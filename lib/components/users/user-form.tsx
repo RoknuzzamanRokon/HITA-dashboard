@@ -326,7 +326,9 @@ export function UserForm({
             <Select
               id="role"
               value={formData.role}
-              onChange={(value) => handleInputChange("role", value as UserRole)}
+              onChange={(e) =>
+                handleInputChange("role", e.target.value as UserRole)
+              }
               options={availableRoles}
               placeholder="Select role"
               error={errors.role}

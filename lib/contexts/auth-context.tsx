@@ -62,13 +62,16 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
         isAuthenticated: !!action.payload,
       };
     case "LOGIN_SUCCESS":
-      return {
+      console.log("🔄 AUTH REDUCER: LOGIN_SUCCESS", action.payload);
+      const newState = {
         ...state,
         user: action.payload.user,
         token: action.payload.token,
         isAuthenticated: true,
         isLoading: false,
       };
+      console.log("🔄 AUTH REDUCER: New state", newState);
+      return newState;
     case "LOGOUT":
       return {
         ...state,
@@ -142,27 +145,43 @@ export function AuthProvider({ children }: AuthProviderProps) {
       dispatch({ type: "SET_LOADING", payload: true });
       setError(null);
 
+      console.log("🔐 Starting login process...");
       const response = await AuthService.login(credentials);
+      console.log("🔐 Login response:", response);
 
       if (response.success && response.data) {
-        // Fetch user profile after successful login
+        console.log("✅ Login successful, fetching user profile...");
+        // Try to fetch user profile after successful login
         const userResponse = await AuthService.getCurrentUser();
+        console.log("👤 User profile response:", userResponse);
 
+        let user;
         if (userResponse.success && userResponse.data) {
-          dispatch({
-            type: "LOGIN_SUCCESS",
-            payload: {
-              user: userResponse.data,
-              token: response.data.access_token,
-            },
-          });
-          return { success: true };
+          console.log("✅ User profile fetched successfully");
+          user = userResponse.data;
         } else {
-          const errorMessage =
-            userResponse.error?.message || "Failed to fetch user profile";
-          setError(errorMessage);
-          return { success: false, error: errorMessage };
+          // If user profile fetch fails, create a basic user object from the token
+          console.warn(
+            "⚠️ Failed to fetch user profile, using fallback user data:",
+            userResponse.error
+          );
+          user = AuthService.createFallbackUser(
+            credentials.username,
+            response.data.access_token
+          );
         }
+        console.log("👤 Final user object:", user);
+
+        console.log("🚀 Dispatching LOGIN_SUCCESS...");
+        dispatch({
+          type: "LOGIN_SUCCESS",
+          payload: {
+            user: user,
+            token: response.data.access_token,
+          },
+        });
+        console.log("✅ Login process completed successfully");
+        return { success: true };
       } else {
         const errorMessage = response.error?.message || "Login failed";
         setError(errorMessage);
@@ -233,5 +252,16 @@ export function useAuth(): AuthContextType {
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log("🔍 useAuth state:", {
+      isAuthenticated: context.isAuthenticated,
+      isLoading: context.isLoading,
+      user: context.user,
+      hasToken: !!context.token,
+    });
+  }, [context.isAuthenticated, context.isLoading, context.user, context.token]);
+
   return context;
 }

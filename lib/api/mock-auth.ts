@@ -45,6 +45,15 @@ const MOCK_USERS: User[] = [
         createdAt: '2024-01-01T00:00:00Z',
         pointBalance: 750,
     },
+    {
+        id: '5',
+        username: 'ursamroko',
+        email: 'ursamroko@example.com',
+        role: UserRole.SUPER_USER,
+        isActive: true,
+        createdAt: '2024-01-01T00:00:00Z',
+        pointBalance: 2000,
+    }
 ];
 
 // Mock delay to simulate network request

@@ -6,7 +6,7 @@ import { apiClient } from './client';
 import { apiEndpoints, config } from '@/lib/config';
 import { TokenStorage } from '@/lib/auth/token-storage';
 import { MockAuthService } from './mock-auth';
-import type { LoginCredentials, AuthResponse, User } from '@/lib/types/auth';
+import type { LoginCredentials, AuthResponse, User, UserRole } from '@/lib/types/auth';
 import type { ApiResponse } from '@/lib/types/api';
 
 export class AuthService {
@@ -14,40 +14,49 @@ export class AuthService {
      * Check if we should use mock authentication
      */
     private static shouldUseMock(): boolean {
-        return config.useMockAuth || config.isDevelopment;
+        return config.useMockAuth;
     }
 
     /**
      * Login user with credentials
      */
     static async login(credentials: LoginCredentials): Promise<ApiResponse<AuthResponse>> {
+        console.log("🔐 AuthService.login called with:", { username: credentials.username });
+        console.log("🔧 shouldUseMock():", this.shouldUseMock());
+
         // Try real API first, fall back to mock if it fails
         if (!this.shouldUseMock()) {
+            console.log("🌐 Using real API for login...");
             try {
-                // Prepare form data for OAuth2 token endpoint
-                const formData = new FormData();
-                formData.append('username', credentials.username);
-                formData.append('password', credentials.password);
-                formData.append('grant_type', 'password');
+                // Prepare URL-encoded form data for OAuth2 token endpoint
+                const formBody = new URLSearchParams();
+                formBody.append('username', credentials.username);
+                formBody.append('password', credentials.password);
+                formBody.append('grant_type', 'password');
 
+                console.log("📡 Making API request to:", apiEndpoints.auth.login);
                 const response = await apiClient.request<AuthResponse>(
                     apiEndpoints.auth.login,
                     {
                         method: 'POST',
                         headers: {
-                            // Don't set Content-Type for FormData
+                            'Content-Type': 'application/x-www-form-urlencoded',
                         },
-                        body: formData,
+                        body: formBody.toString(),
                         requiresAuth: false,
                     }
                 );
 
+                console.log("📡 API response:", response);
+
                 // Store tokens if login successful
                 if (response.success && response.data) {
+                    console.log("💾 Storing tokens...");
                     TokenStorage.setToken(response.data.access_token);
                     if (response.data.refresh_token) {
                         TokenStorage.setRefreshToken(response.data.refresh_token);
                     }
+                    console.log("✅ Tokens stored successfully");
                 }
 
                 return response;
@@ -107,15 +116,31 @@ export class AuthService {
      * Get current user profile
      */
     static async getCurrentUser(): Promise<ApiResponse<User>> {
+        console.log("👤 AuthService.getCurrentUser called");
+        console.log("🔧 shouldUseMock():", this.shouldUseMock());
+
         // Try real API first, fall back to mock if it fails
         if (!this.shouldUseMock()) {
+            console.log("🌐 Fetching user profile from real API...");
             try {
-                const response = await apiClient.get<User>(apiEndpoints.users.profile);
-                if (response.success) {
-                    return response;
+                console.log("📡 Making request to:", apiEndpoints.users.profile);
+                const response = await apiClient.get<any>(apiEndpoints.users.profile);
+                console.log("📡 User profile response:", response);
+
+                if (response.success && response.data) {
+                    // Map backend user data to frontend User type
+                    const backendUser = response.data;
+                    console.log("🔄 Mapping backend user:", backendUser);
+                    const mappedUser: User = this.mapBackendUserToFrontend(backendUser);
+                    console.log("✅ Mapped user:", mappedUser);
+
+                    return {
+                        success: true,
+                        data: mappedUser
+                    };
                 }
             } catch (error) {
-                console.warn('Real API failed, falling back to mock authentication');
+                console.warn('❌ Real API failed, falling back to mock authentication:', error);
                 // Fall through to mock authentication
             }
         }
@@ -181,5 +206,67 @@ export class AuthService {
         }
 
         return response;
+    }
+
+    /**
+     * Map backend user data to frontend User type
+     */
+    static mapBackendUserToFrontend(backendUser: any): User {
+        // Map user_status to UserRole
+        let role: UserRole;
+        switch (backendUser.user_status) {
+            case 'super_user':
+                role = UserRole.SUPER_USER;
+                break;
+            case 'admin_user':
+                role = UserRole.ADMIN_USER;
+                break;
+            case 'general_user':
+            default:
+                role = UserRole.GENERAL_USER;
+                break;
+        }
+
+        return {
+            id: backendUser.id,
+            username: backendUser.username,
+            email: backendUser.email,
+            role: role,
+            isActive: true, // Assuming user is active if they can login
+            createdAt: backendUser.created_at,
+            updatedAt: backendUser.updated_at,
+            pointBalance: backendUser.available_points,
+            activeSuppliers: backendUser.active_supplier || [],
+        };
+    }
+
+    /**
+     * Create a fallback user object when user profile fetch fails
+     */
+    static createFallbackUser(username: string, token: string): User {
+        // Try to decode JWT token to get user info
+        let userId = username;
+        let role = 'general_user' as UserRole;
+
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            if (payload.sub) {
+                userId = payload.sub;
+            }
+            // You can add more logic here to determine role from token if needed
+            role = 'admin_user' as UserRole; // Default to admin for backend users
+        } catch (error) {
+            console.warn('Failed to decode JWT token:', error);
+        }
+
+        return {
+            id: userId,
+            username: username,
+            email: `${username}@example.com`,
+            role: role,
+            isActive: true,
+            createdAt: new Date().toISOString(),
+            pointBalance: 1000,
+        };
     }
 }

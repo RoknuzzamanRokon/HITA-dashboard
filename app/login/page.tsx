@@ -21,7 +21,7 @@ function SecurityHeaders() {
       <meta name="robots" content="noindex, nofollow" />
       <meta
         httpEquiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
+        content="default-src 'self'; connect-src 'self' http://127.0.0.1:8000 http://localhost:8000; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
       />
     </>
   );
@@ -57,7 +57,9 @@ function LoginContent() {
   }
 
   const handleLoginSuccess = () => {
+    console.log("🎉 Login success handler called");
     const targetUrl = returnUrl || redirectTo;
+    console.log("🚀 Redirecting to:", targetUrl);
     router.push(targetUrl);
   };
 

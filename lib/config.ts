@@ -48,7 +48,7 @@ export const apiEndpoints = {
         create: '/user',
         update: (id: string) => `/user/${id}`,
         delete: (id: string) => `/user/${id}`,
-        profile: '/user/me',
+        profile: '/user/me/',
         points: '/user/points',
     },
 

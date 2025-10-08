@@ -190,35 +190,34 @@ export default function UserProfilePage() {
   if (error || !user) {
     return (
       <div className="max-w-4xl mx-auto">
-          <div className="mb-8">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push("/dashboard/users")}
-              leftIcon={<ArrowLeft className="h-4 w-4" />}
-            >
-              Back to Users
-            </Button>
-          </div>
+        <div className="mb-8">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push("/dashboard/users")}
+            leftIcon={<ArrowLeft className="h-4 w-4" />}
+          >
+            Back to Users
+          </Button>
+        </div>
 
-          <div className="bg-red-50 border border-red-200 rounded-md p-6">
-            <div className="flex">
-              <div className="ml-3">
-                <h3 className="text-lg font-medium text-red-800">
-                  {error || "User not found"}
-                </h3>
-                <div className="mt-2 text-sm text-red-700">
-                  {error || "The requested user could not be found."}
-                </div>
-                <div className="mt-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => router.push("/dashboard/users")}
-                  >
-                    Return to Users List
-                  </Button>
-                </div>
+        <div className="bg-red-50 border border-red-200 rounded-md p-6">
+          <div className="flex">
+            <div className="ml-3">
+              <h3 className="text-lg font-medium text-red-800">
+                {error || "User not found"}
+              </h3>
+              <div className="mt-2 text-sm text-red-700">
+                {error || "The requested user could not be found."}
+              </div>
+              <div className="mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push("/dashboard/users")}
+                >
+                  Return to Users List
+                </Button>
               </div>
             </div>
           </div>

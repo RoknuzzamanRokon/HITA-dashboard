@@ -59,6 +59,8 @@ export class ApiClient {
             const requestConfig: RequestInit = {
                 method,
                 headers: requestHeaders,
+                mode: 'cors',
+                credentials: 'omit',
             };
 
             // Add body for non-GET requests
@@ -66,6 +68,9 @@ export class ApiClient {
                 if (body instanceof FormData) {
                     // Remove Content-Type for FormData (browser will set it with boundary)
                     delete requestHeaders['Content-Type'];
+                    requestConfig.body = body;
+                } else if (typeof body === 'string' && requestHeaders['Content-Type'] === 'application/x-www-form-urlencoded') {
+                    // Handle URL-encoded form data
                     requestConfig.body = body;
                 } else {
                     requestConfig.body = JSON.stringify(body);
@@ -80,13 +85,13 @@ export class ApiClient {
         } catch (error) {
             console.error('API request failed:', error);
 
-            // Check if it's a network error
+            // Check if it's a network error (likely CORS)
             if (error instanceof TypeError && error.message.includes('fetch')) {
                 return {
                     success: false,
                     error: {
                         status: 0,
-                        message: 'Unable to connect to the API server. Please check if the backend is running.',
+                        message: 'Unable to connect to the API server. This might be a CORS issue. Please ensure your backend allows requests from localhost:3002',
                     },
                 };
             }
