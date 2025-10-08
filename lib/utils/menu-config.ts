@@ -60,7 +60,7 @@ export const mainMenuItems: MenuItem[] = [
         id: "hotels",
         label: "Hotel Search",
         icon: Building2,
-        path: "/hotels",
+        path: "/dashboard/hotels",
         description: "Search and view hotel information",
         requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER, UserRole.GENERAL_USER],
     },
@@ -262,7 +262,7 @@ export function getQuickActions(userRole: UserRole): MenuItem[] {
         id: "quick-search",
         label: "Search Hotels",
         icon: Search,
-        path: "/hotels",
+        path: "/dashboard/hotels",
         requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER, UserRole.GENERAL_USER],
     });
 
