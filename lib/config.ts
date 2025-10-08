@@ -50,6 +50,15 @@ export const apiEndpoints = {
         delete: (id: string) => `/user/${id}`,
         profile: '/user/me/',
         points: '/user/points',
+        // Specific user creation endpoints
+        createSuperUser: '/user/create_super_user/',
+        createAdminUser: '/user/create_admin_user/',
+        createGeneralUser: '/user/create_general_user/',
+        // Admin endpoints
+        getAllUsers: '/user/super/check/all/',
+        // Delete endpoints
+        deleteSuperUser: (id: string) => `/delete/delete_super_user/${id}/`,
+        deleteUser: (id: string) => `/delete/delete_user/${id}/`,
     },
 
     // Hotel Content

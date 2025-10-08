@@ -6,9 +6,55 @@ import { apiClient } from './client';
 import { apiEndpoints } from '@/lib/config';
 import type { ApiResponse, PaginatedResponse } from '@/lib/types/api';
 import type { User } from '@/lib/types/auth';
+import { UserRole } from '@/lib/types/auth';
 import type { UserListItem, UserFormData, UserSearchParams, UserStats } from '@/lib/types/user';
 
 export class UserService {
+    /**
+     * Get all users (admin endpoint)
+     */
+    static async getAllUsers(): Promise<ApiResponse<UserListItem[]>> {
+        console.log("📡 Fetching all users from:", apiEndpoints.users.getAllUsers);
+
+        const response = await apiClient.get<any>(apiEndpoints.users.getAllUsers);
+
+        if (response.success && response.data) {
+            // Transform the backend response to match frontend expectations
+            const backendData = response.data;
+            const allUsers: UserListItem[] = [];
+
+            // Process super users
+            if (backendData.super_users && Array.isArray(backendData.super_users)) {
+                backendData.super_users.forEach((user: any) => {
+                    allUsers.push(this.transformBackendUser(user));
+                });
+            }
+
+            // Process admin users
+            if (backendData.admin_users && Array.isArray(backendData.admin_users)) {
+                backendData.admin_users.forEach((user: any) => {
+                    allUsers.push(this.transformBackendUser(user));
+                });
+            }
+
+            // Process general users
+            if (backendData.general_users && Array.isArray(backendData.general_users)) {
+                backendData.general_users.forEach((user: any) => {
+                    allUsers.push(this.transformBackendUser(user));
+                });
+            }
+
+            console.log("✅ Transformed users:", allUsers.length);
+
+            return {
+                success: true,
+                data: allUsers
+            };
+        }
+
+        return response;
+    }
+
     /**
      * Get paginated list of users with search and filtering
      */
@@ -37,10 +83,47 @@ export class UserService {
     }
 
     /**
-     * Create new user
+     * Create new user (generic)
      */
     static async createUser(userData: UserFormData): Promise<ApiResponse<User>> {
         return apiClient.post<User>(apiEndpoints.users.create, userData);
+    }
+
+    /**
+     * Create super user
+     */
+    static async createSuperUser(userData: {
+        username: string;
+        email: string;
+        password: string;
+    }): Promise<ApiResponse<User>> {
+        console.log("📡 Creating super user:", { username: userData.username, email: userData.email });
+        return apiClient.post<User>(apiEndpoints.users.createSuperUser, userData);
+    }
+
+    /**
+     * Create admin user
+     */
+    static async createAdminUser(userData: {
+        username: string;
+        email: string;
+        business_id: string;
+        password: string;
+    }): Promise<ApiResponse<User>> {
+        console.log("📡 Creating admin user:", { username: userData.username, email: userData.email, business_id: userData.business_id });
+        return apiClient.post<User>(apiEndpoints.users.createAdminUser, userData);
+    }
+
+    /**
+     * Create general user
+     */
+    static async createGeneralUser(userData: {
+        username: string;
+        email: string;
+        password: string;
+    }): Promise<ApiResponse<User>> {
+        console.log("📡 Creating general user:", { username: userData.username, email: userData.email });
+        return apiClient.post<User>(apiEndpoints.users.createGeneralUser, userData);
     }
 
     /**
@@ -51,10 +134,19 @@ export class UserService {
     }
 
     /**
-     * Delete user
+     * Delete user (generic)
      */
     static async deleteUser(id: string): Promise<ApiResponse<void>> {
-        return apiClient.delete<void>(apiEndpoints.users.delete(id));
+        console.log("📡 Deleting user:", id);
+        return apiClient.delete<void>(apiEndpoints.users.deleteUser(id));
+    }
+
+    /**
+     * Delete super user
+     */
+    static async deleteSuperUser(id: string): Promise<ApiResponse<void>> {
+        console.log("📡 Deleting super user:", id);
+        return apiClient.delete<void>(apiEndpoints.users.deleteSuperUser(id));
     }
 
     /**
@@ -88,5 +180,41 @@ export class UserService {
      */
     static async updateUserPoints(id: string, points: number): Promise<ApiResponse<User>> {
         return apiClient.patch<User>(`${apiEndpoints.users.list}/${id}/points`, { points });
+    }
+
+    /**
+     * Transform backend user data to frontend UserListItem format
+     */
+    private static transformBackendUser(backendUser: any): UserListItem {
+        // Map backend user_status to UserRole enum
+        let role: UserRole;
+        switch (backendUser.user_status) {
+            case 'super_user':
+                role = UserRole.SUPER_USER;
+                break;
+            case 'admin_user':
+                role = UserRole.ADMIN_USER;
+                break;
+            case 'general_user':
+            default:
+                role = UserRole.GENERAL_USER;
+                break;
+        }
+
+        return {
+            id: backendUser.id,
+            username: backendUser.username,
+            email: backendUser.email,
+            role: role,
+            isActive: backendUser.is_active,
+            pointBalance: backendUser.points?.current_points || 0,
+            totalPoints: backendUser.points?.total_points || 0,
+            paidStatus: backendUser.points?.paid_status || 'Unknown',
+            totalRequests: backendUser.points?.total_rq || 0,
+            usingRqStatus: backendUser.using_rq_status || 'Inactive',
+            createdAt: backendUser.created_at,
+            lastLogin: undefined, // Not provided in backend response
+            activeSuppliers: [] // Not provided in backend response
+        };
     }
 }

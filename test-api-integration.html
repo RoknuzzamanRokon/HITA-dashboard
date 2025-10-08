@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quick API Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+      }
+      .result {
+        margin: 10px 0;
+        padding: 10px;
+        border-radius: 4px;
+      }
+      .success {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+      }
+      .error {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+      }
+      button {
+        padding: 10px 20px;
+        margin: 5px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      pre {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 4px;
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🚀 Quick API Integration Test</h1>
+
+    <div>
+      <h3>Test with your provided token:</h3>
+      <button onclick="testWithProvidedToken()">Test Get All Users</button>
+      <div id="results"></div>
+    </div>
+
+    <script>
+      const API_BASE_URL = "http://localhost:8000/v1.0";
+
+      // Your provided token
+      const PROVIDED_TOKEN =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1cnNhbXJva28iLCJleHAiOjE3ODUzNzA3MTV9.XSQEExtrZFf-FISeRsDZveoXNYD7a0eO_McRvGgNc5Y";
+
+      async function testWithProvidedToken() {
+        const resultsDiv = document.getElementById("results");
+        resultsDiv.innerHTML = "<p>🔄 Testing with provided token...</p>";
+
+        try {
+          const response = await fetch(
+            `${API_BASE_URL}/user/super/check/all/`,
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${PROVIDED_TOKEN}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            resultsDiv.innerHTML +=
+              '<div class="result success">✅ API call successful!</div>';
+            resultsDiv.innerHTML += `<pre>${JSON.stringify(
+              data,
+              null,
+              2
+            )}</pre>`;
+
+            // Test the transformation logic
+            const allUsers = [];
+
+            if (data.super_users && Array.isArray(data.super_users)) {
+              data.super_users.forEach((user) => {
+                allUsers.push(transformUser(user));
+              });
+            }
+
+            if (data.admin_users && Array.isArray(data.admin_users)) {
+              data.admin_users.forEach((user) => {
+                allUsers.push(transformUser(user));
+              });
+            }
+
+            if (data.general_users && Array.isArray(data.general_users)) {
+              data.general_users.forEach((user) => {
+                allUsers.push(transformUser(user));
+              });
+            }
+
+            resultsDiv.innerHTML +=
+              '<div class="result success">✅ Transformation successful!</div>';
+            resultsDiv.innerHTML += `<h4>Transformed Users (${allUsers.length} total):</h4>`;
+            resultsDiv.innerHTML += `<pre>${JSON.stringify(
+              allUsers,
+              null,
+              2
+            )}</pre>`;
+          } else {
+            const errorText = await response.text();
+            resultsDiv.innerHTML += `<div class="result error">❌ API call failed: ${response.status} - ${errorText}</div>`;
+          }
+        } catch (error) {
+          resultsDiv.innerHTML += `<div class="result error">❌ Network error: ${error.message}</div>`;
+        }
+      }
+
+      function transformUser(backendUser) {
+        let role;
+        switch (backendUser.user_status) {
+          case "super_user":
+            role = "super_user";
+            break;
+          case "admin_user":
+            role = "admin_user";
+            break;
+          case "general_user":
+          default:
+            role = "general_user";
+            break;
+        }
+
+        return {
+          id: backendUser.id,
+          username: backendUser.username,
+          email: backendUser.email,
+          role: role,
+          isActive: backendUser.is_active,
+          pointBalance: backendUser.points?.current_points || 0,
+          totalPoints: backendUser.points?.total_points || 0,
+          paidStatus: backendUser.points?.paid_status || "Unknown",
+          totalRequests: backendUser.points?.total_rq || 0,
+          usingRqStatus: backendUser.using_rq_status || "Inactive",
+          createdAt: backendUser.created_at,
+          lastLogin: undefined,
+          activeSuppliers: [],
+        };
+      }
+    </script>
+  </body>
+</html>

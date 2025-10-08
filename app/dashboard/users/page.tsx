@@ -1,6 +1,6 @@
 /**
  * User Management Page
- * Displays list of users with search, filtering, and pagination
+ * Comprehensive user management with role-based creation and deletion
  */
 
 "use client";
@@ -8,6 +8,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useRequireAuth } from "@/lib/hooks/use-auth";
+import { useAuth } from "@/lib/contexts/auth-context";
 import { UserService } from "@/lib/api/users";
 import { DataTable, Column } from "@/lib/components/ui/data-table";
 import { Button } from "@/lib/components/ui/button";
@@ -22,17 +23,22 @@ import {
   UserCheck,
   UserX,
   Filter,
+  Users,
+  Shield,
+  Crown,
+  RefreshCw,
 } from "lucide-react";
 import type {
   UserListItem,
   UserSearchParams,
   UserFormData,
 } from "@/lib/types/user";
-import type { UserRole } from "@/lib/types/auth";
+import { UserRole } from "@/lib/types/auth";
 
 export default function UsersPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useRequireAuth();
+  const { user: currentUser } = useAuth();
 
   // State management
   const [users, setUsers] = useState<UserListItem[]>([]);
@@ -56,6 +62,18 @@ export default function UsersPage() {
   const [showUserModal, setShowUserModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createUserType, setCreateUserType] = useState<
+    "super" | "admin" | "general"
+  >("general");
+
+  // Create user form state
+  const [createUserData, setCreateUserData] = useState({
+    username: "",
+    email: "",
+    password: "",
+    business_id: "", // For admin users
+  });
 
   /**
    * Fetch users with current parameters
@@ -65,31 +83,58 @@ export default function UsersPage() {
       setLoading(true);
       setError(null);
 
-      const params: UserSearchParams = {
-        page: pagination.page,
-        limit: pagination.pageSize,
-        search: searchQuery || undefined,
-        role: filters.role,
-        isActive: filters.isActive,
-      };
+      console.log("🔄 Fetching users...");
 
-      const response = await UserService.getUsers(params);
+      // Use the admin endpoint to get all users
+      const response = await UserService.getAllUsers();
 
       if (response.success && response.data) {
-        setUsers(response.data.data);
+        console.log("✅ Users fetched successfully:", response.data.length);
+
+        // Ensure response.data is an array
+        const usersData = Array.isArray(response.data) ? response.data : [];
+
+        // Apply client-side filtering if needed
+        let filteredUsers = usersData;
+
+        if (searchQuery) {
+          filteredUsers = filteredUsers.filter(
+            (user) =>
+              user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              user.email.toLowerCase().includes(searchQuery.toLowerCase())
+          );
+        }
+
+        if (filters.role) {
+          filteredUsers = filteredUsers.filter(
+            (user) => user.role === filters.role
+          );
+        }
+
+        if (filters.isActive !== undefined) {
+          filteredUsers = filteredUsers.filter(
+            (user) => user.isActive === filters.isActive
+          );
+        }
+
+        setUsers(filteredUsers);
         setPagination((prev) => ({
           ...prev,
-          total: response.data!.pagination.total,
+          total: filteredUsers.length,
         }));
       } else {
+        console.error("❌ Failed to fetch users:", response.error);
         setError(response.error?.message || "Failed to fetch users");
+        setUsers([]); // Ensure users is always an array
       }
     } catch (err) {
+      console.error("❌ Error fetching users:", err);
       setError(err instanceof Error ? err.message : "An error occurred");
+      setUsers([]); // Ensure users is always an array
     } finally {
       setLoading(false);
     }
-  }, [pagination.page, pagination.pageSize, searchQuery, filters]);
+  }, [searchQuery, filters]);
 
   // Fetch users on component mount and when dependencies change
   useEffect(() => {
@@ -172,16 +217,88 @@ export default function UsersPage() {
     if (!selectedUser) return;
 
     try {
-      const response = await UserService.deleteUser(selectedUser.id);
+      console.log(
+        "🗑️ Deleting user:",
+        selectedUser.username,
+        "Role:",
+        selectedUser.role
+      );
+
+      let response;
+      if (selectedUser.role === UserRole.SUPER_USER) {
+        response = await UserService.deleteSuperUser(selectedUser.id);
+      } else {
+        response = await UserService.deleteUser(selectedUser.id);
+      }
+
       if (response.success) {
+        console.log("✅ User deleted successfully");
         setShowDeleteModal(false);
         setSelectedUser(null);
         fetchUsers(); // Refresh the list
       } else {
+        console.error("❌ Failed to delete user:", response.error);
         setError(response.error?.message || "Failed to delete user");
       }
     } catch (err) {
+      console.error("❌ Error deleting user:", err);
       setError(err instanceof Error ? err.message : "An error occurred");
+    }
+  };
+
+  /**
+   * Handle create user
+   */
+  const handleCreateUser = async () => {
+    try {
+      setLoading(true);
+      console.log("👤 Creating user:", createUserType, createUserData);
+
+      let response;
+      switch (createUserType) {
+        case "super":
+          response = await UserService.createSuperUser({
+            username: createUserData.username,
+            email: createUserData.email,
+            password: createUserData.password,
+          });
+          break;
+        case "admin":
+          response = await UserService.createAdminUser({
+            username: createUserData.username,
+            email: createUserData.email,
+            business_id: createUserData.business_id,
+            password: createUserData.password,
+          });
+          break;
+        case "general":
+          response = await UserService.createGeneralUser({
+            username: createUserData.username,
+            email: createUserData.email,
+            password: createUserData.password,
+          });
+          break;
+      }
+
+      if (response.success) {
+        console.log("✅ User created successfully:", response.data);
+        setShowCreateModal(false);
+        setCreateUserData({
+          username: "",
+          email: "",
+          password: "",
+          business_id: "",
+        });
+        fetchUsers(); // Refresh the list
+      } else {
+        console.error("❌ Failed to create user:", response.error);
+        setError(response.error?.message || "Failed to create user");
+      }
+    } catch (err) {
+      console.error("❌ Error creating user:", err);
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -216,15 +333,15 @@ export default function UsersPage() {
       sortable: true,
       render: (value: UserRole) => {
         const roleColors = {
-          super_user: "bg-purple-100 text-purple-800",
-          admin_user: "bg-blue-100 text-blue-800",
-          general_user: "bg-green-100 text-green-800",
+          [UserRole.SUPER_USER]: "bg-purple-100 text-purple-800",
+          [UserRole.ADMIN_USER]: "bg-blue-100 text-blue-800",
+          [UserRole.GENERAL_USER]: "bg-green-100 text-green-800",
         };
 
         const roleLabels = {
-          super_user: "Super User",
-          admin_user: "Admin",
-          general_user: "User",
+          [UserRole.SUPER_USER]: "Super User",
+          [UserRole.ADMIN_USER]: "Admin",
+          [UserRole.GENERAL_USER]: "User",
         };
 
         return <Badge className={roleColors[value]}>{roleLabels[value]}</Badge>;
@@ -232,13 +349,49 @@ export default function UsersPage() {
     },
     {
       key: "pointBalance",
-      label: "Points",
+      label: "Current Points",
       sortable: true,
-      render: (value) => (
-        <span className="text-gray-900">
-          {value !== undefined ? value.toLocaleString() : "N/A"}
-        </span>
+      render: (value, user) => (
+        <div className="text-gray-900">
+          <div className="font-medium">
+            {value !== undefined ? value.toLocaleString() : "N/A"}
+          </div>
+          {user.totalPoints !== undefined && user.totalPoints !== value && (
+            <div className="text-xs text-gray-500">
+              Total: {user.totalPoints.toLocaleString()}
+            </div>
+          )}
+        </div>
       ),
+    },
+    {
+      key: "paidStatus",
+      label: "Status",
+      sortable: true,
+      render: (value) => {
+        const statusColors = {
+          Paid: "bg-green-100 text-green-800",
+          Unpaid: "bg-red-100 text-red-800",
+          "I am super user, I have unlimited points.":
+            "bg-purple-100 text-purple-800",
+        };
+
+        const displayText =
+          value === "I am super user, I have unlimited points."
+            ? "Unlimited"
+            : value || "Unknown";
+
+        return (
+          <Badge
+            className={
+              statusColors[value as keyof typeof statusColors] ||
+              "bg-gray-100 text-gray-800"
+            }
+          >
+            {displayText}
+          </Badge>
+        );
+      },
     },
     {
       key: "lastLogin",
@@ -339,12 +492,96 @@ export default function UsersPage() {
               Manage system users, roles, and permissions
             </p>
           </div>
-          <Button
-            onClick={() => router.push("/dashboard/users/create")}
-            leftIcon={<Plus className="h-4 w-4" />}
-          >
-            Add User
-          </Button>
+          <div className="flex items-center space-x-3">
+            <Button
+              variant="outline"
+              onClick={fetchUsers}
+              leftIcon={<RefreshCw className="h-4 w-4" />}
+              disabled={loading}
+            >
+              Refresh
+            </Button>
+            <div className="relative">
+              <Button
+                onClick={() => setShowCreateModal(true)}
+                leftIcon={<Plus className="h-4 w-4" />}
+              >
+                Create User
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* User Stats */}
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="bg-white p-4 rounded-lg shadow border">
+            <div className="flex items-center">
+              <Users className="h-8 w-8 text-blue-500" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-500">Total Users</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {Array.isArray(users) ? users.length : 0}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow border">
+            <div className="flex items-center">
+              <Crown className="h-8 w-8 text-purple-500" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-500">Super Users</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {Array.isArray(users)
+                    ? users.filter((u) => u.role === UserRole.SUPER_USER).length
+                    : 0}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow border">
+            <div className="flex items-center">
+              <Shield className="h-8 w-8 text-blue-500" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-500">Admin Users</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {Array.isArray(users)
+                    ? users.filter((u) => u.role === UserRole.ADMIN_USER).length
+                    : 0}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow border">
+            <div className="flex items-center">
+              <Users className="h-8 w-8 text-green-500" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-500">
+                  General Users
+                </p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {Array.isArray(users)
+                    ? users.filter((u) => u.role === UserRole.GENERAL_USER)
+                        .length
+                    : 0}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow border">
+            <div className="flex items-center">
+              <UserCheck className="h-8 w-8 text-emerald-500" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-500">
+                  Active Users
+                </p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {Array.isArray(users)
+                    ? users.filter((u) => u.isActive).length
+                    : 0}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -452,12 +689,51 @@ export default function UsersPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Point Balance
+                  Current Points
                 </label>
                 <p className="mt-1 text-sm text-gray-900">
                   {selectedUser.pointBalance !== undefined
                     ? selectedUser.pointBalance.toLocaleString()
                     : "N/A"}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Total Points
+                </label>
+                <p className="mt-1 text-sm text-gray-900">
+                  {selectedUser.totalPoints !== undefined
+                    ? selectedUser.totalPoints.toLocaleString()
+                    : "N/A"}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Payment Status
+                </label>
+                <p className="mt-1 text-sm text-gray-900">
+                  {selectedUser.paidStatus ===
+                  "I am super user, I have unlimited points."
+                    ? "Unlimited Points"
+                    : selectedUser.paidStatus || "Unknown"}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Total Requests
+                </label>
+                <p className="mt-1 text-sm text-gray-900">
+                  {selectedUser.totalRequests !== undefined
+                    ? selectedUser.totalRequests.toLocaleString()
+                    : "N/A"}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Request Status
+                </label>
+                <p className="mt-1 text-sm text-gray-900">
+                  {selectedUser.usingRqStatus || "Unknown"}
                 </p>
               </div>
               <div>
@@ -581,6 +857,181 @@ export default function UsersPage() {
         onSubmit={handleUpdateUser}
         loading={loading}
       />
+
+      {/* Create User Modal */}
+      <Modal
+        isOpen={showCreateModal}
+        onClose={() => {
+          setShowCreateModal(false);
+          setCreateUserData({
+            username: "",
+            email: "",
+            password: "",
+            business_id: "",
+          });
+        }}
+        title="Create New User"
+        size="lg"
+      >
+        <div className="space-y-6">
+          {/* User Type Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              User Type
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              <button
+                type="button"
+                onClick={() => setCreateUserType("general")}
+                className={`p-3 border rounded-lg text-center transition-colors ${
+                  createUserType === "general"
+                    ? "border-blue-500 bg-blue-50 text-blue-700"
+                    : "border-gray-300 hover:border-gray-400"
+                }`}
+              >
+                <Users className="h-6 w-6 mx-auto mb-2" />
+                <div className="text-sm font-medium">General User</div>
+                <div className="text-xs text-gray-500">Standard access</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setCreateUserType("admin")}
+                className={`p-3 border rounded-lg text-center transition-colors ${
+                  createUserType === "admin"
+                    ? "border-blue-500 bg-blue-50 text-blue-700"
+                    : "border-gray-300 hover:border-gray-400"
+                }`}
+              >
+                <Shield className="h-6 w-6 mx-auto mb-2" />
+                <div className="text-sm font-medium">Admin User</div>
+                <div className="text-xs text-gray-500">Business management</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setCreateUserType("super")}
+                className={`p-3 border rounded-lg text-center transition-colors ${
+                  createUserType === "super"
+                    ? "border-blue-500 bg-blue-50 text-blue-700"
+                    : "border-gray-300 hover:border-gray-400"
+                }`}
+              >
+                <Crown className="h-6 w-6 mx-auto mb-2" />
+                <div className="text-sm font-medium">Super User</div>
+                <div className="text-xs text-gray-500">Full system access</div>
+              </button>
+            </div>
+          </div>
+
+          {/* User Form Fields */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Username *
+              </label>
+              <input
+                type="text"
+                value={createUserData.username}
+                onChange={(e) =>
+                  setCreateUserData({
+                    ...createUserData,
+                    username: e.target.value,
+                  })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter username"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email *
+              </label>
+              <input
+                type="email"
+                value={createUserData.email}
+                onChange={(e) =>
+                  setCreateUserData({
+                    ...createUserData,
+                    email: e.target.value,
+                  })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter email"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Password *
+              </label>
+              <input
+                type="password"
+                value={createUserData.password}
+                onChange={(e) =>
+                  setCreateUserData({
+                    ...createUserData,
+                    password: e.target.value,
+                  })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter password"
+                required
+              />
+            </div>
+            {createUserType === "admin" && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Business ID *
+                </label>
+                <input
+                  type="text"
+                  value={createUserData.business_id}
+                  onChange={(e) =>
+                    setCreateUserData({
+                      ...createUserData,
+                      business_id: e.target.value,
+                    })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter business ID"
+                  required
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end space-x-3 pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCreateModal(false);
+                setCreateUserData({
+                  username: "",
+                  email: "",
+                  password: "",
+                  business_id: "",
+                });
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateUser}
+              disabled={
+                !createUserData.username ||
+                !createUserData.email ||
+                !createUserData.password ||
+                (createUserType === "admin" && !createUserData.business_id) ||
+                loading
+              }
+              leftIcon={<Plus className="h-4 w-4" />}
+            >
+              {loading ? "Creating..." : "Create User"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

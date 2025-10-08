@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User API Endpoint Tester</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .test-section {
+        margin: 20px 0;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+      .success {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+      }
+      .error {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+      }
+      .info {
+        background-color: #d1ecf1;
+        border-color: #bee5eb;
+      }
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      button:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+      }
+      .credentials {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+      }
+      .credential-box {
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background: #f8f9fa;
+      }
+      pre {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 4px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+      }
+      .token-display {
+        word-break: break-all;
+        font-size: 12px;
+        background: #e9ecef;
+        padding: 5px;
+        border-radius: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🚀 User Management API Tester</h1>
+      <p>Test all user management endpoints with the provided credentials</p>
+
+      <!-- Test Credentials -->
+      <div class="test-section info">
+        <h3>📋 Test Credentials</h3>
+        <div class="credentials">
+          <div class="credential-box">
+            <h4>🔱 Super User</h4>
+            <p><strong>Username:</strong> ursamroko</p>
+            <p><strong>Password:</strong> ursamroko123</p>
+            <div id="superToken" class="token-display">Not logged in</div>
+          </div>
+          <div class="credential-box">
+            <h4>🛡️ Admin User</h4>
+            <p><strong>Username:</strong> ron123</p>
+            <p><strong>Password:</strong> ron123</p>
+            <div id="adminToken" class="token-display">Not logged in</div>
+          </div>
+          <div class="credential-box">
+            <h4>👤 General User</h4>
+            <p><strong>Username:</strong> roman</p>
+            <p><strong>Password:</strong> roman123</p>
+            <div id="generalToken" class="token-display">Not logged in</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Authentication Tests -->
+      <div class="test-section">
+        <h3>🔐 Step 1: Authentication Tests</h3>
+        <button onclick="testLogin('super')">Login Super User</button>
+        <button onclick="testLogin('admin')">Login Admin User</button>
+        <button onclick="testLogin('general')">Login General User</button>
+        <button onclick="testAllLogins()">Login All Users</button>
+        <div id="authResults"></div>
+      </div>
+
+      <!-- Profile Tests -->
+      <div class="test-section">
+        <h3>👤 Step 2: User Profile Tests (/v1.0/user/me/)</h3>
+        <button onclick="testProfile('super')">Get Super User Profile</button>
+        <button onclick="testProfile('admin')">Get Admin User Profile</button>
+        <button onclick="testProfile('general')">
+          Get General User Profile
+        </button>
+        <div id="profileResults"></div>
+      </div>
+
+      <!-- Get All Users Tests -->
+      <div class="test-section">
+        <h3>📋 Step 3: Get All Users (/v1.0/user/super/check/all/)</h3>
+        <button onclick="testGetAllUsers('super')">
+          Get All Users (Super)
+        </button>
+        <button onclick="testGetAllUsers('admin')">
+          Get All Users (Admin)
+        </button>
+        <button onclick="testGetAllUsers('general')">
+          Get All Users (General)
+        </button>
+        <div id="getAllUsersResults"></div>
+      </div>
+
+      <!-- User Creation Tests -->
+      <div class="test-section">
+        <h3>➕ Step 4: User Creation Tests</h3>
+        <button onclick="testCreateUser('super', 'super')">
+          Create Super User (by Super)
+        </button>
+        <button onclick="testCreateUser('super', 'admin')">
+          Create Admin User (by Super)
+        </button>
+        <button onclick="testCreateUser('super', 'general')">
+          Create General User (by Super)
+        </button>
+        <button onclick="testCreateUser('admin', 'admin')">
+          Create Admin User (by Admin)
+        </button>
+        <button onclick="testCreateUser('admin', 'general')">
+          Create General User (by Admin)
+        </button>
+        <div id="createUserResults"></div>
+      </div>
+
+      <!-- User Deletion Tests -->
+      <div class="test-section">
+        <h3>🗑️ Step 5: User Deletion Tests</h3>
+        <p>Created users will be listed here for deletion testing:</p>
+        <div id="createdUsersList"></div>
+        <div id="deleteUserResults"></div>
+      </div>
+
+      <!-- Run All Tests -->
+      <div class="test-section">
+        <h3>🎯 Complete Test Suite</h3>
+        <button
+          onclick="runAllTests()"
+          style="background: #28a745; font-size: 16px; padding: 15px 30px"
+        >
+          🚀 Run All Tests
+        </button>
+        <div id="allTestsResults"></div>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE_URL = "http://localhost:8000/v1.0";
+
+      // Store tokens
+      const tokens = {
+        super: null,
+        admin: null,
+        general: null,
+      };
+
+      // Store created users for cleanup
+      const createdUsers = [];
+
+      // Test credentials
+      const credentials = {
+        super: { username: "ursamroko", password: "ursamroko123" },
+        admin: { username: "ron123", password: "ron123" },
+        general: { username: "roman", password: "roman123" },
+      };
+
+      // Utility function to make API requests
+      async function makeRequest(endpoint, options = {}) {
+        const {
+          method = "GET",
+          body = null,
+          token = null,
+          headers = {},
+        } = options;
+
+        const requestHeaders = {
+          "Content-Type": "application/json",
+          ...headers,
+        };
+
+        if (token) {
+          requestHeaders.Authorization = `Bearer ${token}`;
+        }
+
+        const requestConfig = {
+          method,
+          headers: requestHeaders,
+          mode: "cors",
+        };
+
+        if (body && method !== "GET") {
+          requestConfig.body = JSON.stringify(body);
+        }
+
+        try {
+          const response = await fetch(
+            `${API_BASE_URL}${endpoint}`,
+            requestConfig
+          );
+
+          let responseData;
+          const contentType = response.headers.get("content-type");
+
+          if (contentType && contentType.includes("application/json")) {
+            responseData = await response.json();
+          } else {
+            responseData = await response.text();
+          }
+
+          return {
+            success: response.ok,
+            status: response.status,
+            data: responseData,
+          };
+        } catch (error) {
+          return {
+            success: false,
+            status: 0,
+            error: error.message,
+          };
+        }
+      }
+
+      // Login function
+      async function testLogin(userType) {
+        const creds = credentials[userType];
+        const resultDiv = document.getElementById("authResults");
+
+        resultDiv.innerHTML += `<p>🔄 Logging in ${userType} user (${creds.username})...</p>`;
+
+        const formData = new URLSearchParams();
+        formData.append("username", creds.username);
+        formData.append("password", creds.password);
+        formData.append("grant_type", "password");
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/auth/token`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: formData.toString(),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            tokens[userType] = data.access_token;
+
+            // Update token display
+            document.getElementById(
+              `${userType}Token`
+            ).textContent = `Token: ${data.access_token.substring(0, 50)}...`;
+
+            resultDiv.innerHTML += `<p class="success">✅ ${userType} login successful!</p>`;
+            return data.access_token;
+          } else {
+            const errorText = await response.text();
+            resultDiv.innerHTML += `<p class="error">❌ ${userType} login failed: ${response.status} - ${errorText}</p>`;
+            return null;
+          }
+        } catch (error) {
+          resultDiv.innerHTML += `<p class="error">❌ ${userType} login error: ${error.message}</p>`;
+          return null;
+        }
+      }
+
+      // Test user profile
+      async function testProfile(userType) {
+        const resultDiv = document.getElementById("profileResults");
+
+        if (!tokens[userType]) {
+          resultDiv.innerHTML += `<p class="error">❌ No token for ${userType}. Please login first.</p>`;
+          return;
+        }
+
+        resultDiv.innerHTML += `<p>🔄 Getting profile for ${userType}...</p>`;
+
+        const result = await makeRequest("/user/me/", {
+          token: tokens[userType],
+        });
+
+        if (result.success) {
+          resultDiv.innerHTML += `<p class="success">✅ ${userType} profile retrieved:</p>`;
+          resultDiv.innerHTML += `<pre>${JSON.stringify(
+            result.data,
+            null,
+            2
+          )}</pre>`;
+        } else {
+          resultDiv.innerHTML += `<p class="error">❌ ${userType} profile failed: ${
+            result.status
+          } - ${JSON.stringify(result.data)}</p>`;
+        }
+      }
+
+      // Test get all users
+      async function testGetAllUsers(userType) {
+        const resultDiv = document.getElementById("getAllUsersResults");
+
+        if (!tokens[userType]) {
+          resultDiv.innerHTML += `<p class="error">❌ No token for ${userType}. Please login first.</p>`;
+          return;
+        }
+
+        resultDiv.innerHTML += `<p>🔄 Getting all users with ${userType} token...</p>`;
+
+        const result = await makeRequest("/user/super/check/all/", {
+          token: tokens[userType],
+        });
+
+        if (result.success) {
+          const userCount = Array.isArray(result.data)
+            ? result.data.length
+            : "Unknown";
+          resultDiv.innerHTML += `<p class="success">✅ ${userType} retrieved ${userCount} users</p>`;
+          if (Array.isArray(result.data) && result.data.length > 0) {
+            resultDiv.innerHTML += `<pre>${JSON.stringify(
+              result.data.slice(0, 2),
+              null,
+              2
+            )}${result.data.length > 2 ? "\n... and more" : ""}</pre>`;
+          }
+        } else {
+          resultDiv.innerHTML += `<p class="error">❌ ${userType} get all users failed: ${
+            result.status
+          } - ${JSON.stringify(result.data)}</p>`;
+        }
+      }
+
+      // Test create user
+      async function testCreateUser(creatorType, userTypeToCreate) {
+        const resultDiv = document.getElementById("createUserResults");
+
+        if (!tokens[creatorType]) {
+          resultDiv.innerHTML += `<p class="error">❌ No token for ${creatorType}. Please login first.</p>`;
+          return;
+        }
+
+        const timestamp = Date.now();
+        const userData = {
+          username: `test_${userTypeToCreate}_${timestamp}`,
+          email: `test_${userTypeToCreate}_${timestamp}@example.com`,
+          password: "testpassword123",
+        };
+
+        if (userTypeToCreate === "admin") {
+          userData.business_id = "test_business_123";
+        }
+
+        let endpoint;
+        switch (userTypeToCreate) {
+          case "super":
+            endpoint = "/user/create_super_user/";
+            break;
+          case "admin":
+            endpoint = "/user/create_admin_user/";
+            break;
+          case "general":
+            endpoint = "/user/create_general_user/";
+            break;
+        }
+
+        resultDiv.innerHTML += `<p>🔄 Creating ${userTypeToCreate} user with ${creatorType} token...</p>`;
+
+        const result = await makeRequest(endpoint, {
+          method: "POST",
+          body: userData,
+          token: tokens[creatorType],
+        });
+
+        if (result.success) {
+          resultDiv.innerHTML += `<p class="success">✅ ${userTypeToCreate} user created by ${creatorType}!</p>`;
+          resultDiv.innerHTML += `<pre>${JSON.stringify(
+            result.data,
+            null,
+            2
+          )}</pre>`;
+
+          // Store for deletion testing
+          if (result.data && result.data.id) {
+            createdUsers.push({
+              id: result.data.id,
+              username: userData.username,
+              type: userTypeToCreate,
+              createdBy: creatorType,
+            });
+            updateCreatedUsersList();
+          }
+        } else {
+          resultDiv.innerHTML += `<p class="error">❌ Create ${userTypeToCreate} user failed: ${
+            result.status
+          } - ${JSON.stringify(result.data)}</p>`;
+        }
+      }
+
+      // Update created users list
+      function updateCreatedUsersList() {
+        const listDiv = document.getElementById("createdUsersList");
+        if (createdUsers.length === 0) {
+          listDiv.innerHTML = "<p>No users created yet.</p>";
+          return;
+        }
+
+        let html = "<h4>Created Users:</h4>";
+        createdUsers.forEach((user, index) => {
+          html += `
+                    <div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                        <strong>${user.username}</strong> (${user.type}) - ID: ${user.id}
+                        <button onclick="testDeleteUser('${user.id}', '${user.type}', ${index})" 
+                                style="margin-left: 10px; background: #dc3545;">
+                            Delete
+                        </button>
+                    </div>
+                `;
+        });
+        listDiv.innerHTML = html;
+      }
+
+      // Test delete user
+      async function testDeleteUser(userId, userType, index) {
+        const resultDiv = document.getElementById("deleteUserResults");
+
+        if (!tokens.super) {
+          resultDiv.innerHTML += `<p class="error">❌ No super user token. Please login first.</p>`;
+          return;
+        }
+
+        const endpoint =
+          userType === "super"
+            ? `/delete/delete_super_user/${userId}/`
+            : `/delete/delete_user/${userId}/`;
+
+        resultDiv.innerHTML += `<p>🔄 Deleting ${userType} user ${userId}...</p>`;
+
+        const result = await makeRequest(endpoint, {
+          method: "DELETE",
+          token: tokens.super,
+        });
+
+        if (result.success) {
+          resultDiv.innerHTML += `<p class="success">✅ User ${userId} deleted successfully!</p>`;
+          // Remove from created users list
+          createdUsers.splice(index, 1);
+          updateCreatedUsersList();
+        } else {
+          resultDiv.innerHTML += `<p class="error">❌ Delete user failed: ${
+            result.status
+          } - ${JSON.stringify(result.data)}</p>`;
+        }
+      }
+
+      // Login all users
+      async function testAllLogins() {
+        await testLogin("super");
+        await testLogin("admin");
+        await testLogin("general");
+      }
+
+      // Run all tests
+      async function runAllTests() {
+        const resultDiv = document.getElementById("allTestsResults");
+        resultDiv.innerHTML = "<h4>🚀 Running Complete Test Suite...</h4>";
+
+        // Clear previous results
+        document.getElementById("authResults").innerHTML = "";
+        document.getElementById("profileResults").innerHTML = "";
+        document.getElementById("getAllUsersResults").innerHTML = "";
+        document.getElementById("createUserResults").innerHTML = "";
+        document.getElementById("deleteUserResults").innerHTML = "";
+
+        try {
+          // Step 1: Login all users
+          resultDiv.innerHTML += "<p>Step 1: Authenticating all users...</p>";
+          await testAllLogins();
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          // Step 2: Test profiles
+          resultDiv.innerHTML += "<p>Step 2: Testing user profiles...</p>";
+          await testProfile("super");
+          await testProfile("admin");
+          await testProfile("general");
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          // Step 3: Test get all users
+          resultDiv.innerHTML += "<p>Step 3: Testing get all users...</p>";
+          await testGetAllUsers("super");
+          await testGetAllUsers("admin");
+          await testGetAllUsers("general");
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          // Step 4: Test user creation
+          resultDiv.innerHTML += "<p>Step 4: Testing user creation...</p>";
+          await testCreateUser("super", "general");
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          await testCreateUser("admin", "general");
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          resultDiv.innerHTML +=
+            '<p class="success">✅ All tests completed! Check individual sections for detailed results.</p>';
+        } catch (error) {
+          resultDiv.innerHTML += `<p class="error">❌ Test suite error: ${error.message}</p>`;
+        }
+      }
+
+      // Initialize
+      updateCreatedUsersList();
+    </script>
+  </body>
+</html>

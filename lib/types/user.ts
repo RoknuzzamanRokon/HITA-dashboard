@@ -9,6 +9,9 @@ export interface UserListItem extends User {
     totalPoints?: number;
     usedPoints?: number;
     activeSuppliers?: string[];
+    paidStatus?: string;
+    totalRequests?: number;
+    usingRqStatus?: string;
 }
 
 export interface UserFormData {
