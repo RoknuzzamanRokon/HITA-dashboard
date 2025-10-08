@@ -90,7 +90,7 @@ export function Modal({
     >
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity animate-fade-in"
+        className="fixed inset-0 backdrop-blur-lg transition-all duration-300 animate-fade-in"
         onClick={handleOverlayClick}
       />
 
@@ -99,8 +99,8 @@ export function Modal({
         <div
           ref={modalRef}
           className={cn(
-            "relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all animate-fade-in",
-            "w-full",
+            "relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl border border-gray-200 transition-all animate-fade-in",
+            "w-full backdrop-blur-sm",
             sizeClasses[size],
             className
           )}

@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { useRequireAuth } from "@/lib/hooks/use-auth";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { UserService } from "@/lib/api/users";
+import { apiClient } from "@/lib/api/client";
 import { DataTable, Column } from "@/lib/components/ui/data-table";
 import { Button } from "@/lib/components/ui/button";
 import { Badge } from "@/lib/components/ui/badge";
@@ -44,6 +45,7 @@ export default function UsersPage() {
   const [users, setUsers] = useState<UserListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentUserDetails, setCurrentUserDetails] = useState<any>(null);
   const [pagination, setPagination] = useState({
     page: 1,
     pageSize: 25,
@@ -74,6 +76,9 @@ export default function UsersPage() {
     password: "",
     business_id: "", // For admin users
   });
+  const [createUserError, setCreateUserError] = useState<string | null>(null);
+  const [createUserLoading, setCreateUserLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   /**
    * Fetch users with current parameters
@@ -136,12 +141,37 @@ export default function UsersPage() {
     }
   }, [searchQuery, filters]);
 
-  // Fetch users on component mount and when dependencies change
+  /**
+   * Fetch current user details
+   */
+  const fetchCurrentUserDetails = useCallback(async () => {
+    try {
+      console.log("👤 Fetching current user details...");
+
+      // Make direct API call to get raw response from /user/me/
+      const response = await apiClient.get<any>("/user/me/");
+
+      if (response.success && response.data) {
+        setCurrentUserDetails(response.data);
+        console.log("✅ Current user details fetched:", response.data);
+      } else {
+        console.error(
+          "❌ Failed to fetch current user details:",
+          response.error
+        );
+      }
+    } catch (err) {
+      console.error("❌ Error fetching current user details:", err);
+    }
+  }, []);
+
+  // Fetch users and current user details on component mount
   useEffect(() => {
     if (isAuthenticated) {
       fetchUsers();
+      fetchCurrentUserDetails();
     }
-  }, [isAuthenticated, fetchUsers]);
+  }, [isAuthenticated, fetchUsers, fetchCurrentUserDetails]);
 
   /**
    * Handle search
@@ -165,8 +195,31 @@ export default function UsersPage() {
   /**
    * Handle user actions
    */
-  const handleViewUser = (user: UserListItem) => {
-    router.push(`/dashboard/users/${user.id}`);
+  const handleViewUser = async (user: UserListItem) => {
+    try {
+      setLoading(true);
+      console.log("👁️ Viewing user details for:", user.username);
+
+      // Fetch detailed user information
+      const response = await UserService.getUserInfo(user.id);
+
+      if (response.success && response.data) {
+        setSelectedUser(response.data);
+        setShowUserModal(true);
+      } else {
+        console.error("❌ Failed to fetch user details:", response.error);
+        // Fallback to using the existing user data
+        setSelectedUser(user);
+        setShowUserModal(true);
+      }
+    } catch (err) {
+      console.error("❌ Error fetching user details:", err);
+      // Fallback to using the existing user data
+      setSelectedUser(user);
+      setShowUserModal(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEditUser = (user: UserListItem) => {
@@ -180,9 +233,19 @@ export default function UsersPage() {
     try {
       const response = await UserService.updateUser(selectedUser.id, userData);
       if (response.success) {
+        // Show success message
+        setSuccessMessage(
+          `✅ User "${selectedUser.username}" updated successfully!`
+        );
+
         setShowEditModal(false);
         setSelectedUser(null);
         fetchUsers(); // Refresh the list
+
+        // Auto-hide success message after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage(null);
+        }, 5000);
       } else {
         throw new Error(response.error?.message || "Failed to update user");
       }
@@ -203,8 +266,19 @@ export default function UsersPage() {
         !user.isActive
       );
       if (response.success) {
+        // Show success message
+        const statusAction = user.isActive ? "deactivated" : "activated";
+        setSuccessMessage(
+          `✅ User "${user.username}" ${statusAction} successfully!`
+        );
+
         // Refresh the user list
         fetchUsers();
+
+        // Auto-hide success message after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage(null);
+        }, 5000);
       } else {
         setError(response.error?.message || "Failed to update user status");
       }
@@ -233,9 +307,20 @@ export default function UsersPage() {
 
       if (response.success) {
         console.log("✅ User deleted successfully");
+
+        // Show success message
+        setSuccessMessage(
+          `✅ User "${selectedUser.username}" deleted successfully!`
+        );
+
         setShowDeleteModal(false);
         setSelectedUser(null);
         fetchUsers(); // Refresh the list
+
+        // Auto-hide success message after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage(null);
+        }, 5000);
       } else {
         console.error("❌ Failed to delete user:", response.error);
         setError(response.error?.message || "Failed to delete user");
@@ -251,37 +336,83 @@ export default function UsersPage() {
    */
   const handleCreateUser = async () => {
     try {
-      setLoading(true);
+      setCreateUserLoading(true);
+      setCreateUserError(null);
       console.log("👤 Creating user:", createUserType, createUserData);
+
+      // Basic validation
+      if (!createUserData.username.trim()) {
+        setCreateUserError("Username is required");
+        return;
+      }
+      if (!createUserData.email.trim()) {
+        setCreateUserError("Email is required");
+        return;
+      }
+      if (!createUserData.password.trim()) {
+        setCreateUserError("Password is required");
+        return;
+      }
+      if (createUserType === "admin" && !createUserData.business_id.trim()) {
+        setCreateUserError("Business ID is required for admin users");
+        return;
+      }
+
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(createUserData.email)) {
+        setCreateUserError("Please enter a valid email address");
+        return;
+      }
+
+      // Password validation
+      if (createUserData.password.length < 8) {
+        setCreateUserError("Password must be at least 8 characters long");
+        return;
+      }
 
       let response;
       switch (createUserType) {
         case "super":
           response = await UserService.createSuperUser({
-            username: createUserData.username,
-            email: createUserData.email,
+            username: createUserData.username.trim(),
+            email: createUserData.email.trim(),
             password: createUserData.password,
           });
           break;
         case "admin":
           response = await UserService.createAdminUser({
-            username: createUserData.username,
-            email: createUserData.email,
-            business_id: createUserData.business_id,
+            username: createUserData.username.trim(),
+            email: createUserData.email.trim(),
+            business_id: createUserData.business_id.trim(),
             password: createUserData.password,
           });
           break;
         case "general":
           response = await UserService.createGeneralUser({
-            username: createUserData.username,
-            email: createUserData.email,
+            username: createUserData.username.trim(),
+            email: createUserData.email.trim(),
             password: createUserData.password,
           });
           break;
       }
 
-      if (response.success) {
+      if (response && response.success) {
         console.log("✅ User created successfully:", response.data);
+
+        // Show success message
+        const userTypeLabel =
+          createUserType === "super"
+            ? "Super User"
+            : createUserType === "admin"
+            ? "Admin User"
+            : "General User";
+        setSuccessMessage(
+          `✅ ${userTypeLabel} "${createUserData.username}" created successfully!`
+        );
+        setError(null);
+
+        // Close modal and reset form
         setShowCreateModal(false);
         setCreateUserData({
           username: "",
@@ -289,16 +420,32 @@ export default function UsersPage() {
           password: "",
           business_id: "",
         });
-        fetchUsers(); // Refresh the list
+        setCreateUserType("general");
+        setCreateUserError(null);
+
+        // Refresh the list
+        fetchUsers();
+
+        // Auto-hide success message after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage(null);
+        }, 5000);
       } else {
-        console.error("❌ Failed to create user:", response.error);
-        setError(response.error?.message || "Failed to create user");
+        console.error("❌ Failed to create user:", response?.error);
+        const errorMessage =
+          response?.error?.message ||
+          (typeof response?.error === "string"
+            ? response.error
+            : "Failed to create user");
+        setCreateUserError(errorMessage);
       }
     } catch (err) {
       console.error("❌ Error creating user:", err);
-      setError(err instanceof Error ? err.message : "An error occurred");
+      const errorMessage =
+        err instanceof Error ? err.message : "An unexpected error occurred";
+      setCreateUserError(errorMessage);
     } finally {
-      setLoading(false);
+      setCreateUserLoading(false);
     }
   };
 
@@ -306,6 +453,16 @@ export default function UsersPage() {
    * Define table columns
    */
   const columns: Column<UserListItem>[] = [
+    {
+      key: "id",
+      label: "ID",
+      sortable: true,
+      render: (value) => (
+        <span className="font-mono text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
+          {value}
+        </span>
+      ),
+    },
     {
       key: "username",
       label: "Username",
@@ -394,16 +551,6 @@ export default function UsersPage() {
       },
     },
     {
-      key: "lastLogin",
-      label: "Last Login",
-      sortable: true,
-      render: (value) => (
-        <span className="text-gray-600 text-sm">
-          {value ? new Date(value).toLocaleDateString() : "Never"}
-        </span>
-      ),
-    },
-    {
       key: "createdAt",
       label: "Created",
       sortable: true,
@@ -414,7 +561,23 @@ export default function UsersPage() {
       ),
     },
     {
-      key: "id",
+      key: "createdBy",
+      label: "Created By",
+      sortable: true,
+      render: (value) => (
+        <span className="text-gray-600 text-xs">
+          {value ? (
+            <div className="max-w-32 truncate" title={value}>
+              {value}
+            </div>
+          ) : (
+            "Unknown"
+          )}
+        </span>
+      ),
+    },
+    {
+      key: "actions",
       label: "Actions",
       render: (_, user) => (
         <div className="flex items-center space-x-2">
@@ -426,31 +589,7 @@ export default function UsersPage() {
           >
             <Eye className="h-4 w-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleEditUser(user)}
-            title="Edit User"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleToggleUserStatus(user)}
-            title={user.isActive ? "Deactivate" : "Activate"}
-            className={
-              user.isActive
-                ? "text-orange-600 hover:text-orange-700"
-                : "text-green-600 hover:text-green-700"
-            }
-          >
-            {user.isActive ? (
-              <UserX className="h-4 w-4" />
-            ) : (
-              <UserCheck className="h-4 w-4" />
-            )}
-          </Button>
+
           <Button
             variant="ghost"
             size="sm"
@@ -511,6 +650,167 @@ export default function UsersPage() {
             </div>
           </div>
         </div>
+
+        {/* Success Message */}
+        {successMessage && (
+          <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4 shadow-sm animate-fade-in">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <svg
+                  className="h-5 w-5 text-green-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="ml-3 flex-1">
+                <p className="text-sm font-medium text-green-800">
+                  {successMessage}
+                </p>
+                <p className="text-xs text-green-600 mt-1">
+                  This message will disappear in 5 seconds
+                </p>
+              </div>
+              <div className="ml-auto pl-3">
+                <div className="-mx-1.5 -my-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setSuccessMessage(null)}
+                    className="inline-flex bg-green-50 rounded-md p-1.5 text-green-500 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-green-50 focus:ring-green-600"
+                  >
+                    <span className="sr-only">Dismiss</span>
+                    <svg
+                      className="h-3 w-3"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Current User Profile */}
+        {currentUserDetails && (
+          <div className="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center">
+                  <span className="text-2xl font-bold text-white">
+                    {currentUserDetails.username?.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    {currentUserDetails.username}
+                  </h3>
+                  <p className="text-gray-600">{currentUserDetails.email}</p>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <Badge
+                      className={
+                        currentUserDetails.user_status === "super_user"
+                          ? "bg-purple-100 text-purple-800"
+                          : currentUserDetails.user_status === "admin_user"
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-green-100 text-green-800"
+                      }
+                    >
+                      {currentUserDetails.user_status === "super_user"
+                        ? "Super User"
+                        : currentUserDetails.user_status === "admin_user"
+                        ? "Admin User"
+                        : "General User"}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-500">Available Points</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {currentUserDetails.available_points?.toLocaleString() ||
+                        0}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Total Points</p>
+                    <p className="text-2xl font-bold text-gray-700">
+                      {currentUserDetails.total_points?.toLocaleString() || 0}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <p className="text-xs text-gray-500">
+                    Member since{" "}
+                    {new Date(
+                      currentUserDetails.created_at
+                    ).toLocaleDateString()}
+                  </p>
+                  {currentUserDetails.updated_at && (
+                    <p className="text-xs text-gray-500">
+                      Last updated{" "}
+                      {new Date(
+                        currentUserDetails.updated_at
+                      ).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Additional Info */}
+            <div className="mt-4 pt-4 border-t border-blue-200">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-500">User ID:</span>
+                  <span className="ml-2 font-mono text-gray-700">
+                    {currentUserDetails.id}
+                  </span>
+                </div>
+                {currentUserDetails.active_supplier &&
+                  currentUserDetails.active_supplier.length > 0 && (
+                    <div>
+                      <span className="text-gray-500">Active Suppliers:</span>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {currentUserDetails.active_supplier.map(
+                          (supplier: string, index: number) => (
+                            <Badge
+                              key={index}
+                              variant="outline"
+                              className="text-xs"
+                            >
+                              {supplier}
+                            </Badge>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
+                {currentUserDetails.need_to_next_upgrade && (
+                  <div>
+                    <span className="text-gray-500">Upgrade Status:</span>
+                    <p className="text-xs text-orange-600 mt-1">
+                      {currentUserDetails.need_to_next_upgrade}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* User Stats */}
         <div className="mt-6 grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -738,22 +1038,22 @@ export default function UsersPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Last Login
-                </label>
-                <p className="mt-1 text-sm text-gray-900">
-                  {selectedUser.lastLogin
-                    ? new Date(selectedUser.lastLogin).toLocaleString()
-                    : "Never"}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
                   Created
                 </label>
                 <p className="mt-1 text-sm text-gray-900">
                   {new Date(selectedUser.createdAt).toLocaleString()}
                 </p>
               </div>
+              {selectedUser.createdBy && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Created By
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedUser.createdBy}
+                  </p>
+                </div>
+              )}
               {selectedUser.updatedAt && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
@@ -846,18 +1146,6 @@ export default function UsersPage() {
         )}
       </Modal>
 
-      {/* Edit User Modal */}
-      <UserForm
-        user={selectedUser}
-        isOpen={showEditModal}
-        onClose={() => {
-          setShowEditModal(false);
-          setSelectedUser(null);
-        }}
-        onSubmit={handleUpdateUser}
-        loading={loading}
-      />
-
       {/* Create User Modal */}
       <Modal
         isOpen={showCreateModal}
@@ -874,6 +1162,20 @@ export default function UsersPage() {
         size="lg"
       >
         <div className="space-y-6">
+          {/* Error Display */}
+          {createUserError && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-4">
+              <div className="flex">
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">Error</h3>
+                  <div className="mt-2 text-sm text-red-700">
+                    {createUserError}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* User Type Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -889,8 +1191,10 @@ export default function UsersPage() {
                     : "border-gray-300 hover:border-gray-400"
                 }`}
               >
-                <Users className="h-6 w-6 mx-auto mb-2" />
-                <div className="text-sm font-medium">General User</div>
+                <Users className="h-6 w-6 mx-auto mb-2 text-emerald-500" />
+                <div className="text-sm text-gray-900 font-medium">
+                  General User
+                </div>
                 <div className="text-xs text-gray-500">Standard access</div>
               </button>
               <button
@@ -902,8 +1206,10 @@ export default function UsersPage() {
                     : "border-gray-300 hover:border-gray-400"
                 }`}
               >
-                <Shield className="h-6 w-6 mx-auto mb-2" />
-                <div className="text-sm font-medium">Admin User</div>
+                <Shield className="h-6 w-6 mx-auto mb-2 text-emerald-500" />
+                <div className="text-sm font-medium  text-gray-900">
+                  Admin User
+                </div>
                 <div className="text-xs text-gray-500">Business management</div>
               </button>
               <button
@@ -915,8 +1221,10 @@ export default function UsersPage() {
                     : "border-gray-300 hover:border-gray-400"
                 }`}
               >
-                <Crown className="h-6 w-6 mx-auto mb-2" />
-                <div className="text-sm font-medium">Super User</div>
+                <Crown className="h-6 w-6 mx-auto mb-2 text-emerald-500" />
+                <div className="text-sm font-medium  text-gray-900">
+                  Super User
+                </div>
                 <div className="text-xs text-gray-500">Full system access</div>
               </button>
             </div>
@@ -931,15 +1239,22 @@ export default function UsersPage() {
               <input
                 type="text"
                 value={createUserData.username}
-                onChange={(e) =>
+                onChange={(e) => {
                   setCreateUserData({
                     ...createUserData,
                     username: e.target.value,
-                  })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  });
+                  if (createUserError) setCreateUserError(null);
+                }}
+                className={`w-full px-3 py-2 border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  createUserError &&
+                  createUserError.toLowerCase().includes("username")
+                    ? "border-red-300 bg-red-50"
+                    : "border-gray-300"
+                }`}
                 placeholder="Enter username"
                 required
+                disabled={createUserLoading}
               />
             </div>
             <div>
@@ -949,15 +1264,22 @@ export default function UsersPage() {
               <input
                 type="email"
                 value={createUserData.email}
-                onChange={(e) =>
+                onChange={(e) => {
                   setCreateUserData({
                     ...createUserData,
                     email: e.target.value,
-                  })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  });
+                  if (createUserError) setCreateUserError(null);
+                }}
+                className={`w-full px-3 py-2 border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  createUserError &&
+                  createUserError.toLowerCase().includes("email")
+                    ? "border-red-300 bg-red-50"
+                    : "border-gray-300"
+                }`}
                 placeholder="Enter email"
                 required
+                disabled={createUserLoading}
               />
             </div>
             <div>
@@ -967,16 +1289,26 @@ export default function UsersPage() {
               <input
                 type="password"
                 value={createUserData.password}
-                onChange={(e) =>
+                onChange={(e) => {
                   setCreateUserData({
                     ...createUserData,
                     password: e.target.value,
-                  })
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter password"
+                  });
+                  if (createUserError) setCreateUserError(null);
+                }}
+                className={`w-full px-3 py-2 border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  createUserError &&
+                  createUserError.toLowerCase().includes("password")
+                    ? "border-red-300 bg-red-50"
+                    : "border-gray-300"
+                }`}
+                placeholder="Enter password (min 8 characters)"
                 required
+                disabled={createUserLoading}
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Password must be at least 8 characters long
+              </p>
             </div>
             {createUserType === "admin" && (
               <div>
@@ -986,15 +1318,22 @@ export default function UsersPage() {
                 <input
                   type="text"
                   value={createUserData.business_id}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setCreateUserData({
                       ...createUserData,
                       business_id: e.target.value,
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    });
+                    if (createUserError) setCreateUserError(null);
+                  }}
+                  className={`w-full px-3 py-2 border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    createUserError &&
+                    createUserError.toLowerCase().includes("business")
+                      ? "border-red-300 bg-red-50"
+                      : "border-gray-300"
+                  }`}
                   placeholder="Enter business ID"
                   required
+                  disabled={createUserLoading}
                 />
               </div>
             )}
@@ -1012,22 +1351,32 @@ export default function UsersPage() {
                   password: "",
                   business_id: "",
                 });
+                setCreateUserError(null);
+                setCreateUserType("general");
               }}
+              disabled={createUserLoading}
             >
               Cancel
             </Button>
             <Button
               onClick={handleCreateUser}
               disabled={
-                !createUserData.username ||
-                !createUserData.email ||
-                !createUserData.password ||
-                (createUserType === "admin" && !createUserData.business_id) ||
-                loading
+                !createUserData.username.trim() ||
+                !createUserData.email.trim() ||
+                !createUserData.password.trim() ||
+                (createUserType === "admin" &&
+                  !createUserData.business_id.trim()) ||
+                createUserLoading
               }
-              leftIcon={<Plus className="h-4 w-4" />}
+              leftIcon={
+                createUserLoading ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )
+              }
             >
-              {loading ? "Creating..." : "Create User"}
+              {createUserLoading ? "Creating..." : "Create User"}
             </Button>
           </div>
         </div>

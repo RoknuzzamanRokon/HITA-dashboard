@@ -23,28 +23,14 @@ export class UserService {
             const backendData = response.data;
             const allUsers: UserListItem[] = [];
 
-            // Process super users
-            if (backendData.super_users && Array.isArray(backendData.super_users)) {
-                backendData.super_users.forEach((user: any) => {
+            // New API format: { total_users: number, users: [...] }
+            if (backendData.users && Array.isArray(backendData.users)) {
+                backendData.users.forEach((user: any) => {
                     allUsers.push(this.transformBackendUser(user));
                 });
             }
 
-            // Process admin users
-            if (backendData.admin_users && Array.isArray(backendData.admin_users)) {
-                backendData.admin_users.forEach((user: any) => {
-                    allUsers.push(this.transformBackendUser(user));
-                });
-            }
-
-            // Process general users
-            if (backendData.general_users && Array.isArray(backendData.general_users)) {
-                backendData.general_users.forEach((user: any) => {
-                    allUsers.push(this.transformBackendUser(user));
-                });
-            }
-
-            console.log("✅ Transformed users:", allUsers.length);
+            console.log("✅ Transformed users:", allUsers.length, "out of", backendData.total_users || 0);
 
             return {
                 success: true,
@@ -80,6 +66,29 @@ export class UserService {
      */
     static async getUserById(id: string): Promise<ApiResponse<UserListItem>> {
         return apiClient.get<UserListItem>(`${apiEndpoints.users.list}/${id}`);
+    }
+
+    /**
+     * Get detailed user information by ID
+     */
+    static async getUserInfo(id: string): Promise<ApiResponse<UserListItem>> {
+        console.log("📡 Fetching user info for ID:", id);
+
+        const response = await apiClient.get<any>(apiEndpoints.users.getUserInfo(id));
+
+        if (response.success && response.data) {
+            // Transform the backend response to match frontend expectations
+            const transformedUser = this.transformBackendUser(response.data);
+
+            console.log("✅ User info retrieved and transformed:", transformedUser);
+
+            return {
+                success: true,
+                data: transformedUser
+            };
+        }
+
+        return response;
     }
 
     /**
@@ -213,6 +222,7 @@ export class UserService {
             totalRequests: backendUser.points?.total_rq || 0,
             usingRqStatus: backendUser.using_rq_status || 'Inactive',
             createdAt: backendUser.created_at,
+            createdBy: backendUser.created_by || undefined,
             lastLogin: undefined, // Not provided in backend response
             activeSuppliers: [] // Not provided in backend response
         };

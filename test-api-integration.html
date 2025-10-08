@@ -60,16 +60,13 @@
         resultsDiv.innerHTML = "<p>🔄 Testing with provided token...</p>";
 
         try {
-          const response = await fetch(
-            `${API_BASE_URL}/user/super/check/all/`,
-            {
-              method: "GET",
-              headers: {
-                Authorization: `Bearer ${PROVIDED_TOKEN}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
+          const response = await fetch(`${API_BASE_URL}/user/check/all/`, {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${PROVIDED_TOKEN}`,
+              "Content-Type": "application/json",
+            },
+          });
 
           if (response.ok) {
             const data = await response.json();
@@ -81,30 +78,20 @@
               2
             )}</pre>`;
 
-            // Test the transformation logic
+            // Test the transformation logic for new format
             const allUsers = [];
 
-            if (data.super_users && Array.isArray(data.super_users)) {
-              data.super_users.forEach((user) => {
-                allUsers.push(transformUser(user));
-              });
-            }
-
-            if (data.admin_users && Array.isArray(data.admin_users)) {
-              data.admin_users.forEach((user) => {
-                allUsers.push(transformUser(user));
-              });
-            }
-
-            if (data.general_users && Array.isArray(data.general_users)) {
-              data.general_users.forEach((user) => {
+            if (data.users && Array.isArray(data.users)) {
+              data.users.forEach((user) => {
                 allUsers.push(transformUser(user));
               });
             }
 
             resultsDiv.innerHTML +=
               '<div class="result success">✅ Transformation successful!</div>';
-            resultsDiv.innerHTML += `<h4>Transformed Users (${allUsers.length} total):</h4>`;
+            resultsDiv.innerHTML += `<h4>Transformed Users (${
+              allUsers.length
+            } out of ${data.total_users || 0} total):</h4>`;
             resultsDiv.innerHTML += `<pre>${JSON.stringify(
               allUsers,
               null,

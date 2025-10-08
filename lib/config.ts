@@ -50,12 +50,14 @@ export const apiEndpoints = {
         delete: (id: string) => `/user/${id}`,
         profile: '/user/me/',
         points: '/user/points',
+        pointsHistory: '/user/points/check/me/',
         // Specific user creation endpoints
         createSuperUser: '/user/create_super_user/',
         createAdminUser: '/user/create_admin_user/',
         createGeneralUser: '/user/create_general_user/',
         // Admin endpoints
-        getAllUsers: '/user/super/check/all/',
+        getAllUsers: '/user/check/all/',
+        getUserInfo: (id: string) => `/user/check/user_info/${id}/`,
         // Delete endpoints
         deleteSuperUser: (id: string) => `/delete/delete_super_user/${id}/`,
         deleteUser: (id: string) => `/delete/delete_user/${id}/`,

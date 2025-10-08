@@ -133,7 +133,7 @@
 
       <!-- Get All Users Tests -->
       <div class="test-section">
-        <h3>📋 Step 3: Get All Users (/v1.0/user/super/check/all/)</h3>
+        <h3>📋 Step 3: Get All Users (/v1.0/user/check/all/)</h3>
         <button onclick="testGetAllUsers('super')">
           Get All Users (Super)
         </button>
@@ -144,6 +144,32 @@
           Get All Users (General)
         </button>
         <div id="getAllUsersResults"></div>
+      </div>
+
+      <!-- User Info Tests -->
+      <div class="test-section">
+        <h3>👁️ Step 3.5: Get User Info (/v1.0/user/check/user_info/{id}/)</h3>
+        <input
+          type="text"
+          id="userIdInput"
+          placeholder="Enter User ID"
+          style="
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+          "
+        />
+        <button onclick="testGetUserInfo('super')">
+          Get User Info (Super)
+        </button>
+        <button onclick="testGetUserInfo('admin')">
+          Get User Info (Admin)
+        </button>
+        <button onclick="testGetUserInfo('general')">
+          Get User Info (General)
+        </button>
+        <div id="getUserInfoResults"></div>
       </div>
 
       <!-- User Creation Tests -->
@@ -348,7 +374,7 @@
 
         resultDiv.innerHTML += `<p>🔄 Getting all users with ${userType} token...</p>`;
 
-        const result = await makeRequest("/user/super/check/all/", {
+        const result = await makeRequest("/user/check/all/", {
           token: tokens[userType],
         });
 
@@ -366,6 +392,42 @@
           }
         } else {
           resultDiv.innerHTML += `<p class="error">❌ ${userType} get all users failed: ${
+            result.status
+          } - ${JSON.stringify(result.data)}</p>`;
+        }
+      }
+
+      // Test get user info
+      async function testGetUserInfo(userType) {
+        const resultDiv = document.getElementById("getUserInfoResults");
+        const userIdInput = document.getElementById("userIdInput");
+        const userId = userIdInput.value.trim();
+
+        if (!userId) {
+          resultDiv.innerHTML += `<p class="error">❌ Please enter a User ID first.</p>`;
+          return;
+        }
+
+        if (!tokens[userType]) {
+          resultDiv.innerHTML += `<p class="error">❌ No token for ${userType}. Please login first.</p>`;
+          return;
+        }
+
+        resultDiv.innerHTML += `<p>🔄 Getting user info for ID: ${userId} with ${userType} token...</p>`;
+
+        const result = await makeRequest(`/user/check/user_info/${userId}/`, {
+          token: tokens[userType],
+        });
+
+        if (result.success) {
+          resultDiv.innerHTML += `<p class="success">✅ ${userType} retrieved user info successfully!</p>`;
+          resultDiv.innerHTML += `<pre>${JSON.stringify(
+            result.data,
+            null,
+            2
+          )}</pre>`;
+        } else {
+          resultDiv.innerHTML += `<p class="error">❌ ${userType} get user info failed: ${
             result.status
           } - ${JSON.stringify(result.data)}</p>`;
         }

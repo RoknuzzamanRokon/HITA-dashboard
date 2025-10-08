@@ -12,6 +12,8 @@ export interface UserListItem extends User {
     paidStatus?: string;
     totalRequests?: number;
     usingRqStatus?: string;
+    createdBy?: string;
+    actions?: never; // Virtual field for actions column
 }
 
 export interface UserFormData {
