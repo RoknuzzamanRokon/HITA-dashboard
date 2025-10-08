@@ -108,30 +108,44 @@ export function AuthProvider({ children }: AuthProviderProps) {
    */
   const initializeAuth = async () => {
     try {
+      console.log("🔄 Initializing auth state...");
       dispatch({ type: "SET_LOADING", payload: true });
 
       // Check if user is authenticated
       if (AuthService.isAuthenticated()) {
+        console.log("✅ Token found, fetching user profile...");
         const token = AuthService.getToken();
         dispatch({ type: "SET_TOKEN", payload: token });
 
         // Fetch current user
         const userResponse = await AuthService.getCurrentUser();
         if (userResponse.success && userResponse.data) {
+          console.log(
+            "✅ User profile loaded successfully:",
+            userResponse.data
+          );
           dispatch({ type: "SET_USER", payload: userResponse.data });
         } else {
+          console.warn(
+            "❌ Failed to fetch user profile, clearing tokens:",
+            userResponse.error
+          );
           // Token might be invalid, clear it
           await AuthService.logout();
           dispatch({ type: "LOGOUT" });
         }
       } else {
+        console.log("❌ No token found, user not authenticated");
         dispatch({ type: "LOGOUT" });
       }
     } catch (error) {
-      console.error("Auth initialization failed:", error);
+      console.error("❌ Auth initialization failed:", error);
+      // Clear tokens on any error
+      await AuthService.logout();
       dispatch({ type: "LOGOUT" });
     } finally {
       dispatch({ type: "SET_LOADING", payload: false });
+      console.log("🔄 Auth initialization completed");
     }
   };
 
@@ -202,14 +216,32 @@ export function AuthProvider({ children }: AuthProviderProps) {
    */
   const logout = async (): Promise<void> => {
     try {
+      console.log("🚪 Starting logout process...");
       dispatch({ type: "SET_LOADING", payload: true });
+
+      // Clear tokens from storage
       await AuthService.logout();
+
+      // Update state
       dispatch({ type: "LOGOUT" });
       setError(null);
+
+      console.log("✅ Logout completed successfully");
+
+      // Force redirect to login page
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
     } catch (error) {
-      console.error("Logout failed:", error);
+      console.error("❌ Logout failed:", error);
       // Still logout locally even if API call fails
       dispatch({ type: "LOGOUT" });
+      setError(null);
+
+      // Force redirect even on error
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
     } finally {
       dispatch({ type: "SET_LOADING", payload: false });
     }

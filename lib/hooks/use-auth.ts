@@ -13,14 +13,17 @@ import type { UserRole } from '@/lib/types/auth';
  * Hook for protected routes - redirects to login if not authenticated
  */
 export function useRequireAuth(redirectTo: string = '/login') {
-    const { isAuthenticated, isLoading } = useAuth();
+    const { isAuthenticated, isLoading, user } = useAuth();
     const router = useRouter();
 
     useEffect(() => {
+        console.log("🔒 useRequireAuth - Auth state:", { isAuthenticated, isLoading, hasUser: !!user });
+
         if (!isLoading && !isAuthenticated) {
+            console.log("🚪 Redirecting to login - not authenticated");
             router.push(redirectTo);
         }
-    }, [isAuthenticated, isLoading, router, redirectTo]);
+    }, [isAuthenticated, isLoading, user, router, redirectTo]);
 
     return { isAuthenticated, isLoading };
 }

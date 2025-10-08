@@ -6,7 +6,8 @@ import { apiClient } from './client';
 import { apiEndpoints, config } from '@/lib/config';
 import { TokenStorage } from '@/lib/auth/token-storage';
 import { MockAuthService } from './mock-auth';
-import type { LoginCredentials, AuthResponse, User, UserRole } from '@/lib/types/auth';
+import type { LoginCredentials, AuthResponse, User } from '@/lib/types/auth';
+import { UserRole } from '@/lib/types/auth';
 import type { ApiResponse } from '@/lib/types/api';
 
 export class AuthService {
@@ -138,10 +139,19 @@ export class AuthService {
                         success: true,
                         data: mappedUser
                     };
+                } else {
+                    console.warn("❌ User profile request failed:", response.error);
+                    return response;
                 }
             } catch (error) {
                 console.warn('❌ Real API failed, falling back to mock authentication:', error);
-                // Fall through to mock authentication
+                return {
+                    success: false,
+                    error: {
+                        status: 0,
+                        message: error instanceof Error ? error.message : 'Failed to fetch user profile',
+                    },
+                };
             }
         }
 
@@ -165,7 +175,31 @@ export class AuthService {
      * Check if user is authenticated
      */
     static isAuthenticated(): boolean {
-        return TokenStorage.hasToken();
+        const token = TokenStorage.getToken();
+        if (!token) {
+            console.log("❌ No token found");
+            return false;
+        }
+
+        // Check if token is expired
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const currentTime = Math.floor(Date.now() / 1000);
+            const isExpired = payload.exp < currentTime;
+
+            if (isExpired) {
+                console.warn("🕐 Token is expired, clearing tokens");
+                TokenStorage.clearTokens();
+                return false;
+            }
+
+            console.log("✅ Token is valid");
+            return true;
+        } catch (error) {
+            console.warn("❌ Invalid token format, clearing tokens:", error);
+            TokenStorage.clearTokens();
+            return false;
+        }
     }
 
     /**

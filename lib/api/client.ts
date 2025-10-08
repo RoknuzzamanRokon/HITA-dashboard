@@ -187,8 +187,15 @@ export class ApiClient {
         try {
             const payload = JSON.parse(atob(token.split('.')[1]));
             const currentTime = Math.floor(Date.now() / 1000);
-            return payload.exp < currentTime;
-        } catch {
+            const isExpired = payload.exp < currentTime;
+
+            if (isExpired) {
+                console.warn("🕐 Token is expired, exp:", payload.exp, "current:", currentTime);
+            }
+
+            return isExpired;
+        } catch (error) {
+            console.warn("❌ Failed to parse token, considering it expired:", error);
             // If we can't parse the token, consider it expired
             return true;
         }
@@ -262,11 +269,15 @@ export class ApiClient {
      * Handle authentication failure
      */
     private handleAuthenticationFailure(): void {
+        console.warn("🚨 Authentication failure detected, clearing tokens and redirecting");
         TokenStorage.clearTokens();
 
         // Redirect to login page if we're on the client
         if (typeof window !== 'undefined') {
-            window.location.href = '/login';
+            // Add a small delay to ensure token clearing is complete
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 100);
         }
     }
 
