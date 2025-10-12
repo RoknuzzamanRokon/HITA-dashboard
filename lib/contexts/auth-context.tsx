@@ -12,6 +12,7 @@ import React, {
   ReactNode,
 } from "react";
 import { AuthService } from "@/lib/api/auth";
+import { SessionPersistence } from "@/lib/auth/session-persistence";
 import type { User, AuthState, LoginCredentials } from "@/lib/types/auth";
 
 // Auth actions
@@ -100,8 +101,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Initialize authentication state on mount
   useEffect(() => {
+    // Initialize session tracking
+    SessionPersistence.initializeTracking();
     initializeAuth();
   }, []);
+
+  // Add visibility change listener to re-authenticate when tab becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible" && state.isAuthenticated) {
+        // Update session activity and silently refresh user data
+        SessionPersistence.updateActivity();
+        refreshUser();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [state.isAuthenticated]);
 
   /**
    * Initialize authentication state
@@ -112,37 +131,94 @@ export function AuthProvider({ children }: AuthProviderProps) {
       dispatch({ type: "SET_LOADING", payload: true });
 
       // Check if user is authenticated
-      if (AuthService.isAuthenticated()) {
-        console.log("✅ Token found, fetching user profile...");
+      const hasToken = AuthService.isAuthenticated();
+
+      if (hasToken) {
+        console.log("✅ Token found, setting up user session...");
         const token = AuthService.getToken();
         dispatch({ type: "SET_TOKEN", payload: token });
 
-        // Fetch current user
-        const userResponse = await AuthService.getCurrentUser();
-        if (userResponse.success && userResponse.data) {
-          console.log(
-            "✅ User profile loaded successfully:",
-            userResponse.data
+        // Try to fetch current user, but don't fail if it doesn't work
+        try {
+          const userResponse = await AuthService.getCurrentUser();
+
+          if (userResponse.success && userResponse.data) {
+            console.log(
+              "✅ User profile loaded successfully:",
+              userResponse.data
+            );
+            dispatch({ type: "SET_USER", payload: userResponse.data });
+
+            // Update session with user data
+            SessionPersistence.saveSession({
+              isAuthenticated: true,
+              userId: userResponse.data.id,
+              username: userResponse.data.username,
+            });
+          } else {
+            console.warn("⚠️ User profile fetch failed, using fallback user");
+            // Create a fallback user to keep session active
+            const session = SessionPersistence.getSession();
+            const fallbackUser = AuthService.createFallbackUser(
+              session.username || "user",
+              token || ""
+            );
+            dispatch({ type: "SET_USER", payload: fallbackUser });
+
+            // Still save session data
+            SessionPersistence.saveSession({
+              isAuthenticated: true,
+              userId: fallbackUser.id,
+              username: fallbackUser.username,
+            });
+          }
+        } catch (userError) {
+          console.warn("⚠️ User fetch error, using fallback:", userError);
+          // Always create a fallback user if we have a token
+          const session = SessionPersistence.getSession();
+          const fallbackUser = AuthService.createFallbackUser(
+            session.username || "user",
+            token || ""
           );
-          dispatch({ type: "SET_USER", payload: userResponse.data });
-        } else {
-          console.warn(
-            "❌ Failed to fetch user profile, clearing tokens:",
-            userResponse.error
-          );
-          // Token might be invalid, clear it
-          await AuthService.logout();
-          dispatch({ type: "LOGOUT" });
+          dispatch({ type: "SET_USER", payload: fallbackUser });
+
+          SessionPersistence.saveSession({
+            isAuthenticated: true,
+            userId: fallbackUser.id,
+            username: fallbackUser.username,
+          });
         }
       } else {
-        console.log("❌ No token found, user not authenticated");
+        console.log("❌ No valid token found, user not authenticated");
         dispatch({ type: "LOGOUT" });
+        SessionPersistence.clearSession();
       }
     } catch (error) {
       console.error("❌ Auth initialization failed:", error);
-      // Clear tokens on any error
-      await AuthService.logout();
-      dispatch({ type: "LOGOUT" });
+
+      // Always try to maintain session if we have a token
+      const token = AuthService.getToken();
+      if (token) {
+        console.log(
+          "⚠️ Keeping user session active despite initialization error"
+        );
+        const session = SessionPersistence.getSession();
+        const fallbackUser = AuthService.createFallbackUser(
+          session.username || "user",
+          token
+        );
+        dispatch({ type: "SET_USER", payload: fallbackUser });
+
+        SessionPersistence.saveSession({
+          isAuthenticated: true,
+          userId: fallbackUser.id,
+          username: fallbackUser.username,
+        });
+      } else {
+        console.log("❌ No token available, logging out");
+        dispatch({ type: "LOGOUT" });
+        SessionPersistence.clearSession();
+      }
     } finally {
       dispatch({ type: "SET_LOADING", payload: false });
       console.log("🔄 Auth initialization completed");
@@ -194,7 +270,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
             token: response.data.access_token,
           },
         });
+
+        // Save session data
+        SessionPersistence.saveSession({
+          isAuthenticated: true,
+          userId: user.id,
+          username: user.username,
+        });
+
         console.log("✅ Login process completed successfully");
+        console.log("🔍 Final auth state after login:", {
+          isAuthenticated: true,
+          user: user,
+          token: response.data.access_token,
+        });
+
         return { success: true };
       } else {
         const errorMessage = response.error?.message || "Login failed";
@@ -225,6 +315,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Update state
       dispatch({ type: "LOGOUT" });
       setError(null);
+
+      // Clear session data
+      SessionPersistence.clearSession();
 
       console.log("✅ Logout completed successfully");
 

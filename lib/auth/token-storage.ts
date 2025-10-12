@@ -15,6 +15,8 @@ export class TokenStorage {
 
         try {
             localStorage.setItem(config.auth.tokenKey, token);
+            // Also store in sessionStorage as backup
+            sessionStorage.setItem(config.auth.tokenKey, token);
         } catch (error) {
             console.error('Failed to store token:', error);
         }
@@ -27,7 +29,16 @@ export class TokenStorage {
         if (!this.isClient) return null;
 
         try {
-            return localStorage.getItem(config.auth.tokenKey);
+            // Try localStorage first, then sessionStorage as fallback
+            let token = localStorage.getItem(config.auth.tokenKey);
+            if (!token) {
+                token = sessionStorage.getItem(config.auth.tokenKey);
+                // If found in sessionStorage, restore to localStorage
+                if (token) {
+                    localStorage.setItem(config.auth.tokenKey, token);
+                }
+            }
+            return token;
         } catch (error) {
             console.error('Failed to retrieve token:', error);
             return null;
@@ -42,6 +53,8 @@ export class TokenStorage {
 
         try {
             localStorage.setItem(config.auth.refreshTokenKey, refreshToken);
+            // Also store in sessionStorage as backup
+            sessionStorage.setItem(config.auth.refreshTokenKey, refreshToken);
         } catch (error) {
             console.error('Failed to store refresh token:', error);
         }
@@ -54,7 +67,16 @@ export class TokenStorage {
         if (!this.isClient) return null;
 
         try {
-            return localStorage.getItem(config.auth.refreshTokenKey);
+            // Try localStorage first, then sessionStorage as fallback
+            let refreshToken = localStorage.getItem(config.auth.refreshTokenKey);
+            if (!refreshToken) {
+                refreshToken = sessionStorage.getItem(config.auth.refreshTokenKey);
+                // If found in sessionStorage, restore to localStorage
+                if (refreshToken) {
+                    localStorage.setItem(config.auth.refreshTokenKey, refreshToken);
+                }
+            }
+            return refreshToken;
         } catch (error) {
             console.error('Failed to retrieve refresh token:', error);
             return null;
@@ -70,6 +92,8 @@ export class TokenStorage {
         try {
             localStorage.removeItem(config.auth.tokenKey);
             localStorage.removeItem(config.auth.refreshTokenKey);
+            sessionStorage.removeItem(config.auth.tokenKey);
+            sessionStorage.removeItem(config.auth.refreshTokenKey);
         } catch (error) {
             console.error('Failed to clear tokens:', error);
         }

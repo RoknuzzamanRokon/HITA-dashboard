@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Navigation Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      .status {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+      }
+      .success {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .error {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+      }
+      button {
+        padding: 10px 15px;
+        margin: 5px;
+        cursor: pointer;
+      }
+      .nav-links {
+        margin: 20px 0;
+      }
+      .nav-links a {
+        display: inline-block;
+        padding: 10px 15px;
+        margin: 5px;
+        background: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Navigation Test</h1>
+
+    <div id="status" class="status info">Testing navigation persistence...</div>
+
+    <div>
+      <button onclick="simulateLogin()">Simulate Login</button>
+      <button onclick="checkAuthState()">Check Auth State</button>
+      <button onclick="clearAuth()">Clear Auth</button>
+    </div>
+
+    <div class="nav-links">
+      <h3>Test Navigation (should not redirect to login after login):</h3>
+      <a href="http://localhost:3001/dashboard" target="_blank">Dashboard</a>
+      <a href="http://localhost:3001/login" target="_blank">Login Page</a>
+      <a href="http://localhost:3001/" target="_blank">Home Page</a>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+      function updateStatus(message, type = "info") {
+        const statusDiv = document.getElementById("status");
+        statusDiv.textContent = message;
+        statusDiv.className = `status ${type}`;
+      }
+
+      function addResult(message) {
+        const resultsDiv = document.getElementById("results");
+        const p = document.createElement("p");
+        p.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+        resultsDiv.appendChild(p);
+      }
+
+      function simulateLogin() {
+        try {
+          // Create a valid-looking JWT token (mock)
+          const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+          const payload = btoa(
+            JSON.stringify({
+              sub: "testuser",
+              exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours from now
+              iat: Math.floor(Date.now() / 1000),
+            })
+          );
+          const signature = "mock-signature";
+          const token = `${header}.${payload}.${signature}`;
+
+          // Store token in both storages
+          localStorage.setItem("auth-token", token);
+          sessionStorage.setItem("auth-token", token);
+
+          // Create session data
+          const sessionData = {
+            isAuthenticated: true,
+            lastActivity: Date.now(),
+            userId: "testuser",
+            username: "testuser",
+          };
+          localStorage.setItem("auth-session", JSON.stringify(sessionData));
+
+          updateStatus("Login simulated successfully!", "success");
+          addResult("✅ Mock login completed - tokens and session stored");
+          addResult("🔗 Now try clicking the navigation links above");
+        } catch (error) {
+          updateStatus("Login simulation failed: " + error.message, "error");
+          addResult("❌ Login simulation error: " + error.message);
+        }
+      }
+
+      function checkAuthState() {
+        try {
+          const token = localStorage.getItem("auth-token");
+          const sessionStr = localStorage.getItem("auth-session");
+          const sessionToken = sessionStorage.getItem("auth-token");
+
+          addResult("=== Auth State Check ===");
+          addResult(`localStorage token: ${token ? "EXISTS" : "MISSING"}`);
+          addResult(
+            `sessionStorage token: ${sessionToken ? "EXISTS" : "MISSING"}`
+          );
+          addResult(`Session data: ${sessionStr ? "EXISTS" : "MISSING"}`);
+
+          if (token && sessionStr) {
+            const session = JSON.parse(sessionStr);
+            const timeSinceActivity = Date.now() - session.lastActivity;
+            const minutesInactive = Math.floor(timeSinceActivity / (1000 * 60));
+
+            addResult(
+              `✅ User: ${session.username}, Last activity: ${minutesInactive}m ago`
+            );
+            updateStatus("Authentication state is valid", "success");
+          } else {
+            updateStatus("No authentication found", "error");
+          }
+        } catch (error) {
+          updateStatus("Auth check failed: " + error.message, "error");
+          addResult("❌ Auth check error: " + error.message);
+        }
+      }
+
+      function clearAuth() {
+        localStorage.clear();
+        sessionStorage.clear();
+        updateStatus("Authentication cleared", "info");
+        addResult("🧹 All auth data cleared");
+      }
+
+      // Auto-check on load
+      checkAuthState();
+    </script>
+  </body>
+</html>

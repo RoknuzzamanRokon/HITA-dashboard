@@ -15,15 +15,53 @@ import type { UserRole } from '@/lib/types/auth';
 export function useRequireAuth(redirectTo: string = '/login') {
     const { isAuthenticated, isLoading, user } = useAuth();
     const router = useRouter();
+    const [hasRedirected, setHasRedirected] = useState(false);
+    const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+
+    // Mark initial load as complete after a delay
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setInitialLoadComplete(true);
+        }, 1000); // Give 1 second for auth to initialize
+
+        return () => clearTimeout(timer);
+    }, []);
 
     useEffect(() => {
-        console.log("🔒 useRequireAuth - Auth state:", { isAuthenticated, isLoading, hasUser: !!user });
+        console.log("🔒 useRequireAuth - Auth state:", {
+            isAuthenticated,
+            isLoading,
+            hasUser: !!user,
+            initialLoadComplete,
+            hasRedirected
+        });
 
-        if (!isLoading && !isAuthenticated) {
-            console.log("🚪 Redirecting to login - not authenticated");
-            router.push(redirectTo);
+        // Only redirect if:
+        // 1. Not loading
+        // 2. Not authenticated 
+        // 3. Haven't redirected yet
+        // 4. Initial load is complete (to prevent premature redirects)
+        // 5. We have a token in storage (if no token, definitely not authenticated)
+        if (!isLoading &&
+            !isAuthenticated &&
+            !hasRedirected &&
+            initialLoadComplete) {
+
+            // Check if we have any tokens in storage
+            const hasToken = localStorage.getItem('auth-token') || sessionStorage.getItem('auth-token');
+
+            if (!hasToken) {
+                console.log("🚪 No token found, redirecting to login");
+                setHasRedirected(true);
+
+                const currentPath = window.location.pathname;
+                const loginUrl = `${redirectTo}?redirect=${encodeURIComponent(currentPath)}`;
+                router.push(loginUrl);
+            } else {
+                console.log("⚠️ Token exists but not authenticated, waiting for auth to resolve...");
+            }
         }
-    }, [isAuthenticated, isLoading, user, router, redirectTo]);
+    }, [isAuthenticated, isLoading, user, router, redirectTo, hasRedirected, initialLoadComplete]);
 
     return { isAuthenticated, isLoading };
 }

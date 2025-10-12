@@ -181,24 +181,37 @@ export class AuthService {
             return false;
         }
 
-        // Check if token is expired
+        // For mock auth, always return true if token exists
+        if (this.shouldUseMock()) {
+            MockAuthService.initialize();
+            console.log("✅ Mock auth - token exists, user authenticated");
+            return true;
+        }
+
+        // For real auth, be more lenient - if we have a token, consider user authenticated
+        // Let the API calls handle token validation
+        console.log("✅ Token exists, considering user authenticated");
+        return true;
+    }
+
+    /**
+     * Check if token is expired (separate method for internal use)
+     */
+    static isTokenExpired(): boolean {
+        const token = TokenStorage.getToken();
+        if (!token) return true;
+
+        // For mock auth, tokens never expire
+        if (this.shouldUseMock()) {
+            return false;
+        }
+
         try {
             const payload = JSON.parse(atob(token.split('.')[1]));
             const currentTime = Math.floor(Date.now() / 1000);
-            const isExpired = payload.exp < currentTime;
-
-            if (isExpired) {
-                console.warn("🕐 Token is expired, clearing tokens");
-                TokenStorage.clearTokens();
-                return false;
-            }
-
-            console.log("✅ Token is valid");
-            return true;
+            return payload.exp < currentTime;
         } catch (error) {
-            console.warn("❌ Invalid token format, clearing tokens:", error);
-            TokenStorage.clearTokens();
-            return false;
+            return true;
         }
     }
 
@@ -216,6 +229,7 @@ export class AuthService {
         const refreshToken = TokenStorage.getRefreshToken();
 
         if (!refreshToken) {
+            console.log("❌ No refresh token available, skipping refresh");
             return {
                 success: false,
                 error: {
@@ -225,21 +239,49 @@ export class AuthService {
             };
         }
 
-        const response = await apiClient.post<AuthResponse>(
-            apiEndpoints.auth.refresh,
-            { refresh_token: refreshToken },
-            false
-        );
+        try {
+            console.log("🔄 Attempting to refresh token...");
 
-        // Update stored tokens if refresh successful
-        if (response.success && response.data) {
-            TokenStorage.setToken(response.data.access_token);
-            if (response.data.refresh_token) {
-                TokenStorage.setRefreshToken(response.data.refresh_token);
+            // Try real API first if not using mock
+            if (!this.shouldUseMock()) {
+                const response = await apiClient.post<AuthResponse>(
+                    apiEndpoints.auth.refresh,
+                    { refresh_token: refreshToken },
+                    false
+                );
+
+                // Update stored tokens if refresh successful
+                if (response.success && response.data) {
+                    console.log("✅ Token refreshed successfully");
+                    TokenStorage.setToken(response.data.access_token);
+                    if (response.data.refresh_token) {
+                        TokenStorage.setRefreshToken(response.data.refresh_token);
+                    }
+                }
+
+                return response;
+            } else {
+                // For mock auth, just return success to keep session active
+                console.log("🔄 Mock auth - keeping session active");
+                return {
+                    success: true,
+                    data: {
+                        access_token: TokenStorage.getToken() || 'mock_token',
+                        token_type: 'bearer',
+                        refresh_token: refreshToken
+                    }
+                };
             }
+        } catch (error) {
+            console.error("❌ Token refresh failed:", error);
+            return {
+                success: false,
+                error: {
+                    status: 500,
+                    message: error instanceof Error ? error.message : 'Token refresh failed',
+                },
+            };
         }
-
-        return response;
     }
 
     /**

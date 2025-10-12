@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      .status {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+      }
+      .success {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .error {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+      }
+      button {
+        padding: 10px 15px;
+        margin: 5px;
+        cursor: pointer;
+      }
+      input {
+        padding: 8px;
+        margin: 5px;
+        width: 200px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Login Test</h1>
+
+    <div>
+      <input type="text" id="username" placeholder="Username" value="admin" />
+      <input
+        type="password"
+        id="password"
+        placeholder="Password"
+        value="password"
+      />
+      <button onclick="testLogin()">Test Login</button>
+    </div>
+
+    <div id="status" class="status info">Ready to test login</div>
+    <div id="results"></div>
+
+    <script>
+      function updateStatus(message, type = "info") {
+        const statusDiv = document.getElementById("status");
+        statusDiv.textContent = message;
+        statusDiv.className = `status ${type}`;
+      }
+
+      function addResult(message) {
+        const resultsDiv = document.getElementById("results");
+        const p = document.createElement("p");
+        p.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+        resultsDiv.appendChild(p);
+      }
+
+      async function testLogin() {
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+
+        updateStatus("Testing login...", "info");
+        addResult("Starting login test...");
+
+        try {
+          // Test the login endpoint directly
+          const formData = new URLSearchParams();
+          formData.append("username", username);
+          formData.append("password", password);
+          formData.append("grant_type", "password");
+
+          addResult("Making login request...");
+
+          const response = await fetch(
+            "http://127.0.0.1:8000/v1.0/auth/token",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: formData.toString(),
+            }
+          );
+
+          addResult(`Response status: ${response.status}`);
+
+          if (response.ok) {
+            const data = await response.json();
+            addResult("✅ Login successful!");
+            addResult(`Token: ${data.access_token ? "RECEIVED" : "MISSING"}`);
+
+            // Store token
+            localStorage.setItem("auth-token", data.access_token);
+            sessionStorage.setItem("auth-token", data.access_token);
+
+            // Create session
+            const sessionData = {
+              isAuthenticated: true,
+              lastActivity: Date.now(),
+              userId: username,
+              username: username,
+            };
+            localStorage.setItem("auth-session", JSON.stringify(sessionData));
+
+            updateStatus("Login successful! Token stored.", "success");
+            addResult("✅ Token and session stored in localStorage");
+          } else {
+            const errorData = await response.json();
+            addResult(
+              `❌ Login failed: ${errorData.detail || "Unknown error"}`
+            );
+            updateStatus("Login failed", "error");
+          }
+        } catch (error) {
+          addResult(`❌ Network error: ${error.message}`);
+          updateStatus("Network error during login", "error");
+        }
+      }
+    </script>
+  </body>
+</html>

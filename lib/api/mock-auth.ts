@@ -60,8 +60,53 @@ const MOCK_USERS: User[] = [
 const mockDelay = (ms: number = 1000) => new Promise(resolve => setTimeout(resolve, ms));
 
 export class MockAuthService {
-    private static currentUser: User | null = null;
-    private static token: string | null = null;
+    private static readonly MOCK_USER_KEY = 'mock_current_user';
+    private static readonly MOCK_TOKEN_KEY = 'mock_current_token';
+
+    private static get currentUser(): User | null {
+        if (typeof window === 'undefined') return null;
+        try {
+            const stored = localStorage.getItem(this.MOCK_USER_KEY);
+            return stored ? JSON.parse(stored) : null;
+        } catch {
+            return null;
+        }
+    }
+
+    private static set currentUser(user: User | null) {
+        if (typeof window === 'undefined') return;
+        try {
+            if (user) {
+                localStorage.setItem(this.MOCK_USER_KEY, JSON.stringify(user));
+            } else {
+                localStorage.removeItem(this.MOCK_USER_KEY);
+            }
+        } catch (error) {
+            console.error('Failed to store mock user:', error);
+        }
+    }
+
+    private static get token(): string | null {
+        if (typeof window === 'undefined') return null;
+        try {
+            return localStorage.getItem(this.MOCK_TOKEN_KEY);
+        } catch {
+            return null;
+        }
+    }
+
+    private static set token(token: string | null) {
+        if (typeof window === 'undefined') return;
+        try {
+            if (token) {
+                localStorage.setItem(this.MOCK_TOKEN_KEY, token);
+            } else {
+                localStorage.removeItem(this.MOCK_TOKEN_KEY);
+            }
+        } catch (error) {
+            console.error('Failed to store mock token:', error);
+        }
+    }
 
     /**
      * Mock login - accepts any valid username/password combination
@@ -93,8 +138,9 @@ export class MockAuthService {
             };
         }
 
-        // Generate mock token
-        const token = `mock_token_${user.id}_${Date.now()}`;
+        // Generate mock token with expiration (24 hours from now)
+        const expirationTime = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
+        const token = `mock_token_${user.id}_${Date.now()}_${expirationTime}`;
         this.token = token;
         this.currentUser = user;
 
@@ -137,13 +183,36 @@ export class MockAuthService {
         await mockDelay(300);
         this.token = null;
         this.currentUser = null;
+        // Also clear from localStorage directly as backup
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem(this.MOCK_USER_KEY);
+            localStorage.removeItem(this.MOCK_TOKEN_KEY);
+        }
     }
 
     /**
      * Check if authenticated
      */
     static isAuthenticated(): boolean {
-        return !!this.token;
+        const token = this.token;
+        if (!token) return false;
+
+        // Check if mock token is expired
+        try {
+            const parts = token.split('_');
+            if (parts.length >= 4) {
+                const expirationTime = parseInt(parts[3]);
+                if (Date.now() > expirationTime) {
+                    console.log('🕐 Mock token expired, clearing session');
+                    this.logout();
+                    return false;
+                }
+            }
+        } catch (error) {
+            console.warn('Failed to parse mock token expiration:', error);
+        }
+
+        return true;
     }
 
     /**
@@ -151,6 +220,16 @@ export class MockAuthService {
      */
     static getToken(): string | null {
         return this.token;
+    }
+
+    /**
+     * Initialize mock auth from stored data
+     */
+    static initialize(): void {
+        // This method ensures the getters are called to load from localStorage
+        const user = this.currentUser;
+        const token = this.token;
+        console.log('🔄 Mock auth initialized:', { hasUser: !!user, hasToken: !!token });
     }
 
     /**

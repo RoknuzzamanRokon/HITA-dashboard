@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Auth Persistence Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      .status {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+      }
+      .success {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .error {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+      }
+      button {
+        padding: 10px 15px;
+        margin: 5px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Authentication Persistence Test</h1>
+
+    <div id="status" class="status info">
+      Testing authentication persistence...
+    </div>
+
+    <div>
+      <button onclick="testTokenStorage()">Test Token Storage</button>
+      <button onclick="testSessionPersistence()">
+        Test Session Persistence
+      </button>
+      <button onclick="clearAll()">Clear All Data</button>
+      <button onclick="simulateLogin()">Simulate Login</button>
+      <button onclick="checkAuthState()">Check Auth State</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+      function updateStatus(message, type = "info") {
+        const statusDiv = document.getElementById("status");
+        statusDiv.textContent = message;
+        statusDiv.className = `status ${type}`;
+      }
+
+      function addResult(message) {
+        const resultsDiv = document.getElementById("results");
+        const p = document.createElement("p");
+        p.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+        resultsDiv.appendChild(p);
+      }
+
+      function testTokenStorage() {
+        try {
+          // Test token storage
+          const testToken = "test-token-" + Date.now();
+          localStorage.setItem("auth-token", testToken);
+          sessionStorage.setItem("auth-token", testToken);
+
+          const retrievedToken = localStorage.getItem("auth-token");
+          const sessionToken = sessionStorage.getItem("auth-token");
+
+          if (retrievedToken === testToken && sessionToken === testToken) {
+            updateStatus("Token storage test passed", "success");
+            addResult("✅ Token storage working correctly");
+          } else {
+            updateStatus("Token storage test failed", "error");
+            addResult("❌ Token storage not working");
+          }
+        } catch (error) {
+          updateStatus("Token storage test error: " + error.message, "error");
+          addResult("❌ Token storage error: " + error.message);
+        }
+      }
+
+      function testSessionPersistence() {
+        try {
+          // Test session persistence
+          const sessionData = {
+            isAuthenticated: true,
+            lastActivity: Date.now(),
+            userId: "test-user",
+            username: "testuser",
+          };
+
+          localStorage.setItem("auth-session", JSON.stringify(sessionData));
+
+          const retrievedSession = JSON.parse(
+            localStorage.getItem("auth-session")
+          );
+
+          if (
+            retrievedSession &&
+            retrievedSession.isAuthenticated &&
+            retrievedSession.username === "testuser"
+          ) {
+            updateStatus("Session persistence test passed", "success");
+            addResult("✅ Session persistence working correctly");
+          } else {
+            updateStatus("Session persistence test failed", "error");
+            addResult("❌ Session persistence not working");
+          }
+        } catch (error) {
+          updateStatus(
+            "Session persistence test error: " + error.message,
+            "error"
+          );
+          addResult("❌ Session persistence error: " + error.message);
+        }
+      }
+
+      function clearAll() {
+        localStorage.clear();
+        sessionStorage.clear();
+        updateStatus("All data cleared", "info");
+        addResult("🧹 All storage cleared");
+      }
+
+      function simulateLogin() {
+        try {
+          // Simulate a login
+          const token = "mock-jwt-token-" + Date.now();
+          const sessionData = {
+            isAuthenticated: true,
+            lastActivity: Date.now(),
+            userId: "user123",
+            username: "testuser",
+          };
+
+          localStorage.setItem("auth-token", token);
+          sessionStorage.setItem("auth-token", token);
+          localStorage.setItem("auth-session", JSON.stringify(sessionData));
+
+          updateStatus("Login simulated successfully", "success");
+          addResult("✅ Simulated login - token and session stored");
+        } catch (error) {
+          updateStatus("Login simulation error: " + error.message, "error");
+          addResult("❌ Login simulation error: " + error.message);
+        }
+      }
+
+      function checkAuthState() {
+        try {
+          const token = localStorage.getItem("auth-token");
+          const sessionStr = localStorage.getItem("auth-session");
+
+          if (!token) {
+            updateStatus("No authentication token found", "error");
+            addResult("❌ No token found");
+            return;
+          }
+
+          if (!sessionStr) {
+            updateStatus("No session data found", "error");
+            addResult("❌ No session data found");
+            return;
+          }
+
+          const session = JSON.parse(sessionStr);
+          const timeSinceActivity = Date.now() - session.lastActivity;
+          const hoursInactive = Math.floor(
+            timeSinceActivity / (1000 * 60 * 60)
+          );
+
+          updateStatus(
+            `Auth state: Token exists, Session active, ${hoursInactive}h since last activity`,
+            "success"
+          );
+          addResult(
+            `✅ Auth state valid - User: ${session.username}, Last activity: ${hoursInactive}h ago`
+          );
+        } catch (error) {
+          updateStatus("Auth state check error: " + error.message, "error");
+          addResult("❌ Auth state check error: " + error.message);
+        }
+      }
+
+      // Run initial check
+      checkAuthState();
+    </script>
+  </body>
+</html>

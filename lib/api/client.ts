@@ -187,17 +187,20 @@ export class ApiClient {
         try {
             const payload = JSON.parse(atob(token.split('.')[1]));
             const currentTime = Math.floor(Date.now() / 1000);
-            const isExpired = payload.exp < currentTime;
+            // Add 5 minute buffer to prevent premature expiration
+            const bufferTime = 5 * 60; // 5 minutes
+            const isExpired = payload.exp < (currentTime + bufferTime);
 
             if (isExpired) {
-                console.warn("🕐 Token is expired, exp:", payload.exp, "current:", currentTime);
+                console.warn("🕐 Token is expired or expiring soon, exp:", payload.exp, "current:", currentTime);
             }
 
             return isExpired;
         } catch (error) {
-            console.warn("❌ Failed to parse token, considering it expired:", error);
-            // If we can't parse the token, consider it expired
-            return true;
+            console.warn("❌ Failed to parse token, but keeping it valid:", error);
+            // If we can't parse the token, don't assume it's expired
+            // Let the server decide if it's valid
+            return false;
         }
     }
 
@@ -269,16 +272,11 @@ export class ApiClient {
      * Handle authentication failure
      */
     private handleAuthenticationFailure(): void {
-        console.warn("🚨 Authentication failure detected, clearing tokens and redirecting");
+        console.warn("🚨 Authentication failure detected, clearing tokens");
         TokenStorage.clearTokens();
 
-        // Redirect to login page if we're on the client
-        if (typeof window !== 'undefined') {
-            // Add a small delay to ensure token clearing is complete
-            setTimeout(() => {
-                window.location.href = '/login';
-            }, 100);
-        }
+        // Don't automatically redirect - let the auth context handle it
+        // This prevents unwanted redirects during normal navigation
     }
 
     /**
