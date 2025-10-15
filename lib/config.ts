@@ -5,7 +5,7 @@
 export const config = {
     // API Configuration
     api: {
-        baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000',
+        baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000',
         version: process.env.NEXT_PUBLIC_API_VERSION || 'v1.0',
         get url() {
             return `${this.baseUrl}/${this.version}`;
@@ -51,12 +51,14 @@ export const apiEndpoints = {
         profile: '/user/me/',
         points: '/user/points',
         pointsHistory: '/user/points/check/me/',
+        // Dashboard statistics
+        dashboardStats: '/users/dashboard/statistics',
         // Specific user creation endpoints
         createSuperUser: '/user/create_super_user/',
         createAdminUser: '/user/create_admin_user/',
         createGeneralUser: '/user/create_general_user/',
         // Admin endpoints
-        getAllUsers: '/user/check/all/',
+        getAllUsers: '/user/list',
         getUserInfo: (id: string) => `/user/check/user_info/${id}/`,
         // Delete endpoints
         deleteSuperUser: (id: string) => `/delete/delete_super_user/${id}/`,

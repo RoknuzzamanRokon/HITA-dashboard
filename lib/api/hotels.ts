@@ -305,4 +305,57 @@ export class HotelService {
             };
         }
     }
+
+    /**
+     * Get supplier information (hotel count) - permission-based access
+     */
+    static async getSupplierInfo(supplierName: string): Promise<ApiResponse<{
+        supplier_name: string;
+        total_hotel: number;
+        user_role: string;
+        access_granted: boolean;
+    }>> {
+        try {
+            const params = new URLSearchParams();
+            params.append('supplier', supplierName);
+
+            return await apiClient.get(`/hotels/get_supplier_info?${params.toString()}`);
+        } catch (error) {
+            return {
+                success: false,
+                error: {
+                    status: 0,
+                    message: 'Failed to fetch supplier information',
+                    details: error,
+                },
+            };
+        }
+    }
+
+    /**
+     * Get list of suppliers accessible to the current user
+     */
+    static async getUserAccessibleSuppliers(): Promise<ApiResponse<{
+        user_id: string;
+        user_role: string;
+        accessible_suppliers: Array<{
+            supplier_name: string;
+            total_hotels: number;
+            access_type: string;
+        }>;
+        total_accessible_suppliers: number;
+    }>> {
+        try {
+            return await apiClient.get('/hotels/get_user_accessible_suppliers');
+        } catch (error) {
+            return {
+                success: false,
+                error: {
+                    status: 0,
+                    message: 'Failed to fetch accessible suppliers',
+                    details: error,
+                },
+            };
+        }
+    }
 }

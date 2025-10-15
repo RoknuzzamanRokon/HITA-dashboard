@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple Login Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 500px;
+        margin: 50px auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+      button {
+        width: 100%;
+        padding: 12px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      .result {
+        margin-top: 20px;
+        padding: 10px;
+        border-radius: 4px;
+        white-space: pre-wrap;
+        font-family: monospace;
+        font-size: 12px;
+      }
+      .success {
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+      }
+      .error {
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+      }
+      .quick-login {
+        margin-top: 15px;
+        padding: 10px;
+        background-color: #e9ecef;
+        border-radius: 4px;
+      }
+      .quick-login button {
+        width: auto;
+        margin: 5px;
+        padding: 5px 10px;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Backend API Login Test</h2>
+      <p>
+        Test login to the FastAPI backend and store tokens for dashboard access.
+      </p>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="username">Username:</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            value="ursamroko"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password:</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            value="ursamroko123"
+            required
+          />
+        </div>
+
+        <button type="submit">Login</button>
+      </form>
+
+      <div class="quick-login">
+        <strong>Quick Login Options:</strong><br />
+        <button onclick="quickLogin('ursamroko', 'ursamroko123')">
+          ursamroko (Super User)
+        </button>
+        <button onclick="quickLogin('ali', 'ali123')">ali (if exists)</button>
+        <button onclick="quickLogin('admin', 'admin123')">
+          admin (if exists)
+        </button>
+      </div>
+
+      <div id="result"></div>
+
+      <div style="margin-top: 20px">
+        <button onclick="testDashboard()" style="background-color: #28a745">
+          Test Dashboard API
+        </button>
+        <button onclick="clearTokens()" style="background-color: #dc3545">
+          Clear Tokens
+        </button>
+        <button onclick="checkTokens()" style="background-color: #6c757d">
+          Check Stored Tokens
+        </button>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE = "http://127.0.0.1:8000/v1.0";
+
+      function showResult(message, isError = false) {
+        const resultDiv = document.getElementById("result");
+        resultDiv.textContent = message;
+        resultDiv.className = `result ${isError ? "error" : "success"}`;
+      }
+
+      function quickLogin(username, password) {
+        document.getElementById("username").value = username;
+        document.getElementById("password").value = password;
+        document.getElementById("loginForm").dispatchEvent(new Event("submit"));
+      }
+
+      document
+        .getElementById("loginForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const username = document.getElementById("username").value;
+          const password = document.getElementById("password").value;
+
+          try {
+            showResult("Logging in...");
+
+            const response = await fetch(`${API_BASE}/auth/token`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: `username=${encodeURIComponent(
+                username
+              )}&password=${encodeURIComponent(password)}`,
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+              // Store tokens in localStorage
+              localStorage.setItem("admin_auth_token", data.access_token);
+              localStorage.setItem("admin_refresh_token", data.refresh_token);
+
+              showResult(`✅ Login successful!
+Access Token: ${data.access_token.substring(0, 50)}...
+Refresh Token: ${data.refresh_token.substring(0, 50)}...
+Token Type: ${data.token_type}
+
+Tokens stored in localStorage. You can now access the dashboard at:
+http://localhost:3001/dashboard`);
+            } else {
+              showResult(
+                `❌ Login failed: ${
+                  data.message || data.detail || "Unknown error"
+                }`,
+                true
+              );
+            }
+          } catch (error) {
+            showResult(`❌ Network error: ${error.message}`, true);
+          }
+        });
+
+      async function testDashboard() {
+        const token = localStorage.getItem("admin_auth_token");
+        if (!token) {
+          showResult("❌ No token found. Please login first.", true);
+          return;
+        }
+
+        try {
+          showResult("Testing dashboard API...");
+
+          const response = await fetch(
+            `${API_BASE}/users/dashboard/statistics`,
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          const data = await response.json();
+
+          if (response.ok) {
+            showResult(`✅ Dashboard API test successful!
+Data received:
+${JSON.stringify(data, null, 2)}`);
+          } else {
+            showResult(
+              `❌ Dashboard API test failed: ${
+                data.message || data.detail || "Unknown error"
+              }`,
+              true
+            );
+          }
+        } catch (error) {
+          showResult(`❌ Dashboard API error: ${error.message}`, true);
+        }
+      }
+
+      function clearTokens() {
+        localStorage.removeItem("admin_auth_token");
+        localStorage.removeItem("admin_refresh_token");
+        showResult("✅ Tokens cleared from localStorage");
+      }
+
+      function checkTokens() {
+        const accessToken = localStorage.getItem("admin_auth_token");
+        const refreshToken = localStorage.getItem("admin_refresh_token");
+
+        if (accessToken) {
+          try {
+            const payload = JSON.parse(atob(accessToken.split(".")[1]));
+            const exp = new Date(payload.exp * 1000);
+            const isExpired = Date.now() > payload.exp * 1000;
+
+            showResult(`✅ Tokens found in localStorage:
+Access Token: ${accessToken.substring(0, 50)}...
+Refresh Token: ${
+              refreshToken ? refreshToken.substring(0, 50) + "..." : "Not found"
+            }
+User: ${payload.sub}
+Role: ${payload.role}
+Expires: ${exp.toLocaleString()}
+Is Expired: ${isExpired ? "❌ Yes" : "✅ No"}`);
+          } catch (e) {
+            showResult(`⚠️ Token found but couldn't parse: ${e.message}`, true);
+          }
+        } else {
+          showResult("❌ No tokens found in localStorage", true);
+        }
+      }
+
+      // Check tokens on page load
+      window.addEventListener("load", checkTokens);
+    </script>
+  </body>
+</html>

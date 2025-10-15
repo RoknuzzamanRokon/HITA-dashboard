@@ -7,6 +7,7 @@
 
 import React, { useState } from "react";
 import { useAuth } from "@/lib/contexts/auth-context";
+import { cn } from "@/lib/utils";
 import { Navbar } from "./navbar";
 import { Sidebar } from "./sidebar";
 
@@ -45,26 +46,20 @@ export function RootLayout({ children }: RootLayoutProps) {
         <Sidebar
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
+          onToggle={() => setSidebarOpen(!sidebarOpen)}
           userRole={user.role}
         />
 
         {/* Main Content Area */}
         <main
-          className={`flex-1 transition-all duration-300 ease-in-out ${
-            sidebarOpen ? "lg:ml-64" : "lg:ml-16"
-          }`}
+          className={cn(
+            "flex-1 transition-all duration-500 ease-out",
+            sidebarOpen ? "lg:ml-72" : "lg:ml-20"
+          )}
         >
           <div className="p-6 pt-20">{children}</div>
         </main>
       </div>
-
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
     </div>
   );
 }

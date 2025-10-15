@@ -322,7 +322,7 @@ export class ApiClient {
      */
     async healthCheck(): Promise<ApiResponse<{ status: string }>> {
         try {
-            return await this.request<{ status: string }>('/health', {
+            return await this.request<{ status: string }>('/health/', {
                 method: 'GET',
                 requiresAuth: false
             });

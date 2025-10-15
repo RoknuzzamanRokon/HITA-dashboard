@@ -76,4 +76,65 @@ export function debounce<T extends (...args: any[]) => any>(
  */
 export function sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+}/**
+
+ * Animation utilities for enhanced UI components
+ */
+
+/**
+ * Create a ripple effect at the click position
+ */
+export function createRipple(event: React.MouseEvent<HTMLElement>) {
+    const button = event.currentTarget;
+    const rect = button.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const x = event.clientX - rect.left - size / 2;
+    const y = event.clientY - rect.top - size / 2;
+
+    const ripple = document.createElement('span');
+    ripple.style.cssText = `
+    position: absolute;
+    width: ${size}px;
+    height: ${size}px;
+    left: ${x}px;
+    top: ${y}px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    transform: scale(0);
+    animation: ripple 0.6s ease-out;
+    pointer-events: none;
+  `;
+
+    button.appendChild(ripple);
+
+    setTimeout(() => {
+        ripple.remove();
+    }, 600);
+}
+
+/**
+ * Stagger animation delay for list items
+ */
+export function getStaggerDelay(index: number, baseDelay: number = 100): string {
+    return `${index * baseDelay}ms`;
+}
+
+/**
+ * Easing functions for smooth animations
+ */
+export const easings = {
+    easeOutCubic: 'cubic-bezier(0.33, 1, 0.68, 1)',
+    easeInOutCubic: 'cubic-bezier(0.65, 0, 0.35, 1)',
+    easeOutQuart: 'cubic-bezier(0.25, 1, 0.5, 1)',
+    easeInOutQuart: 'cubic-bezier(0.76, 0, 0.24, 1)',
+} as const;
+
+/**
+ * Generate CSS custom properties for animations
+ */
+export function generateAnimationProps(duration: number = 300, easing: string = easings.easeOutCubic) {
+    return {
+        '--animation-duration': `${duration}ms`,
+        '--animation-easing': easing,
+    } as React.CSSProperties;
 }

@@ -16,29 +16,107 @@ export class UserService {
     static async getAllUsers(): Promise<ApiResponse<UserListItem[]>> {
         console.log("📡 Fetching all users from:", apiEndpoints.users.getAllUsers);
 
-        const response = await apiClient.get<any>(apiEndpoints.users.getAllUsers);
+        try {
+            // Use the paginated endpoint with maximum allowed limit (100)
+            let allUsers: UserListItem[] = [];
+            let page = 1;
+            let hasMore = true;
+            const limit = 100; // Maximum allowed by API
 
-        if (response.success && response.data) {
-            // Transform the backend response to match frontend expectations
-            const backendData = response.data;
-            const allUsers: UserListItem[] = [];
+            while (hasMore) {
+                const response = await apiClient.get<any>(`${apiEndpoints.users.getAllUsers}?limit=${limit}&page=${page}`);
 
-            // New API format: { total_users: number, users: [...] }
-            if (backendData.users && Array.isArray(backendData.users)) {
-                backendData.users.forEach((user: any) => {
-                    allUsers.push(this.transformBackendUser(user));
-                });
+                if (response.success && response.data) {
+                    // Handle the new paginated response format: { users: [...], pagination: {...}, statistics: {...} }
+                    const backendData = response.data;
+
+                    if (backendData.users && Array.isArray(backendData.users)) {
+                        backendData.users.forEach((user: any) => {
+                            allUsers.push(this.transformBackendUser(user));
+                        });
+                    }
+
+                    // Check if there are more pages
+                    const pagination = backendData.pagination;
+                    if (pagination && pagination.page && pagination.total_pages) {
+                        hasMore = pagination.page < pagination.total_pages;
+                        page++;
+                    } else {
+                        // If no pagination info, assume we got all users if we got less than the limit
+                        hasMore = backendData.users && backendData.users.length === limit;
+                        page++;
+                    }
+
+                    console.log(`✅ Fetched page ${page - 1}: ${backendData.users?.length || 0} users`);
+                } else {
+                    // If any page fails, break the loop and return what we have
+                    console.error("❌ Failed to fetch page", page, ":", response.error);
+                    break;
+                }
             }
 
-            console.log("✅ Transformed users:", allUsers.length, "out of", backendData.total_users || 0);
+            console.log("✅ Total users fetched:", allUsers.length);
 
             return {
                 success: true,
                 data: allUsers
             };
-        }
+        } catch (error) {
+            console.error("❌ Error in getAllUsers:", error);
 
-        return response;
+            // Fallback to the original endpoint if the new one fails
+            console.log("🔄 Trying fallback endpoint: /user/check/all/");
+            try {
+                const fallbackResponse = await apiClient.get<any>('/user/check/all/');
+
+                if (fallbackResponse.success && fallbackResponse.data) {
+                    // Handle the old format: { super_users: [], admin_users: [], general_users: [], root_user: {} }
+                    const backendData = fallbackResponse.data;
+                    const allUsers: UserListItem[] = [];
+
+                    if (backendData.super_users && Array.isArray(backendData.super_users)) {
+                        backendData.super_users.forEach((user: any) => {
+                            allUsers.push(this.transformBackendUser(user));
+                        });
+                    }
+
+                    if (backendData.admin_users && Array.isArray(backendData.admin_users)) {
+                        backendData.admin_users.forEach((user: any) => {
+                            allUsers.push(this.transformBackendUser(user));
+                        });
+                    }
+
+                    if (backendData.general_users && Array.isArray(backendData.general_users)) {
+                        backendData.general_users.forEach((user: any) => {
+                            allUsers.push(this.transformBackendUser(user));
+                        });
+                    }
+
+                    // Also include the root user (current user) if it exists
+                    if (backendData.root_user && backendData.root_user.id) {
+                        allUsers.push(this.transformBackendUser(backendData.root_user));
+                    }
+
+                    console.log("✅ Fallback successful - Fetched users:", allUsers.length);
+
+                    return {
+                        success: true,
+                        data: allUsers
+                    };
+                }
+
+                return fallbackResponse;
+            } catch (fallbackError) {
+                console.error("❌ Fallback also failed:", fallbackError);
+                return {
+                    success: false,
+                    error: {
+                        status: 500,
+                        message: "Failed to fetch users from both endpoints"
+                    }
+                };
+            }
+        }
     }
 
     /**
@@ -92,10 +170,32 @@ export class UserService {
     }
 
     /**
-     * Create new user (generic)
+     * Create new user (generic) - routes to appropriate specific endpoint
      */
     static async createUser(userData: UserFormData): Promise<ApiResponse<User>> {
-        return apiClient.post<User>(apiEndpoints.users.create, userData);
+        // Route to the appropriate specific endpoint based on role
+        switch (userData.role) {
+            case UserRole.SUPER_USER:
+                return this.createSuperUser({
+                    username: userData.username,
+                    email: userData.email,
+                    password: userData.password || '',
+                });
+            case UserRole.ADMIN_USER:
+                return this.createAdminUser({
+                    username: userData.username,
+                    email: userData.email,
+                    password: userData.password || '',
+                    business_id: '', // You might need to add this to UserFormData if needed
+                });
+            case UserRole.GENERAL_USER:
+            default:
+                return this.createGeneralUser({
+                    username: userData.username,
+                    email: userData.email,
+                    password: userData.password || '',
+                });
+        }
     }
 
     /**
@@ -195,19 +295,26 @@ export class UserService {
      * Transform backend user data to frontend UserListItem format
      */
     private static transformBackendUser(backendUser: any): UserListItem {
-        // Map backend user_status to UserRole enum
+        // Handle both old and new response formats
         let role: UserRole;
-        switch (backendUser.user_status) {
-            case 'super_user':
-                role = UserRole.SUPER_USER;
-                break;
-            case 'admin_user':
-                role = UserRole.ADMIN_USER;
-                break;
-            case 'general_user':
-            default:
-                role = UserRole.GENERAL_USER;
-                break;
+
+        // New format uses 'role' field directly
+        if (backendUser.role) {
+            role = backendUser.role;
+        } else {
+            // Old format uses 'user_status'
+            switch (backendUser.user_status) {
+                case 'super_user':
+                    role = UserRole.SUPER_USER;
+                    break;
+                case 'admin_user':
+                    role = UserRole.ADMIN_USER;
+                    break;
+                case 'general_user':
+                default:
+                    role = UserRole.GENERAL_USER;
+                    break;
+            }
         }
 
         return {
@@ -216,15 +323,16 @@ export class UserService {
             email: backendUser.email,
             role: role,
             isActive: backendUser.is_active,
-            pointBalance: backendUser.points?.current_points || 0,
-            totalPoints: backendUser.points?.total_points || 0,
-            paidStatus: backendUser.points?.paid_status || 'Unknown',
-            totalRequests: backendUser.points?.total_rq || 0,
-            usingRqStatus: backendUser.using_rq_status || 'Inactive',
+            // New format has direct fields
+            pointBalance: backendUser.point_balance || backendUser.points?.current_points || 0,
+            totalPoints: backendUser.total_points || backendUser.points?.total_points || 0,
+            paidStatus: backendUser.paid_status || backendUser.points?.paid_status || 'Unknown',
+            totalRequests: backendUser.total_requests || backendUser.points?.total_rq || 0,
+            usingRqStatus: backendUser.activity_status || backendUser.using_rq_status || 'Inactive',
             createdAt: backendUser.created_at,
             createdBy: backendUser.created_by || undefined,
-            lastLogin: undefined, // Not provided in backend response
-            activeSuppliers: [] // Not provided in backend response
+            lastLogin: backendUser.last_login || undefined,
+            activeSuppliers: backendUser.active_suppliers || []
         };
     }
 }

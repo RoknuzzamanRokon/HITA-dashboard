@@ -384,7 +384,53 @@ export function HotelSearch({ onHotelSelect, className }: HotelSearchProps) {
           {/* Error Message */}
           {error && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-600 text-sm">{error}</p>
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0">
+                  <svg
+                    className="h-5 w-5 text-red-400"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-red-800">
+                    Search Error
+                  </h3>
+                  <p className="text-red-600 text-sm mt-1">{error}</p>
+                  {error.includes("Unable to connect") && (
+                    <div className="mt-2 text-xs text-red-600">
+                      <p>
+                        This usually means the backend API is not running.
+                        Please check:
+                      </p>
+                      <ul className="list-disc list-inside mt-1 space-y-1">
+                        <li>
+                          Backend server is running on http://127.0.0.1:8000
+                        </li>
+                        <li>No firewall blocking the connection</li>
+                        <li>CORS is properly configured</li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setError(null);
+                    searchHotels();
+                  }}
+                  className="border-red-300 text-red-700 hover:bg-red-100"
+                >
+                  Retry
+                </Button>
+              </div>
             </div>
           )}
 

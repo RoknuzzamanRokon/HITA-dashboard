@@ -8,13 +8,55 @@ import React, { useState, useEffect } from "react";
 import { useRequireAuth } from "@/lib/hooks/use-auth";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { apiClient } from "@/lib/api/client";
+import {
+  StatsCard,
+  RevenueTrendChart,
+  UserActivityChart,
+  BookingSourcesChart,
+  RealTimeMetrics,
+  LiveActivityFeed,
+  QuickActions,
+} from "@/lib/components/dashboard";
+import { useDashboardStats } from "@/lib/hooks/use-dashboard-stats";
+import {
+  Users,
+  UserCheck,
+  Shield,
+  UserCog,
+  Coins,
+  Wallet,
+  UserPlus,
+  Activity,
+  RefreshCw,
+} from "lucide-react";
+import { testDashboardStatsAPI } from "@/lib/utils/api-test";
+import { TokenStorage } from "@/lib/auth/token-storage";
+import { PermissionGuard } from "@/lib/components/auth/permission-guard";
+import { Permission } from "@/lib/utils/rbac";
+import {
+  RoleBasedNav,
+  RoleBasedQuickActions,
+} from "@/lib/components/navigation/role-based-nav";
 
 export default function DashboardPage() {
   const { isAuthenticated, isLoading } = useRequireAuth();
   const { user } = useAuth();
+
+  // State declarations must come before hooks that use them
   const [apiStatus, setApiStatus] = useState<
     "checking" | "connected" | "disconnected"
   >("checking");
+  const [testingAPI, setTestingAPI] = useState(false);
+  const [realTimeEnabled, setRealTimeEnabled] = useState(true);
+
+  // Dashboard stats hook with conditional real-time updates
+  const {
+    stats,
+    loading: statsLoading,
+    error: statsError,
+    refetch,
+    lastFetch,
+  } = useDashboardStats(realTimeEnabled ? 30000 : 0); // Real-time updates every 30 seconds when enabled
 
   // Check API connection on mount
   useEffect(() => {
@@ -31,6 +73,58 @@ export default function DashboardPage() {
       checkApiConnection();
     }
   }, [isAuthenticated]);
+
+  // Test API connection manually
+  const handleTestAPI = async () => {
+    setTestingAPI(true);
+    try {
+      await testDashboardStatsAPI();
+      alert("✅ API test successful! Check console for details.");
+    } catch (error) {
+      alert(
+        `❌ API test failed: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    } finally {
+      setTestingAPI(false);
+    }
+  };
+
+  // Refresh dashboard stats
+  const handleRefreshStats = async () => {
+    await refetch();
+  };
+
+  // Check token status
+  const handleCheckToken = () => {
+    const token = TokenStorage.getToken();
+    const refreshToken = TokenStorage.getRefreshToken();
+
+    console.log("🔐 Current tokens:", {
+      hasToken: !!token,
+      hasRefreshToken: !!refreshToken,
+      tokenPreview: token ? `${token.substring(0, 20)}...` : "None",
+    });
+
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const currentTime = Math.floor(Date.now() / 1000);
+        const isExpired = payload.exp < currentTime;
+
+        alert(`Token Status:
+- Expires: ${new Date(payload.exp * 1000).toLocaleString()}
+- Current: ${new Date(currentTime * 1000).toLocaleString()}
+- Is Expired: ${isExpired}
+- User: ${payload.sub || payload.username || "unknown"}`);
+      } catch (e) {
+        alert("Could not parse token: " + e);
+      }
+    } else {
+      alert("No authentication token found!");
+    }
+  };
 
   // Show loading while checking authentication
   if (isLoading) {
@@ -49,10 +143,89 @@ export default function DashboardPage() {
   return (
     <div className="max-w-7xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Welcome to the Admin Management Panel
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Real-Time Dashboard
+            </h1>
+            <div className="mt-1 flex items-center space-x-4">
+              <PermissionGuard
+                permissions={[
+                  Permission.VIEW_ALL_USERS,
+                  Permission.MANAGE_SYSTEM_SETTINGS,
+                ]}
+                fallback={
+                  <p className="text-sm text-gray-600">
+                    Welcome to your Dashboard
+                  </p>
+                }
+              >
+                <p className="text-sm text-gray-600">
+                  Welcome to the Admin Management Panel
+                </p>
+              </PermissionGuard>
+              {lastFetch && (
+                <div className="flex items-center space-x-2 text-xs text-gray-500">
+                  <div
+                    className={`w-2 h-2 rounded-full ${
+                      realTimeEnabled
+                        ? "bg-green-500 animate-pulse"
+                        : "bg-gray-400"
+                    }`}
+                  ></div>
+                  <span>Last updated: {lastFetch.toLocaleTimeString()}</span>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setRealTimeEnabled(!realTimeEnabled)}
+              className={`px-4 py-2 rounded-md flex items-center space-x-2 ${
+                realTimeEnabled
+                  ? "bg-green-600 text-white hover:bg-green-700"
+                  : "bg-gray-600 text-white hover:bg-gray-700"
+              }`}
+            >
+              <Activity className="w-4 h-4" />
+              <span>{realTimeEnabled ? "Real-time ON" : "Real-time OFF"}</span>
+            </button>
+            <button
+              onClick={handleRefreshStats}
+              disabled={statsLoading}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center space-x-2"
+            >
+              <RefreshCw
+                className={`w-4 h-4 ${statsLoading ? "animate-spin" : ""}`}
+              />
+              <span>Refresh</span>
+            </button>
+            <PermissionGuard
+              permissions={[
+                Permission.MANAGE_SYSTEM_SETTINGS,
+                Permission.VIEW_ANALYTICS,
+              ]}
+            >
+              <button
+                onClick={handleTestAPI}
+                disabled={testingAPI}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center space-x-2"
+              >
+                <RefreshCw
+                  className={`w-4 h-4 ${testingAPI ? "animate-spin" : ""}`}
+                />
+                <span>Test API</span>
+              </button>
+              <button
+                onClick={handleCheckToken}
+                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 flex items-center space-x-2"
+              >
+                <Shield className="w-4 h-4" />
+                <span>Check Token</span>
+              </button>
+            </PermissionGuard>
+          </div>
+        </div>
       </div>
 
       {/* API Status Indicator */}
@@ -96,51 +269,312 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="border-4 border-dashed border-gray-200 rounded-lg p-8">
-        <div className="text-center">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">
-            Welcome to the Admin Management Panel
-          </h2>
-          <p className="text-gray-600 mb-6">
-            You have successfully logged in. The authentication system is
-            working correctly.
-          </p>
-
-          {user && (
-            <div className="bg-white p-6 rounded-lg shadow max-w-md mx-auto">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                User Information
-              </h3>
-              <dl className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <dt className="text-gray-500">Username:</dt>
-                  <dd className="text-gray-900">{user.username}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-gray-500">Email:</dt>
-                  <dd className="text-gray-900">{user.email}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-gray-500">Role:</dt>
-                  <dd className="text-gray-900">{user.role}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="text-gray-500">Status:</dt>
-                  <dd className="text-gray-900">
-                    {user.isActive ? "Active" : "Inactive"}
-                  </dd>
-                </div>
-                {user.pointBalance !== undefined && (
-                  <div className="flex justify-between">
-                    <dt className="text-gray-500">Points:</dt>
-                    <dd className="text-gray-900">{user.pointBalance}</dd>
-                  </div>
-                )}
-              </dl>
-            </div>
-          )}
+      {/* Authentication Debug Info */}
+      <div className="mb-6">
+        <div className="p-4 rounded-md bg-blue-50 border border-blue-200">
+          <div className="text-sm">
+            <strong>Auth Status:</strong>{" "}
+            {isAuthenticated ? "✅ Authenticated" : "❌ Not Authenticated"} |
+            <strong> User:</strong> {user?.username || "None"} |
+            <strong> Role:</strong> {user?.role || "None"}
+          </div>
         </div>
       </div>
+
+      {/* Dashboard Stats Error */}
+      {statsError && (
+        <div className="mb-6">
+          <div className="p-4 rounded-md bg-red-50 border border-red-200">
+            <div className="flex items-center">
+              <div className="w-3 h-3 rounded-full mr-3 bg-red-500"></div>
+              <span className="text-sm font-medium text-red-800">
+                Dashboard Stats Error: {statsError}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* User Statistics Grid - Admin Only */}
+      <PermissionGuard
+        permissions={[
+          Permission.VIEW_ALL_USERS,
+          Permission.MANAGE_SYSTEM_SETTINGS,
+        ]}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StatsCard
+            title="Total Users"
+            value={stats?.totalUsers || 0}
+            change={{
+              value: stats?.recentSignups || 0,
+              type: "increase",
+            }}
+            icon={<Users className="w-6 h-6" />}
+            gradient="primary"
+            loading={statsLoading}
+          />
+
+          <StatsCard
+            title="Active Users"
+            value={stats?.activeUsers || 0}
+            change={{
+              value: stats?.totalUsers
+                ? Math.round((stats.activeUsers / stats.totalUsers) * 100)
+                : 0,
+              type: "increase",
+            }}
+            icon={<UserCheck className="w-6 h-6" />}
+            gradient="success"
+            loading={statsLoading}
+          />
+
+          <StatsCard
+            title="Admin Users"
+            value={stats?.adminUsers || 0}
+            change={{
+              value: stats?.superUsers || 0,
+              type: "neutral",
+            }}
+            icon={<Shield className="w-6 h-6" />}
+            gradient="accent"
+            loading={statsLoading}
+          />
+
+          <StatsCard
+            title="General Users"
+            value={stats?.generalUsers || 0}
+            change={{
+              value: stats?.totalUsers
+                ? Math.round((stats.generalUsers / stats.totalUsers) * 100)
+                : 0,
+              type: "increase",
+            }}
+            icon={<UserCog className="w-6 h-6" />}
+            gradient="secondary"
+            loading={statsLoading}
+          />
+        </div>
+      </PermissionGuard>
+
+      {/* Points Statistics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <PermissionGuard
+          permissions={[
+            Permission.VIEW_ALL_TRANSACTIONS,
+            Permission.MANAGE_POINTS,
+          ]}
+        >
+          <StatsCard
+            title="Points Distributed"
+            value={
+              stats?.totalPointsDistributed
+                ? `${(stats.totalPointsDistributed / 1000000).toFixed(1)}M`
+                : "0"
+            }
+            change={{
+              value:
+                stats?.currentPointsBalance && stats?.totalPointsDistributed
+                  ? Math.round(
+                      (stats.currentPointsBalance /
+                        stats.totalPointsDistributed) *
+                        100
+                    )
+                  : 0,
+              type: "increase",
+            }}
+            icon={<Coins className="w-6 h-6" />}
+            gradient="warning"
+            loading={statsLoading}
+          />
+        </PermissionGuard>
+
+        <PermissionGuard
+          permissions={[
+            Permission.VIEW_ALL_TRANSACTIONS,
+            Permission.MANAGE_POINTS,
+          ]}
+        >
+          <StatsCard
+            title="Current Balance"
+            value={
+              stats?.currentPointsBalance
+                ? `${(stats.currentPointsBalance / 1000000).toFixed(1)}M`
+                : "0"
+            }
+            change={{
+              value:
+                stats?.totalPointsDistributed && stats?.currentPointsBalance
+                  ? Math.round(
+                      ((stats.totalPointsDistributed -
+                        stats.currentPointsBalance) /
+                        stats.totalPointsDistributed) *
+                        100
+                    )
+                  : 0,
+              type: "decrease",
+            }}
+            icon={<Wallet className="w-6 h-6" />}
+            gradient="success"
+            loading={statsLoading}
+          />
+        </PermissionGuard>
+
+        <PermissionGuard
+          permissions={[
+            Permission.VIEW_ALL_USERS,
+            Permission.MANAGE_SYSTEM_SETTINGS,
+          ]}
+        >
+          <StatsCard
+            title="Recent Signups"
+            value={stats?.recentSignups || 0}
+            change={{
+              value: stats?.totalUsers
+                ? Math.round((stats.recentSignups / stats.totalUsers) * 100)
+                : 0,
+              type: "increase",
+            }}
+            icon={<UserPlus className="w-6 h-6" />}
+            gradient="primary"
+            loading={statsLoading}
+          />
+        </PermissionGuard>
+
+        <PermissionGuard
+          permissions={[
+            Permission.VIEW_ALL_USERS,
+            Permission.MANAGE_SYSTEM_SETTINGS,
+          ]}
+        >
+          <StatsCard
+            title="Inactive Users"
+            value={stats?.inactiveUsers || 0}
+            change={{
+              value: stats?.totalUsers
+                ? Math.round((stats.inactiveUsers / stats.totalUsers) * 100)
+                : 0,
+              type: "neutral",
+            }}
+            icon={<Activity className="w-6 h-6" />}
+            gradient="error"
+            loading={statsLoading}
+          />
+        </PermissionGuard>
+      </div>
+
+      {/* Quick Actions Panel - Admin/Super User Only */}
+      <PermissionGuard
+        permissions={[
+          Permission.CREATE_USERS,
+          Permission.MANAGE_SYSTEM_SETTINGS,
+        ]}
+      >
+        <div className="mb-8">
+          <QuickActions
+            onRefreshData={handleRefreshStats}
+            isLoading={statsLoading}
+          />
+        </div>
+      </PermissionGuard>
+
+      {/* Real-time System Metrics */}
+      <div className="mb-8">
+        <RealTimeMetrics isEnabled={realTimeEnabled} lastUpdate={lastFetch} />
+      </div>
+
+      {/* Analytics Charts and Live Feed */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="lg:col-span-2">
+          <RevenueTrendChart loading={statsLoading} stats={stats} />
+        </div>
+        <PermissionGuard
+          permissions={[
+            Permission.VIEW_ANALYTICS,
+            Permission.MANAGE_SYSTEM_SETTINGS,
+          ]}
+        >
+          <div className="lg:row-span-2">
+            <LiveActivityFeed isEnabled={realTimeEnabled} />
+          </div>
+        </PermissionGuard>
+        <UserActivityChart loading={statsLoading} stats={stats} />
+        <PermissionGuard
+          permissions={[
+            Permission.VIEW_ALL_TRANSACTIONS,
+            Permission.MANAGE_POINTS,
+          ]}
+        >
+          <BookingSourcesChart loading={statsLoading} stats={stats} />
+        </PermissionGuard>
+      </div>
+
+      {/* Role-Based Navigation */}
+      <div className="mb-8">
+        <h2 className="text-lg font-medium text-gray-900 mb-4">
+          Available Features
+        </h2>
+        <RoleBasedNav variant="grid" />
+      </div>
+
+      {/* Role-Based Quick Actions */}
+      <div className="mb-8">
+        <RoleBasedQuickActions />
+      </div>
+
+      {/* Welcome Section - Admin/Super User Only */}
+      <PermissionGuard
+        permissions={[
+          Permission.VIEW_ALL_USERS,
+          Permission.MANAGE_SYSTEM_SETTINGS,
+        ]}
+      >
+        <div className="border-4 border-dashed border-gray-200 rounded-lg p-8">
+          <div className="text-center">
+            <h2 className="text-lg font-medium text-gray-900 mb-4">
+              Welcome to the Admin Management Panel
+            </h2>
+            <p className="text-gray-600 mb-6">
+              You have successfully logged in. The authentication system is
+              working correctly.
+            </p>
+
+            {user && (
+              <div className="bg-white p-6 rounded-lg shadow max-w-md mx-auto">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  User Information
+                </h3>
+                <dl className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <dt className="text-gray-500">Username:</dt>
+                    <dd className="text-gray-900">{user.username}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-gray-500">Email:</dt>
+                    <dd className="text-gray-900">{user.email}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-gray-500">Role:</dt>
+                    <dd className="text-gray-900">{user.role}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-gray-500">Status:</dt>
+                    <dd className="text-gray-900">
+                      {user.isActive ? "Active" : "Inactive"}
+                    </dd>
+                  </div>
+                  {user.pointBalance !== undefined && (
+                    <div className="flex justify-between">
+                      <dt className="text-gray-500">Points:</dt>
+                      <dd className="text-gray-900">{user.pointBalance}</dd>
+                    </div>
+                  )}
+                </dl>
+              </div>
+            )}
+          </div>
+        </div>
+      </PermissionGuard>
     </div>
   );
 }

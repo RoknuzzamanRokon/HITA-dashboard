@@ -18,6 +18,7 @@ import {
     Shield,
     FileText,
     Search,
+    User,
 } from "lucide-react";
 import { UserRole } from "@/lib/types/auth";
 
@@ -46,6 +47,14 @@ export const mainMenuItems: MenuItem[] = [
         icon: Home,
         path: "/dashboard",
         description: "Overview and system statistics",
+        requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER, UserRole.GENERAL_USER],
+    },
+    {
+        id: "profile",
+        label: "Profile",
+        icon: User,
+        path: "/dashboard/profile",
+        description: "View and manage your profile",
         requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER, UserRole.GENERAL_USER],
     },
     {
