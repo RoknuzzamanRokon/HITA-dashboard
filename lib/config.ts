@@ -52,7 +52,7 @@ export const apiEndpoints = {
         points: '/user/points',
         pointsHistory: '/user/points/check/me/',
         // Dashboard statistics
-        dashboardStats: '/users/dashboard/statistics',
+        dashboardStats: '/dashboard/stats',
         // Specific user creation endpoints
         createSuperUser: '/user/create_super_user/',
         createAdminUser: '/user/create_admin_user/',

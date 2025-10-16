@@ -96,67 +96,35 @@ export const useDashboardStats = (realTimeInterval?: number): UseDashboardStatsR
             // Try to fetch real data from the API using the API client
             let response;
             try {
-                // First try with authentication
+                // First try with authentication (required for dashboard stats)
                 console.log('🔐 Trying authenticated request...');
                 response = await apiClient.get<{
                     total_users: number;
-                    super_users: string;
-                    admin_users: string;
-                    general_users: string;
-                    active_users: string;
-                    inactive_users: string;
-                    total_points_distributed: string;
-                    current_points_balance: string;
+                    active_users: number;
+                    admin_users: number;
+                    general_users: number;
+                    points_distributed: number;
+                    current_balance: number;
                     recent_signups: number;
-                    last_updated: string;
-                    point_distribution: Array<{
-                        role: string;
-                        total_points: string;
-                        user_count: number;
-                    }>;
-                    activity_trends: Array<{
-                        date: string;
-                        transaction_count: number;
-                        points_transferred: string;
-                    }>;
-                    top_active_users: Array<{
-                        id: string;
+                    inactive_users: number;
+                    additional_stats: {
+                        super_users: number;
+                        admin_users_only: number;
+                        total_transactions: number;
+                        recent_activity_count: number;
+                        users_with_api_keys: number;
+                        points_used: number;
+                    };
+                    timestamp: string;
+                    requested_by: {
+                        user_id: string;
                         username: string;
-                        email: string;
-                        transaction_count: number;
-                    }>;
+                        role: string;
+                    };
                 }>(apiEndpoints.users.dashboardStats, true); // Requires authentication
             } catch (authError) {
-                console.warn('⚠️ Authenticated request failed, trying without auth:', authError);
-                // If authenticated request fails, try without authentication
-                response = await apiClient.get<{
-                    total_users: number;
-                    super_users: string;
-                    admin_users: string;
-                    general_users: string;
-                    active_users: string;
-                    inactive_users: string;
-                    total_points_distributed: string;
-                    current_points_balance: string;
-                    recent_signups: number;
-                    last_updated: string;
-                    point_distribution: Array<{
-                        role: string;
-                        total_points: string;
-                        user_count: number;
-                    }>;
-                    activity_trends: Array<{
-                        date: string;
-                        transaction_count: number;
-                        points_transferred: string;
-                    }>;
-                    top_active_users: Array<{
-                        id: string;
-                        username: string;
-                        email: string;
-                        transaction_count: number;
-                    }>;
-                }>(apiEndpoints.users.dashboardStats, false); // No authentication
+                console.warn('⚠️ Authenticated request failed:', authError);
+                throw authError; // Dashboard stats require authentication, don't try without auth
             }
 
             if (!response.success) {
@@ -178,18 +146,27 @@ export const useDashboardStats = (realTimeInterval?: number): UseDashboardStatsR
             console.log('✅ Dashboard stats received:', data);
             const transformedStats: DashboardStats = {
                 totalUsers: data.total_users,
-                superUsers: parseInt(data.super_users),
-                adminUsers: parseInt(data.admin_users),
-                generalUsers: parseInt(data.general_users),
-                activeUsers: parseInt(data.active_users),
-                inactiveUsers: parseInt(data.inactive_users),
-                totalPointsDistributed: parseInt(data.total_points_distributed),
-                currentPointsBalance: parseInt(data.current_points_balance),
+                superUsers: data.additional_stats.super_users,
+                adminUsers: data.admin_users,
+                generalUsers: data.general_users,
+                activeUsers: data.active_users,
+                inactiveUsers: data.inactive_users,
+                totalPointsDistributed: data.points_distributed,
+                currentPointsBalance: data.current_balance,
                 recentSignups: data.recent_signups,
-                lastUpdated: data.last_updated,
-                pointDistribution: data.point_distribution,
-                activityTrends: data.activity_trends,
-                topActiveUsers: data.top_active_users,
+                lastUpdated: data.timestamp,
+                // For now, use mock data for these fields until we implement the additional endpoints
+                pointDistribution: [
+                    { role: "admin_user", total_points: data.points_distributed.toString(), user_count: data.admin_users },
+                    { role: "general_user", total_points: data.current_balance.toString(), user_count: data.general_users },
+                    { role: "super_user", total_points: "0", user_count: data.additional_stats.super_users },
+                ],
+                activityTrends: [
+                    { date: new Date().toISOString().split('T')[0], transaction_count: data.additional_stats.total_transactions, points_transferred: data.additional_stats.points_used.toString() },
+                ],
+                topActiveUsers: [
+                    { id: data.requested_by.user_id, username: data.requested_by.username, email: "admin@example.com", transaction_count: data.additional_stats.recent_activity_count },
+                ],
             };
 
             console.log('📊 Transformed stats:', transformedStats);
