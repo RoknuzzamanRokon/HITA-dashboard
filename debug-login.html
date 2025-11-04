@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Debug Login - Mock Auth Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .status {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+        border-left: 4px solid;
+      }
+      .success {
+        background-color: #d4edda;
+        color: #155724;
+        border-color: #28a745;
+      }
+      .error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border-color: #dc3545;
+      }
+      .info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+        border-color: #17a2b8;
+      }
+      .warning {
+        background-color: #fff3cd;
+        color: #856404;
+        border-color: #ffc107;
+      }
+      button {
+        padding: 10px 15px;
+        margin: 5px;
+        cursor: pointer;
+        border: none;
+        border-radius: 4px;
+        background-color: #007bff;
+        color: white;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      button:disabled {
+        background-color: #6c757d;
+        cursor: not-allowed;
+      }
+      input {
+        padding: 8px;
+        margin: 5px;
+        width: 200px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      .form-group {
+        margin: 15px 0;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      .log {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 10px;
+        margin: 10px 0;
+        max-height: 300px;
+        overflow-y: auto;
+        font-family: monospace;
+        font-size: 12px;
+      }
+      .credentials {
+        background-color: #e7f3ff;
+        padding: 15px;
+        border-radius: 4px;
+        margin: 15px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🔐 Debug Login - Mock Authentication Test</h1>
+
+      <div class="credentials">
+        <h3>Available Test Credentials:</h3>
+        <ul>
+          <li><strong>admin</strong> / password123 (Super User)</li>
+          <li><strong>manager</strong> / password123 (Admin User)</li>
+          <li><strong>user</strong> / password123 (General User)</li>
+          <li><strong>demo</strong> / password123 (Admin User)</li>
+          <li><strong>ursamroko</strong> / password123 (Super User)</li>
+        </ul>
+        <p>
+          <em>Note: Any password with 3+ characters will work in mock mode</em>
+        </p>
+      </div>
+
+      <div class="form-group">
+        <label for="username">Username:</label>
+        <input type="text" id="username" placeholder="Username" value="admin" />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password:</label>
+        <input
+          type="password"
+          id="password"
+          placeholder="Password"
+          value="password123"
+        />
+      </div>
+
+      <div>
+        <button onclick="testMockLogin()" id="loginBtn">Test Mock Login</button>
+        <button onclick="checkAuthStatus()">Check Auth Status</button>
+        <button onclick="clearStorage()">Clear Storage</button>
+        <button onclick="testRealAPI()">Test Real API</button>
+      </div>
+
+      <div id="status" class="status info">Ready to test authentication</div>
+
+      <div class="log" id="log"></div>
+    </div>
+
+    <script>
+      function log(message, type = "info") {
+        const logDiv = document.getElementById("log");
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = document.createElement("div");
+        logEntry.innerHTML = `<span style="color: #666;">[${timestamp}]</span> ${message}`;
+        logDiv.appendChild(logEntry);
+        logDiv.scrollTop = logDiv.scrollHeight;
+
+        // Also update status
+        updateStatus(message, type);
+      }
+
+      function updateStatus(message, type = "info") {
+        const statusDiv = document.getElementById("status");
+        statusDiv.textContent = message;
+        statusDiv.className = `status ${type}`;
+      }
+
+      function clearLog() {
+        document.getElementById("log").innerHTML = "";
+      }
+
+      async function testMockLogin() {
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+        const loginBtn = document.getElementById("loginBtn");
+
+        if (!username || !password) {
+          log("❌ Please enter username and password", "error");
+          return;
+        }
+
+        loginBtn.disabled = true;
+        loginBtn.textContent = "Testing...";
+        clearLog();
+
+        try {
+          log("🚀 Starting mock authentication test...");
+          log(`👤 Username: ${username}`);
+          log(`🔑 Password: ${password.replace(/./g, "*")}`);
+
+          // Check environment variables
+          log("🔧 Checking environment configuration...");
+
+          // Simulate the mock login process
+          log("📡 Simulating mock login request...");
+
+          // Create mock response similar to MockAuthService
+          const mockUsers = [
+            { id: "1", username: "admin", role: "SUPER_USER" },
+            { id: "2", username: "manager", role: "ADMIN_USER" },
+            { id: "3", username: "user", role: "GENERAL_USER" },
+            { id: "4", username: "demo", role: "ADMIN_USER" },
+            { id: "5", username: "ursamroko", role: "SUPER_USER" },
+          ];
+
+          const user = mockUsers.find((u) => u.username === username);
+
+          if (!user) {
+            log(`❌ User '${username}' not found in mock database`, "error");
+            return;
+          }
+
+          if (password.length < 3) {
+            log("❌ Password too short (minimum 3 characters)", "error");
+            return;
+          }
+
+          // Simulate network delay
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+
+          // Generate mock token
+          const expirationTime = Date.now() + 24 * 60 * 60 * 1000;
+          const token = `mock_token_${user.id}_${Date.now()}_${expirationTime}`;
+
+          log("✅ Mock authentication successful!");
+          log(`🎫 Generated token: ${token.substring(0, 30)}...`);
+          log(`👤 User role: ${user.role}`);
+
+          // Store in localStorage (same keys as the app)
+          localStorage.setItem("admin_auth_token", token);
+          localStorage.setItem("mock_current_token", token);
+          localStorage.setItem(
+            "mock_current_user",
+            JSON.stringify({
+              id: user.id,
+              username: user.username,
+              email: `${user.username}@example.com`,
+              role: user.role,
+              isActive: true,
+              createdAt: new Date().toISOString(),
+              pointBalance: 1000,
+            })
+          );
+
+          // Create session data
+          const sessionData = {
+            isAuthenticated: true,
+            lastActivity: Date.now(),
+            userId: user.id,
+            username: user.username,
+          };
+          localStorage.setItem("auth-session", JSON.stringify(sessionData));
+
+          log("💾 Stored authentication data in localStorage");
+          log("🎉 Mock login completed successfully!", "success");
+
+          // Show next steps
+          log("🚀 You can now navigate to: http://localhost:3000/dashboard");
+        } catch (error) {
+          log(`❌ Mock login failed: ${error.message}`, "error");
+        } finally {
+          loginBtn.disabled = false;
+          loginBtn.textContent = "Test Mock Login";
+        }
+      }
+
+      async function checkAuthStatus() {
+        clearLog();
+        log("🔍 Checking authentication status...");
+
+        // Check tokens
+        const adminToken = localStorage.getItem("admin_auth_token");
+        const mockToken = localStorage.getItem("mock_current_token");
+        const mockUser = localStorage.getItem("mock_current_user");
+        const session = localStorage.getItem("auth-session");
+
+        log(`🎫 Admin token: ${adminToken ? "EXISTS" : "NOT FOUND"}`);
+        log(`🎫 Mock token: ${mockToken ? "EXISTS" : "NOT FOUND"}`);
+        log(`👤 Mock user: ${mockUser ? "EXISTS" : "NOT FOUND"}`);
+        log(`📋 Session: ${session ? "EXISTS" : "NOT FOUND"}`);
+
+        if (mockUser) {
+          try {
+            const user = JSON.parse(mockUser);
+            log(`👤 Current user: ${user.username} (${user.role})`);
+          } catch (e) {
+            log("❌ Failed to parse user data", "error");
+          }
+        }
+
+        if (session) {
+          try {
+            const sessionData = JSON.parse(session);
+            log(`📋 Session authenticated: ${sessionData.isAuthenticated}`);
+            log(
+              `📋 Last activity: ${new Date(
+                sessionData.lastActivity
+              ).toLocaleString()}`
+            );
+          } catch (e) {
+            log("❌ Failed to parse session data", "error");
+          }
+        }
+
+        if (adminToken || mockToken) {
+          log("✅ User appears to be authenticated", "success");
+        } else {
+          log("❌ User is not authenticated", "warning");
+        }
+      }
+
+      function clearStorage() {
+        clearLog();
+        log("🧹 Clearing all authentication data...");
+
+        // Clear all auth-related items
+        const keysToRemove = [
+          "admin_auth_token",
+          "admin_refresh_token",
+          "mock_current_token",
+          "mock_current_user",
+          "auth-session",
+        ];
+
+        keysToRemove.forEach((key) => {
+          localStorage.removeItem(key);
+          sessionStorage.removeItem(key);
+        });
+
+        log("✅ All authentication data cleared", "success");
+      }
+
+      async function testRealAPI() {
+        clearLog();
+        log("🌐 Testing real API connection...");
+
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+
+        try {
+          const formData = new URLSearchParams();
+          formData.append("username", username);
+          formData.append("password", password);
+          formData.append("grant_type", "password");
+
+          log("📡 Making request to real API...");
+          const response = await fetch(
+            "http://127.0.0.1:8002/v1.0/auth/token",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: formData.toString(),
+            }
+          );
+
+          log(`📡 Response status: ${response.status}`);
+
+          if (response.ok) {
+            const data = await response.json();
+            log("✅ Real API connection successful!", "success");
+            log(`🎫 Received token: ${data.access_token ? "YES" : "NO"}`);
+          } else {
+            const errorData = await response.json();
+            log(
+              `❌ Real API error: ${errorData.detail || "Unknown error"}`,
+              "error"
+            );
+          }
+        } catch (error) {
+          log(`❌ Real API connection failed: ${error.message}`, "error");
+          log("💡 This is expected if no backend server is running", "info");
+          log("💡 Use mock authentication instead", "info");
+        }
+      }
+
+      // Initialize
+      log("🔧 Debug page loaded. Ready to test authentication.");
+    </script>
+  </body>
+</html>

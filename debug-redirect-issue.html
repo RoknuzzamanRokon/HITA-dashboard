@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Debug Redirect Issue</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .status {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+        border-left: 4px solid;
+      }
+      .success {
+        background-color: #d4edda;
+        color: #155724;
+        border-color: #28a745;
+      }
+      .error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border-color: #dc3545;
+      }
+      .info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+        border-color: #17a2b8;
+      }
+      .warning {
+        background-color: #fff3cd;
+        color: #856404;
+        border-color: #ffc107;
+      }
+
+      button {
+        padding: 10px 15px;
+        margin: 5px;
+        cursor: pointer;
+        border: none;
+        border-radius: 4px;
+        background-color: #007bff;
+        color: white;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+
+      .log {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 10px;
+        margin: 10px 0;
+        max-height: 400px;
+        overflow-y: auto;
+        font-family: monospace;
+        font-size: 12px;
+      }
+
+      .debug-info {
+        background-color: #fff3cd;
+        padding: 15px;
+        border-radius: 4px;
+        margin: 15px 0;
+        border-left: 4px solid #ffc107;
+      }
+
+      .steps {
+        background-color: #e7f3ff;
+        padding: 15px;
+        border-radius: 4px;
+        margin: 15px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🔍 Debug Redirect Issue</h1>
+
+      <div class="debug-info">
+        <h3>🔍 Current Status:</h3>
+        <p>✅ <strong>Frontend:</strong> Login page loads (GET /login 200)</p>
+        <p>
+          ✅ <strong>Backend:</strong> API responds (POST /v1.0/auth/token 200
+          OK)
+        </p>
+        <p>❌ <strong>Issue:</strong> No redirect to /dashboard after login</p>
+      </div>
+
+      <div class="steps">
+        <h3>🧪 Debug Steps:</h3>
+        <ol>
+          <li>
+            <strong>Check Browser Console:</strong> Look for JavaScript errors
+          </li>
+          <li>
+            <strong>Check Network Tab:</strong> Verify API response format
+          </li>
+          <li>
+            <strong>Check Auth State:</strong> Verify token storage and
+            validation
+          </li>
+          <li>
+            <strong>Check Redirect Logic:</strong> Verify success callback
+            execution
+          </li>
+        </ol>
+      </div>
+
+      <div>
+        <button onclick="checkConsoleErrors()">1. Check for JS Errors</button>
+        <button onclick="checkAuthState()">2. Check Auth State</button>
+        <button onclick="checkTokenValidation()">
+          3. Check Token Validation
+        </button>
+        <button onclick="simulateLogin()">4. Simulate Login Process</button>
+      </div>
+
+      <div id="status" class="status info">Ready to debug redirect issue</div>
+
+      <div class="log" id="log"></div>
+    </div>
+
+    <script>
+      function log(message, type = "info") {
+        const logDiv = document.getElementById("log");
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = document.createElement("div");
+        logEntry.innerHTML = `<span style="color: #666;">[${timestamp}]</span> ${message}`;
+        logDiv.appendChild(logEntry);
+        logDiv.scrollTop = logDiv.scrollHeight;
+        updateStatus(message, type);
+      }
+
+      function updateStatus(message, type = "info") {
+        const statusDiv = document.getElementById("status");
+        statusDiv.textContent = message;
+        statusDiv.className = `status ${type}`;
+      }
+
+      function clearLog() {
+        document.getElementById("log").innerHTML = "";
+      }
+
+      function checkConsoleErrors() {
+        clearLog();
+        log("🔍 Checking for JavaScript errors...");
+        log("💡 IMPORTANT: Open your browser's Developer Tools (F12)");
+        log("💡 Go to Console tab and look for any red error messages");
+        log("💡 Common issues to look for:");
+        log("   - JWT validation errors");
+        log("   - Router navigation errors");
+        log("   - Auth context state errors");
+        log("   - Component rendering errors");
+        log("");
+        log(
+          "🚀 Now try logging in and watch the console for errors",
+          "warning"
+        );
+      }
+
+      function checkAuthState() {
+        clearLog();
+        log("🔍 Checking authentication state...");
+
+        // Check stored tokens
+        const adminToken = localStorage.getItem("admin_auth_token");
+        const session = localStorage.getItem("auth-session");
+
+        log(`🎫 Admin token: ${adminToken ? "EXISTS" : "NOT FOUND"}`);
+        log(`📋 Session: ${session ? "EXISTS" : "NOT FOUND"}`);
+
+        if (adminToken) {
+          log("🔍 Analyzing stored token...");
+          try {
+            const parts = adminToken.split(".");
+            if (parts.length === 3) {
+              const payload = JSON.parse(atob(parts[1]));
+              const currentTime = Math.floor(Date.now() / 1000);
+              const isExpired = payload.exp < currentTime;
+
+              log(`👤 Token subject: ${payload.sub || "N/A"}`);
+              log(`👤 User ID: ${payload.user_id || "N/A"}`);
+              log(`👤 Role: ${payload.role || "N/A"}`);
+              log(
+                `⏰ Expires: ${new Date(payload.exp * 1000).toLocaleString()}`
+              );
+              log(
+                `✅ Valid: ${isExpired ? "NO (EXPIRED)" : "YES"}`,
+                isExpired ? "error" : "success"
+              );
+
+              if (isExpired) {
+                log(
+                  "❌ Token is expired - this could prevent redirect",
+                  "error"
+                );
+              } else {
+                log("✅ Token is valid - should allow redirect", "success");
+              }
+            } else {
+              log(
+                "❌ Invalid JWT format - this will prevent redirect",
+                "error"
+              );
+            }
+          } catch (e) {
+            log(`❌ Failed to decode JWT: ${e.message}`, "error");
+          }
+        } else {
+          log(
+            "❌ No token found - login might not be storing token properly",
+            "error"
+          );
+        }
+
+        if (session) {
+          try {
+            const sessionData = JSON.parse(session);
+            log(`📋 Session authenticated: ${sessionData.isAuthenticated}`);
+            log(`👤 Session username: ${sessionData.username || "N/A"}`);
+            log(
+              `⏰ Last activity: ${new Date(
+                sessionData.lastActivity
+              ).toLocaleString()}`
+            );
+          } catch (e) {
+            log(`❌ Failed to parse session: ${e.message}`, "error");
+          }
+        }
+      }
+
+      function checkTokenValidation() {
+        clearLog();
+        log("🔍 Testing JWT token validation logic...");
+
+        const token = localStorage.getItem("admin_auth_token");
+        if (!token) {
+          log("❌ No token to validate", "error");
+          return;
+        }
+
+        log("🧪 Testing JWT validation (same logic as app)...");
+
+        try {
+          // Replicate the app's JWT validation logic
+          const parts = token.split(".");
+          if (parts.length !== 3) {
+            log("❌ JWT validation failed: Not 3 parts", "error");
+            return;
+          }
+
+          const header = JSON.parse(atob(parts[0]));
+          const payload = JSON.parse(atob(parts[1]));
+
+          log("✅ JWT structure is valid");
+          log(`📋 Header: ${JSON.stringify(header)}`);
+          log(`📋 Payload keys: ${Object.keys(payload).join(", ")}`);
+
+          // Check required fields
+          if (!header.alg || !header.typ) {
+            log("❌ JWT validation failed: Missing header fields", "error");
+            return;
+          }
+
+          if (!payload.exp || !payload.iat) {
+            log(
+              "❌ JWT validation failed: Missing payload fields (exp/iat)",
+              "error"
+            );
+            return;
+          }
+
+          // Check expiration
+          const currentTime = Math.floor(Date.now() / 1000);
+          if (payload.exp < currentTime) {
+            log("❌ JWT validation failed: Token expired", "error");
+            return;
+          }
+
+          log("✅ JWT validation passed - token should be accepted", "success");
+          log(
+            "💡 If redirect still fails, the issue is in the React components",
+            "info"
+          );
+        } catch (error) {
+          log(`❌ JWT validation error: ${error.message}`, "error");
+        }
+      }
+
+      async function simulateLogin() {
+        clearLog();
+        log("🧪 Simulating login process to identify where it fails...");
+
+        try {
+          // Step 1: Test API call
+          log("📡 Step 1: Testing API authentication...");
+          const formData = new URLSearchParams();
+          formData.append("username", "roman");
+          formData.append("password", "roman123");
+          formData.append("grant_type", "password");
+
+          const response = await fetch(
+            "http://127.0.0.1:8002/v1.0/auth/token",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: formData.toString(),
+            }
+          );
+
+          if (!response.ok) {
+            log(`❌ API call failed: ${response.status}`, "error");
+            return;
+          }
+
+          const data = await response.json();
+          log("✅ API call successful", "success");
+          log(`📋 Response: ${JSON.stringify(data, null, 2)}`);
+
+          // Step 2: Check token format
+          if (!data.access_token) {
+            log("❌ No access_token in response", "error");
+            return;
+          }
+
+          log("✅ Access token received", "success");
+
+          // Step 3: Validate token
+          try {
+            const parts = data.access_token.split(".");
+            if (parts.length !== 3) {
+              log("❌ Invalid JWT format", "error");
+              return;
+            }
+
+            const payload = JSON.parse(atob(parts[1]));
+            const currentTime = Math.floor(Date.now() / 1000);
+
+            if (payload.exp < currentTime) {
+              log("❌ Token is expired", "error");
+              return;
+            }
+
+            log("✅ Token validation passed", "success");
+          } catch (e) {
+            log(`❌ Token validation failed: ${e.message}`, "error");
+            return;
+          }
+
+          // Step 4: Store token (simulate app behavior)
+          localStorage.setItem("admin_auth_token", data.access_token);
+          log("✅ Token stored in localStorage", "success");
+
+          // Step 5: Check if this would trigger redirect
+          log("🔍 Checking if stored token would trigger redirect...");
+          log("💡 In the app, this should now:");
+          log("   1. Update auth context state");
+          log("   2. Call onSuccess callback");
+          log("   3. Execute router.push('/dashboard')");
+          log("");
+          log(
+            "🚀 Try opening the login page now - it should redirect to dashboard",
+            "info"
+          );
+          log("🔗 http://localhost:3000/login", "info");
+        } catch (error) {
+          log(`❌ Simulation failed: ${error.message}`, "error");
+        }
+      }
+
+      // Initialize
+      log("🔧 Redirect debug tool ready");
+      log(
+        "💡 Since API is working (200 OK), the issue is likely in the frontend"
+      );
+      log("💡 Most common causes:");
+      log("   - JWT validation failing in the frontend");
+      log("   - Auth context not updating properly");
+      log("   - onSuccess callback not being called");
+      log("   - Router navigation being blocked");
+    </script>
+  </body>
+</html>

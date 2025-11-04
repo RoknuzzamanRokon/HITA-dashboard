@@ -43,7 +43,7 @@ export function RootLayout({ children }: RootLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
+    <div className="min-h-screen from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
       {/* Navbar */}
       <Navbar
         user={user}
@@ -66,8 +66,8 @@ export function RootLayout({ children }: RootLayoutProps) {
             sidebarOpen ? "lg:ml-72" : "lg:ml-20"
           )}
         >
-          <div className="p-6 pt-20 max-w-7xl mx-auto">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+          <div className="p-6 pt-20  mx-auto">
+            <div className="bg-white dark:bg-gray-200 rounded-xl shadow-sm border border-gray-100 dark:border-gray-400">
               <div className="p-6">{children}</div>
             </div>
           </div>

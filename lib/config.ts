@@ -30,7 +30,7 @@ export const config = {
     isProduction: process.env.NODE_ENV === 'production',
 
     // Mock mode for development when backend is not available
-    useMockAuth: process.env.NEXT_PUBLIC_USE_MOCK_AUTH === 'true' || false,
+    useMockAuth: process.env.NEXT_PUBLIC_USE_MOCK_AUTH === 'true',
 } as const;
 
 // API Endpoints
@@ -39,7 +39,7 @@ export const apiEndpoints = {
     auth: {
         login: '/auth/token',
         register: '/auth/register',
-        refresh: '/auth/refresh',
+        refresh: '/auth/refresh-token',
     },
 
     // User Management

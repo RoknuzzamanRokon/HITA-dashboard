@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fix CORS Issue</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .status {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+        border-left: 4px solid;
+      }
+      .success {
+        background-color: #d4edda;
+        color: #155724;
+        border-color: #28a745;
+      }
+      .error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border-color: #dc3545;
+      }
+      .info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+        border-color: #17a2b8;
+      }
+      .warning {
+        background-color: #fff3cd;
+        color: #856404;
+        border-color: #ffc107;
+      }
+
+      button {
+        padding: 10px 15px;
+        margin: 5px;
+        cursor: pointer;
+        border: none;
+        border-radius: 4px;
+        background-color: #007bff;
+        color: white;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+
+      .log {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 10px;
+        margin: 10px 0;
+        max-height: 400px;
+        overflow-y: auto;
+        font-family: monospace;
+        font-size: 12px;
+      }
+
+      .cors-issue {
+        background-color: #f8d7da;
+        padding: 15px;
+        border-radius: 4px;
+        margin: 15px 0;
+        border-left: 4px solid #dc3545;
+      }
+
+      .solution {
+        background-color: #d4edda;
+        padding: 15px;
+        border-radius: 4px;
+        margin: 15px 0;
+        border-left: 4px solid #28a745;
+      }
+
+      .code {
+        background-color: #f8f9fa;
+        padding: 10px;
+        border-radius: 4px;
+        font-family: monospace;
+        margin: 10px 0;
+        border: 1px solid #dee2e6;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🚨 Fix CORS Issue - "Failed to fetch"</h1>
+
+      <div class="cors-issue">
+        <h3>🔍 Problem Identified:</h3>
+        <p>
+          <strong>CORS Error:</strong> Your frontend (http://localhost:3000)
+          cannot connect to your backend (http://127.0.0.1:8002) due to
+          Cross-Origin Resource Sharing restrictions.
+        </p>
+        <p><strong>Symptoms:</strong></p>
+        <ul>
+          <li>❌ "Failed to fetch" error in browser console</li>
+          <li>✅ Backend shows 200 OK responses (backend is working)</li>
+          <li>❌ Frontend cannot complete the request (CORS blocked)</li>
+        </ul>
+      </div>
+
+      <div class="solution">
+        <h3>✅ Solutions (Choose One):</h3>
+
+        <h4>Option 1: Fix Backend CORS (Recommended)</h4>
+        <p>
+          Add CORS headers to your backend to allow requests from
+          http://localhost:3000
+        </p>
+
+        <div class="code">
+          <strong>For FastAPI (Python):</strong><br />
+          <pre>
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)</pre
+          >
+        </div>
+
+        <div class="code">
+          <strong>For Express.js (Node.js):</strong><br />
+          <pre>
+const cors = require('cors');
+app.use(cors({
+    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+    credentials: true
+}));</pre
+          >
+        </div>
+
+        <h4>Option 2: Use Proxy (Quick Fix)</h4>
+        <p>Add a proxy to your Next.js app to bypass CORS</p>
+
+        <div class="code">
+          <strong>Create next.config.js:</strong><br />
+          <pre>
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://127.0.0.1:8002/:path*',
+      },
+    ]
+  },
+}
+
+module.exports = nextConfig</pre
+          >
+        </div>
+
+        <h4>Option 3: Disable Browser Security (Development Only)</h4>
+        <p>Start Chrome with disabled security (NOT for production)</p>
+        <div class="code">
+          chrome.exe --user-data-dir=/tmp/foo --disable-web-security
+          --disable-features=VizDisplayCompositor
+        </div>
+      </div>
+
+      <div>
+        <button onclick="testCORS()">🧪 Test CORS</button>
+        <button onclick="testWithProxy()">🔄 Test with Proxy</button>
+        <button onclick="showInstructions()">📋 Show Instructions</button>
+      </div>
+
+      <div id="status" class="status info">Ready to test CORS fix</div>
+
+      <div class="log" id="log"></div>
+    </div>
+
+    <script>
+      function log(message, type = "info") {
+        const logDiv = document.getElementById("log");
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = document.createElement("div");
+        logEntry.innerHTML = `<span style="color: #666;">[${timestamp}]</span> ${message}`;
+        logDiv.appendChild(logEntry);
+        logDiv.scrollTop = logDiv.scrollHeight;
+        updateStatus(message, type);
+      }
+
+      function updateStatus(message, type = "info") {
+        const statusDiv = document.getElementById("status");
+        statusDiv.textContent = message;
+        statusDiv.className = `status ${type}`;
+      }
+
+      function clearLog() {
+        document.getElementById("log").innerHTML = "";
+      }
+
+      async function testCORS() {
+        clearLog();
+        log("🧪 Testing CORS configuration...");
+
+        try {
+          // Test preflight request
+          log("📡 Testing preflight request...");
+          const preflightResponse = await fetch(
+            "http://127.0.0.1:8002/v1.0/auth/token",
+            {
+              method: "OPTIONS",
+              headers: {
+                Origin: "http://localhost:3000",
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "Content-Type",
+              },
+            }
+          );
+
+          log(`📡 Preflight response: ${preflightResponse.status}`);
+
+          const corsHeaders = {
+            "Access-Control-Allow-Origin": preflightResponse.headers.get(
+              "Access-Control-Allow-Origin"
+            ),
+            "Access-Control-Allow-Methods": preflightResponse.headers.get(
+              "Access-Control-Allow-Methods"
+            ),
+            "Access-Control-Allow-Headers": preflightResponse.headers.get(
+              "Access-Control-Allow-Headers"
+            ),
+          };
+
+          log("📋 CORS Headers received:");
+          Object.entries(corsHeaders).forEach(([key, value]) => {
+            log(`  ${key}: ${value || "NOT SET"}`);
+          });
+
+          if (corsHeaders["Access-Control-Allow-Origin"]) {
+            log("✅ CORS is configured!", "success");
+            log("🚀 Try logging in again - it should work now", "success");
+          } else {
+            log("❌ CORS is not configured", "error");
+            log("💡 Your backend needs CORS headers", "warning");
+          }
+        } catch (error) {
+          log(`❌ CORS test failed: ${error.message}`, "error");
+          log("💡 This confirms CORS is blocking requests", "warning");
+        }
+      }
+
+      async function testWithProxy() {
+        clearLog();
+        log("🔄 Testing with proxy approach...");
+        log(
+          "💡 This would use /api/v1.0/auth/token instead of direct backend URL"
+        );
+        log("📋 To implement proxy:");
+        log("1. Create next.config.js with proxy configuration");
+        log(
+          "2. Update API base URL to use /api instead of http://127.0.0.1:8002"
+        );
+        log("3. Restart Next.js development server");
+      }
+
+      function showInstructions() {
+        clearLog();
+        log("📋 Step-by-step CORS fix instructions:");
+        log("");
+        log("🔧 OPTION 1: Fix Backend CORS (Recommended)");
+        log("1. Add CORS middleware to your backend");
+        log("2. Allow origin: http://localhost:3000");
+        log("3. Allow methods: POST, GET, OPTIONS");
+        log("4. Allow headers: Content-Type, Authorization");
+        log("5. Restart your backend server");
+        log("");
+        log("🔧 OPTION 2: Use Next.js Proxy");
+        log("1. Create next.config.js in your project root");
+        log("2. Add proxy configuration (see code above)");
+        log("3. Update .env.local: NEXT_PUBLIC_API_BASE_URL=/api");
+        log("4. Restart Next.js server: npm run dev");
+        log("");
+        log("🧪 After implementing either solution:");
+        log("1. Test CORS with the button above");
+        log("2. Try logging in at http://localhost:3000/login");
+        log("3. Should redirect to dashboard successfully");
+      }
+
+      // Initialize
+      log("🚨 CORS Issue Detected");
+      log("💡 Your backend is working, but CORS is blocking frontend requests");
+      log("🔧 Choose a solution above to fix the issue");
+    </script>
+  </body>
+</html>

@@ -103,7 +103,8 @@ export default function ProfilePage() {
           general_user: UserRole.GENERAL_USER,
         };
 
-        const resolvedRole: UserRole = roleMap[me.user_status] ?? UserRole.GENERAL_USER;
+        const resolvedRole: UserRole =
+          roleMap[me.user_status] ?? UserRole.GENERAL_USER;
 
         const profileData: UserProfile = {
           id: me.id,
@@ -115,8 +116,7 @@ export default function ProfilePage() {
             (points && (points.current_points ?? points.available_points)) ??
             me.available_points ??
             0,
-          totalPoints:
-            (points && points.total_points) ?? me.total_points ?? 0,
+          totalPoints: (points && points.total_points) ?? me.total_points ?? 0,
           paidStatus:
             resolvedRole === UserRole.SUPER_USER
               ? "I am super user, I have unlimited points."

@@ -25,12 +25,27 @@ export class ApiClient {
   private baseUrl: string;
 
   constructor(baseUrl?: string) {
-    this.baseUrl = baseUrl || process.env.NEXT_PUBLIC_API_URL || '';
+    // Use the full API URL with version, not just the base URL
+    const apiBaseUrl = baseUrl || process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || '';
+    const apiVersion = process.env.NEXT_PUBLIC_API_VERSION || 'v1.0';
 
-    if (!this.baseUrl && process.env.NODE_ENV === 'development') {
-      this.baseUrl = 'http://localhost:8002';
+    if (apiBaseUrl) {
+      this.baseUrl = `${apiBaseUrl}/${apiVersion}`;
+    } else if (process.env.NODE_ENV === 'development') {
+      this.baseUrl = 'http://localhost:8002/v1.0';
       console.warn('API URL not set, using fallback:', this.baseUrl);
+    } else {
+      this.baseUrl = '';
     }
+
+    console.log('🔧 API Client initialized:', {
+      baseUrl: this.baseUrl,
+      apiBaseUrl,
+      apiVersion,
+      NODE_ENV: process.env.NODE_ENV,
+      NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
+      NEXT_PUBLIC_USE_MOCK_AUTH: process.env.NEXT_PUBLIC_USE_MOCK_AUTH
+    });
   }
 
   // Main request method
@@ -74,7 +89,7 @@ export class ApiClient {
     };
 
     if (requiresAuth) {
-      const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
+      const token = typeof localStorage !== 'undefined' ? localStorage.getItem('admin_auth_token') : null;
       if (token) {
         requestHeaders['Authorization'] = `Bearer ${token}`;
       }
@@ -83,14 +98,19 @@ export class ApiClient {
     const requestConfig: RequestInit = {
       method,
       headers: requestHeaders,
-      credentials: 'include',
+      mode: 'cors',
+      credentials: 'omit', // Changed from 'include' to avoid CORS issues
     };
 
     if (body && method !== 'GET') {
       if (body instanceof FormData) {
         delete requestHeaders['Content-Type'];
         requestConfig.body = body;
+      } else if (typeof body === 'string') {
+        // If body is already a string (like URL-encoded form data), use it directly
+        requestConfig.body = body;
       } else {
+        // Otherwise, JSON stringify it
         requestConfig.body = JSON.stringify(body);
       }
     }
@@ -99,13 +119,38 @@ export class ApiClient {
     const url = /^https?:\/\//.test(endpoint) ? endpoint : `${this.baseUrl}${endpoint}`;
 
     try {
+      console.log(`🌐 Making request to: ${url}`);
+      console.log(`🔧 Request config:`, requestConfig);
+
       const response = await fetch(url, requestConfig);
+      console.log(`📡 Response status: ${response.status}`);
+
       return await this.handleResponse<T>(response);
     } catch (err) {
       console.error('API request failed:', err);
+      console.error('Request URL:', url);
+      console.error('Request config:', requestConfig);
+
+      // Check if this is a CORS error
+      if (err instanceof TypeError && err.message.includes('fetch')) {
+        console.error('🚨 CORS Error detected - this is likely a backend CORS configuration issue');
+        console.error('💡 Your backend needs to allow requests from http://localhost:3000');
+
+        return {
+          success: false,
+          error: {
+            status: 0,
+            message: `CORS Error: Cannot connect to ${url}. Backend must allow requests from http://localhost:3000. Check backend CORS configuration.`
+          },
+        };
+      }
+
       return {
         success: false,
-        error: { status: 0, message: err instanceof Error ? err.message : 'Network error' },
+        error: {
+          status: 0,
+          message: err instanceof Error ? err.message : 'Network error'
+        },
       };
     }
   }

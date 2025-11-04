@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Debug Connection Issue</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .status {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+        border-left: 4px solid;
+      }
+      .success {
+        background-color: #d4edda;
+        color: #155724;
+        border-color: #28a745;
+      }
+      .error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border-color: #dc3545;
+      }
+      .info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+        border-color: #17a2b8;
+      }
+      .warning {
+        background-color: #fff3cd;
+        color: #856404;
+        border-color: #ffc107;
+      }
+
+      button {
+        padding: 10px 15px;
+        margin: 5px;
+        cursor: pointer;
+        border: none;
+        border-radius: 4px;
+        background-color: #007bff;
+        color: white;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      button:disabled {
+        background-color: #6c757d;
+        cursor: not-allowed;
+      }
+
+      .log {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 10px;
+        margin: 10px 0;
+        max-height: 400px;
+        overflow-y: auto;
+        font-family: monospace;
+        font-size: 12px;
+      }
+
+      .checklist {
+        background-color: #fff3cd;
+        padding: 15px;
+        border-radius: 4px;
+        margin: 15px 0;
+        border-left: 4px solid #ffc107;
+      }
+
+      .step {
+        margin: 10px 0;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🔍 Debug Connection Issue</h1>
+
+      <div class="checklist">
+        <h3>⚠️ Connection Troubleshooting Checklist</h3>
+        <div class="step">
+          <strong>1. Backend Server Status:</strong>
+          <ul>
+            <li>Is your backend server running on port 8002?</li>
+            <li>Check your terminal/console for server logs</li>
+            <li>Try accessing http://127.0.0.1:8002 in your browser</li>
+          </ul>
+        </div>
+        <div class="step">
+          <strong>2. CORS Configuration:</strong>
+          <ul>
+            <li>
+              Does your backend allow requests from http://localhost:3000?
+            </li>
+            <li>Check CORS headers in your backend configuration</li>
+          </ul>
+        </div>
+        <div class="step">
+          <strong>3. Firewall/Network:</strong>
+          <ul>
+            <li>Is port 8002 blocked by firewall?</li>
+            <li>Try using 127.0.0.1 instead of localhost</li>
+          </ul>
+        </div>
+      </div>
+
+      <div>
+        <button onclick="testConnection()">Test Connection</button>
+        <button onclick="testHealth()">Test Health Endpoint</button>
+        <button onclick="testAuth()">Test Auth Endpoint</button>
+        <button onclick="testCORS()">Test CORS</button>
+      </div>
+
+      <div id="status" class="status info">
+        Ready to debug connection issues
+      </div>
+
+      <div class="log" id="log"></div>
+    </div>
+
+    <script>
+      function log(message, type = "info") {
+        const logDiv = document.getElementById("log");
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = document.createElement("div");
+        logEntry.innerHTML = `<span style="color: #666;">[${timestamp}]</span> ${message}`;
+        logDiv.appendChild(logEntry);
+        logDiv.scrollTop = logDiv.scrollHeight;
+        updateStatus(message, type);
+      }
+
+      function updateStatus(message, type = "info") {
+        const statusDiv = document.getElementById("status");
+        statusDiv.textContent = message;
+        statusDiv.className = `status ${type}`;
+      }
+
+      function clearLog() {
+        document.getElementById("log").innerHTML = "";
+      }
+
+      async function testConnection() {
+        clearLog();
+        log("🔍 Testing basic connection to backend server...");
+
+        const tests = [
+          { url: "http://127.0.0.1:8002", name: "Base URL" },
+          { url: "http://localhost:8002", name: "Localhost URL" },
+          { url: "http://127.0.0.1:8002/v1.0", name: "API Base URL" },
+        ];
+
+        for (const test of tests) {
+          try {
+            log(`📡 Testing ${test.name}: ${test.url}`);
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+            const response = await fetch(test.url, {
+              method: "GET",
+              signal: controller.signal,
+            });
+
+            clearTimeout(timeoutId);
+            log(`✅ ${test.name}: Connected (${response.status})`, "success");
+          } catch (error) {
+            if (error.name === "AbortError") {
+              log(`❌ ${test.name}: Timeout (5s)`, "error");
+            } else {
+              log(`❌ ${test.name}: ${error.message}`, "error");
+            }
+          }
+        }
+      }
+
+      async function testHealth() {
+        clearLog();
+        log("🏥 Testing health endpoint...");
+
+        const healthUrls = [
+          "http://127.0.0.1:8002/health",
+          "http://127.0.0.1:8002/v1.0/health",
+          "http://127.0.0.1:8002/api/health",
+        ];
+
+        for (const url of healthUrls) {
+          try {
+            log(`📡 Testing health: ${url}`);
+
+            const response = await fetch(url, {
+              method: "GET",
+              headers: {
+                Accept: "application/json",
+              },
+            });
+
+            if (response.ok) {
+              const data = await response.text();
+              log(`✅ Health endpoint found: ${response.status}`, "success");
+              log(`📄 Response: ${data}`);
+              return;
+            } else {
+              log(`❌ Health endpoint: ${response.status}`);
+            }
+          } catch (error) {
+            log(`❌ Health endpoint error: ${error.message}`);
+          }
+        }
+
+        log(
+          "💡 No health endpoint found - this is normal if your backend doesn't have one",
+          "warning"
+        );
+      }
+
+      async function testAuth() {
+        clearLog();
+        log("🔐 Testing auth endpoint...");
+
+        try {
+          const formData = new URLSearchParams();
+          formData.append("username", "test");
+          formData.append("password", "test");
+          formData.append("grant_type", "password");
+
+          const url = "http://127.0.0.1:8002/v1.0/auth/token";
+          log(`📡 Testing auth endpoint: ${url}`);
+
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: formData.toString(),
+          });
+
+          log(`📡 Auth endpoint response: ${response.status}`);
+
+          if (response.status === 401 || response.status === 422) {
+            log(
+              "✅ Auth endpoint is reachable (invalid credentials expected)",
+              "success"
+            );
+          } else if (response.ok) {
+            log("✅ Auth endpoint is working!", "success");
+          } else {
+            const errorText = await response.text();
+            log(`❌ Auth endpoint error: ${errorText}`);
+          }
+        } catch (error) {
+          log(`❌ Auth endpoint connection failed: ${error.message}`, "error");
+          log("💡 This is the same error your app is experiencing", "warning");
+        }
+      }
+
+      async function testCORS() {
+        clearLog();
+        log("🌐 Testing CORS configuration...");
+
+        try {
+          const response = await fetch(
+            "http://127.0.0.1:8002/v1.0/auth/token",
+            {
+              method: "OPTIONS",
+              headers: {
+                Origin: "http://localhost:3000",
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "Content-Type",
+              },
+            }
+          );
+
+          log(`📡 CORS preflight response: ${response.status}`);
+
+          const corsHeaders = {
+            "Access-Control-Allow-Origin": response.headers.get(
+              "Access-Control-Allow-Origin"
+            ),
+            "Access-Control-Allow-Methods": response.headers.get(
+              "Access-Control-Allow-Methods"
+            ),
+            "Access-Control-Allow-Headers": response.headers.get(
+              "Access-Control-Allow-Headers"
+            ),
+          };
+
+          log(`📋 CORS Headers: ${JSON.stringify(corsHeaders, null, 2)}`);
+
+          if (corsHeaders["Access-Control-Allow-Origin"]) {
+            log("✅ CORS is configured", "success");
+          } else {
+            log("❌ CORS might not be configured properly", "warning");
+            log(
+              "💡 Your backend needs to allow requests from http://localhost:3000",
+              "info"
+            );
+          }
+        } catch (error) {
+          log(`❌ CORS test failed: ${error.message}`, "error");
+        }
+      }
+
+      // Initialize
+      log("🔧 Connection debug tool ready");
+      log("💡 Run the tests above to identify the connection issue");
+    </script>
+  </body>
+</html>

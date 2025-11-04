@@ -255,10 +255,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
             "⚠️ Failed to fetch user profile, using fallback user data:",
             userResponse.error
           );
+          console.log("🔄 Creating fallback user to ensure login succeeds...");
           user = AuthService.createFallbackUser(
             credentials.username,
             response.data.access_token
           );
+          console.log("✅ Fallback user created:", user);
         }
         console.log("👤 Final user object:", user);
 
