@@ -411,7 +411,7 @@ export function HotelSearch({ onHotelSelect, className }: HotelSearchProps) {
                       </p>
                       <ul className="list-disc list-inside mt-1 space-y-1">
                         <li>
-                          Backend server is running on http://127.0.0.1:8000
+                          Backend server is running on http://127.0.0.1:8002
                         </li>
                         <li>No firewall blocking the connection</li>
                         <li>CORS is properly configured</li>

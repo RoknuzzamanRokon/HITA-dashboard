@@ -77,7 +77,7 @@ export const mainMenuItems: MenuItem[] = [
         id: "providers",
         label: "Provider Content",
         icon: Database,
-        path: "/providers",
+        path: "/dashboard/provider",
         description: "Manage provider content and mappings",
         requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER, UserRole.GENERAL_USER],
     },

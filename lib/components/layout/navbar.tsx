@@ -1,5 +1,5 @@
 /**
- * Premium Navigation Bar Component
+ * Modern Navigation Bar Component
  * Enhanced top navigation with glassmorphism design, notifications, and search
  */
 
@@ -19,8 +19,11 @@ import {
   Palette,
   HelpCircle,
   Shield,
+  MessageSquare,
+  Home,
 } from "lucide-react";
 import { useAuth } from "@/lib/contexts/auth-context";
+import { useTheme } from "@/lib/contexts/theme-context";
 import { User as UserType } from "@/lib/types/auth";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +34,7 @@ interface NavbarProps {
 
 export function Navbar({ user, onToggleSidebar }: NavbarProps) {
   const { logout } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -116,13 +120,18 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
 
   return (
     <nav
-      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 dark:text-white"
       style={{
-        background:
-          "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.8) 100%)",
+        background: theme === 'dark' 
+          ? "linear-gradient(135deg, rgba(17, 24, 39, 0.95) 0%, rgba(17, 24, 39, 0.8) 100%)"
+          : "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.8) 100%)",
         backdropFilter: "blur(20px)",
-        borderBottom: "1px solid rgba(255, 255, 255, 0.2)",
-        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
+        borderBottom: theme === 'dark' 
+          ? "1px solid rgba(55, 65, 81, 0.3)" 
+          : "1px solid rgba(255, 255, 255, 0.2)",
+        boxShadow: theme === 'dark'
+          ? "0 8px 32px rgba(0, 0, 0, 0.3)"
+          : "0 8px 32px rgba(0, 0, 0, 0.1)",
       }}
     >
       <div className="px-4 sm:px-6 lg:px-8">
@@ -132,18 +141,26 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
             <button
               onClick={onToggleSidebar}
               className={cn(
-                "p-2 rounded-xl text-gray-600 hover:text-gray-900 transition-all duration-300 group relative overflow-hidden",
-                "hover:bg-white/40 hover:backdrop-blur-sm hover:shadow-lg hover:scale-110",
+                "p-2 rounded-xl transition-all duration-300 group relative overflow-hidden",
+                theme === 'dark'
+                  ? "text-gray-300 hover:text-white hover:bg-gray-700/40"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-white/40",
+                "hover:backdrop-blur-sm hover:shadow-lg hover:scale-110",
                 "focus:outline-none focus:ring-2 focus:ring-blue-500/50"
               )}
               aria-label="Toggle sidebar"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
+              <div className={cn(
+                "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl",
+                theme === 'dark'
+                  ? "bg-gradient-to-r from-gray-700/20 to-transparent"
+                  : "bg-gradient-to-r from-white/20 to-transparent"
+              )} />
               <Menu className="h-5 w-5 relative z-10 transition-transform duration-300 group-hover:rotate-180" />
             </button>
 
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
                 <Shield className="h-4 w-4 text-white" />
               </div>
               <h1 className="text-xl font-bold text-gray-800 tracking-tight">
@@ -287,17 +304,25 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
               )}
             </div>
 
-            {/* Theme Toggle */}
+            {/* Theme Toggle Button */}
             <button
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className={cn(
-                "p-2 rounded-xl text-gray-600 hover:text-gray-900 transition-all duration-300 group relative overflow-hidden",
-                "hover:bg-white/40 hover:backdrop-blur-sm hover:shadow-lg hover:scale-110",
+                "p-2 rounded-xl transition-all duration-300 relative overflow-hidden",
+                theme === 'dark'
+                  ? "text-gray-300 hover:text-white hover:bg-gray-700/40"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-white/40",
+                "hover:backdrop-blur-sm hover:shadow-lg hover:scale-110",
                 "focus:outline-none focus:ring-2 focus:ring-blue-500/50"
               )}
               aria-label="Toggle theme"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
-              <Sun className="h-5 w-5 relative z-10 transition-transform duration-300 group-hover:rotate-180" />
+              {theme === 'dark' ? (
+                <Sun className="h-5 w-5 relative z-10" />
+              ) : (
+                <Moon className="h-5 w-5 relative z-10" />
+              )}
             </button>
 
             {/* User dropdown */}

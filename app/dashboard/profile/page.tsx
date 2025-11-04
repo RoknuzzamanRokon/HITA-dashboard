@@ -81,26 +81,56 @@ export default function ProfilePage() {
     try {
       setLoading(true);
       setError(null);
+      // Fetch from backend v1.0 endpoints
+      const meRes = await apiClient.get<any>(
+        "http://127.0.0.1:8002/v1.0/user/me"
+      );
+      const pointsRes = await apiClient.get<any>(
+        "http://127.0.0.1:8002/v1.0/user/points/check/me/"
+      );
+      const suppliersRes = await apiClient.get<any>(
+        "http://127.0.0.1:8002/v1.0/user/check_active_my_supplier"
+      );
 
-      const response = await apiClient.get<any>("/user/me/");
+      if (meRes.success && meRes.data) {
+        const me = meRes.data;
+        const points = pointsRes.success ? pointsRes.data : null;
+        const suppliers = suppliersRes.success ? suppliersRes.data : null;
 
-      if (response.success && response.data) {
+        const roleMap: Record<string, UserRole> = {
+          super_user: UserRole.SUPER_USER,
+          admin_user: UserRole.ADMIN_USER,
+          general_user: UserRole.GENERAL_USER,
+        };
+
+        const resolvedRole: UserRole = roleMap[me.user_status] ?? UserRole.GENERAL_USER;
+
         const profileData: UserProfile = {
-          id: response.data.id,
-          username: response.data.username,
-          email: response.data.email,
-          role: response.data.user_status,
-          isActive: response.data.is_active !== false,
-          pointBalance: response.data.available_points || 0,
-          totalPoints: response.data.total_points || 0,
-          paidStatus: response.data.paid_status || "Unknown",
-          totalRequests: response.data.total_rq || 0,
-          activityStatus: response.data.using_rq_status || "Inactive",
-          createdAt: response.data.created_at,
-          updatedAt: response.data.updated_at,
-          createdBy: response.data.created_by,
-          activeSuppliers: response.data.active_supplier || [],
-          lastLogin: response.data.last_login,
+          id: me.id,
+          username: me.username,
+          email: me.email,
+          role: resolvedRole,
+          isActive: me.is_active !== false,
+          pointBalance:
+            (points && (points.current_points ?? points.available_points)) ??
+            me.available_points ??
+            0,
+          totalPoints:
+            (points && points.total_points) ?? me.total_points ?? 0,
+          paidStatus:
+            resolvedRole === UserRole.SUPER_USER
+              ? "I am super user, I have unlimited points."
+              : me.paid_status || "Paid",
+          totalRequests: me.total_rq ?? 0,
+          activityStatus: me.using_rq_status || "Inactive",
+          createdAt: me.created_at,
+          updatedAt: me.updated_at,
+          createdBy: me.created_by,
+          activeSuppliers:
+            (me.supplier_info && me.supplier_info.active_list) ||
+            (suppliers && suppliers.my_supplier) ||
+            [],
+          lastLogin: me.last_login,
         };
 
         setProfile(profileData);

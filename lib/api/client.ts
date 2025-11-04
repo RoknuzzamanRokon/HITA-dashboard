@@ -1,338 +1,184 @@
 /**
- * Centralized API client with authentication handling
+ * API Client for making HTTP requests to the backend
  */
 
-import { config } from '@/lib/config';
-import { TokenStorage } from '@/lib/auth/token-storage';
-import type { ApiResponse, ApiError, RequestConfig } from '@/lib/types/api';
-
-export class ApiClient {
-    private static instance: ApiClient;
-    private baseUrl: string;
-    private isRefreshing = false;
-    private refreshPromise: Promise<string | null> | null = null;
-
-    private constructor() {
-        this.baseUrl = config.api.url;
-    }
-
-    /**
-     * Get singleton instance
-     */
-    static getInstance(): ApiClient {
-        if (!ApiClient.instance) {
-            ApiClient.instance = new ApiClient();
-        }
-        return ApiClient.instance;
-    }
-
-    /**
-     * Make HTTP request with automatic token handling
-     */
-    async request<T = any>(
-        endpoint: string,
-        options: RequestConfig = {}
-    ): Promise<ApiResponse<T>> {
-        const {
-            method = 'GET',
-            headers = {},
-            body,
-            requiresAuth = true,
-        } = options;
-
-        try {
-            // Prepare request headers
-            const requestHeaders: Record<string, string> = {
-                'Content-Type': 'application/json',
-                ...headers,
-            };
-
-            // Add authentication header if required
-            if (requiresAuth) {
-                const token = await this.getValidToken();
-                if (token) {
-                    requestHeaders.Authorization = `Bearer ${token}`;
-                }
-            }
-
-            // Prepare request configuration
-            const requestConfig: RequestInit = {
-                method,
-                headers: requestHeaders,
-                mode: 'cors',
-                credentials: 'omit',
-            };
-
-            // Add body for non-GET requests
-            if (body && method !== 'GET') {
-                if (body instanceof FormData) {
-                    // Remove Content-Type for FormData (browser will set it with boundary)
-                    delete requestHeaders['Content-Type'];
-                    requestConfig.body = body;
-                } else if (typeof body === 'string' && requestHeaders['Content-Type'] === 'application/x-www-form-urlencoded') {
-                    // Handle URL-encoded form data
-                    requestConfig.body = body;
-                } else {
-                    requestConfig.body = JSON.stringify(body);
-                }
-            }
-
-            // Make the request
-            const response = await fetch(`${this.baseUrl}${endpoint}`, requestConfig);
-
-            // Handle response
-            return await this.handleResponse<T>(response);
-        } catch (error) {
-            console.error('API request failed:', error);
-
-            // Check if it's a network error (likely CORS)
-            if (error instanceof TypeError && error.message.includes('fetch')) {
-                return {
-                    success: false,
-                    error: {
-                        status: 0,
-                        message: 'Unable to connect to the API server. This might be a CORS issue. Please ensure your backend allows requests from localhost:3002',
-                    },
-                };
-            }
-
-            return {
-                success: false,
-                error: {
-                    status: 0,
-                    message: error instanceof Error ? error.message : 'Network error',
-                },
-            };
-        }
-    }
-
-    /**
-     * Handle API response and errors
-     */
-    private async handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
-        try {
-            // Check if response is ok
-            if (!response.ok) {
-                const errorData = await this.parseErrorResponse(response);
-                return {
-                    success: false,
-                    error: {
-                        status: response.status,
-                        message: errorData.message || response.statusText,
-                        details: errorData.details,
-                    },
-                };
-            }
-
-            // Parse successful response
-            const data = await response.json();
-            return {
-                success: true,
-                data,
-            };
-        } catch (error) {
-            return {
-                success: false,
-                error: {
-                    status: response.status,
-                    message: 'Failed to parse response',
-                    details: error,
-                },
-            };
-        }
-    }
-
-    /**
-     * Parse error response
-     */
-    private async parseErrorResponse(response: Response): Promise<{
-        message: string;
-        details?: any;
-    }> {
-        try {
-            const errorData = await response.json();
-            return {
-                message: errorData.detail || errorData.message || 'An error occurred',
-                details: errorData,
-            };
-        } catch {
-            return {
-                message: response.statusText || 'An error occurred',
-            };
-        }
-    }
-
-    /**
-     * Get valid token with automatic refresh
-     */
-    private async getValidToken(): Promise<string | null> {
-        const token = TokenStorage.getToken();
-
-        if (!token) {
-            return null;
-        }
-
-        // Check if token is expired (basic check)
-        if (this.isTokenExpired(token)) {
-            return await this.refreshToken();
-        }
-
-        return token;
-    }
-
-    /**
-     * Check if token is expired (basic implementation)
-     */
-    private isTokenExpired(token: string): boolean {
-        try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            const currentTime = Math.floor(Date.now() / 1000);
-            // Add 5 minute buffer to prevent premature expiration
-            const bufferTime = 5 * 60; // 5 minutes
-            const isExpired = payload.exp < (currentTime + bufferTime);
-
-            if (isExpired) {
-                console.warn("🕐 Token is expired or expiring soon, exp:", payload.exp, "current:", currentTime);
-            }
-
-            return isExpired;
-        } catch (error) {
-            console.warn("❌ Failed to parse token, but keeping it valid:", error);
-            // If we can't parse the token, don't assume it's expired
-            // Let the server decide if it's valid
-            return false;
-        }
-    }
-
-    /**
-     * Refresh authentication token
-     */
-    private async refreshToken(): Promise<string | null> {
-        // Prevent multiple simultaneous refresh attempts
-        if (this.isRefreshing && this.refreshPromise) {
-            return await this.refreshPromise;
-        }
-
-        this.isRefreshing = true;
-        this.refreshPromise = this.performTokenRefresh();
-
-        try {
-            const newToken = await this.refreshPromise;
-            return newToken;
-        } finally {
-            this.isRefreshing = false;
-            this.refreshPromise = null;
-        }
-    }
-
-    /**
-     * Perform actual token refresh
-     */
-    private async performTokenRefresh(): Promise<string | null> {
-        const refreshToken = TokenStorage.getRefreshToken();
-
-        if (!refreshToken) {
-            this.handleAuthenticationFailure();
-            return null;
-        }
-
-        try {
-            const response = await fetch(`${this.baseUrl}/auth/refresh`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ refresh_token: refreshToken }),
-            });
-
-            if (!response.ok) {
-                throw new Error('Token refresh failed');
-            }
-
-            const data = await response.json();
-            const newToken = data.access_token;
-
-            if (newToken) {
-                TokenStorage.setToken(newToken);
-                if (data.refresh_token) {
-                    TokenStorage.setRefreshToken(data.refresh_token);
-                }
-                return newToken;
-            }
-
-            throw new Error('No token in refresh response');
-        } catch (error) {
-            console.error('Token refresh failed:', error);
-            this.handleAuthenticationFailure();
-            return null;
-        }
-    }
-
-    /**
-     * Handle authentication failure
-     */
-    private handleAuthenticationFailure(): void {
-        console.warn("🚨 Authentication failure detected, clearing tokens");
-        TokenStorage.clearTokens();
-
-        // Don't automatically redirect - let the auth context handle it
-        // This prevents unwanted redirects during normal navigation
-    }
-
-    /**
-     * Convenience methods for different HTTP methods
-     */
-    async get<T = any>(endpoint: string, requiresAuth = true): Promise<ApiResponse<T>> {
-        return this.request<T>(endpoint, { method: 'GET', requiresAuth });
-    }
-
-    async post<T = any>(
-        endpoint: string,
-        body?: any,
-        requiresAuth = true
-    ): Promise<ApiResponse<T>> {
-        return this.request<T>(endpoint, { method: 'POST', body, requiresAuth });
-    }
-
-    async put<T = any>(
-        endpoint: string,
-        body?: any,
-        requiresAuth = true
-    ): Promise<ApiResponse<T>> {
-        return this.request<T>(endpoint, { method: 'PUT', body, requiresAuth });
-    }
-
-    async patch<T = any>(
-        endpoint: string,
-        body?: any,
-        requiresAuth = true
-    ): Promise<ApiResponse<T>> {
-        return this.request<T>(endpoint, { method: 'PATCH', body, requiresAuth });
-    }
-
-    async delete<T = any>(
-        endpoint: string,
-        requiresAuth = true
-    ): Promise<ApiResponse<T>> {
-        return this.request<T>(endpoint, { method: 'DELETE', requiresAuth });
-    }
-
-    /**
-     * Health check endpoint
-     */
-    async healthCheck(): Promise<ApiResponse<{ status: string }>> {
-        try {
-            return await this.request<{ status: string }>('/health/', {
-                method: 'GET',
-                requiresAuth: false
-            });
-        } catch (error) {
-            // Fall back to mock health check
-            const { MockAuthService } = await import('./mock-auth');
-            return MockAuthService.healthCheck();
-        }
-    }
+export interface RequestConfig {
+  method?: string;
+  headers?: Record<string, string>;
+  body?: any;
+  requiresAuth?: boolean;
 }
 
-// Export singleton instance
-export const apiClient = ApiClient.getInstance();
+export interface ApiError {
+  status: number;
+  message: string;
+  details?: any;
+}
+
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: ApiError;
+}
+
+export class ApiClient {
+  private baseUrl: string;
+
+  constructor(baseUrl?: string) {
+    this.baseUrl = baseUrl || process.env.NEXT_PUBLIC_API_URL || '';
+
+    if (!this.baseUrl && process.env.NODE_ENV === 'development') {
+      this.baseUrl = 'http://localhost:8002';
+      console.warn('API URL not set, using fallback:', this.baseUrl);
+    }
+  }
+
+  // Main request method
+  async request<T = any>(endpoint: string, options: RequestConfig = {}): Promise<ApiResponse<T>> {
+    const { method = 'GET', headers = {}, body, requiresAuth = true } = options;
+
+    // In development, return realistic mock responses for known endpoints when explicitly enabled
+    if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_MOCKS === 'true') {
+      console.log(`[DEV] Mocking API call to ${endpoint}`);
+
+      // Mock: current user profile
+      if (method === 'GET' && /\/user\/me\/?$/.test(endpoint)) {
+        const mockUser = {
+          id: 'mock-user-1',
+          username: 'demo',
+          email: 'demo@example.com',
+          user_status: 'super_user',
+          is_active: true,
+          available_points: 750,
+          total_points: 1200,
+          paid_status: 'Paid',
+          total_rq: 42,
+          using_rq_status: 'Active',
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-05-01T12:34:56Z',
+          created_by: 'system',
+          active_supplier: ['Provider A', 'Provider B'],
+          last_login: '2024-10-01T08:00:00Z',
+        } as unknown as T;
+
+        return { success: true, data: mockUser };
+      }
+
+      // Default mock for other endpoints
+      return { success: true, data: [] as unknown as T };
+    }
+
+    const requestHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...headers,
+    };
+
+    if (requiresAuth) {
+      const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
+      if (token) {
+        requestHeaders['Authorization'] = `Bearer ${token}`;
+      }
+    }
+
+    const requestConfig: RequestInit = {
+      method,
+      headers: requestHeaders,
+      credentials: 'include',
+    };
+
+    if (body && method !== 'GET') {
+      if (body instanceof FormData) {
+        delete requestHeaders['Content-Type'];
+        requestConfig.body = body;
+      } else {
+        requestConfig.body = JSON.stringify(body);
+      }
+    }
+
+    // Support absolute URLs; otherwise, prepend baseUrl
+    const url = /^https?:\/\//.test(endpoint) ? endpoint : `${this.baseUrl}${endpoint}`;
+
+    try {
+      const response = await fetch(url, requestConfig);
+      return await this.handleResponse<T>(response);
+    } catch (err) {
+      console.error('API request failed:', err);
+      return {
+        success: false,
+        error: { status: 0, message: err instanceof Error ? err.message : 'Network error' },
+      };
+    }
+  }
+
+  // Parse and normalize responses
+  private async handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
+    const contentType = response.headers.get('content-type') || '';
+    let data: any = null;
+    if (contentType.includes('application/json')) {
+      try {
+        data = await response.json();
+      } catch {
+        // fallthrough
+      }
+    }
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: {
+          status: response.status,
+          message: (data && (data.message || data.error)) || response.statusText || 'Unknown error',
+          details: data && (data.details || data.errors),
+        },
+      };
+    }
+
+    return { success: true, data: data as T };
+  }
+
+  // Convenience methods
+  async get<T = any>(endpoint: string, requiresAuth = true): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: 'GET', requiresAuth });
+  }
+
+  async post<T = any>(endpoint: string, body?: any, requiresAuth = true): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: 'POST', body, requiresAuth });
+  }
+
+  async put<T = any>(endpoint: string, body?: any, requiresAuth = true): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: 'PUT', body, requiresAuth });
+  }
+
+  async patch<T = any>(endpoint: string, body?: any, requiresAuth = true): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: 'PATCH', body, requiresAuth });
+  }
+
+  async delete<T = any>(endpoint: string, requiresAuth = true): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: 'DELETE', requiresAuth });
+  }
+
+  // Simple health check helper used by dashboard
+  async healthCheck(): Promise<ApiResponse<{ ok?: boolean }>> {
+    // Prefer a lightweight check; in dev with mocks enabled, always healthy
+    if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_MOCKS === 'true') {
+      return { success: true, data: { ok: true } };
+    }
+
+    // Try a conventional health endpoint, fall back to success=false on error
+    try {
+      const res = await this.get<any>('/health', false);
+      if (res.success) {
+        return { success: true, data: res.data };
+      }
+      return { success: false, error: res.error };
+    } catch (err) {
+      return {
+        success: false,
+        error: { status: 0, message: err instanceof Error ? err.message : 'Network error' },
+      };
+    }
+  }
+}
+
+export const apiClient = new ApiClient();
+export default apiClient;

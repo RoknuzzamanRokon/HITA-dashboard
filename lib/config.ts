@@ -5,7 +5,7 @@
 export const config = {
     // API Configuration
     api: {
-        baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000',
+        baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8002',
         version: process.env.NEXT_PUBLIC_API_VERSION || 'v1.0',
         get url() {
             return `${this.baseUrl}/${this.version}`;

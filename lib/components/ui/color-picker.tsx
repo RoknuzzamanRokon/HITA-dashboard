@@ -14,7 +14,7 @@ export interface ColorOption {
 export interface ColorPickerProps {
   value: string;
   onChange: (value: string) => void;
-  options: ColorOption[];
+  options?: ColorOption[];
   label?: string;
   className?: string;
 }

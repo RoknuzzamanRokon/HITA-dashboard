@@ -117,5 +117,21 @@ export function useTheme() {
   if (context === undefined) {
     throw new Error("useTheme must be used within a ThemeProvider");
   }
-  return context;
+  
+  // Add simplified theme helpers
+  const theme = context.resolvedTheme;
+  const setTheme = (newTheme: "light" | "dark" | "system") => {
+    context.updateSettings({ theme: newTheme });
+  };
+  
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  };
+  
+  return { 
+    ...context, 
+    theme, 
+    setTheme,
+    toggleTheme
+  };
 }

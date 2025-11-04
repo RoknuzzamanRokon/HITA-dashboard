@@ -181,207 +181,194 @@ export default function ProvidersPage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Provider Content Management
-        </h1>
-        <p className="text-gray-600">Manage provider content and mappings</p>
-      </div>
-
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="flex items-center">
-            <Database className="h-8 w-8 text-blue-500" />
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">
-                Total Providers
-              </p>
-              <p className="text-2xl font-bold text-gray-900">
-                {providers.length}
-              </p>
+    <div className="max-w-4xl mx-auto">
+      {/* Header - styled like Profile page */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-8">
+          <div className="flex items-center space-x-6">
+            <div className="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-4 border-white/30">
+              <Database className="h-10 w-10 text-white" />
             </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="flex items-center">
-            <BarChart3 className="h-8 w-8 text-green-500" />
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Total Hotels</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {providerStats
-                  .reduce((sum, stat) => sum + stat.totalHotels, 0)
-                  .toLocaleString()}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="flex items-center">
-            <CheckCircle className="h-8 w-8 text-green-500" />
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Mapped Hotels</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {providerStats
-                  .reduce((sum, stat) => sum + stat.mappedHotels, 0)
-                  .toLocaleString()}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="flex items-center">
-            <Activity className="h-8 w-8 text-blue-500" />
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-600">Active Syncs</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {
-                  providerStats.filter(
-                    (stat) => stat.syncStatus === "in_progress"
-                  ).length
-                }
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Provider Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {providers.map((provider) => {
-          const stats = providerStats.find(
-            (stat) => stat.name === provider.name
-          );
-          const isRefreshing = refreshing === provider.name;
-
-          return (
-            <div
-              key={provider.name}
-              className="bg-white rounded-lg border border-gray-200 hover:border-blue-300 transition-colors cursor-pointer"
-              onClick={() => handleProviderSelect(provider.name)}
-            >
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center">
-                    <Database className="h-8 w-8 text-blue-500" />
-                    <div className="ml-3">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {provider.name}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        {provider.description || "Content Provider"}
-                      </p>
-                    </div>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-gray-400" />
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-white mb-2">
+                Provider Content Management
+              </h1>
+              <p className="text-blue-100 mb-3">Manage provider content and mappings</p>
+              <div className="flex items-center space-x-3">
+                <div className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 border border-blue-200">
+                  Total Providers: {providers.length}
                 </div>
-
-                {stats && (
-                  <>
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <p className="text-sm text-gray-600">Total Hotels</p>
-                        <p className="text-xl font-bold text-gray-900">
-                          {stats.totalHotels.toLocaleString()}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Mapped</p>
-                        <p className="text-xl font-bold text-green-600">
-                          {stats.mappedHotels.toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between text-sm mb-1">
-                        <span className="text-gray-600">Mapping Progress</span>
-                        <span className="text-gray-900">
-                          {Math.round(
-                            (stats.mappedHotels / stats.totalHotels) * 100
-                          )}
-                          %
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-green-500 h-2 rounded-full transition-all"
-                          style={{
-                            width: `${Math.min(
-                              (stats.mappedHotels / stats.totalHotels) * 100,
-                              100
-                            )}%`,
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div
-                        className={`flex items-center px-2 py-1 rounded-full text-xs border ${getStatusColor(
-                          stats.syncStatus
-                        )}`}
-                      >
-                        {getStatusIcon(stats.syncStatus)}
-                        <span className="ml-1 capitalize">
-                          {stats.syncStatus.replace("_", " ")}
-                        </span>
-                      </div>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRefreshProvider(provider.name);
-                        }}
-                        disabled={isRefreshing}
-                        className="p-1 text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-50"
-                        title="Refresh provider data"
-                      >
-                        <RefreshCw
-                          className={`h-4 w-4 ${
-                            isRefreshing ? "animate-spin" : ""
-                          }`}
-                        />
-                      </button>
-                    </div>
-
-                    {stats.lastSyncDate && (
-                      <div className="mt-3 pt-3 border-t border-gray-100">
-                        <div className="flex items-center text-xs text-gray-500">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          Last sync: {formatDate(stats.lastSyncDate)}
-                        </div>
-                        {stats.errorCount && stats.errorCount > 0 && (
-                          <div className="flex items-center text-xs text-red-500 mt-1">
-                            <AlertTriangle className="h-3 w-3 mr-1" />
-                            {stats.errorCount} errors
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </>
-                )}
+                <div className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 border border-green-200">
+                  Total Hotels: {providerStats.reduce((s, st) => s + st.totalHotels, 0).toLocaleString()}
+                </div>
+                <div className="px-2 py-1 rounded-full text-xs bg-indigo-100 text-indigo-800 border border-indigo-200">
+                  Active Syncs: {providerStats.filter((st) => st.syncStatus === 'in_progress').length}
+                </div>
               </div>
             </div>
-          );
-        })}
+          </div>
+        </div>
       </div>
 
-      {providers.length === 0 && (
-        <div className="text-center py-12">
-          <Database className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            No Providers Available
-          </h3>
-          <p className="text-gray-600">
-            No content providers are currently configured or accessible.
-          </p>
+      {/* Main layout - left content, right sidebar (like Profile page) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left: Providers list */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                <Database className="h-5 w-5 mr-2 text-blue-500" />
+                Providers
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {providers.map((provider) => {
+                const stats = providerStats.find((stat) => stat.name === provider.name);
+                const isRefreshing = refreshing === provider.name;
+
+                return (
+                  <div
+                    key={provider.name}
+                    className="bg-white rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all cursor-pointer overflow-hidden"
+                    onClick={() => handleProviderSelect(provider.name)}
+                  >
+                    <div className="p-5">
+                      <div className="flex items-start justify-between mb-4">
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">{provider.name}</h3>
+                          <p className="text-sm text-gray-600">
+                            {provider.description || 'Content Provider'}
+                          </p>
+                        </div>
+                        <ChevronRight className="h-5 w-5 text-gray-400" />
+                      </div>
+
+                      {stats && (
+                        <>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-gray-50 rounded-lg p-3">
+                              <p className="text-xs text-gray-500">Total Hotels</p>
+                              <p className="text-base font-semibold text-gray-900">
+                                {stats.totalHotels.toLocaleString()}
+                              </p>
+                            </div>
+                            <div className="bg-gray-50 rounded-lg p-3">
+                              <p className="text-xs text-gray-500">Mapped</p>
+                              <p className="text-base font-semibold text-gray-900">
+                                {stats.mappedHotels.toLocaleString()}
+                              </p>
+                            </div>
+                            <div className="bg-gray-50 rounded-lg p-3">
+                              <p className="text-xs text-gray-500">Unmapped</p>
+                              <p className="text-base font-semibold text-gray-900">
+                                {stats.unmappedHotels.toLocaleString()}
+                              </p>
+                            </div>
+                            <div className="bg-gray-50 rounded-lg p-3">
+                              <p className="text-xs text-gray-500">Last Sync</p>
+                              <p className="text-base font-semibold text-gray-900">
+                                {stats.lastSyncDate ? formatDate(stats.lastSyncDate) : 'N/A'}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="mt-4">
+                            <p className="text-xs text-gray-500 mb-1">Mapping Progress</p>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div
+                                className="bg-green-500 h-2 rounded-full transition-all"
+                                style={{
+                                  width: `${Math.min((stats.mappedHotels / stats.totalHotels) * 100, 100)}%`,
+                                }}
+                              ></div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                            <div className={`flex items-center px-3 py-1 rounded-full text-sm ${getStatusColor(stats.syncStatus)}`}>
+                              {getStatusIcon(stats.syncStatus)}
+                              <span className="ml-1 font-medium">
+                                {stats.syncStatus === 'success'
+                                  ? 'Synced'
+                                  : stats.syncStatus === 'error'
+                                  ? 'Failed'
+                                  : stats.syncStatus === 'in_progress'
+                                  ? 'Syncing'
+                                  : 'Pending'}
+                              </span>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRefreshProvider(provider.name);
+                              }}
+                              disabled={isRefreshing || stats.syncStatus === 'in_progress'}
+                              className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
+                            >
+                              <RefreshCw className={`h-4 w-4 text-gray-500 ${isRefreshing ? 'animate-spin text-blue-500' : ''}`} />
+                            </button>
+                          </div>
+
+                          {stats.lastSyncDate && (
+                            <div className="mt-3 flex items-center text-xs text-gray-500">
+                              <Calendar className="h-3 w-3 mr-1" />
+                              Last updated: {formatDate(stats.lastSyncDate)}
+                            </div>
+                          )}
+                          {stats.errorCount && stats.errorCount > 0 && (
+                            <div className="flex items-center text-xs text-red-500 mt-1">
+                              <AlertTriangle className="h-3 w-3 mr-1" />
+                              {stats.errorCount} errors
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {providers.length === 0 && (
+              <div className="text-center py-12">
+                <Database className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Providers Available</h3>
+                <p className="text-gray-600">No content providers are currently configured or accessible.</p>
+              </div>
+            )}
+          </div>
         </div>
-      )}
+
+        {/* Right: Sidebar stats */}
+        <div className="space-y-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <Activity className="h-5 w-5 mr-2 text-blue-500" />
+              Overview
+            </h3>
+            <div className="space-y-4">
+              <div className="text-center p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                <p className="text-sm text-gray-600 mb-1">Total Providers</p>
+                <p className="text-3xl font-bold text-blue-600">{providers.length}</p>
+              </div>
+
+              <div className="text-center p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600 mb-1">Total Hotels</p>
+                <p className="text-xl font-semibold text-gray-700">
+                  {providerStats.reduce((sum, stat) => sum + stat.totalHotels, 0).toLocaleString()}
+                </p>
+              </div>
+
+              <div className="text-center">
+                <div className="inline-flex px-2 py-1 rounded-full text-xs bg-indigo-100 text-indigo-800">
+                  Active Syncs: {providerStats.filter((st) => st.syncStatus === 'in_progress').length}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

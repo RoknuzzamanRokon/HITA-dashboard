@@ -1,5 +1,5 @@
 /**
- * Enhanced Sidebar Component with Glassmorphism Design
+ * Modern Sidebar Component with Glassmorphism Design
  * Premium collapsible navigation sidebar with smooth animations and mobile responsiveness
  */
 
@@ -17,12 +17,14 @@ import {
   MenuSection,
 } from "@/lib/utils/menu-config";
 import { useNavigationGuard } from "@/lib/hooks/use-navigation-guard";
+import { useTheme } from "@/lib/contexts/theme-context";
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
   onToggle: () => void;
   userRole: UserRole;
+  className?: string;
 }
 
 interface MenuItemComponentProps {
@@ -170,6 +172,7 @@ function MenuItemComponent({
 
 export function Sidebar({ isOpen, onClose, onToggle, userRole }: SidebarProps) {
   const pathname = usePathname();
+  const { theme } = useTheme();
   const { hasRouteAccess } = useNavigationGuard();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [isMobile, setIsMobile] = useState(false);
@@ -284,7 +287,7 @@ export function Sidebar({ isOpen, onClose, onToggle, userRole }: SidebarProps) {
       <aside
         className={cn(
           "fixed left-0 top-16 h-[calc(100vh-4rem)] transition-all duration-500 ease-out z-50",
-          "bg-white/80 backdrop-blur-xl border-r border-white/20 shadow-2xl",
+          "backdrop-blur-xl border-r shadow-2xl",
           "before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/10 before:to-transparent before:pointer-events-none",
 
           // Desktop behavior
@@ -295,26 +298,36 @@ export function Sidebar({ isOpen, onClose, onToggle, userRole }: SidebarProps) {
           isMobile && isOpen
             ? "w-80 translate-x-0"
             : isMobile && "w-80 -translate-x-full",
+          
+          theme === 'dark' ? "bg-gray-900/80 border-gray-700" : "bg-white/80 border-white/20",
 
           // Animation classes
           "transform-gpu will-change-transform"
         )}
         style={{
-          background:
-            "linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%)",
-          boxShadow:
-            "0 25px 45px -12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.6)",
+          background: theme === 'dark'
+            ? "linear-gradient(135deg, rgba(17, 24, 39, 0.9) 0%, rgba(17, 24, 39, 0.7) 100%)"
+            : "linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%)",
+          boxShadow: theme === 'dark'
+            ? "0 25px 45px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(55, 65, 81, 0.3)"
+            : "0 25px 45px -12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.6)",
         }}
       >
         <div className="flex flex-col h-full relative">
           {/* Enhanced Sidebar Header */}
-          <div className="flex items-center justify-between p-6 border-b border-white/20 bg-gradient-to-r from-white/20 to-transparent backdrop-blur-sm">
+          <div className={cn(
+            "flex items-center justify-between p-6 border-b backdrop-blur-sm",
+            theme === 'dark' ? "border-gray-700/30 bg-gradient-to-r from-gray-800/20 to-transparent" : "border-white/20 bg-gradient-to-r from-white/20 to-transparent"
+          )}>
             {isOpen && (
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
                   <Menu className="h-4 w-4 text-white" />
                 </div>
-                <h2 className="text-lg font-bold text-gray-800 tracking-tight">
+                <h2 className={cn(
+                  "text-lg font-bold tracking-tight",
+                  theme === 'dark' ? "text-white" : "text-gray-800"
+                )}>
                   Navigation
                 </h2>
               </div>
@@ -324,14 +337,22 @@ export function Sidebar({ isOpen, onClose, onToggle, userRole }: SidebarProps) {
             <button
               onClick={isMobile ? onClose : onToggle}
               className={cn(
-                "p-2 rounded-xl text-gray-600 hover:text-gray-900 transition-all duration-300 group relative overflow-hidden",
-                "hover:bg-white/40 hover:backdrop-blur-sm hover:shadow-lg hover:scale-110",
+                "p-2 rounded-xl transition-all duration-300 group relative overflow-hidden",
+                theme === 'dark'
+                  ? "text-gray-300 hover:text-white hover:bg-gray-700/40"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-white/40",
+                "hover:backdrop-blur-sm hover:shadow-lg hover:scale-110",
                 "focus:outline-none focus:ring-2 focus:ring-blue-500/50",
                 !isOpen && "lg:mx-auto"
               )}
               aria-label={isMobile ? "Close sidebar" : "Toggle sidebar"}
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
+              <div className={cn(
+                "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl",
+                theme === 'dark'
+                  ? "bg-gradient-to-r from-gray-700/20 to-transparent"
+                  : "bg-gradient-to-r from-white/20 to-transparent"
+              )} />
               {isMobile ? (
                 <X className="h-5 w-5 relative z-10 transition-transform duration-300 group-hover:rotate-90" />
               ) : (

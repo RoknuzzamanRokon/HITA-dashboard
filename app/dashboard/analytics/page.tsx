@@ -141,13 +141,13 @@ export default function AnalyticsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Users</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <div className="text-2xl font-bold text-gray-900">
                   {statsLoading ? (
                     <SkeletonLoader className="h-8 w-16" />
                   ) : (
                     stats?.totalUsers?.toLocaleString() || "0"
                   )}
-                </p>
+                </div>
                 <p className="text-xs text-green-600 flex items-center mt-1">
                   <TrendingUp className="w-3 h-3 mr-1" />+
                   {stats?.recentSignups || 0} this period
@@ -167,13 +167,13 @@ export default function AnalyticsPage() {
                 <p className="text-sm font-medium text-gray-600">
                   Active Users
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <div className="text-2xl font-bold text-gray-900">
                   {statsLoading ? (
                     <SkeletonLoader className="h-8 w-16" />
                   ) : (
                     stats?.activeUsers?.toLocaleString() || "0"
                   )}
-                </p>
+                </div>
                 <p className="text-xs text-green-600 flex items-center mt-1">
                   <TrendingUp className="w-3 h-3 mr-1" />
                   {stats?.totalUsers
@@ -196,7 +196,7 @@ export default function AnalyticsPage() {
                 <p className="text-sm font-medium text-gray-600">
                   Points Distributed
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <div className="text-2xl font-bold text-gray-900">
                   {statsLoading ? (
                     <SkeletonLoader className="h-8 w-20" />
                   ) : stats?.totalPointsDistributed ? (
@@ -204,7 +204,7 @@ export default function AnalyticsPage() {
                   ) : (
                     "0"
                   )}
-                </p>
+                </div>
                 <p className="text-xs text-purple-600 flex items-center mt-1">
                   <Target className="w-3 h-3 mr-1" />
                   Across all users
@@ -224,7 +224,7 @@ export default function AnalyticsPage() {
                 <p className="text-sm font-medium text-gray-600">
                   Current Balance
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <div className="text-2xl font-bold text-gray-900">
                   {statsLoading ? (
                     <SkeletonLoader className="h-8 w-20" />
                   ) : stats?.currentPointsBalance ? (
@@ -232,7 +232,7 @@ export default function AnalyticsPage() {
                   ) : (
                     "0"
                   )}
-                </p>
+                </div>
                 <p className="text-xs text-orange-600 flex items-center mt-1">
                   <Target className="w-3 h-3 mr-1" />
                   Available points

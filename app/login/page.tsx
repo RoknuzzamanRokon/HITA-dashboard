@@ -21,7 +21,7 @@ function SecurityHeaders() {
       <meta name="robots" content="noindex, nofollow" />
       <meta
         httpEquiv="Content-Security-Policy"
-        content="default-src 'self'; connect-src 'self' http://127.0.0.1:8000 http://localhost:8000; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
+        content="default-src 'self'; connect-src 'self' http://127.0.0.1:8002 http://localhost:8002; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
       />
     </>
   );
