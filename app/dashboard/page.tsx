@@ -228,58 +228,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* API Status Indicator */}
-      <div className="mb-6">
-        <div
-          className={`p-4 rounded-md ${
-            apiStatus === "connected"
-              ? "bg-green-50 border border-green-200"
-              : apiStatus === "disconnected"
-              ? "bg-red-50 border border-red-200"
-              : "bg-yellow-50 border border-yellow-200"
-          }`}
-        >
-          <div className="flex items-center">
-            <div
-              className={`w-3 h-3 rounded-full mr-3 ${
-                apiStatus === "connected"
-                  ? "bg-green-500"
-                  : apiStatus === "disconnected"
-                  ? "bg-red-500"
-                  : "bg-yellow-500"
-              }`}
-            ></div>
-            <span
-              className={`text-sm font-medium ${
-                apiStatus === "connected"
-                  ? "text-green-800"
-                  : apiStatus === "disconnected"
-                  ? "text-red-800"
-                  : "text-yellow-800"
-              }`}
-            >
-              API Status:{" "}
-              {apiStatus === "connected"
-                ? "Connected"
-                : apiStatus === "disconnected"
-                ? "Disconnected - Backend server may not be running"
-                : "Checking connection..."}
-            </span>
-          </div>
-        </div>
-      </div>
 
-      {/* Authentication Debug Info */}
-      <div className="mb-6">
-        <div className="p-4 rounded-md bg-blue-50 border border-blue-200">
-          <div className="text-sm">
-            <strong>Auth Status:</strong>{" "}
-            {isAuthenticated ? "✅ Authenticated" : "❌ Not Authenticated"} |
-            <strong> User:</strong> {user?.username || "None"} |
-            <strong> Role:</strong> {user?.role || "None"}
-          </div>
-        </div>
-      </div>
+    
 
       {/* Dashboard Stats Error */}
       {statsError && (

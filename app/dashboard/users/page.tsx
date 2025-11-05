@@ -259,8 +259,8 @@ export default function UsersPage() {
     try {
       console.log("👤 Fetching current user details...");
 
-      // Make direct API call to get raw response from /user/me/
-      const response = await apiClient.get<any>("/user/me/");
+      // Make direct API call to get raw response from /user/check-me
+      const response = await apiClient.get<any>("/user/check-me");
 
       if (response.success && response.data) {
         setCurrentUserDetails(response.data);

@@ -152,8 +152,8 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // User profile endpoint
-    if (path === "/v1.0/user/me/" && req.method === "GET") {
+    // User profile endpoint (updated path)
+    if (path === "/v1.0/user/check-me" && req.method === "GET") {
       const authHeader = req.headers.authorization;
       if (!authHeader || !authHeader.startsWith("Bearer ")) {
         res.writeHead(401, { "Content-Type": "application/json" });
@@ -212,6 +212,63 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
+    // User points check endpoint
+    if (path === "/v1.0/user/points-check" && req.method === "GET") {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "unauthorized",
+            message: "Missing or invalid authorization header",
+          })
+        );
+        return;
+      }
+
+      const pointsData = {
+        current_points: 1000,
+        available_points: 1000,
+        total_points: 1500,
+        used_points: 500,
+        last_updated: new Date().toISOString(),
+      };
+
+      console.log("✅ User points retrieved");
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(pointsData));
+      return;
+    }
+
+    // User active suppliers check endpoint
+    if (
+      path === "/v1.0/user/check-active-my-supplier" &&
+      req.method === "GET"
+    ) {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: "unauthorized",
+            message: "Missing or invalid authorization header",
+          })
+        );
+        return;
+      }
+
+      const suppliersData = {
+        my_supplier: ["Provider A", "Provider B", "Restel", "Booking.com"],
+        active_count: 4,
+        last_updated: new Date().toISOString(),
+      };
+
+      console.log("✅ User active suppliers retrieved");
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(suppliersData));
+      return;
+    }
+
     // Health check
     if (path === "/v1.0/health" && req.method === "GET") {
       res.writeHead(200, { "Content-Type": "application/json" });
@@ -242,8 +299,10 @@ server.listen(PORT, HOST, () => {
   console.log(`🚀 Mock backend server running on http://${HOST}:${PORT}`);
   console.log("📋 Available endpoints:");
   console.log("  POST /v1.0/auth/token - Authentication");
-  console.log("  GET  /v1.0/user/me/  - User profile");
-  console.log("  GET  /v1.0/health    - Health check");
+  console.log("  GET  /v1.0/user/check-me - User profile");
+  console.log("  GET  /v1.0/user/points-check - User points");
+  console.log("  GET  /v1.0/user/check-active-my-supplier - Active suppliers");
+  console.log("  GET  /v1.0/health - Health check");
   console.log("");
   console.log("👤 Test users:");
   Object.values(MOCK_USERS).forEach((user) => {

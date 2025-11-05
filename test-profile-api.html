@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile API Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .test-result {
+        margin: 10px 0;
+        padding: 15px;
+        border-radius: 4px;
+      }
+      .success {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+      }
+      .error {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+      }
+      .warning {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        color: #856404;
+      }
+      button {
+        padding: 10px 20px;
+        margin: 5px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      pre {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 4px;
+        overflow-x: auto;
+      }
+      .endpoint {
+        font-family: monospace;
+        background: #e9ecef;
+        padding: 2px 6px;
+        border-radius: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Profile API Test</h1>
+      <p>
+        Testing the user profile API endpoints to verify they work correctly.
+      </p>
+
+      <div>
+        <button onclick="testUserProfile()">Test GET /user/me/</button>
+        <button onclick="testNonExistentEndpoints()">
+          Test Non-existent Endpoints
+        </button>
+        <button onclick="testWithoutAuth()">Test Without Auth</button>
+        <button onclick="clearResults()">Clear Results</button>
+      </div>
+
+      <div id="results"></div>
+    </div>
+
+    <script>
+      const API_BASE = "http://127.0.0.1:8002/v1.0";
+
+      function addResult(type, title, message, data = null) {
+        const resultsDiv = document.getElementById("results");
+        const resultDiv = document.createElement("div");
+        resultDiv.className = `test-result ${type}`;
+
+        let html = `<h3>${title}</h3><p>${message}</p>`;
+        if (data) {
+          html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        }
+
+        resultDiv.innerHTML = html;
+        resultsDiv.appendChild(resultDiv);
+      }
+
+      function clearResults() {
+        document.getElementById("results").innerHTML = "";
+      }
+
+      async function makeRequest(endpoint, options = {}) {
+        try {
+          const response = await fetch(`${API_BASE}${endpoint}`, {
+            method: options.method || "GET",
+            headers: {
+              "Content-Type": "application/json",
+              ...options.headers,
+            },
+            body: options.body ? JSON.stringify(options.body) : undefined,
+          });
+
+          const data = await response.json();
+
+          return {
+            success: response.ok,
+            status: response.status,
+            data: data,
+          };
+        } catch (error) {
+          return {
+            success: false,
+            status: 0,
+            error: error.message,
+          };
+        }
+      }
+
+      async function testUserProfile() {
+        addResult(
+          "warning",
+          "Testing User Profile",
+          "Testing GET /user/me/ endpoint..."
+        );
+
+        // First, let's try without authentication
+        const noAuthResult = await makeRequest("/user/me/");
+
+        if (noAuthResult.status === 401) {
+          addResult(
+            "success",
+            "✅ Authentication Required",
+            "Endpoint correctly requires authentication (401 Unauthorized)",
+            noAuthResult.data
+          );
+        } else {
+          addResult(
+            "error",
+            "❌ Authentication Issue",
+            `Expected 401, got ${noAuthResult.status}`,
+            noAuthResult
+          );
+        }
+
+        // Now test with a mock token (this would normally come from login)
+        const mockToken =
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdXBlcl91c2VyIiwiaWF0IjoxNjM5NTg0MDAwLCJleHAiOjk5OTk5OTk5OTl9.mock_signature";
+
+        const authResult = await makeRequest("/user/me/", {
+          headers: {
+            Authorization: `Bearer ${mockToken}`,
+          },
+        });
+
+        if (authResult.success) {
+          addResult(
+            "success",
+            "✅ User Profile Retrieved",
+            "Successfully retrieved user profile data",
+            authResult.data
+          );
+        } else {
+          addResult(
+            "error",
+            "❌ Profile Fetch Failed",
+            `Failed to get profile: ${authResult.status}`,
+            authResult
+          );
+        }
+      }
+
+      async function testNonExistentEndpoints() {
+        addResult(
+          "warning",
+          "Testing Non-existent Endpoints",
+          "Testing endpoints that should not exist..."
+        );
+
+        const endpoints = [
+          { path: "/user/points/check/me/", method: "GET" },
+          { path: "/user/points/check/me/", method: "POST" },
+          { path: "/user/check_active_my_supplier", method: "GET" },
+          { path: "/user/check_active_my_supplier", method: "POST" },
+        ];
+
+        for (const endpoint of endpoints) {
+          const result = await makeRequest(endpoint.path, {
+            method: endpoint.method,
+          });
+
+          if (result.status === 404) {
+            addResult(
+              "success",
+              "✅ Endpoint Not Found (Expected)",
+              `${endpoint.method} ${endpoint.path} correctly returns 404`,
+              null
+            );
+          } else if (result.status === 405) {
+            addResult(
+              "warning",
+              "⚠️ Method Not Allowed",
+              `${endpoint.method} ${endpoint.path} returns 405 - endpoint exists but method not allowed`,
+              result.data
+            );
+          } else {
+            addResult(
+              "error",
+              "❌ Unexpected Response",
+              `${endpoint.method} ${endpoint.path} returned ${result.status}`,
+              result
+            );
+          }
+        }
+      }
+
+      async function testWithoutAuth() {
+        addResult(
+          "warning",
+          "Testing Without Authentication",
+          "Testing endpoints without auth headers..."
+        );
+
+        const result = await makeRequest("/user/me/");
+
+        if (result.status === 401) {
+          addResult(
+            "success",
+            "✅ Proper Authentication Check",
+            "Endpoint correctly rejects requests without authentication",
+            result.data
+          );
+        } else {
+          addResult(
+            "error",
+            "❌ Authentication Bypass",
+            `Expected 401, got ${result.status} - security issue!`,
+            result
+          );
+        }
+      }
+
+      // Auto-run basic test on page load
+      window.onload = function () {
+        addResult(
+          "warning",
+          "Profile API Test Started",
+          "Ready to test user profile API endpoints. Click buttons above to run tests."
+        );
+      };
+    </script>
+  </body>
+</html>

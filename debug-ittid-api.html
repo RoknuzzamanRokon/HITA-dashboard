@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Debug ITTID API</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      button {
+        padding: 10px 20px;
+        margin: 10px 0;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      .response {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 15px;
+        margin: 10px 0;
+      }
+      .error {
+        background: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+      }
+      .success {
+        background: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+      }
+      pre {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Debug ITTID API Response</h1>
+      <p>
+        This page tests the /v1.0/content/get-all-ittid API endpoint to debug
+        the response structure.
+      </p>
+
+      <button onclick="testAPI()">Test Get All ITTIDs API</button>
+
+      <div id="result"></div>
+    </div>
+
+    <script>
+      async function testAPI() {
+        const resultDiv = document.getElementById("result");
+        resultDiv.innerHTML = '<div class="response">Loading...</div>';
+
+        try {
+          // Get auth token from localStorage (if available)
+          const token = localStorage.getItem("admin_auth_token");
+
+          const headers = {
+            "Content-Type": "application/json",
+          };
+
+          if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+          }
+
+          const response = await fetch(
+            "http://localhost:8002/v1.0/content/get-all-ittid?page=1",
+            {
+              method: "GET",
+              headers: headers,
+              mode: "cors",
+            }
+          );
+
+          console.log("Response status:", response.status);
+          console.log("Response headers:", response.headers);
+
+          const data = await response.json();
+          console.log("Response data:", data);
+
+          if (response.ok) {
+            resultDiv.innerHTML = `
+                        <div class="response success">
+                            <h3>✅ API Response (Status: ${
+                              response.status
+                            })</h3>
+                            <h4>Response Structure:</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                            
+                            <h4>Analysis:</h4>
+                            <ul>
+                                <li><strong>Total Suppliers:</strong> ${
+                                  data.total_supplier || "N/A"
+                                }</li>
+                                <li><strong>Total ITTIDs:</strong> ${
+                                  data.total_ittid || "N/A"
+                                }</li>
+                                <li><strong>ITTID List Length:</strong> ${
+                                  data.ittid_list
+                                    ? data.ittid_list.length
+                                    : "N/A"
+                                }</li>
+                                <li><strong>First 5 ITTIDs:</strong> ${
+                                  data.ittid_list
+                                    ? data.ittid_list.slice(0, 5).join(", ")
+                                    : "N/A"
+                                }</li>
+                            </ul>
+                        </div>
+                    `;
+          } else {
+            resultDiv.innerHTML = `
+                        <div class="response error">
+                            <h3>❌ API Error (Status: ${response.status})</h3>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+          }
+        } catch (error) {
+          console.error("API test failed:", error);
+          resultDiv.innerHTML = `
+                    <div class="response error">
+                        <h3>❌ Network Error</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p><strong>Possible causes:</strong></p>
+                        <ul>
+                            <li>Backend server is not running on http://localhost:8002</li>
+                            <li>CORS is not properly configured</li>
+                            <li>Authentication token is missing or invalid</li>
+                        </ul>
+                    </div>
+                `;
+        }
+      }
+    </script>
+  </body>
+</html>

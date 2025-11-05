@@ -48,9 +48,10 @@ export const apiEndpoints = {
         create: '/user',
         update: (id: string) => `/user/${id}`,
         delete: (id: string) => `/user/${id}`,
-        profile: '/user/me/',
-        points: '/user/points',
-        pointsHistory: '/user/points/check/me/',
+        profile: '/user/check-me',
+        points: '/user/points-check',
+        pointsHistory: '/user/points-check',
+        checkActiveSupplier: '/user/check-active-my-supplier',
         // Dashboard statistics
         dashboardStats: '/dashboard/stats',
         // Specific user creation endpoints

@@ -81,16 +81,26 @@ export default function ProfilePage() {
     try {
       setLoading(true);
       setError(null);
-      // Fetch from backend v1.0 endpoints
-      const meRes = await apiClient.get<any>(
-        "http://127.0.0.1:8002/v1.0/user/me"
-      );
-      const pointsRes = await apiClient.get<any>(
-        "http://127.0.0.1:8002/v1.0/user/points/check/me/"
-      );
-      const suppliersRes = await apiClient.get<any>(
-        "http://127.0.0.1:8002/v1.0/user/check_active_my_supplier"
-      );
+      // Fetch from backend v1.0 endpoints with updated paths
+      const meRes = await apiClient.get<any>("/user/check-me");
+
+      // Now try to fetch from the available endpoints
+      let pointsRes = { success: false, data: null };
+      let suppliersRes = { success: false, data: null };
+
+      try {
+        pointsRes = await apiClient.get<any>("/user/points-check");
+      } catch (err) {
+        console.warn("Points endpoint failed:", err);
+      }
+
+      try {
+        suppliersRes = await apiClient.get<any>(
+          "/user/check-active-my-supplier"
+        );
+      } catch (err) {
+        console.warn("Suppliers endpoint failed:", err);
+      }
 
       if (meRes.success && meRes.data) {
         const me = meRes.data;
@@ -113,23 +123,19 @@ export default function ProfilePage() {
           role: resolvedRole,
           isActive: me.is_active !== false,
           pointBalance:
-            (points && (points.current_points ?? points.available_points)) ??
-            me.available_points ??
-            0,
+            (points && points.available_points) ?? me.available_points ?? 0,
           totalPoints: (points && points.total_points) ?? me.total_points ?? 0,
           paidStatus:
             resolvedRole === UserRole.SUPER_USER
               ? "I am super user, I have unlimited points."
               : me.paid_status || "Paid",
           totalRequests: me.total_rq ?? 0,
-          activityStatus: me.using_rq_status || "Inactive",
+          activityStatus: me.using_rq_status || "Active",
           createdAt: me.created_at,
           updatedAt: me.updated_at,
           createdBy: me.created_by,
           activeSuppliers:
-            (me.supplier_info && me.supplier_info.active_list) ||
-            (suppliers && suppliers.my_supplier) ||
-            [],
+            (suppliers && suppliers.my_supplier) || me.active_supplier || [],
           lastLogin: me.last_login,
         };
 
