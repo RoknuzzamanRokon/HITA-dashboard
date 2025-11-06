@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Debug Hotel API</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+      }
+      .test-section {
+        border: 1px solid #ddd;
+        padding: 20px;
+        margin: 10px 0;
+        border-radius: 8px;
+      }
+      .success {
+        background: #d4edda;
+        border-color: #c3e6cb;
+      }
+      .error {
+        background: #f8d7da;
+        border-color: #f5c6cb;
+      }
+      .loading {
+        background: #fff3cd;
+        border-color: #ffeaa7;
+      }
+      .info {
+        background: #d1ecf1;
+        border-color: #bee5eb;
+      }
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      pre {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 4px;
+        overflow-x: auto;
+        font-size: 12px;
+      }
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin: 15px 0;
+      }
+      .stat-card {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 6px;
+        text-align: center;
+        border: 1px solid #dee2e6;
+      }
+      .stat-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: #007bff;
+      }
+      .stat-label {
+        font-size: 14px;
+        color: #6c757d;
+        margin-top: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🔧 Debug Hotel API Integration</h1>
+
+      <div class="info">
+        <h3>📋 Debug Information</h3>
+        <p><strong>Frontend URL:</strong> http://localhost:3000 (or 3001)</p>
+        <p><strong>Backend API:</strong> http://127.0.0.1:8002/v1.0</p>
+        <p>
+          <strong>Target Endpoint:</strong>
+          /hotels/check-my-active-suppliers-info
+        </p>
+      </div>
+
+      <div class="test-section">
+        <h2>🔑 Authentication Setup</h2>
+        <button onclick="setupAuth()">Setup Auth Token</button>
+        <button onclick="checkAuth()">Check Auth Status</button>
+        <div id="authStatus"></div>
+      </div>
+
+      <div class="test-section">
+        <h2>🌐 API Connection Test</h2>
+        <button onclick="testDirectAPI()">Test Direct API Call</button>
+        <button onclick="testWithCORS()">Test with CORS Headers</button>
+        <div id="apiResults"></div>
+      </div>
+
+      <div class="test-section">
+        <h2>📊 Statistics Cards Preview</h2>
+        <button onclick="generateStatsCards()">Generate Stats Cards</button>
+        <div id="statsCards"></div>
+      </div>
+
+      <div class="test-section">
+        <h2>🏨 Hotel Search Test</h2>
+        <button onclick="testHotelSearch()">Test Hotel Search</button>
+        <div id="hotelResults"></div>
+      </div>
+    </div>
+
+    <script>
+      const TOKEN =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1cnNhbXJva28iLCJ1c2VyX2lkIjoiMWEyMDNjY2RhNCIsInJvbGUiOiJzdXBlcl91c2VyIiwiZXhwIjoxNzY0MjM3NDE2LCJ0eXBlIjoiYWNjZXNzIiwiaWF0IjoxNzYyNDM3NDE2fQ.Ri1GAYk-PYv9rrwnYcjNxemUyKOIRbFoI2QtBgmjsOI";
+      const API_BASE = "http://127.0.0.1:8002/v1.0";
+
+      function setupAuth() {
+        const authDiv = document.getElementById("authStatus");
+
+        try {
+          localStorage.setItem("admin_auth_token", TOKEN);
+
+          authDiv.innerHTML = `
+                    <div class="success">
+                        <h4>✅ Authentication Token Set</h4>
+                        <p>Token stored in localStorage with key: <code>admin_auth_token</code></p>
+                    </div>
+                `;
+        } catch (error) {
+          authDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Auth Setup Failed</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+        }
+      }
+
+      function checkAuth() {
+        const authDiv = document.getElementById("authStatus");
+        const token = localStorage.getItem("admin_auth_token");
+
+        if (token) {
+          authDiv.innerHTML = `
+                    <div class="success">
+                        <h4>✅ Token Found</h4>
+                        <p><strong>Token:</strong> ${token.substring(
+                          0,
+                          50
+                        )}...</p>
+                        <p><strong>Length:</strong> ${
+                          token.length
+                        } characters</p>
+                    </div>
+                `;
+        } else {
+          authDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ No Token Found</h4>
+                        <p>Click "Setup Auth Token" first</p>
+                    </div>
+                `;
+        }
+      }
+
+      async function testDirectAPI() {
+        const resultsDiv = document.getElementById("apiResults");
+        resultsDiv.innerHTML =
+          '<div class="loading">🔄 Testing direct API call...</div>';
+
+        try {
+          const response = await fetch(
+            `${API_BASE}/hotels/check-my-active-suppliers-info`,
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${TOKEN}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          console.log("Response status:", response.status);
+          console.log("Response headers:", [...response.headers.entries()]);
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          console.log("API Response:", data);
+
+          resultsDiv.innerHTML = `
+                    <div class="success">
+                        <h4>✅ Direct API Call Successful</h4>
+                        <p><strong>Status:</strong> ${response.status} ${
+            response.statusText
+          }</p>
+                        <p><strong>Total Hotels:</strong> ${data.supplierAnalytics?.totalHotelsAccessible?.toLocaleString()}</p>
+                        <p><strong>Active Suppliers:</strong> ${
+                          data.supplierAnalytics?.activeSuppliers
+                        }</p>
+                        <p><strong>User Role:</strong> ${data.role}</p>
+                        <details>
+                            <summary>View Full Response</summary>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </details>
+                    </div>
+                `;
+
+          // Store the data for stats cards
+          window.apiData = data;
+        } catch (error) {
+          console.error("API Error:", error);
+          resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ API Call Failed</h4>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p><strong>Possible causes:</strong></p>
+                        <ul>
+                            <li>Backend server not running on port 8002</li>
+                            <li>CORS not configured for this origin</li>
+                            <li>Token expired or invalid</li>
+                            <li>Network connectivity issues</li>
+                        </ul>
+                    </div>
+                `;
+        }
+      }
+
+      async function testWithCORS() {
+        const resultsDiv = document.getElementById("apiResults");
+        resultsDiv.innerHTML =
+          '<div class="loading">🔄 Testing with CORS headers...</div>';
+
+        try {
+          const response = await fetch(
+            `${API_BASE}/hotels/check-my-active-suppliers-info`,
+            {
+              method: "GET",
+              mode: "cors",
+              credentials: "omit",
+              headers: {
+                Authorization: `Bearer ${TOKEN}`,
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+            }
+          );
+
+          const data = await response.json();
+
+          resultsDiv.innerHTML = `
+                    <div class="success">
+                        <h4>✅ CORS Test Successful</h4>
+                        <p><strong>CORS Mode:</strong> cors</p>
+                        <p><strong>Credentials:</strong> omit</p>
+                        <p><strong>Response:</strong> ${JSON.stringify(
+                          data
+                        ).substring(0, 100)}...</p>
+                    </div>
+                `;
+
+          window.apiData = data;
+        } catch (error) {
+          resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ CORS Test Failed</h4>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                    </div>
+                `;
+        }
+      }
+
+      function generateStatsCards() {
+        const statsDiv = document.getElementById("statsCards");
+
+        if (!window.apiData) {
+          statsDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ No API Data</h4>
+                        <p>Run "Test Direct API Call" first to get data</p>
+                    </div>
+                `;
+          return;
+        }
+
+        const data = window.apiData;
+
+        statsDiv.innerHTML = `
+                <div class="success">
+                    <h4>📊 Statistics Cards (Based on Real API Data)</h4>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value">${
+                              data.supplierAnalytics?.totalHotelsAccessible?.toLocaleString() ||
+                              "N/A"
+                            }</div>
+                            <div class="stat-label">Total Hotels Accessible</div>
+                            <div style="font-size: 12px; color: #28a745; margin-top: 4px;">
+                                ${
+                                  data.supplierAnalytics
+                                    ?.accessCoveragePercentage || 0
+                                }% coverage
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-value">${
+                              data.supplierAnalytics?.activeSuppliers || "N/A"
+                            }</div>
+                            <div class="stat-label">Active Suppliers</div>
+                            <div style="font-size: 12px; color: #17a2b8; margin-top: 4px;">
+                                ${
+                                  data.accessSummary
+                                    ?.accessibleSuppliersCount || 0
+                                } accessible
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-value">${
+                              data.supplierAnalytics?.inactiveSuppliers || "N/A"
+                            }</div>
+                            <div class="stat-label">Inactive Suppliers</div>
+                            <div style="font-size: 12px; color: #ffc107; margin-top: 4px;">
+                                Total in system: ${
+                                  data.accessSummary?.totalSuppliersInSystem ||
+                                  0
+                                }
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-value" style="font-size: 18px; text-transform: capitalize;">${
+                              data.role || "N/A"
+                            }</div>
+                            <div class="stat-label">User Role</div>
+                            <div style="font-size: 12px; color: #6f42c1; margin-top: 4px;">
+                                ${
+                                  data.accessSummary?.permissionBased
+                                    ? "Permission-based"
+                                    : "Full access"
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h5>🏨 Accessible Suppliers (${
+                      data.accessibleSuppliers?.length || 0
+                    })</h5>
+                    <div style="max-height: 200px; overflow-y: auto;">
+                        ${
+                          data.accessibleSuppliers
+                            ?.map(
+                              (supplier) => `
+                            <div style="display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee;">
+                                <span style="font-weight: bold; text-transform: capitalize;">${
+                                  supplier.supplierName
+                                }</span>
+                                <span>${supplier.totalHotels.toLocaleString()} hotels</span>
+                                <span style="color: #28a745;">●</span>
+                            </div>
+                        `
+                            )
+                            .join("") || "<p>No suppliers found</p>"
+                        }
+                    </div>
+                </div>
+            `;
+      }
+
+      async function testHotelSearch() {
+        const resultsDiv = document.getElementById("hotelResults");
+        resultsDiv.innerHTML =
+          '<div class="loading">🔄 Testing hotel search mock data...</div>';
+
+        // Simulate the hotel search with mock data based on API data
+        if (window.apiData) {
+          const suppliers = window.apiData.accessibleSuppliers || [];
+          const mockHotels = suppliers.slice(0, 5).map((supplier, index) => ({
+            ittid: `ITT${String(index + 1).padStart(6, "0")}`,
+            id: index + 1,
+            name: `Sample Hotel ${index + 1} (${supplier.supplierName})`,
+            rating: ["3", "4", "5"][Math.floor(Math.random() * 3)],
+            propertyType: ["Hotel", "Resort", "Apartment"][
+              Math.floor(Math.random() * 3)
+            ],
+            mapStatus: ["mapped", "unmapped", "pending"][
+              Math.floor(Math.random() * 3)
+            ],
+            addressLine1: `${100 + index} Main Street`,
+            supplierName: supplier.supplierName,
+          }));
+
+          resultsDiv.innerHTML = `
+                    <div class="success">
+                        <h4>✅ Hotel Search Mock Data</h4>
+                        <p><strong>Generated:</strong> ${
+                          mockHotels.length
+                        } sample hotels</p>
+                        <div style="max-height: 300px; overflow-y: auto;">
+                            ${mockHotels
+                              .map(
+                                (hotel) => `
+                                <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 4px;">
+                                    <strong>${hotel.name}</strong><br>
+                                    <small>ITTID: ${hotel.ittid} | Rating: ${hotel.rating}★ | Type: ${hotel.propertyType}</small><br>
+                                    <small>Address: ${hotel.addressLine1} | Status: ${hotel.mapStatus}</small>
+                                </div>
+                            `
+                              )
+                              .join("")}
+                        </div>
+                    </div>
+                `;
+        } else {
+          resultsDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ No API Data for Mock Hotels</h4>
+                        <p>Run "Test Direct API Call" first to get supplier data</p>
+                    </div>
+                `;
+        }
+      }
+
+      // Auto-setup on page load
+      window.onload = () => {
+        console.log("🔧 Debug page loaded");
+        setupAuth();
+        setTimeout(() => {
+          testDirectAPI();
+        }, 1000);
+      };
+    </script>
+  </body>
+</html>

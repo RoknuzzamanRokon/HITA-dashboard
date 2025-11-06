@@ -5,18 +5,19 @@
 
 "use client";
 
-import React from "react";
+import React, { use } from "react";
 import { useRouter } from "next/navigation";
 import { HotelDetailsView } from "@/lib/components/hotels/hotel-details";
 
 interface HotelDetailsPageProps {
-  params: {
+  params: Promise<{
     ittid: string;
-  };
+  }>;
 }
 
 export default function HotelDetailsPage({ params }: HotelDetailsPageProps) {
   const router = useRouter();
+  const resolvedParams = use(params);
 
   const handleBack = () => {
     router.back();
@@ -24,12 +25,12 @@ export default function HotelDetailsPage({ params }: HotelDetailsPageProps) {
 
   const handleEdit = () => {
     // TODO: Implement edit functionality
-    console.log("Edit hotel:", params.ittid);
+    console.log("Edit hotel:", resolvedParams.ittid);
   };
 
   return (
     <HotelDetailsView
-      ittid={params.ittid}
+      ittid={resolvedParams.ittid}
       onBack={handleBack}
       onEdit={handleEdit}
     />

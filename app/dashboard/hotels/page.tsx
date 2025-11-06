@@ -9,32 +9,46 @@ import React, { useState, useEffect } from "react";
 import {
   Search,
   Building2,
-  MapPin,
   Users,
   Database,
-  Filter,
   Download,
   RefreshCw,
   AlertCircle,
   CheckCircle,
   Clock,
-  BarChart3,
-  Star,
 } from "lucide-react";
 import { Button } from "@/lib/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/lib/components/ui/card";
 import { HotelSearchCompact } from "@/lib/components/hotels/hotel-search-compact";
-import { apiClient } from "@/lib/api/client";
-import { TokenStorage } from "@/lib/auth/token-storage";
+
+import { useAuth } from "@/lib/contexts/auth-context";
 import { HotelService } from "@/lib/api/hotels";
 import type { Hotel, HotelStats } from "@/lib/types/hotel";
 
 export default function HotelsPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [stats, setStats] = useState<HotelStats | null>(null);
   const [recentHotels, setRecentHotels] = useState<Hotel[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [hotelInfo, setHotelInfo] = useState<{
+    totalHotels: number;
+    activeHotels: number;
+    pendingHotels: number;
+    mappedHotels: number;
+    recentUpdates: number;
+    topSuppliers: Array<{
+      name: string;
+      hotelCount: number;
+      status: string;
+    }>;
+    hotelsByRegion: Array<{
+      region: string;
+      count: number;
+    }>;
+    lastUpdated: string;
+  } | null>(null);
+  const [supplierFilter, setSupplierFilter] = useState<string>("");
   const [accessibleSuppliers, setAccessibleSuppliers] = useState<
     Array<{
       supplier_name: string;
@@ -43,6 +57,29 @@ export default function HotelsPage() {
     }>
   >([]);
   const [userRole, setUserRole] = useState<string>("");
+  const [supplierInfo, setSupplierInfo] = useState<{
+    userId: string;
+    role: string;
+    accessSummary: {
+      totalSuppliersInSystem: number;
+      accessibleSuppliersCount: number;
+      permissionBased: boolean;
+    };
+    supplierAnalytics: {
+      totalHotelsAccessible: number;
+      activeSuppliers: number;
+      inactiveSuppliers: number;
+      accessCoveragePercentage: number;
+    };
+    accessibleSuppliers: Array<{
+      supplierName: string;
+      totalHotels: number;
+      accessType: string;
+      permissionGrantedAt: string | null;
+      lastUpdated: string;
+      availabilityStatus: string;
+    }>;
+  } | null>(null);
 
   const handleHotelSelect = (hotel: Hotel) => {
     window.location.href = `/dashboard/hotels/${hotel.ittid}`;
@@ -58,8 +95,12 @@ export default function HotelsPage() {
   };
 
   const loadDashboardData = async () => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !user) {
+      console.log("⚠️ loadDashboardData called but user not authenticated");
+      return;
+    }
 
+    console.log("🔄 Starting dashboard data load...");
     setIsLoading(true);
     setError(null);
 
@@ -94,6 +135,18 @@ export default function HotelsPage() {
         } else {
           setRecentHotels([]);
         }
+      }
+
+      // Load hotel info from the content endpoint
+      try {
+        console.log("Loading hotel info from content endpoint...");
+        const hotelInfoResponse = await HotelService.getAllHotelInfo();
+        if (hotelInfoResponse.success && hotelInfoResponse.data) {
+          setHotelInfo(hotelInfoResponse.data);
+          console.log("Hotel info loaded:", hotelInfoResponse.data);
+        }
+      } catch (hotelInfoError) {
+        console.log("Hotel info not available:", hotelInfoError);
       }
 
       // Load stats if available
@@ -142,29 +195,76 @@ export default function HotelsPage() {
       } catch (supplierError) {
         console.log("Suppliers not available:", supplierError);
       }
+
+      // Load active suppliers info for statistics
+      try {
+        console.log("Loading active suppliers info...");
+        const activeSupplierResponse =
+          await HotelService.checkActiveSuppliers();
+        if (activeSupplierResponse.success && activeSupplierResponse.data) {
+          setSupplierInfo(activeSupplierResponse.data);
+          console.log(
+            "Loaded active suppliers info:",
+            activeSupplierResponse.data
+          );
+        } else {
+          console.error(
+            "Active suppliers API failed:",
+            activeSupplierResponse.error
+          );
+          setError(
+            `Failed to load supplier info: ${
+              activeSupplierResponse.error?.message || "Unknown error"
+            }`
+          );
+        }
+      } catch (supplierInfoError) {
+        console.error("Active suppliers info error:", supplierInfoError);
+        setError(
+          `Supplier info error: ${
+            supplierInfoError instanceof Error
+              ? supplierInfoError.message
+              : "Unknown error"
+          }`
+        );
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Check authentication and load data
+  // Load data when authentication is ready
   useEffect(() => {
-    const checkAuth = () => {
-      const token = TokenStorage.getToken();
-      const authenticated = !!token;
-      setIsAuthenticated(authenticated);
-
-      if (authenticated) {
+    if (!authLoading) {
+      if (isAuthenticated && user) {
+        console.log("✅ User authenticated, loading dashboard data...");
         loadDashboardData();
       } else {
+        console.log("❌ User not authenticated");
         setIsLoading(false);
       }
-    };
+    }
+  }, [authLoading, isAuthenticated, user]);
 
-    checkAuth();
-  }, []);
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Loading...
+            </h2>
+            <p className="text-gray-600">
+              Checking authentication and loading hotel data.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="w-full max-w-md">
@@ -257,17 +357,6 @@ export default function HotelsPage() {
                 <Download className="h-4 w-4 mr-2" />
                 <span>Export Data</span>
               </button>
-
-              {/* Advanced Search Button */}
-              <button
-                onClick={() =>
-                  (window.location.href = "/dashboard/hotels/manage")
-                }
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
-              >
-                <Filter className="h-4 w-4 mr-2" />
-                <span>Advanced Search</span>
-              </button>
             </div>
           </div>
         </div>
@@ -282,20 +371,35 @@ export default function HotelsPage() {
                   <h3 className="text-sm font-medium text-red-800">Error</h3>
                   <p className="text-sm text-red-700">{error}</p>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => loadDashboardData()}
-                  className="border-red-300 text-red-700 hover:bg-red-100"
-                >
-                  Retry
-                </Button>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => loadDashboardData()}
+                    className="border-red-300 text-red-700 hover:bg-red-100"
+                  >
+                    Retry
+                  </Button>
+                  {process.env.NODE_ENV === "development" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        console.log("🔧 Manual refresh");
+                        window.location.reload();
+                      }}
+                      className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                    >
+                      Debug Refresh
+                    </Button>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Statistics Cards */}
+        {/* Hotel Info Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardContent className="p-6">
@@ -304,11 +408,20 @@ export default function HotelsPage() {
                   <p className="text-sm font-medium text-gray-600">
                     Total Hotels
                   </p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-2xl font-bold text-blue-600">
                     {isLoading
                       ? "..."
-                      : stats?.totalHotels?.toLocaleString() || "N/A"}
+                      : hotelInfo?.totalHotels?.toLocaleString() ||
+                        supplierInfo?.supplierAnalytics?.totalHotelsAccessible?.toLocaleString() ||
+                        stats?.totalHotels?.toLocaleString() ||
+                        "N/A"}
                   </p>
+                  {hotelInfo && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Last updated:{" "}
+                      {new Date(hotelInfo.lastUpdated).toLocaleDateString()}
+                    </p>
+                  )}
                 </div>
                 <Database className="h-8 w-8 text-blue-600" />
               </div>
@@ -320,13 +433,24 @@ export default function HotelsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
-                    Mapped Hotels
+                    Active Hotels
                   </p>
                   <p className="text-2xl font-bold text-green-600">
                     {isLoading
                       ? "..."
-                      : stats?.mappedHotels?.toLocaleString() || "N/A"}
+                      : hotelInfo?.activeHotels?.toLocaleString() ||
+                        supplierInfo?.supplierAnalytics?.activeSuppliers?.toString() ||
+                        stats?.mappedHotels?.toLocaleString() ||
+                        "N/A"}
                   </p>
+                  {hotelInfo && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {Math.round(
+                        (hotelInfo.activeHotels / hotelInfo.totalHotels) * 100
+                      )}
+                      % of total
+                    </p>
+                  )}
                 </div>
                 <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
@@ -338,13 +462,21 @@ export default function HotelsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
-                    Unmapped Hotels
+                    Pending Hotels
                   </p>
                   <p className="text-2xl font-bold text-yellow-600">
                     {isLoading
                       ? "..."
-                      : stats?.unmappedHotels?.toLocaleString() || "N/A"}
+                      : hotelInfo?.pendingHotels?.toLocaleString() ||
+                        supplierInfo?.supplierAnalytics?.inactiveSuppliers?.toString() ||
+                        stats?.unmappedHotels?.toLocaleString() ||
+                        "N/A"}
                   </p>
+                  {hotelInfo && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Awaiting processing
+                    </p>
+                  )}
                 </div>
                 <Clock className="h-8 w-8 text-yellow-600" />
               </div>
@@ -356,23 +488,202 @@ export default function HotelsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
-                    Active Providers
+                    Recent Updates
                   </p>
                   <p className="text-2xl font-bold text-purple-600">
                     {isLoading
                       ? "..."
-                      : Object.keys(stats?.hotelsByPropertyType || {}).length ||
+                      : hotelInfo?.recentUpdates?.toLocaleString() ||
+                        supplierInfo?.accessSummary?.accessibleSuppliersCount?.toString() ||
                         "N/A"}
                   </p>
+                  {hotelInfo && (
+                    <p className="text-xs text-gray-500 mt-1">Last 30 days</p>
+                  )}
                 </div>
-                <Users className="h-8 w-8 text-purple-600" />
+                <RefreshCw className="h-8 w-8 text-purple-600" />
               </div>
             </CardContent>
           </Card>
         </div>
 
+        {/* Hotel Info Details Section */}
+        {hotelInfo && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* Top Suppliers */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">
+                      All Suppliers
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      {supplierFilter
+                        ? `${
+                            hotelInfo.topSuppliers.filter((supplier) =>
+                              supplier.name
+                                .toLowerCase()
+                                .includes(supplierFilter.toLowerCase())
+                            ).length
+                          } of ${hotelInfo.topSuppliers.length} suppliers`
+                        : `${hotelInfo.topSuppliers.length} suppliers sorted by hotel count`}
+                    </p>
+                  </div>
+                  <Building2 className="h-5 w-5 text-gray-400" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                {/* Search Filter */}
+                <div className="mb-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search suppliers..."
+                      value={supplierFilter}
+                      onChange={(e) => setSupplierFilter(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    />
+                    {supplierFilter && (
+                      <button
+                        onClick={() => setSupplierFilter("")}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Suppliers List */}
+                <div className="max-h-80 overflow-y-auto pr-2 space-y-3">
+                  {hotelInfo.topSuppliers
+                    .filter((supplier) =>
+                      supplier.name
+                        .toLowerCase()
+                        .includes(supplierFilter.toLowerCase())
+                    )
+                    .map((supplier, filteredIndex) => {
+                      // Get the original index for ranking
+                      const originalIndex = hotelInfo.topSuppliers.findIndex(
+                        (s) => s.name === supplier.name
+                      );
+                      return (
+                        <div
+                          key={supplier.name}
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-sm font-medium text-blue-600">
+                                {originalIndex + 1}
+                              </span>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-gray-900 truncate capitalize">
+                                {supplier.name}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {supplier.hotelCount.toLocaleString()} hotels
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2 flex-shrink-0">
+                            <div
+                              className={`px-2 py-1 rounded-full text-xs ${
+                                supplier.status === "active"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}
+                            >
+                              {supplier.status}
+                            </div>
+                            {originalIndex < 3 && (
+                              <div
+                                className="w-2 h-2 bg-yellow-400 rounded-full"
+                                title="Top 3 Supplier"
+                              />
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+
+                {/* Scroll indicator and filter info */}
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  {supplierFilter ? (
+                    <p className="text-xs text-gray-500 text-center">
+                      Showing{" "}
+                      {
+                        hotelInfo.topSuppliers.filter((supplier) =>
+                          supplier.name
+                            .toLowerCase()
+                            .includes(supplierFilter.toLowerCase())
+                        ).length
+                      }{" "}
+                      suppliers matching "{supplierFilter}"
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-500 text-center">
+                      Showing all {hotelInfo.topSuppliers.length} suppliers •
+                      Scroll to see more
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Hotels by Region */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">
+                      Hotels by Region
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      Geographic distribution
+                    </p>
+                  </div>
+                  <Database className="h-5 w-5 text-gray-400" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {hotelInfo.hotelsByRegion.map((region, index) => {
+                    const percentage = Math.round(
+                      (region.count / hotelInfo.totalHotels) * 100
+                    );
+                    return (
+                      <div key={region.region} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-gray-900">
+                            {region.region}
+                          </span>
+                          <span className="text-sm text-gray-600">
+                            {region.count.toLocaleString()} ({percentage}%)
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Supplier Permissions Section */}
-        {accessibleSuppliers.length > 0 && (
+        {(supplierInfo?.accessibleSuppliers.length ||
+          accessibleSuppliers.length) > 0 && (
           <Card className="mb-8">
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -381,7 +692,8 @@ export default function HotelsPage() {
                     Accessible Suppliers
                   </h2>
                   <p className="text-sm text-gray-600">
-                    Suppliers you have permission to access ({userRole})
+                    Suppliers you have permission to access (
+                    {supplierInfo?.role || userRole})
                   </p>
                 </div>
                 <Users className="h-5 w-5 text-gray-400" />
@@ -389,43 +701,73 @@ export default function HotelsPage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {accessibleSuppliers.map((supplier) => (
+                {(
+                  supplierInfo?.accessibleSuppliers ||
+                  accessibleSuppliers.map((s) => ({
+                    supplierName: s.supplier_name,
+                    totalHotels: s.total_hotels,
+                    accessType: s.access_type,
+                    availabilityStatus: "active",
+                    lastUpdated: new Date().toISOString(),
+                    permissionGrantedAt: null,
+                  }))
+                ).map((supplier) => (
                   <div
-                    key={supplier.supplier_name}
+                    key={supplier.supplierName}
                     className="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer"
                     onClick={() => {
                       // TODO: Navigate to supplier-specific view or show supplier details
-                      console.log("Selected supplier:", supplier.supplier_name);
+                      console.log("Selected supplier:", supplier.supplierName);
                     }}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium text-gray-900 truncate">
-                        {supplier.supplier_name}
+                      <h3 className="font-medium text-gray-900 truncate capitalize">
+                        {supplier.supplierName}
                       </h3>
-                      <div
-                        className={`px-2 py-1 rounded-full text-xs ${
-                          supplier.access_type === "full_access"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-blue-100 text-blue-800"
-                        }`}
-                      >
-                        {supplier.access_type === "full_access"
-                          ? "Full"
-                          : "Limited"}
+                      <div className="flex items-center space-x-2">
+                        <div
+                          className={`px-2 py-1 rounded-full text-xs ${
+                            supplier.accessType === "fullAccess" ||
+                            supplier.accessType === "full_access"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-blue-100 text-blue-800"
+                          }`}
+                        >
+                          {supplier.accessType === "fullAccess" ||
+                          supplier.accessType === "full_access"
+                            ? "Full"
+                            : "Limited"}
+                        </div>
+                        {supplier.availabilityStatus && (
+                          <div
+                            className={`w-2 h-2 rounded-full ${
+                              supplier.availabilityStatus === "active"
+                                ? "bg-green-500"
+                                : "bg-gray-400"
+                            }`}
+                          />
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
                       <Building2 className="h-4 w-4" />
                       <span>
-                        {supplier.total_hotels.toLocaleString()} hotels
+                        {supplier.totalHotels.toLocaleString()} hotels
                       </span>
                     </div>
+                    {supplier.lastUpdated && (
+                      <div className="text-xs text-gray-500">
+                        Updated:{" "}
+                        {new Date(supplier.lastUpdated).toLocaleDateString()}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
 
-              {userRole === "general_user" &&
-                accessibleSuppliers.length === 0 && (
+              {(supplierInfo?.role || userRole) === "general_user" &&
+                (supplierInfo?.accessibleSuppliers.length ||
+                  accessibleSuppliers.length) === 0 && (
                   <div className="text-center py-8 text-gray-500">
                     <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                     <p className="text-sm font-medium text-gray-600 mb-1">
@@ -463,187 +805,6 @@ export default function HotelsPage() {
                   onHotelSelect={handleHotelSelect}
                   maxResults={8}
                 />
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Recent Activity */}
-          <div>
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-900">
-                      Recent Updates
-                    </h2>
-                    <p className="text-sm text-gray-600">
-                      Latest hotel modifications
-                    </p>
-                  </div>
-                  <BarChart3 className="h-5 w-5 text-gray-400" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="space-y-3">
-                    {[...Array(5)].map((_, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg"
-                      >
-                        <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
-                        <div className="flex-1">
-                          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                          <div className="h-3 bg-gray-200 rounded w-1/2 mb-1"></div>
-                          <div className="h-3 bg-gray-200 rounded w-1/3"></div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : recentHotels.length > 0 ? (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-xs text-gray-500">
-                        Showing {Math.min(recentHotels.length, 6)} recent hotels
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => loadDashboardData()}
-                        className="text-xs"
-                      >
-                        <RefreshCw className="h-3 w-3 mr-1" />
-                        Refresh
-                      </Button>
-                    </div>
-
-                    <div className="space-y-2 max-h-80 overflow-y-auto">
-                      {recentHotels.slice(0, 6).map((hotel, index) => {
-                        const getStatusBadge = (status: string) => {
-                          switch (status?.toLowerCase()) {
-                            case "mapped":
-                              return (
-                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                              );
-                            case "unmapped":
-                              return (
-                                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                              );
-                            case "pending":
-                              return (
-                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                              );
-                            default:
-                              return (
-                                <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                              );
-                          }
-                        };
-
-                        const formatTimeAgo = (dateString: string) => {
-                          const date = new Date(dateString);
-                          const now = new Date();
-                          const diffInHours = Math.floor(
-                            (now.getTime() - date.getTime()) / (1000 * 60 * 60)
-                          );
-
-                          if (diffInHours < 1) return "Just now";
-                          if (diffInHours < 24) return `${diffInHours}h ago`;
-                          const diffInDays = Math.floor(diffInHours / 24);
-                          if (diffInDays < 7) return `${diffInDays}d ago`;
-                          return date.toLocaleDateString();
-                        };
-
-                        return (
-                          <div
-                            key={hotel.ittid}
-                            className="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer border border-gray-100 transition-colors"
-                            onClick={() => handleHotelSelect(hotel)}
-                          >
-                            <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <Building2 className="h-5 w-5 text-blue-600" />
-                            </div>
-
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center space-x-2 mb-1">
-                                <p className="text-sm font-medium text-gray-900 truncate">
-                                  {hotel.name}
-                                </p>
-                                {getStatusBadge(hotel.mapStatus || "")}
-                              </div>
-
-                              <div className="flex items-center space-x-2 text-xs text-gray-500 mb-1">
-                                <span className="font-mono bg-gray-100 px-1 rounded">
-                                  {hotel.ittid}
-                                </span>
-                                {hotel.rating && (
-                                  <div className="flex items-center space-x-1">
-                                    <span>★</span>
-                                    <span>{hotel.rating}</span>
-                                  </div>
-                                )}
-                              </div>
-
-                              {hotel.addressLine1 && (
-                                <div className="flex items-center space-x-1 text-xs text-gray-500">
-                                  <MapPin className="h-3 w-3 flex-shrink-0" />
-                                  <span className="truncate">
-                                    {hotel.addressLine1}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="flex flex-col items-end text-xs text-gray-400">
-                              <span>{formatTimeAgo(hotel.updatedAt)}</span>
-                              {hotel.mapStatus && (
-                                <span className="text-xs capitalize mt-1 px-2 py-1 bg-gray-100 rounded">
-                                  {hotel.mapStatus}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {recentHotels.length > 6 && (
-                      <div className="pt-3 border-t border-gray-200">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            (window.location.href = "/dashboard/hotels/manage")
-                          }
-                          className="w-full text-xs"
-                        >
-                          View All Recent Updates ({recentHotels.length})
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Building2 className="h-8 w-8 text-gray-400" />
-                    </div>
-                    <p className="text-sm font-medium text-gray-600 mb-1">
-                      No Recent Updates
-                    </p>
-                    <p className="text-xs text-gray-500 mb-4">
-                      Hotel modifications will appear here
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => loadDashboardData()}
-                      className="text-xs"
-                    >
-                      <RefreshCw className="h-3 w-3 mr-1" />
-                      Check for Updates
-                    </Button>
-                  </div>
-                )}
               </CardContent>
             </Card>
           </div>
