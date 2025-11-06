@@ -20,11 +20,13 @@ import {
 interface QuickActionsProps {
   onRefreshData?: () => void;
   isLoading?: boolean;
+  compact?: boolean;
 }
 
 export const QuickActions: React.FC<QuickActionsProps> = ({
   onRefreshData,
   isLoading = false,
+  compact = false,
 }) => {
   const actions = [
     {

@@ -29,11 +29,13 @@ interface SystemMetrics {
 interface RealTimeMetricsProps {
   isEnabled: boolean;
   lastUpdate?: Date | null;
+  compact?: boolean;
 }
 
 export const RealTimeMetrics: React.FC<RealTimeMetricsProps> = ({
   isEnabled,
   lastUpdate,
+  compact = false,
 }) => {
   const [metrics, setMetrics] = useState<SystemMetrics>({
     activeConnections: 0,

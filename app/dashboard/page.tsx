@@ -184,7 +184,7 @@ export default function DashboardPage() {
               className={`px-4 py-2 rounded-md flex items-center space-x-2 ${
                 realTimeEnabled
                   ? "bg-green-600 text-white hover:bg-green-700"
-                  : "bg-gray-600 text-white hover:bg-gray-700"
+                  : "bg-gray-600 text-black hover:bg-gray-700"
               }`}
             >
               <Activity className="w-4 h-4" />
@@ -228,8 +228,25 @@ export default function DashboardPage() {
         </div>
       </div>
 
-
-    
+      {/* Welcome Section - Admin/Super User Only */}
+      <PermissionGuard
+        permissions={[
+          Permission.VIEW_ALL_USERS,
+          Permission.MANAGE_SYSTEM_SETTINGS,
+        ]}
+      >
+        <div className="border-4 border-dashed mb-8 border-gray-200 rounded-lg p-8">
+          <div className="text-center">
+            <h2 className="text-lg font-medium text-gray-900 mb-4">
+              Welcome to the Admin Management Panel
+            </h2>
+            <p className="text-gray-600 mb-6">
+              You have successfully logged in. The authentication system is
+              working correctly.
+            </p>
+          </div>
+        </div>
+      </PermissionGuard>
 
       {/* Dashboard Stats Error */}
       {statsError && (
@@ -466,65 +483,6 @@ export default function DashboardPage() {
         </h2>
         <RoleBasedNav variant="grid" />
       </div>
-
-      {/* Role-Based Quick Actions */}
-      <div className="mb-8">
-        <RoleBasedQuickActions />
-      </div>
-
-      {/* Welcome Section - Admin/Super User Only */}
-      <PermissionGuard
-        permissions={[
-          Permission.VIEW_ALL_USERS,
-          Permission.MANAGE_SYSTEM_SETTINGS,
-        ]}
-      >
-        <div className="border-4 border-dashed border-gray-200 rounded-lg p-8">
-          <div className="text-center">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">
-              Welcome to the Admin Management Panel
-            </h2>
-            <p className="text-gray-600 mb-6">
-              You have successfully logged in. The authentication system is
-              working correctly.
-            </p>
-
-            {user && (
-              <div className="bg-white p-6 rounded-lg shadow max-w-md mx-auto">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  User Information
-                </h3>
-                <dl className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <dt className="text-gray-500">Username:</dt>
-                    <dd className="text-gray-900">{user.username}</dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-gray-500">Email:</dt>
-                    <dd className="text-gray-900">{user.email}</dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-gray-500">Role:</dt>
-                    <dd className="text-gray-900">{user.role}</dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-gray-500">Status:</dt>
-                    <dd className="text-gray-900">
-                      {user.isActive ? "Active" : "Inactive"}
-                    </dd>
-                  </div>
-                  {user.pointBalance !== undefined && (
-                    <div className="flex justify-between">
-                      <dt className="text-gray-500">Points:</dt>
-                      <dd className="text-gray-900">{user.pointBalance}</dd>
-                    </div>
-                  )}
-                </dl>
-              </div>
-            )}
-          </div>
-        </div>
-      </PermissionGuard>
     </div>
   );
 }

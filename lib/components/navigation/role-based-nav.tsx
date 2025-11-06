@@ -95,11 +95,13 @@ const navigationItems: NavItem[] = [
 interface RoleBasedNavProps {
   className?: string;
   variant?: "sidebar" | "horizontal" | "grid";
+  compact?: boolean;
 }
 
 export function RoleBasedNav({
   className,
   variant = "sidebar",
+  compact = false,
 }: RoleBasedNavProps) {
   const { user } = useAuth();
   const pathname = usePathname();

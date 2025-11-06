@@ -26,6 +26,7 @@ export interface StatsCardProps {
     | "warning"
     | "error";
   loading?: boolean;
+  compact?: boolean;
   className?: string;
 }
 
@@ -45,6 +46,7 @@ const StatsCard: React.FC<StatsCardProps> = ({
   icon,
   gradient = "primary",
   loading = false,
+  compact = false,
   className,
 }) => {
   const [displayValue, setDisplayValue] = useState<number>(0);
@@ -112,14 +114,29 @@ const StatsCard: React.FC<StatsCardProps> = ({
         variant="elevated"
         className={cn("relative overflow-hidden", className)}
       >
-        <div className="p-6">
+        <div className={cn(compact ? "p-4" : "p-6")}>
           {/* Loading skeleton */}
           <div className="animate-pulse">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-8 h-8 bg-gray-200 rounded-lg"></div>
+            <div
+              className={cn(
+                "flex items-center justify-between",
+                compact ? "mb-3" : "mb-4"
+              )}
+            >
+              <div
+                className={cn(
+                  "bg-gray-200 rounded-lg",
+                  compact ? "w-6 h-6" : "w-8 h-8"
+                )}
+              ></div>
               <div className="w-16 h-4 bg-gray-200 rounded"></div>
             </div>
-            <div className="w-24 h-8 bg-gray-200 rounded mb-2"></div>
+            <div
+              className={cn(
+                "bg-gray-200 rounded mb-2",
+                compact ? "w-20 h-6" : "w-24 h-8"
+              )}
+            ></div>
             <div className="w-32 h-4 bg-gray-200 rounded"></div>
           </div>
         </div>
@@ -140,17 +157,23 @@ const StatsCard: React.FC<StatsCardProps> = ({
       {/* Gradient background overlay */}
       <div
         className={cn(
-          "absolute inset-0 bg-gradient-to-br opacity-5 group-hover:opacity-10 transition-opacity duration-300",
+          " inset-0 bg-gradient-to-br opacity-5 group-hover:opacity-10 transition-opacity duration-300",
           gradientClasses[gradient]
         )}
       />
 
-      <div className="relative p-6">
+      <div className={cn("relative", compact ? "p-4" : "p-6")}>
         {/* Header with icon and trend */}
-        <div className="flex items-center justify-between mb-4">
+        <div
+          className={cn(
+            "flex items-center justify-between",
+            compact ? "mb-3" : "mb-4"
+          )}
+        >
           <div
             className={cn(
-              "p-3 rounded-xl bg-gradient-to-br shadow-lg transform group-hover:scale-110 transition-transform duration-300",
+              "rounded-xl bg-gradient-to-br shadow-lg transform group-hover:scale-110 transition-transform duration-300",
+              compact ? "p-2" : "p-3",
               gradientClasses[gradient]
             )}
           >
@@ -160,7 +183,8 @@ const StatsCard: React.FC<StatsCardProps> = ({
           {change && (
             <div
               className={cn(
-                "flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium transition-all duration-300",
+                "flex items-center space-x-1 px-2 py-1 rounded-full font-medium transition-all duration-300",
+                compact ? "text-xs" : "text-xs",
                 getTrendColor(),
                 "group-hover:scale-105"
               )}
@@ -172,10 +196,11 @@ const StatsCard: React.FC<StatsCardProps> = ({
         </div>
 
         {/* Value */}
-        <div className="mb-2">
+        <div className={cn(compact ? "mb-1" : "mb-2")}>
           <div
             className={cn(
-              "text-3xl font-bold text-gray-900 transition-all duration-300",
+              "font-bold text-gray-900 transition-all duration-300",
+              compact ? "text-2xl" : "text-3xl",
               isAnimating && "animate-pulse"
             )}
           >
@@ -184,7 +209,12 @@ const StatsCard: React.FC<StatsCardProps> = ({
         </div>
 
         {/* Title */}
-        <div className="text-sm font-medium text-gray-600 group-hover:text-gray-700 transition-colors duration-300">
+        <div
+          className={cn(
+            "font-medium text-gray-600 group-hover:text-gray-700 transition-colors duration-300",
+            compact ? "text-xs" : "text-sm"
+          )}
+        >
           {title}
         </div>
       </div>
@@ -192,9 +222,10 @@ const StatsCard: React.FC<StatsCardProps> = ({
       {/* Animated border on hover */}
       <div
         className={cn(
-          "absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300",
+          " inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300",
           "bg-gradient-to-r p-[1px]",
-          gradientClasses[gradient]
+          gradientClasses[gradient],
+          "pointer-events-none"
         )}
       >
         <div className="w-full h-full bg-white rounded-xl" />

@@ -36,11 +36,13 @@ interface ActivityItem {
 interface LiveActivityFeedProps {
   isEnabled: boolean;
   maxItems?: number;
+  compact?: boolean;
 }
 
 export const LiveActivityFeed: React.FC<LiveActivityFeedProps> = ({
   isEnabled,
   maxItems = 10,
+  compact = false,
 }) => {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
 
