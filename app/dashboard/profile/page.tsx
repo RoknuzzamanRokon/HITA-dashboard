@@ -1,8 +1,3 @@
-/**
- * User Profile Page
- * Professional user profile with editable information and activity overview
- */
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -27,6 +22,11 @@ import {
   Settings,
   Key,
   UserCheck,
+  Mail,
+  IdCard,
+  TrendingUp,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react";
 import { UserRole } from "@/lib/types/auth";
 
@@ -85,19 +85,33 @@ export default function ProfilePage() {
       const meRes = await apiClient.get<any>("/user/check-me");
 
       // Now try to fetch from the available endpoints
-      let pointsRes = { success: false, data: null };
-      let suppliersRes = { success: false, data: null };
+      let pointsRes: { success: boolean; data: any } = {
+        success: false,
+        data: null,
+      };
+      let suppliersRes: { success: boolean; data: any } = {
+        success: false,
+        data: null,
+      };
 
       try {
-        pointsRes = await apiClient.get<any>("/user/points-check");
+        const pointsResponse = await apiClient.get<any>("/user/points-check");
+        pointsRes = {
+          success: pointsResponse.success,
+          data: pointsResponse.data,
+        };
       } catch (err) {
         console.warn("Points endpoint failed:", err);
       }
 
       try {
-        suppliersRes = await apiClient.get<any>(
+        const suppliersResponse = await apiClient.get<any>(
           "/user/check-active-my-supplier"
         );
+        suppliersRes = {
+          success: suppliersResponse.success,
+          data: suppliersResponse.data,
+        };
       } catch (err) {
         console.warn("Suppliers endpoint failed:", err);
       }
@@ -244,31 +258,30 @@ export default function ProfilePage() {
   // Show loading while checking authentication
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your profile...</p>
+        </div>
       </div>
     );
   }
 
   // Don't render if not authenticated
   if (!isAuthenticated || !profile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return null;
   }
 
   const getRoleColor = (role: UserRole) => {
     switch (role) {
       case UserRole.SUPER_USER:
-        return "bg-purple-100 text-purple-800 border-purple-200";
+        return "bg-gradient-to-r from-purple-500 to-purple-600 text-white";
       case UserRole.ADMIN_USER:
-        return "bg-blue-100 text-blue-800 border-blue-200";
+        return "bg-gradient-to-r from-blue-500 to-blue-600 text-white";
       case UserRole.GENERAL_USER:
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-gradient-to-r from-green-500 to-green-600 text-white";
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-gradient-to-r from-gray-500 to-gray-600 text-white";
     }
   };
 
@@ -285,388 +298,499 @@ export default function ProfilePage() {
     }
   };
 
+  const getStatusColor = (isActive: boolean) => {
+    return isActive
+      ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white"
+      : "bg-gradient-to-r from-red-500 to-red-600 text-white";
+  };
+
   return (
-    <div className="max-w-4xl mx-auto">
-      {/* Success Message */}
-      {successMessage && (
-        <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4 shadow-sm animate-fade-in">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <UserCheck className="h-5 w-5 text-green-400" />
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Success Message */}
+        {successMessage && (
+          <div className="mb-6 bg-white border-l-4 border-green-500 rounded-lg p-4 shadow-lg animate-fade-in">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              </div>
+              <div className="ml-3 flex-1">
+                <p className="text-sm font-medium text-green-800">
+                  {successMessage}
+                </p>
+              </div>
+              <button
+                onClick={() => setSuccessMessage(null)}
+                className="ml-auto text-green-500 hover:text-green-700 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
-            <div className="ml-3 flex-1">
-              <p className="text-sm font-medium text-green-800">
-                {successMessage}
-              </p>
-            </div>
-            <button
-              onClick={() => setSuccessMessage(null)}
-              className="ml-auto text-green-500 hover:text-green-700"
-            >
-              <X className="h-4 w-4" />
-            </button>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Error Message */}
-      {error && (
-        <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex items-center">
-            <div className="ml-3 flex-1">
-              <p className="text-sm font-medium text-red-800">{error}</p>
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 bg-white border-l-4 border-red-500 rounded-lg p-4 shadow-lg">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <AlertCircle className="h-5 w-5 text-red-500" />
+              </div>
+              <div className="ml-3 flex-1">
+                <p className="text-sm font-medium text-red-800">{error}</p>
+              </div>
+              <button
+                onClick={() => setError(null)}
+                className="ml-auto text-red-500 hover:text-red-700 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
-            <button
-              onClick={() => setError(null)}
-              className="ml-auto text-red-500 hover:text-red-700"
-            >
-              <X className="h-4 w-4" />
-            </button>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Profile Header */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
-        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-8">
-          <div className="flex items-center space-x-6">
-            <div className="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-4 border-white/30">
-              <span className="text-3xl font-bold text-white">
-                {profile.username.charAt(0).toUpperCase()}
-              </span>
-            </div>
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-white mb-2">
-                {profile.username}
-              </h1>
-              <p className="text-blue-100 mb-3">{profile.email}</p>
-              <div className="flex items-center space-x-3">
-                <Badge className={`${getRoleColor(profile.role)} border`}>
-                  {getRoleLabel(profile.role)}
-                </Badge>
-                <Badge
-                  className={
-                    profile.isActive
-                      ? "bg-green-100 text-green-800 border-green-200"
-                      : "bg-red-100 text-red-800 border-red-200"
+        {/* Profile Header */}
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden mb-8">
+          <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 px-8 py-12">
+            <div className="flex flex-col lg:flex-row items-center justify-between">
+              <div className="flex items-center space-x-6 mb-6 lg:mb-0">
+                <div className="relative">
+                  <div className="w-28 h-28 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border-4 border-white/30 shadow-2xl">
+                    <span className="text-4xl font-bold text-white">
+                      {profile.username.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="absolute -bottom-2 -right-2">
+                    <div
+                      className={`px-3 py-1 rounded-full text-xs font-semibold shadow-lg ${getStatusColor(
+                        profile.isActive
+                      )}`}
+                    >
+                      {profile.isActive ? "✓ Active" : "Inactive"}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-white">
+                  <h1 className="text-4xl font-bold mb-2">
+                    {profile.username}
+                  </h1>
+                  <div className="flex items-center space-x-4 mb-3">
+                    <div className="flex items-center space-x-2">
+                      <Mail className="h-4 w-4 text-blue-200" />
+                      <p className="text-blue-100">{profile.email}</p>
+                    </div>
+                    <div
+                      className={`px-3 py-1 rounded-full text-sm font-semibold ${getRoleColor(
+                        profile.role
+                      )}`}
+                    >
+                      {getRoleLabel(profile.role)}
+                    </div>
+                  </div>
+                  <p className="text-blue-200 text-sm">
+                    Member since{" "}
+                    {new Date(profile.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+              <div className="flex space-x-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowChangePassword(true)}
+                  className="bg-white/10 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
+                  leftIcon={<Key className="h-4 w-4" />}
+                >
+                  Change Password
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditing(!isEditing)}
+                  className="bg-white/10 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm"
+                  leftIcon={
+                    isEditing ? (
+                      <X className="h-4 w-4" />
+                    ) : (
+                      <Edit className="h-4 w-4" />
+                    )
                   }
                 >
-                  {profile.isActive ? "Active" : "Inactive"}
-                </Badge>
+                  {isEditing ? "Cancel" : "Edit Profile"}
+                </Button>
               </div>
-            </div>
-            <div className="text-right">
-              <Button
-                variant="outline"
-                onClick={() => setIsEditing(!isEditing)}
-                className="bg-white/10 border-white/30 text-white hover:bg-white/20"
-                leftIcon={
-                  isEditing ? (
-                    <X className="h-4 w-4" />
-                  ) : (
-                    <Edit className="h-4 w-4" />
-                  )
-                }
-              >
-                {isEditing ? "Cancel" : "Edit Profile"}
-              </Button>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Profile Information */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Basic Information */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                <User className="h-5 w-5 mr-2 text-blue-500" />
-                Basic Information
-              </h2>
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+          {/* Main Content - 3 columns */}
+          <div className="xl:col-span-3 space-y-8">
+            {/* Basic Information Card */}
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 flex items-center">
+                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mr-4">
+                    <User className="h-6 w-6 text-blue-600" />
+                  </div>
+                  Basic Information
+                </h2>
+              </div>
+
+              {isEditing ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-3">
+                        Username
+                      </label>
+                      <input
+                        type="text"
+                        value={editData.username}
+                        onChange={(e) =>
+                          setEditData({ ...editData, username: e.target.value })
+                        }
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        placeholder="Enter username"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-3">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        value={editData.email}
+                        onChange={(e) =>
+                          setEditData({ ...editData, email: e.target.value })
+                        }
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        placeholder="Enter email address"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-end space-x-4">
+                    <Button
+                      onClick={handleUpdateProfile}
+                      disabled={loading}
+                      className="px-6 py-3 rounded-xl"
+                      leftIcon={<Save className="h-4 w-4" />}
+                    >
+                      Save Changes
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsEditing(false);
+                        setEditData({
+                          username: profile.username,
+                          email: profile.email,
+                        });
+                      }}
+                      className="px-6 py-3 rounded-xl"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-6">
+                    <div className="p-4 bg-gray-50 rounded-xl">
+                      <label className="block text-sm font-semibold text-gray-500 mb-2">
+                        Username
+                      </label>
+                      <p className="text-lg text-gray-900 font-semibold">
+                        {profile.username}
+                      </p>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded-xl">
+                      <label className="block text-sm font-semibold text-gray-500 mb-2">
+                        Email Address
+                      </label>
+                      <p className="text-lg text-gray-900">{profile.email}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-6">
+                    <div className="p-4 bg-gray-50 rounded-xl">
+                      <label className="block text-sm font-semibold text-gray-500 mb-2">
+                        User Role
+                      </label>
+                      <div
+                        className={`inline-flex px-4 py-2 rounded-full text-sm font-semibold ${getRoleColor(
+                          profile.role
+                        )}`}
+                      >
+                        {getRoleLabel(profile.role)}
+                      </div>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded-xl">
+                      <label className="block text-sm font-semibold text-gray-500 mb-2">
+                        User ID
+                      </label>
+                      <div className="flex items-center space-x-2">
+                        <IdCard className="h-4 w-4 text-gray-400" />
+                        <code className="text-sm text-gray-600 font-mono bg-gray-100 px-2 py-1 rounded">
+                          {profile.id}
+                        </code>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {isEditing ? (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Username
-                  </label>
-                  <input
-                    type="text"
-                    value={editData.username}
-                    onChange={(e) =>
-                      setEditData({ ...editData, username: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
+            {/* Stats & Activity Cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Points Overview */}
+              <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold text-gray-900 flex items-center">
+                    <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center mr-3">
+                      <Coins className="h-5 w-5 text-amber-600" />
+                    </div>
+                    Points Overview
+                  </h3>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={editData.email}
-                    onChange={(e) =>
-                      setEditData({ ...editData, email: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div className="flex space-x-3 pt-4">
-                  <Button
-                    onClick={handleUpdateProfile}
-                    disabled={loading}
-                    leftIcon={<Save className="h-4 w-4" />}
-                  >
-                    Save Changes
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setIsEditing(false);
-                      setEditData({
-                        username: profile.username,
-                        email: profile.email,
-                      });
-                    }}
-                  >
-                    Cancel
-                  </Button>
+
+                <div className="space-y-4">
+                  <div className="p-6 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl text-white">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-amber-100 text-sm font-semibold">
+                        Current Balance
+                      </span>
+                      <TrendingUp className="h-4 w-4 text-amber-200" />
+                    </div>
+                    <p className="text-3xl font-bold">
+                      {profile.pointBalance.toLocaleString()}
+                    </p>
+                    <div className="mt-2 text-amber-100 text-sm">
+                      Total Earned: {profile.totalPoints.toLocaleString()}
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-gray-50 rounded-xl">
+                    <div className="text-center">
+                      <Badge
+                        className={
+                          profile.paidStatus === "Paid"
+                            ? "bg-green-100 text-green-800 px-4 py-2 text-sm"
+                            : profile.paidStatus ===
+                              "I am super user, I have unlimited points."
+                            ? "bg-purple-100 text-purple-800 px-4 py-2 text-sm"
+                            : "bg-red-100 text-red-800 px-4 py-2 text-sm"
+                        }
+                      >
+                        {profile.paidStatus ===
+                        "I am super user, I have unlimited points."
+                          ? "✨ Unlimited Points"
+                          : profile.paidStatus}
+                      </Badge>
+                    </div>
+                  </div>
                 </div>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">
-                      Username
-                    </label>
-                    <p className="text-lg text-gray-900 font-medium">
-                      {profile.username}
-                    </p>
+
+              {/* Activity Overview */}
+              <PermissionGuard permissions={[Permission.VIEW_ALL_TRANSACTIONS]}>
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-gray-900 flex items-center">
+                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                        <Activity className="h-5 w-5 text-green-600" />
+                      </div>
+                      Activity Overview
+                    </h3>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">
-                      Email Address
-                    </label>
-                    <p className="text-lg text-gray-900">{profile.email}</p>
+
+                  <div className="space-y-4">
+                    <div className="p-4 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl text-white">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-green-100 text-sm font-semibold">
+                            Total Requests
+                          </p>
+                          <p className="text-2xl font-bold">
+                            {profile.totalRequests}
+                          </p>
+                        </div>
+                        <Activity className="h-8 w-8 text-green-200" />
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-gray-50 rounded-xl">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-gray-600 text-sm font-semibold">
+                            Status
+                          </p>
+                          <p className="text-lg font-semibold text-gray-900">
+                            {profile.activityStatus}
+                          </p>
+                        </div>
+                        <div
+                          className={`w-3 h-3 rounded-full ${
+                            profile.isActive ? "bg-green-500" : "bg-red-500"
+                          }`}
+                        ></div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">
-                      User Role
-                    </label>
-                    <Badge className={getRoleColor(profile.role)}>
-                      {getRoleLabel(profile.role)}
-                    </Badge>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">
-                      Account Status
-                    </label>
-                    <Badge
-                      className={
-                        profile.isActive
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }
+              </PermissionGuard>
+            </div>
+
+            {/* Active Suppliers */}
+            {profile.activeSuppliers.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold text-gray-900 flex items-center">
+                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                      <Settings className="h-5 w-5 text-blue-600" />
+                    </div>
+                    Active Suppliers
+                  </h3>
+                  <Badge variant="outline" className="text-sm">
+                    {profile.activeSuppliers.length} suppliers
+                  </Badge>
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  {profile.activeSuppliers.map((supplier, index) => (
+                    <div
+                      key={index}
+                      className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl text-blue-800 font-medium text-sm"
                     >
-                      {profile.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </div>
+                      {supplier}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
           </div>
 
-          {/* Account Security */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                <Shield className="h-5 w-5 mr-2 text-blue-500" />
-                Account Security
-              </h2>
+          {/* Sidebar - 1 column */}
+          <div className="space-y-8">
+            {/* Account Details */}
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+              <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                  <Calendar className="h-5 w-5 text-purple-600" />
+                </div>
+                Account Timeline
+              </h3>
+
+              <div className="space-y-6">
+                <div className="flex items-start space-x-4">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">
+                      Account Created
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {new Date(profile.createdAt).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </p>
+                  </div>
+                </div>
+
+                {profile.lastLogin && (
+                  <div className="flex items-start space-x-4">
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Clock className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Last Login</p>
+                      <p className="text-sm text-gray-600">
+                        {new Date(profile.lastLogin).toLocaleDateString(
+                          "en-US",
+                          {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          }
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {profile.updatedAt && (
+                  <div className="flex items-start space-x-4">
+                    <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Edit className="h-5 w-5 text-amber-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">
+                        Last Updated
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {new Date(profile.updatedAt).toLocaleDateString(
+                          "en-US",
+                          {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          }
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <PermissionGuard permissions={[Permission.VIEW_ALL_USERS]}>
+                  {profile.createdBy && (
+                    <div className="flex items-start space-x-4">
+                      <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <User className="h-5 w-5 text-gray-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">
+                          Created By
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {profile.createdBy}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </PermissionGuard>
+              </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <h3 className="font-medium text-gray-900">Password</h3>
-                  <p className="text-sm text-gray-500">Last changed recently</p>
+            {/* Security Quick Actions */}
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+              <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                  <Shield className="h-5 w-5 text-red-600" />
                 </div>
+                Security
+              </h3>
+
+              <div className="space-y-4">
                 <Button
-                  variant="outline"
                   onClick={() => setShowChangePassword(true)}
+                  variant="outline"
+                  className="w-full justify-start px-4 py-3 rounded-xl border-gray-200 hover:border-red-200 hover:bg-red-50 transition-all"
                   leftIcon={<Key className="h-4 w-4" />}
                 >
                   Change Password
                 </Button>
-              </div>
 
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <h3 className="font-medium text-gray-900">Account ID</h3>
-                  <p className="text-sm text-gray-500 font-mono">
-                    {profile.id}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Activity Overview */}
-          <PermissionGuard permissions={[Permission.VIEW_ALL_TRANSACTIONS]}>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                  <Activity className="h-5 w-5 mr-2 text-blue-500" />
-                  Activity Overview
-                </h2>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <div className="flex items-center">
-                    <Coins className="h-8 w-8 text-blue-500 mr-3" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">
-                        Total Requests
-                      </p>
-                      <p className="text-2xl font-bold text-blue-600">
-                        {profile.totalRequests}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-4 bg-green-50 rounded-lg">
-                  <div className="flex items-center">
-                    <Activity className="h-8 w-8 text-green-500 mr-3" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">
-                        Activity Status
-                      </p>
-                      <p className="text-lg font-semibold text-green-600">
-                        {profile.activityStatus}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </PermissionGuard>
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Points Information */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <Coins className="h-5 w-5 mr-2 text-yellow-500" />
-              Points Balance
-            </h3>
-
-            <div className="space-y-4">
-              <div className="text-center p-4 bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg border border-yellow-200">
-                <p className="text-sm text-gray-600 mb-1">Current Points</p>
-                <p className="text-3xl font-bold text-yellow-600">
-                  {profile.pointBalance.toLocaleString()}
-                </p>
-              </div>
-
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-600 mb-1">Total Earned</p>
-                <p className="text-xl font-semibold text-gray-700">
-                  {profile.totalPoints.toLocaleString()}
-                </p>
-              </div>
-
-              <div className="text-center">
-                <Badge
-                  className={
-                    profile.paidStatus === "Paid"
-                      ? "bg-green-100 text-green-800"
-                      : profile.paidStatus ===
-                        "I am super user, I have unlimited points."
-                      ? "bg-purple-100 text-purple-800"
-                      : "bg-red-100 text-red-800"
-                  }
-                >
-                  {profile.paidStatus ===
-                  "I am super user, I have unlimited points."
-                    ? "Unlimited Points"
-                    : profile.paidStatus}
-                </Badge>
-              </div>
-            </div>
-          </div>
-
-          {/* Account Details */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <Calendar className="h-5 w-5 mr-2 text-blue-500" />
-              Account Details
-            </h3>
-
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Member Since</span>
-                <span className="text-gray-900 font-medium">
-                  {new Date(profile.createdAt).toLocaleDateString()}
-                </span>
-              </div>
-
-              {profile.updatedAt && (
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Last Updated</span>
-                  <span className="text-gray-900">
-                    {new Date(profile.updatedAt).toLocaleDateString()}
-                  </span>
-                </div>
-              )}
-
-              {profile.lastLogin && (
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Last Login</span>
-                  <span className="text-gray-900">
-                    {new Date(profile.lastLogin).toLocaleDateString()}
-                  </span>
-                </div>
-              )}
-
-              <PermissionGuard permissions={[Permission.VIEW_ALL_USERS]}>
-                {profile.createdBy && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Created By</span>
-                    <span className="text-gray-900 text-xs">
-                      {profile.createdBy}
+                <div className="p-4 bg-green-50 border border-green-200 rounded-xl">
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <span className="text-sm font-medium text-green-800">
+                      Account Protected
                     </span>
                   </div>
-                )}
-              </PermissionGuard>
-            </div>
-          </div>
-
-          {/* Active Suppliers */}
-          {profile.activeSuppliers.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Settings className="h-5 w-5 mr-2 text-blue-500" />
-                Active Suppliers
-              </h3>
-
-              <div className="flex flex-wrap gap-2">
-                {profile.activeSuppliers.map((supplier, index) => (
-                  <Badge key={index} variant="outline" className="text-xs">
-                    {supplier}
-                  </Badge>
-                ))}
+                </div>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
 
@@ -685,71 +809,76 @@ export default function ProfilePage() {
         title="Change Password"
         size="md"
       >
-        <div className="space-y-4">
+        <div className="space-y-6">
           {passwordError && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-4">
-              <p className="text-sm text-red-700">{passwordError}</p>
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+              <div className="flex items-center">
+                <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
+                <p className="text-sm text-red-700">{passwordError}</p>
+              </div>
             </div>
           )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Current Password
-            </label>
-            <input
-              type="password"
-              value={passwordData.currentPassword}
-              onChange={(e) => {
-                setPasswordData({
-                  ...passwordData,
-                  currentPassword: e.target.value,
-                });
-                if (passwordError) setPasswordError(null);
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter current password"
-            />
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Current Password
+              </label>
+              <input
+                type="password"
+                value={passwordData.currentPassword}
+                onChange={(e) => {
+                  setPasswordData({
+                    ...passwordData,
+                    currentPassword: e.target.value,
+                  });
+                  if (passwordError) setPasswordError(null);
+                }}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                placeholder="Enter current password"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                New Password
+              </label>
+              <input
+                type="password"
+                value={passwordData.newPassword}
+                onChange={(e) => {
+                  setPasswordData({
+                    ...passwordData,
+                    newPassword: e.target.value,
+                  });
+                  if (passwordError) setPasswordError(null);
+                }}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                placeholder="Enter new password (min 8 characters)"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Confirm New Password
+              </label>
+              <input
+                type="password"
+                value={passwordData.confirmPassword}
+                onChange={(e) => {
+                  setPasswordData({
+                    ...passwordData,
+                    confirmPassword: e.target.value,
+                  });
+                  if (passwordError) setPasswordError(null);
+                }}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                placeholder="Confirm new password"
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              New Password
-            </label>
-            <input
-              type="password"
-              value={passwordData.newPassword}
-              onChange={(e) => {
-                setPasswordData({
-                  ...passwordData,
-                  newPassword: e.target.value,
-                });
-                if (passwordError) setPasswordError(null);
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter new password (min 8 characters)"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Confirm New Password
-            </label>
-            <input
-              type="password"
-              value={passwordData.confirmPassword}
-              onChange={(e) => {
-                setPasswordData({
-                  ...passwordData,
-                  confirmPassword: e.target.value,
-                });
-                if (passwordError) setPasswordError(null);
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Confirm new password"
-            />
-          </div>
-
-          <div className="flex justify-end space-x-3 pt-4 border-t">
+          <div className="flex justify-end space-x-3 pt-6 border-t">
             <Button
               variant="outline"
               onClick={() => {
@@ -762,12 +891,14 @@ export default function ProfilePage() {
                 setPasswordError(null);
               }}
               disabled={passwordLoading}
+              className="px-6 py-3 rounded-xl"
             >
               Cancel
             </Button>
             <Button
               onClick={handleChangePassword}
               disabled={passwordLoading}
+              className="px-6 py-3 rounded-xl"
               leftIcon={
                 passwordLoading ? (
                   <Clock className="h-4 w-4 animate-spin" />
