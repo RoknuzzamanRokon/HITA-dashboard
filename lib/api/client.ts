@@ -159,15 +159,30 @@ export class ApiClient {
   private async handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
     const contentType = response.headers.get('content-type') || '';
     let data: any = null;
+
+    console.log(`📡 Response status: ${response.status}`);
+    console.log(`📡 Response content-type: ${contentType}`);
+
     if (contentType.includes('application/json')) {
       try {
         data = await response.json();
-      } catch {
-        // fallthrough
+        console.log(`📡 Response data:`, data);
+      } catch (parseError) {
+        console.error('📡 Failed to parse JSON response:', parseError);
+      }
+    } else {
+      // Try to get text content for non-JSON responses
+      try {
+        const textData = await response.text();
+        console.log(`📡 Response text:`, textData);
+        data = textData;
+      } catch (textError) {
+        console.error('📡 Failed to get text response:', textError);
       }
     }
 
     if (!response.ok) {
+      console.log(`📡 Error response - Status: ${response.status}, Data:`, data);
       return {
         success: false,
         error: {
@@ -178,6 +193,7 @@ export class ApiClient {
       };
     }
 
+    console.log(`📡 Success response - Data:`, data);
     return { success: true, data: data as T };
   }
 

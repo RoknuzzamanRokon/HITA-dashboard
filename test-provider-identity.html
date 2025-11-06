@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Provider Identity API</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .result { margin-top: 20px; padding: 15px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; }
+        .error { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        pre { white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test Provider Identity API</h1>
+        <p>Test the new Provider Identity functionality that searches hotel mappings using provider name and ID.</p>
+        
+        <form id="providerForm">
+            <div class="form-group">
+                <label for="providerName">Provider Name:</label>
+                <select id="providerName" required>
+                    <option value="agoda">Agoda</option>
+                    <option value="booking">Booking.com</option>
+                    <option value="expedia">Expedia</option>
+                    <option value="restel">Restel</option>
+                    <option value="hotelbeds">Hotelbeds</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="providerId">Provider ID:</label>
+                <input type="text" id="providerId" placeholder="e.g., 1134459" required>
+                <small>Enter the provider's internal hotel ID</small>
+            </div>
+            
+            <button type="submit" id="searchBtn">Search Hotel Mapping</button>
+        </form>
+        
+        <div id="result" class="result" style="display: none;">
+            <h3>Result:</h3>
+            <pre id="resultContent"></pre>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://127.0.0.1:8002/v1.0';
+        const AUTH_TOKEN = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1cnNhbXJva28iLCJ1c2VyX2lkIjoiMWEyMDNjY2RhNCIsInJvbGUiOiJzdXBlcl91c2VyIiwiZXhwIjoxNzY0MjA4MzE1LCJ0eXBlIjoiYWNjZXNzIiwiaWF0IjoxNzYyNDA4MzE1fQ.3_BJbg0B0DpQm48_AuvuNqyDx1bHivMB3nvEH91fqc0';
+
+        document.getElementById('providerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const providerName = document.getElementById('providerName').value;
+            const providerId = document.getElementById('providerId').value;
+            const searchBtn = document.getElementById('searchBtn');
+            const resultDiv = document.getElementById('result');
+            const resultContent = document.getElementById('resultContent');
+            
+            if (!providerName || !providerId) {
+                alert('Please fill in both provider name and provider ID');
+                return;
+            }
+            
+            searchBtn.disabled = true;
+            searchBtn.textContent = 'Searching...';
+            resultDiv.style.display = 'none';
+            
+            try {
+                const payload = {
+                    provider_hotel_identity: [
+                        {
+                            provider_name: providerName,
+                            provider_id: providerId
+                        }
+                    ]
+                };
+                
+                console.log('Sending request:', payload);
+                
+                const response = await fetch(`${API_BASE_URL}/content/get-hotel-mapping-info-using-provider-name-and-id`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': AUTH_TOKEN
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.text();
+                console.log('Response:', data);
+                
+                resultDiv.className = 'result';
+                resultDiv.style.display = 'block';
+                
+                try {
+                    const jsonData = JSON.parse(data);
+                    resultContent.textContent = JSON.stringify(jsonData, null, 2);
+                    
+                    // Show structured data if available
+                    if (Array.isArray(jsonData) && jsonData.length > 0 && jsonData[0].provider_mappings) {
+                        const mappings = jsonData[0].provider_mappings;
+                        let tableHtml = '<h4>Provider Mappings:</h4><table border="1" style="border-collapse: collapse; width: 100%; margin-top: 10px;"><tr><th>ITTID</th><th>Provider Mapping ID</th><th>Provider Name</th><th>Provider ID</th><th>Created At</th></tr>';
+                        mappings.forEach(mapping => {
+                            tableHtml += `<tr>
+                                <td>${mapping.ittid}</td>
+                                <td>${mapping.provider_mapping_id}</td>
+                                <td>${mapping.provider_name}</td>
+                                <td>${mapping.provider_id}</td>
+                                <td>${new Date(mapping.created_at).toLocaleDateString()}</td>
+                            </tr>`;
+                        });
+                        tableHtml += '</table>';
+                        
+                        const tableDiv = document.createElement('div');
+                        tableDiv.innerHTML = tableHtml;
+                        tableDiv.style.marginTop = '20px';
+                        document.getElementById('result').appendChild(tableDiv);
+                    }
+                } catch {
+                    resultContent.textContent = data;
+                }
+                
+                if (!response.ok) {
+                    resultDiv.className = 'result error';
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.className = 'result error';
+                resultDiv.style.display = 'block';
+                resultContent.textContent = `Error: ${error.message}`;
+            } finally {
+                searchBtn.disabled = false;
+                searchBtn.textContent = 'Search Hotel Mapping';
+            }
+        });
+        
+        // Set default values for testing
+        document.getElementById('providerName').value = 'hotelbeds';
+        document.getElementById('providerId').value = '1';
+    </script>
+</body>
+</html>
+</text>
+</invoke>
