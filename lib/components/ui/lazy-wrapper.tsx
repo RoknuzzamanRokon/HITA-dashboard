@@ -74,7 +74,11 @@ export const LazyWrapper: React.FC<LazyWrapperProps> = ({
   const shouldRender = triggerOnce ? hasLoaded : isIntersecting;
 
   return (
-    <div ref={elementRef} className={className} style={{ minHeight }}>
+    <div
+      ref={elementRef as React.RefObject<HTMLDivElement>}
+      className={className}
+      style={{ minHeight }}
+    >
       {shouldRender ? (
         children
       ) : fallback ? (
@@ -97,7 +101,7 @@ export function withLazyLoading<P extends object>(
 ) {
   const LazyComponent = React.forwardRef<any, P>((props, ref) => (
     <LazyWrapper {...options}>
-      <Component {...props} ref={ref} />
+      <Component {...(props as P)} />
     </LazyWrapper>
   ));
 
@@ -148,7 +152,10 @@ export const LazyImage: React.FC<LazyImageProps> = ({
   }, [onError]);
 
   return (
-    <div ref={elementRef} className={`relative overflow-hidden ${className}`}>
+    <div
+      ref={elementRef as React.RefObject<HTMLDivElement>}
+      className={`relative overflow-hidden ${className}`}
+    >
       {/* Placeholder or blur image */}
       {!isLoaded && !hasError && (
         <div className="absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse" />

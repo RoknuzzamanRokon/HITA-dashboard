@@ -429,16 +429,17 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={(entry: { name: string; percent: number }) =>
-                  `${entry.name} ${(Number(entry.percent) * 100).toFixed(0)}%`
-                }
+                label={(props: any) => {
+                  const { name, percent } = props;
+                  return `${name} ${(percent * 100).toFixed(0)}%`;
+                }}
                 outerRadius={100}
                 fill="#8884d8"
                 dataKey="value"
                 animationDuration={1500}
                 animationBegin={0}
               >
-                {distributionData.map((entry, index) => (
+                {distributionData.map((entry: any, index: number) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>

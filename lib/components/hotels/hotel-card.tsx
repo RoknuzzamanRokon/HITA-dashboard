@@ -70,7 +70,7 @@ export function HotelCard({
   };
 
   return (
-    <Card className={className} variant="outlined">
+    <Card className={className} variant="elevated">
       <CardHeader className="pb-4">
         <div className="flex items-start justify-between">
           <div className="flex-1">

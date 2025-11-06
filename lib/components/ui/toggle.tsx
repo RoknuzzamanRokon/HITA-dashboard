@@ -81,11 +81,9 @@ export function Toggle({
             },
             {
               // Position based on size and state
-              "translate-x-0": !checked && size === "sm",
+              "translate-x-0": !checked,
               "translate-x-4": checked && size === "sm",
-              "translate-x-0": !checked && size === "md",
               "translate-x-5": checked && size === "md",
-              "translate-x-0": !checked && size === "lg",
               "translate-x-6": checked && size === "lg",
             }
           )}

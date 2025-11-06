@@ -78,14 +78,15 @@ export const LiveActivityFeed: React.FC<LiveActivityFeedProps> = ({
         api_request: `API request processed for ${user}`,
       };
 
-      const severities: ActivityItem["severity"][] = {
-        user_login: "success",
-        user_logout: "info",
-        user_created: "success",
-        points_awarded: "success",
-        system_event: "info",
-        api_request: "info",
-      };
+      const severities: Record<ActivityItem["type"], ActivityItem["severity"]> =
+        {
+          user_login: "success",
+          user_logout: "info",
+          user_created: "success",
+          points_awarded: "success",
+          system_event: "info",
+          api_request: "info",
+        };
 
       return {
         id: Math.random().toString(36).substr(2, 9),

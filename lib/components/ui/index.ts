@@ -21,21 +21,51 @@ export { RadioGroup } from "./radio-group";
 export { LazyWrapper, LazyImage, LazyComponent, withLazyLoading } from "./lazy-wrapper";
 export { ResponsiveWrapper, withResponsive, ResponsiveText, ResponsiveSpacing } from "./responsive-wrapper";
 
-// Re-export utility functions for animations and styling
+// Re-export basic utility functions
 export {
     cn,
-    createRipple,
+    formatDate,
+    formatDateTime,
+    capitalize,
+    truncate,
+    formatNumber,
+    debounce,
+    sleep,
     getStaggerDelay,
     easings,
     generateAnimationProps,
+    createRipple
+} from "../../utils";
+
+// Re-export animation utilities
+export {
     useOptimizedAnimation,
     useHardwareAcceleration,
     createOptimizedRipple,
     useStaggeredAnimation,
+    useScrollAnimation,
+    useDebounceAnimation,
+    durations,
+    animationConfigs
+} from "../../utils/animations";
+
+// Re-export performance utilities
+export {
     useReducedMotion,
+    hardwareAcceleration,
+    useIntersectionObserver,
+    usePerformanceOptimizedAnimation
+} from "../../utils/performance";
+
+// Re-export responsive utilities
+export {
     useBreakpoint,
     useTouchDevice,
+    useOrientation,
     useResponsiveValue,
     useTouchGestures,
-    useResponsiveLayout
-} from "../../utils";
+    useResponsiveLayout,
+    useViewportHeight,
+    useResponsiveImage,
+    breakpoints
+} from "../../utils/responsive";
