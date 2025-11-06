@@ -87,6 +87,34 @@ export interface HotelSearchResponse {
     mappingDetails?: any;
 }
 
+export interface ProviderMappingResponse {
+    ittid: string;
+    total_supplier: number;
+    provider_list: string[];
+    provider_mappings: Array<{
+        provider_name: string;
+        provider_id: string;
+        updated_at: string;
+    }>;
+}
+
+export interface ProviderIdentityRequest {
+    provider_hotel_identity: Array<{
+        provider_name: string;
+        provider_id: string;
+    }>;
+}
+
+export interface ProviderIdentityResponse {
+    provider_mappings: Array<{
+        ittid: string;
+        provider_mapping_id: number;
+        provider_id: string;
+        provider_name: string;
+        created_at: string;
+    }>;
+}
+
 export class ProviderUpdatesApi {
     /**
      * Get all ITTID records
@@ -202,6 +230,63 @@ export class ProviderUpdatesApi {
                 error: {
                     status: 500,
                     message: 'Failed to fetch hotel mapping data',
+                },
+            };
+        }
+    }
+
+    /**
+     * Get provider mapping info using ITTID (comprehensive mapping data)
+     */
+    static async getProviderMappingByIttid(
+        request: HotelSearchRequest
+    ): Promise<ApiResponse<ProviderMappingResponse>> {
+        try {
+            console.log('📡 Making request to provider mapping API:', request);
+            const response = await apiClient.post<ProviderMappingResponse>(
+                '/mapping/get-mapping-hotel-with-ittid',
+                request
+            );
+            console.log('📡 Provider mapping API response:', response);
+
+            return response;
+        } catch (error) {
+            console.error('Failed to fetch provider mapping by ITTID:', error);
+            return {
+                success: false,
+                error: {
+                    status: 500,
+                    message: 'Failed to fetch provider mapping data',
+                },
+            };
+        }
+    }
+
+    /**
+     * Get hotel mapping info using provider name and ID
+     */
+    static async getHotelMappingByProviderIdentity(
+        request: ProviderIdentityRequest
+    ): Promise<ApiResponse<any>> {
+        try {
+            console.log('📡 Making request to provider identity API:', request);
+            const response = await apiClient.post<any>(
+                '/content/get-hotel-mapping-info-using-provider-name-and-id',
+                request
+            );
+            console.log('📡 Provider identity API response:', response);
+            console.log('📡 Response success:', response.success);
+            console.log('📡 Response data:', response.data);
+            console.log('📡 Response error:', response.error);
+
+            return response;
+        } catch (error) {
+            console.error('Failed to fetch hotel mapping by provider identity:', error);
+            return {
+                success: false,
+                error: {
+                    status: 500,
+                    message: 'Failed to fetch provider identity mapping data',
                 },
             };
         }
