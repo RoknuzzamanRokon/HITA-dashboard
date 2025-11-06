@@ -169,40 +169,6 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
             </div>
           </div>
 
-          {/* Center - Search Bar */}
-          <div className="hidden md:flex flex-1 max-w-md mx-8">
-            <div className="relative w-full">
-              <div
-                className={cn(
-                  "flex items-center transition-all duration-300 rounded-xl overflow-hidden",
-                  searchOpen
-                    ? "bg-white/60 backdrop-blur-sm shadow-lg border border-white/30"
-                    : "bg-white/20 hover:bg-white/30"
-                )}
-              >
-                <button
-                  onClick={() => setSearchOpen(!searchOpen)}
-                  className="p-3 text-gray-500 hover:text-gray-700 transition-colors duration-200"
-                >
-                  <Search className="h-4 w-4" />
-                </button>
-                <input
-                  ref={searchRef}
-                  type="text"
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className={cn(
-                    "flex-1 bg-transparent border-none outline-none text-gray-700 placeholder-gray-500 transition-all duration-300",
-                    searchOpen ? "w-full pr-4" : "w-0 opacity-0"
-                  )}
-                  onBlur={() => {
-                    if (!searchQuery) setSearchOpen(false);
-                  }}
-                />
-              </div>
-            </div>
-          </div>
 
           {/* Right side - Actions and user menu */}
           <div className="flex items-center space-x-2">

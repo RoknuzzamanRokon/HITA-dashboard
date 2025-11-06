@@ -105,7 +105,7 @@ export default function ProviderUpdatePage() {
     | "mapping"
     | "provider-identity"
     | "provider-mapping"
-  >("all-ittids");
+  >("provider-identity");
 
   useEffect(() => {
     // Set default dates (last 30 days)
@@ -750,16 +750,16 @@ export default function ProviderUpdatePage() {
           <nav className="-mb-px flex space-x-8">
             {[
               {
+                id: "provider-identity",
+                label: "Provider Identity",
+                icon: UserCheck,
+              },
+              {
                 id: "provider-mapping",
                 label: "Provider Mapping",
                 icon: Search,
               },
               { id: "mapping", label: "Country Mapping", icon: MapPin },
-              {
-                id: "provider-identity",
-                label: "Provider Identity",
-                icon: UserCheck,
-              },
               { id: "all-ittids", label: "All ITTIDs", icon: Database },
               { id: "updates", label: "Provider Updates", icon: RefreshCw },
             ].map((tab) => (

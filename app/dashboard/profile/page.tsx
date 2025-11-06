@@ -95,7 +95,11 @@ export default function ProfilePage() {
       };
 
       try {
-        pointsRes = await apiClient.get<any>("/user/points-check");
+        const pointsResponse = await apiClient.get<any>("/user/points-check");
+        pointsRes = {
+          success: pointsResponse.success,
+          data: pointsResponse.data || null,
+        };
       } catch (err) {
         console.warn("Points endpoint failed:", err);
       }
@@ -104,6 +108,10 @@ export default function ProfilePage() {
         const suppliersResponse = await apiClient.get<any>(
           "/user/check-active-my-supplier"
         );
+        suppliersRes = {
+          success: suppliersResponse.success,
+          data: suppliersResponse.data || null,
+        };
       } catch (err) {
         console.warn("Suppliers endpoint failed:", err);
       }
