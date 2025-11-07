@@ -145,17 +145,24 @@ export class AuthService {
      */
     static async logout(): Promise<void> {
         try {
-            console.log("🚪 Logging out user...");
+            console.log("🚪 AuthService: Logging out user...");
 
             // Clear tokens from storage
+            console.log("🧹 AuthService: Clearing tokens from storage...");
             TokenStorage.clearTokens();
+
+            // Verify tokens are cleared
+            const tokenAfter = TokenStorage.getToken();
+            const refreshTokenAfter = TokenStorage.getRefreshToken();
+            console.log("🔍 AuthService: Token after clear:", tokenAfter ? "STILL EXISTS" : "CLEARED");
+            console.log("🔍 AuthService: Refresh token after clear:", refreshTokenAfter ? "STILL EXISTS" : "CLEARED");
 
             // Optional: Call logout endpoint if it exists
             // await apiClient.post('/auth/logout');
 
-            console.log("✅ Logout completed");
+            console.log("✅ AuthService: Logout completed");
         } catch (error) {
-            console.error('Logout error:', error);
+            console.error('❌ AuthService: Logout error:', error);
             // Still clear tokens even if API call fails
             TokenStorage.clearTokens();
         }
@@ -206,36 +213,36 @@ export class AuthService {
                 };
             } else {
                 console.warn("❌ User profile request failed:", response.error);
-                // Fall back to creating user from token
-                throw new Error('API request failed');
+                // Don't throw error, let it fall through to the fallback logic
+                console.log("🔄 API failed, proceeding to token fallback...");
             }
         } catch (error) {
             console.error('❌ API failed, using token fallback:', error);
-
-            // Create user from JWT token as fallback
-            if (token && this.isValidJWT(token)) {
-                console.log("🔄 Creating user from JWT token as fallback");
-                try {
-                    const payload = JSON.parse(atob(token.split('.')[1]));
-                    const fallbackUser = this.createFallbackUser(payload.sub || 'user', token);
-                    console.log("✅ Created fallback user:", fallbackUser);
-                    return {
-                        success: true,
-                        data: fallbackUser
-                    };
-                } catch (tokenError) {
-                    console.warn("❌ Failed to create user from token:", tokenError);
-                }
-            }
-
-            return {
-                success: false,
-                error: {
-                    status: 500,
-                    message: 'Unable to fetch user profile from server',
-                },
-            };
         }
+
+        // Create user from JWT token as fallback (moved outside try-catch)
+        if (token && this.isValidJWT(token)) {
+            console.log("🔄 Creating user from JWT token as fallback");
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                const fallbackUser = this.createFallbackUser(payload.sub || 'user', token);
+                console.log("✅ Created fallback user:", fallbackUser);
+                return {
+                    success: true,
+                    data: fallbackUser
+                };
+            } catch (tokenError) {
+                console.warn("❌ Failed to create user from token:", tokenError);
+            }
+        }
+
+        return {
+            success: false,
+            error: {
+                status: 500,
+                message: 'Unable to fetch user profile from server',
+            },
+        };
     }
 
     /**

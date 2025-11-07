@@ -48,7 +48,7 @@ export function useRequireAuth(redirectTo: string = '/login') {
             initialLoadComplete) {
 
             // Check if we have any tokens in storage
-            const hasToken = localStorage.getItem('auth-token') || sessionStorage.getItem('auth-token');
+            const hasToken = localStorage.getItem('admin_auth_token') || sessionStorage.getItem('admin_auth_token');
 
             if (!hasToken) {
                 console.log("🚪 No token found, redirecting to login");

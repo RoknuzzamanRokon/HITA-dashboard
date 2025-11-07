@@ -101,8 +101,16 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
   }, [searchOpen]);
 
   const handleLogout = async () => {
+    console.log("🚪 Navbar: Starting logout process...");
+    alert("Logout button clicked! Check console for details.");
     setDropdownOpen(false);
-    await logout();
+
+    try {
+      await logout();
+      console.log("✅ Navbar: Logout completed successfully");
+    } catch (error) {
+      console.error("❌ Navbar: Logout failed:", error);
+    }
   };
 
   const getRoleDisplayName = (role: string) => {
@@ -122,16 +130,19 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
     <nav
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 dark:text-white"
       style={{
-        background: theme === 'dark' 
-          ? "linear-gradient(135deg, rgba(17, 24, 39, 0.95) 0%, rgba(17, 24, 39, 0.8) 100%)"
-          : "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.8) 100%)",
+        background:
+          theme === "dark"
+            ? "linear-gradient(135deg, rgba(17, 24, 39, 0.95) 0%, rgba(17, 24, 39, 0.8) 100%)"
+            : "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.8) 100%)",
         backdropFilter: "blur(20px)",
-        borderBottom: theme === 'dark' 
-          ? "1px solid rgba(55, 65, 81, 0.3)" 
-          : "1px solid rgba(255, 255, 255, 0.2)",
-        boxShadow: theme === 'dark'
-          ? "0 8px 32px rgba(0, 0, 0, 0.3)"
-          : "0 8px 32px rgba(0, 0, 0, 0.1)",
+        borderBottom:
+          theme === "dark"
+            ? "1px solid rgba(55, 65, 81, 0.3)"
+            : "1px solid rgba(255, 255, 255, 0.2)",
+        boxShadow:
+          theme === "dark"
+            ? "0 8px 32px rgba(0, 0, 0, 0.3)"
+            : "0 8px 32px rgba(0, 0, 0, 0.1)",
       }}
     >
       <div className="px-4 sm:px-6 lg:px-8">
@@ -142,7 +153,7 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
               onClick={onToggleSidebar}
               className={cn(
                 "p-2 rounded-xl transition-all duration-300 group relative overflow-hidden",
-                theme === 'dark'
+                theme === "dark"
                   ? "text-gray-300 hover:text-white hover:bg-gray-700/40"
                   : "text-gray-600 hover:text-gray-900 hover:bg-white/40",
                 "hover:backdrop-blur-sm hover:shadow-lg hover:scale-110",
@@ -150,12 +161,14 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
               )}
               aria-label="Toggle sidebar"
             >
-              <div className={cn(
-                "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl",
-                theme === 'dark'
-                  ? "bg-gradient-to-r from-gray-700/20 to-transparent"
-                  : "bg-gradient-to-r from-white/20 to-transparent"
-              )} />
+              <div
+                className={cn(
+                  "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl",
+                  theme === "dark"
+                    ? "bg-gradient-to-r from-gray-700/20 to-transparent"
+                    : "bg-gradient-to-r from-white/20 to-transparent"
+                )}
+              />
               <Menu className="h-5 w-5 relative z-10 transition-transform duration-300 group-hover:rotate-180" />
             </button>
 
@@ -168,7 +181,6 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
               </h1>
             </div>
           </div>
-
 
           {/* Right side - Actions and user menu */}
           <div className="flex items-center space-x-2">
@@ -272,10 +284,10 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
 
             {/* Theme Toggle Button */}
             <button
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               className={cn(
                 "p-2 rounded-xl transition-all duration-300 relative overflow-hidden",
-                theme === 'dark'
+                theme === "dark"
                   ? "text-gray-300 hover:text-white hover:bg-gray-700/40"
                   : "text-gray-600 hover:text-gray-900 hover:bg-white/40",
                 "hover:backdrop-blur-sm hover:shadow-lg hover:scale-110",
@@ -284,7 +296,7 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
               aria-label="Toggle theme"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
-              {theme === 'dark' ? (
+              {theme === "dark" ? (
                 <Sun className="h-5 w-5 relative z-10" />
               ) : (
                 <Moon className="h-5 w-5 relative z-10" />
@@ -392,7 +404,12 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
 
                     <div className="border-t border-white/20 pt-2">
                       <button
-                        onClick={handleLogout}
+                        onClick={(e) => {
+                          console.log("🖱️ Logout button clicked!");
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleLogout();
+                        }}
                         className="flex items-center w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50/50 hover:text-red-700 transition-all duration-200 group"
                       >
                         <LogOut className="h-4 w-4 mr-3 group-hover:transform group-hover:translate-x-1 transition-transform duration-200" />

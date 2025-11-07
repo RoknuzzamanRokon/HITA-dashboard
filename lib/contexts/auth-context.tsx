@@ -308,34 +308,47 @@ export function AuthProvider({ children }: AuthProviderProps) {
    */
   const logout = async (): Promise<void> => {
     try {
-      console.log("🚪 Starting logout process...");
+      console.log("🚪 AuthContext: Starting logout process...");
       dispatch({ type: "SET_LOADING", payload: true });
 
       // Clear tokens from storage
+      console.log("🧹 AuthContext: Clearing tokens...");
       await AuthService.logout();
 
       // Update state
+      console.log("🔄 AuthContext: Updating state...");
       dispatch({ type: "LOGOUT" });
       setError(null);
 
       // Clear session data
+      console.log("🧹 AuthContext: Clearing session...");
       SessionPersistence.clearSession();
 
-      console.log("✅ Logout completed successfully");
+      console.log("✅ AuthContext: Logout completed successfully");
 
       // Force redirect to login page
       if (typeof window !== "undefined") {
-        window.location.href = "/login";
+        console.log("🔄 AuthContext: Redirecting to login...");
+        // Use setTimeout to ensure state updates are processed first
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 100);
       }
     } catch (error) {
-      console.error("❌ Logout failed:", error);
+      console.error("❌ AuthContext: Logout failed:", error);
       // Still logout locally even if API call fails
       dispatch({ type: "LOGOUT" });
       setError(null);
 
       // Force redirect even on error
       if (typeof window !== "undefined") {
-        window.location.href = "/login";
+        console.log(
+          "🔄 AuthContext: Force redirecting to login after error..."
+        );
+        // Use setTimeout to ensure state updates are processed first
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 100);
       }
     } finally {
       dispatch({ type: "SET_LOADING", payload: false });
