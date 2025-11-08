@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test Hotel Autocomplete API</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 50px auto;
+        padding: 20px;
+      }
+      .container {
+        background: #f5f5f5;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+      input {
+        width: 100%;
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-bottom: 10px;
+      }
+      button {
+        padding: 10px 20px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 10px;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      .result {
+        background: white;
+        padding: 15px;
+        border-radius: 4px;
+        margin-top: 10px;
+        white-space: pre-wrap;
+        font-family: monospace;
+        font-size: 12px;
+      }
+      .suggestion {
+        padding: 10px;
+        border: 1px solid #ddd;
+        margin: 5px 0;
+        cursor: pointer;
+        background: white;
+        border-radius: 4px;
+      }
+      .suggestion:hover {
+        background: #e9ecef;
+      }
+      .loading {
+        color: #007bff;
+        font-style: italic;
+      }
+      .error {
+        color: #dc3545;
+      }
+      .success {
+        color: #28a745;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🏨 Hotel Autocomplete API Test</h1>
+
+    <div class="container">
+      <h2>Step 1: Autocomplete Search</h2>
+      <p>Type a search query (e.g., "brazil", "savoy", "hotel")</p>
+      <input type="text" id="searchQuery" placeholder="Enter search query..." />
+      <button onclick="testAutocomplete()">Search</button>
+      <div id="autocompleteResult" class="result"></div>
+      <div id="suggestions"></div>
+    </div>
+
+    <div class="container">
+      <h2>Step 2: Get Hotel Details</h2>
+      <p>Enter exact hotel name from suggestions above</p>
+      <input type="text" id="hotelName" placeholder="Enter hotel name..." />
+      <button onclick="testHotelDetails()">Get Details</button>
+      <div id="hotelDetailsResult" class="result"></div>
+    </div>
+
+    <script>
+      const API_BASE = "http://127.0.0.1:8002/v1.0";
+      const TOKEN =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyb21hbiIsInVzZXJfaWQiOiI1Nzc5MzU2MDgxIiwicm9sZSI6ImdlbmVyYWxfdXNlciIsImV4cCI6MTc2NDM1MDQ5NiwidHlwZSI6ImFjY2VzcyIsImlhdCI6MTc2MjU1MDQ5Nn0.rqk7epCzNKPXTtqf2IDI85n8PtwR8EZRRq-bbkQRqyk";
+
+      async function testAutocomplete() {
+        const query = document.getElementById("searchQuery").value;
+        const resultDiv = document.getElementById("autocompleteResult");
+        const suggestionsDiv = document.getElementById("suggestions");
+
+        if (!query) {
+          resultDiv.innerHTML =
+            '<span class="error">Please enter a search query</span>';
+          return;
+        }
+
+        resultDiv.innerHTML = '<span class="loading">Loading...</span>';
+        suggestionsDiv.innerHTML = "";
+
+        try {
+          const response = await fetch(
+            `${API_BASE}/content/autocomplete/?query=${encodeURIComponent(
+              query
+            )}`,
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${TOKEN}`,
+              },
+            }
+          );
+
+          const data = await response.json();
+
+          if (response.ok) {
+            resultDiv.innerHTML = `<span class="success">✓ Success! Found ${
+              data.length || 0
+            } results</span>\n\n${JSON.stringify(data, null, 2)}`;
+
+            // Display suggestions as clickable items
+            if (Array.isArray(data) && data.length > 0) {
+              suggestionsDiv.innerHTML =
+                "<h3>Click a suggestion to get details:</h3>";
+              data.forEach((item) => {
+                const div = document.createElement("div");
+                div.className = "suggestion";
+                div.innerHTML = `
+                                <strong>${item.name}</strong><br>
+                                <small>${item.type || "N/A"} ${
+                  item.city ? "• " + item.city : ""
+                } ${item.country ? "• " + item.country : ""}</small>
+                            `;
+                div.onclick = () => {
+                  document.getElementById("hotelName").value = item.name;
+                  testHotelDetails();
+                };
+                suggestionsDiv.appendChild(div);
+              });
+            }
+          } else {
+            resultDiv.innerHTML = `<span class="error">✗ Error ${
+              response.status
+            }</span>\n\n${JSON.stringify(data, null, 2)}`;
+          }
+        } catch (error) {
+          resultDiv.innerHTML = `<span class="error">✗ Network Error</span>\n\n${error.message}`;
+        }
+      }
+
+      async function testHotelDetails() {
+        const hotelName = document.getElementById("hotelName").value;
+        const resultDiv = document.getElementById("hotelDetailsResult");
+
+        if (!hotelName) {
+          resultDiv.innerHTML =
+            '<span class="error">Please enter a hotel name</span>';
+          return;
+        }
+
+        resultDiv.innerHTML =
+          '<span class="loading">Loading hotel details...</span>';
+
+        try {
+          const response = await fetch(
+            `${API_BASE}/content/search_with_hotel_name`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${TOKEN}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                hotel_name: hotelName,
+              }),
+            }
+          );
+
+          const data = await response.json();
+
+          if (response.ok) {
+            resultDiv.innerHTML = `<span class="success">✓ Success! Hotel details retrieved</span>\n\n${JSON.stringify(
+              data,
+              null,
+              2
+            )}`;
+          } else {
+            resultDiv.innerHTML = `<span class="error">✗ Error ${
+              response.status
+            }</span>\n\n${JSON.stringify(data, null, 2)}`;
+          }
+        } catch (error) {
+          resultDiv.innerHTML = `<span class="error">✗ Network Error</span>\n\n${error.message}`;
+        }
+      }
+
+      // Allow Enter key to trigger search
+      document
+        .getElementById("searchQuery")
+        .addEventListener("keypress", (e) => {
+          if (e.key === "Enter") testAutocomplete();
+        });
+
+      document.getElementById("hotelName").addEventListener("keypress", (e) => {
+        if (e.key === "Enter") testHotelDetails();
+      });
+    </script>
+  </body>
+</html>

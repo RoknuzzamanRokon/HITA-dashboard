@@ -174,14 +174,8 @@ export class AuthService {
     static async getCurrentUser(): Promise<ApiResponse<User>> {
         console.log("👤 AuthService.getCurrentUser called");
 
-        // Ensure we have a token (including development token)
-        let token = TokenStorage.getToken();
-        if (!token && process.env.NODE_ENV === "development") {
-            const testToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1cnNhbXJva28iLCJ1c2VyX2lkIjoiMWEyMDNjY2RhNCIsInJvbGUiOiJzdXBlcl91c2VyIiwiZXhwIjoxNzY0MjM3NDE2LCJ0eXBlIjoiYWNjZXNzIiwiaWF0IjoxNzYyNDM3NDE2fQ.Ri1GAYk-PYv9rrwnYcjNxemUyKOIRbFoI2QtBgmjsOI";
-            console.log("🔧 Development mode: Setting test token for user profile");
-            TokenStorage.setToken(testToken);
-            token = testToken;
-        }
+        // Get the current token
+        const token = TokenStorage.getToken();
 
         if (!token) {
             return {
@@ -261,26 +255,15 @@ export class AuthService {
      * Check if user is authenticated - simplified check
      */
     static isAuthenticated(): boolean {
-        let token = TokenStorage.getToken();
-
-        // For development: if no token found, set the test token
-        if (!token && process.env.NODE_ENV === "development") {
-            const testToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1cnNhbXJva28iLCJ1c2VyX2lkIjoiMWEyMDNjY2RhNCIsInJvbGUiOiJzdXBlcl91c2VyIiwiZXhwIjoxNzY0MjM3NDE2LCJ0eXBlIjoiYWNjZXNzIiwiaWF0IjoxNzYyNDM3NDE2fQ.Ri1GAYk-PYv9rrwnYcjNxemUyKOIRbFoI2QtBgmjsOI";
-            console.log("🔧 Development mode: Setting test token");
-            TokenStorage.setToken(testToken);
-            token = testToken;
-        }
+        const token = TokenStorage.getToken();
 
         if (!token) {
-            console.log("❌ No token found");
+            console.log("❌ No token found, user not authenticated");
             return false;
         }
 
         console.log("✅ Token found, user authenticated");
         return true;
-
-        // Note: We're being less strict here to avoid authentication issues
-        // The token existence is the primary check
     }
 
     /**

@@ -378,6 +378,7 @@ export class HotelService {
 
     /**
      * Get supplier information (hotel count) - permission-based access
+     * Note: This endpoint may not exist, so we use check-my-active-suppliers-info and filter
      */
     static async getSupplierInfo(supplierName: string): Promise<ApiResponse<{
         supplier_name: string;
@@ -386,10 +387,42 @@ export class HotelService {
         access_granted: boolean;
     }>> {
         try {
-            const params = new URLSearchParams();
-            params.append('supplier', supplierName);
+            // Use the working endpoint and filter for the specific supplier
+            const response = await this.checkActiveSuppliers();
 
-            return await apiClient.get(`/hotels/get_supplier_info?${params.toString()}`);
+            if (response.success && response.data) {
+                const supplier = response.data.accessibleSuppliers.find(
+                    s => s.supplierName.toLowerCase() === supplierName.toLowerCase()
+                );
+
+                if (supplier) {
+                    return {
+                        success: true,
+                        data: {
+                            supplier_name: supplier.supplierName,
+                            total_hotel: supplier.totalHotels,
+                            user_role: response.data.role,
+                            access_granted: true
+                        }
+                    };
+                }
+
+                return {
+                    success: false,
+                    error: {
+                        status: 404,
+                        message: `Supplier '${supplierName}' not found or not accessible`,
+                    },
+                };
+            }
+
+            return {
+                success: false,
+                error: {
+                    status: 0,
+                    message: 'Failed to fetch supplier information',
+                },
+            };
         } catch (error) {
             return {
                 success: false,
@@ -404,6 +437,7 @@ export class HotelService {
 
     /**
      * Get list of suppliers accessible to the current user
+     * Note: This endpoint doesn't exist, so we use check-my-active-suppliers-info instead
      */
     static async getUserAccessibleSuppliers(): Promise<ApiResponse<{
         user_id: string;
@@ -416,7 +450,33 @@ export class HotelService {
         total_accessible_suppliers: number;
     }>> {
         try {
-            return await apiClient.get('/hotels/get_user_accessible_suppliers');
+            // Use the working endpoint instead
+            const response = await this.checkActiveSuppliers();
+
+            if (response.success && response.data) {
+                // Transform the response to match the expected format
+                return {
+                    success: true,
+                    data: {
+                        user_id: response.data.userId,
+                        user_role: response.data.role,
+                        accessible_suppliers: response.data.accessibleSuppliers.map(s => ({
+                            supplier_name: s.supplierName,
+                            total_hotels: s.totalHotels,
+                            access_type: s.accessType
+                        })),
+                        total_accessible_suppliers: response.data.accessibleSuppliers.length
+                    }
+                };
+            }
+
+            return {
+                success: false,
+                error: {
+                    status: 0,
+                    message: 'Failed to fetch accessible suppliers',
+                },
+            };
         } catch (error) {
             return {
                 success: false,
@@ -466,6 +526,63 @@ export class HotelService {
                 error: {
                     status: 0,
                     message: 'Failed to fetch active suppliers info',
+                    details: error,
+                },
+            };
+        }
+    }
+
+    /**
+     * Autocomplete hotel search - suggests hotel names based on query
+     */
+    static async autocompleteHotel(query: string): Promise<ApiResponse<Array<{
+        name: string;
+        type: string;
+        country?: string;
+        city?: string;
+    }>>> {
+        try {
+            const response = await apiClient.get(`/content/autocomplete/?query=${encodeURIComponent(query)}`);
+            return response;
+        } catch (error) {
+            return {
+                success: false,
+                error: {
+                    status: 0,
+                    message: 'Failed to fetch autocomplete suggestions',
+                    details: error,
+                },
+            };
+        }
+    }
+
+    /**
+     * Search hotel by exact name - returns full hotel details
+     */
+    static async searchHotelByName(hotelName: string): Promise<ApiResponse<{
+        ittid: string;
+        name: string;
+        addressline1: string;
+        addressline2: string;
+        city: string;
+        country: string;
+        latitude: string;
+        longitude: string;
+        postalcode: string;
+        chainname: string;
+        propertytype: string;
+    }>> {
+        try {
+            const response = await apiClient.post('/content/search_with_hotel_name', {
+                hotel_name: hotelName
+            });
+            return response;
+        } catch (error) {
+            return {
+                success: false,
+                error: {
+                    status: 0,
+                    message: 'Failed to search hotel by name',
                     details: error,
                 },
             };
@@ -578,21 +695,27 @@ export class HotelService {
                 mappedHotels: 937500,
                 recentUpdates: 62500,
                 topSuppliers: [
-                    { name: 'Booking.com', hotelCount: 450000, status: 'active' },
-                    { name: 'Expedia', hotelCount: 380000, status: 'active' },
-                    { name: 'Agoda', hotelCount: 320000, status: 'active' },
-                    { name: 'Hotels.com', hotelCount: 280000, status: 'active' },
-                    { name: 'Priceline', hotelCount: 220000, status: 'active' },
-                    { name: 'Kayak', hotelCount: 180000, status: 'active' },
-                    { name: 'Trivago', hotelCount: 150000, status: 'active' },
-                    { name: 'Orbitz', hotelCount: 120000, status: 'active' },
-                    { name: 'Travelocity', hotelCount: 100000, status: 'active' },
-                    { name: 'Hotwire', hotelCount: 85000, status: 'active' },
-                    { name: 'CheapTickets', hotelCount: 70000, status: 'active' },
-                    { name: 'OneTravel', hotelCount: 55000, status: 'active' },
-                    { name: 'Wotif', hotelCount: 45000, status: 'active' },
-                    { name: 'Lastminute', hotelCount: 35000, status: 'active' },
-                    { name: 'Ebookers', hotelCount: 25000, status: 'active' }
+                    { name: 'agoda', hotelCount: 450000, status: 'active' },
+                    { name: 'dotw', hotelCount: 380000, status: 'active' },
+                    { name: 'ean', hotelCount: 320000, status: 'active' },
+                    { name: 'goglobal', hotelCount: 280000, status: 'active' },
+                    { name: 'grnconnect', hotelCount: 220000, status: 'active' },
+                    { name: 'hotelbeds', hotelCount: 180000, status: 'active' },
+                    { name: 'hotelston', hotelCount: 150000, status: 'active' },
+                    { name: 'hyperguestdirect', hotelCount: 120000, status: 'active' },
+                    { name: 'illusionshotel', hotelCount: 100000, status: 'active' },
+                    { name: 'innstanttravel', hotelCount: 85000, status: 'active' },
+                    { name: 'itt', hotelCount: 70000, status: 'active' },
+                    { name: 'juniperhotel', hotelCount: 55000, status: 'active' },
+                    { name: 'kiwihotel', hotelCount: 45000, status: 'active' },
+                    { name: 'letsflyhotel', hotelCount: 35000, status: 'active' },
+                    { name: 'mgholiday', hotelCount: 25000, status: 'active' },
+                    { name: 'paximumhotel', hotelCount: 20000, status: 'active' },
+                    { name: 'ratehawkhotel', hotelCount: 15000, status: 'active' },
+                    { name: 'restel', hotelCount: 10000, status: 'active' },
+                    { name: 'roomerang', hotelCount: 8000, status: 'active' },
+                    { name: 'stuba', hotelCount: 6000, status: 'active' },
+                    { name: 'tbohotel', hotelCount: 4000, status: 'active' }
                 ],
                 hotelsByRegion: [
                     { region: 'North America', count: 437500 },

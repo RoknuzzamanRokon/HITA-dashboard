@@ -98,6 +98,7 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [state, dispatch] = useReducer(authReducer, initialState);
   const [error, setError] = React.useState<string | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
 
   // Initialize authentication state on mount
   useEffect(() => {
@@ -307,8 +308,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
    * Logout user
    */
   const logout = async (): Promise<void> => {
+    if (isLoggingOut) {
+      console.log("🔄 Logout already in progress, skipping...");
+      return;
+    }
+
     try {
       console.log("🚪 AuthContext: Starting logout process...");
+      setIsLoggingOut(true);
       dispatch({ type: "SET_LOADING", payload: true });
 
       // Clear tokens from storage
@@ -326,13 +333,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       console.log("✅ AuthContext: Logout completed successfully");
 
-      // Force redirect to login page
+      // Force redirect to login page immediately
       if (typeof window !== "undefined") {
         console.log("🔄 AuthContext: Redirecting to login...");
-        // Use setTimeout to ensure state updates are processed first
-        setTimeout(() => {
-          window.location.href = "/login";
-        }, 100);
+        window.location.href = "/login";
       }
     } catch (error) {
       console.error("❌ AuthContext: Logout failed:", error);
@@ -345,13 +349,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.log(
           "🔄 AuthContext: Force redirecting to login after error..."
         );
-        // Use setTimeout to ensure state updates are processed first
-        setTimeout(() => {
-          window.location.href = "/login";
-        }, 100);
+        window.location.href = "/login";
       }
     } finally {
       dispatch({ type: "SET_LOADING", payload: false });
+      setIsLoggingOut(false);
     }
   };
 

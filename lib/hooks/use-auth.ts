@@ -36,30 +36,29 @@ export function useRequireAuth(redirectTo: string = '/login') {
             hasRedirected
         });
 
+        // Check if we have any tokens in storage
+        const hasToken = localStorage.getItem('admin_auth_token') || sessionStorage.getItem('admin_auth_token');
+
         // Only redirect if:
         // 1. Not loading
         // 2. Not authenticated 
         // 3. Haven't redirected yet
         // 4. Initial load is complete (to prevent premature redirects)
-        // 5. We have a token in storage (if no token, definitely not authenticated)
+        // 5. No token in storage (definitely not authenticated)
         if (!isLoading &&
             !isAuthenticated &&
             !hasRedirected &&
-            initialLoadComplete) {
+            initialLoadComplete &&
+            !hasToken) {
 
-            // Check if we have any tokens in storage
-            const hasToken = localStorage.getItem('admin_auth_token') || sessionStorage.getItem('admin_auth_token');
+            console.log("🚪 No token found, redirecting to login");
+            setHasRedirected(true);
 
-            if (!hasToken) {
-                console.log("🚪 No token found, redirecting to login");
-                setHasRedirected(true);
-
-                const currentPath = window.location.pathname;
-                const loginUrl = `${redirectTo}?redirect=${encodeURIComponent(currentPath)}`;
-                router.push(loginUrl);
-            } else {
-                console.log("⚠️ Token exists but not authenticated, waiting for auth to resolve...");
-            }
+            const currentPath = window.location.pathname;
+            const loginUrl = `${redirectTo}?redirect=${encodeURIComponent(currentPath)}`;
+            router.push(loginUrl);
+        } else if (!isLoading && !isAuthenticated && hasToken) {
+            console.log("⚠️ Token exists but not authenticated, waiting for auth to resolve...");
         }
     }, [isAuthenticated, isLoading, user, router, redirectTo, hasRedirected, initialLoadComplete]);
 

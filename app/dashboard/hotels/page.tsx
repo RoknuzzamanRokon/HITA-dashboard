@@ -27,7 +27,7 @@ import type { Hotel, HotelStats } from "@/lib/types/hotel";
 
 export default function HotelsPage() {
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false); // Start with false to show mock data immediately
   const [stats, setStats] = useState<HotelStats | null>(null);
   const [recentHotels, setRecentHotels] = useState<Hotel[]>([]);
   const [error, setError] = useState<string | null>(null);

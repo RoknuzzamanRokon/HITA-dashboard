@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Hotels Page - Final Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        max-width: 800px;
+      }
+      .section {
+        margin: 20px 0;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+      .success {
+        background: #d4edda;
+        border-color: #c3e6cb;
+      }
+      .info {
+        background: #d1ecf1;
+        border-color: #bee5eb;
+      }
+      .warning {
+        background: #fff3cd;
+        border-color: #ffeaa7;
+      }
+      h2 {
+        margin-top: 0;
+      }
+      ul {
+        margin: 10px 0;
+      }
+      a {
+        color: #007bff;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      code {
+        background: #f8f9fa;
+        padding: 2px 6px;
+        border-radius: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🏨 Hotels Page - Final Test Guide</h1>
+
+    <div class="section success">
+      <h2>✅ Issues Fixed</h2>
+      <ul>
+        <li>
+          <strong>API Endpoints:</strong> Now using only working endpoint
+          (<code>/hotels/check-my-active-suppliers-info</code>)
+        </li>
+        <li>
+          <strong>Token Errors:</strong> Fixed - no more "invalid token"
+          messages
+        </li>
+        <li>
+          <strong>Empty Page:</strong> Fixed - hotel search component now loads
+          initial data
+        </li>
+        <li>
+          <strong>404 Errors:</strong> Fixed - stopped calling non-existent
+          endpoints
+        </li>
+      </ul>
+    </div>
+
+    <div class="section info">
+      <h2>🧪 How to Test</h2>
+      <ol>
+        <li>
+          <strong>Login:</strong> Go to
+          <a href="http://localhost:3000/login" target="_blank"
+            >http://localhost:3000/login</a
+          >
+          <ul>
+            <li>Username: <code>ursamroko</code></li>
+            <li>Password: <code>ursamroko123</code></li>
+          </ul>
+        </li>
+        <li>
+          <strong>Visit Hotels Page:</strong>
+          <a href="http://localhost:3000/dashboard/hotels" target="_blank"
+            >http://localhost:3000/dashboard/hotels</a
+          >
+        </li>
+        <li>
+          <strong>Check What You Should See:</strong>
+          <ul>
+            <li>✅ Statistics cards (Total Hotels, Active Hotels, etc.)</li>
+            <li>✅ List of accessible suppliers</li>
+            <li>✅ Hotel search component with initial hotel data</li>
+            <li>✅ Search functionality when you type</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Open Browser Console (F12):</strong> Check for any errors
+          <ul>
+            <li>Should see successful API calls</li>
+            <li>No 401 or 404 errors</li>
+            <li>Hotels loading from mock data</li>
+          </ul>
+        </li>
+      </ol>
+    </div>
+
+    <div class="section warning">
+      <h2>⚠️ Important Notes</h2>
+      <ul>
+        <li>
+          <strong>Mock Data:</strong> Hotel search uses mock data because
+          backend hotel endpoints don't exist yet
+        </li>
+        <li>
+          <strong>Supplier Data:</strong> Statistics come from real supplier API
+          data
+        </li>
+        <li>
+          <strong>Search Works:</strong> You can search the mock hotels by name,
+          ITTID, or location
+        </li>
+      </ul>
+    </div>
+
+    <div class="section info">
+      <h2>📊 What's Working Now</h2>
+      <table style="width: 100%; border-collapse: collapse">
+        <tr style="background: #f8f9fa">
+          <th style="padding: 8px; text-align: left; border: 1px solid #ddd">
+            Feature
+          </th>
+          <th style="padding: 8px; text-align: left; border: 1px solid #ddd">
+            Status
+          </th>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border: 1px solid #ddd">
+            Page loads without errors
+          </td>
+          <td style="padding: 8px; border: 1px solid #ddd">✅ Working</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border: 1px solid #ddd">
+            Authentication token valid
+          </td>
+          <td style="padding: 8px; border: 1px solid #ddd">✅ Working</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border: 1px solid #ddd">
+            Statistics display
+          </td>
+          <td style="padding: 8px; border: 1px solid #ddd">✅ Working</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border: 1px solid #ddd">Supplier list</td>
+          <td style="padding: 8px; border: 1px solid #ddd">✅ Working</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border: 1px solid #ddd">
+            Hotel search component
+          </td>
+          <td style="padding: 8px; border: 1px solid #ddd">
+            ✅ Working (with mock data)
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; border: 1px solid #ddd">
+            Search functionality
+          </td>
+          <td style="padding: 8px; border: 1px solid #ddd">✅ Working</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section success">
+      <h2>🎉 Summary</h2>
+      <p>
+        The hotels page is now fully functional! The structure was correct all
+        along - the issues were:
+      </p>
+      <ol>
+        <li>Calling non-existent API endpoints (404 errors, not 401)</li>
+        <li>Hotel search component not loading initial data</li>
+      </ol>
+      <p>
+        <strong>Both issues are now fixed!</strong> Visit the page to see it
+        working.
+      </p>
+    </div>
+
+    <script>
+      console.log("🏨 Hotels Page Test Guide Loaded");
+      console.log("📋 Follow the steps above to verify the fixes");
+
+      // Check if user is logged in
+      const token = localStorage.getItem("admin_auth_token");
+      if (!token) {
+        console.warn("⚠️ No authentication token found - please login first");
+      } else {
+        console.log("✅ Authentication token found - ready to test");
+      }
+    </script>
+  </body>
+</html>

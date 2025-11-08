@@ -102,7 +102,6 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
 
   const handleLogout = async () => {
     console.log("🚪 Navbar: Starting logout process...");
-    alert("Logout button clicked! Check console for details.");
     setDropdownOpen(false);
 
     try {
@@ -404,12 +403,7 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
 
                     <div className="border-t border-white/20 pt-2">
                       <button
-                        onClick={(e) => {
-                          console.log("🖱️ Logout button clicked!");
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleLogout();
-                        }}
+                        onClick={handleLogout}
                         className="flex items-center w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50/50 hover:text-red-700 transition-all duration-200 group"
                       >
                         <LogOut className="h-4 w-4 mr-3 group-hover:transform group-hover:translate-x-1 transition-transform duration-200" />
