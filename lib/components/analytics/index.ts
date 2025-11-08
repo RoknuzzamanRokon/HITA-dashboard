@@ -20,3 +20,8 @@ export type { TimePeriodSelectorProps, TimePeriod } from "./time-period-selector
 
 export { AnalyticsCharts } from "./analytics-charts";
 export type { AnalyticsChartsProps } from "./analytics-charts";
+
+export { UserManagementOverview } from "./user-management-overview";
+export { ProviderAccessChart } from "./provider-access-chart";
+
+export { InteractiveCharts } from "./interactive-charts";
