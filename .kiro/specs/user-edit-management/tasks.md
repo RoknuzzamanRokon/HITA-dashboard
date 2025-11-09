@@ -23,7 +23,7 @@
   - Update existing user types to support new fields
   - _Requirements: 1.2, 2.1, 3.1, 4.1_
 
-- [ ] 3. Update API configuration with new endpoints
+- [x] 3. Update API configuration with new endpoints
 
   - Add userEdit section to apiEndpoints in `lib/config.ts`
   - Define all 8 endpoint paths with proper parameter handling

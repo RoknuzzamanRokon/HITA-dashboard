@@ -81,6 +81,18 @@ export const apiEndpoints = {
         revoke: '/permissions/revoke',
     },
 
+    // User Edit Management
+    userEdit: {
+        getUserDetails: (userId: string) => `/user/check-user-info/${userId}`,
+        allocatePoints: '/user/points/give/',
+        activateSuppliers: (userId: string) => `/permissions/admin/activate_supplier?user_id=${userId}`,
+        deactivateSuppliers: (userId: string) => `/permissions/admin/deactivate_supplier?user_id=${userId}`,
+        activateUser: (userId: string) => `/auth/admin/users/${userId}/activate`,
+        resetPoints: (userId: string) => `/user/reset_point/${userId}/`,
+        deleteUser: (userId: string) => `/delete/delete_user/${userId}`,
+        generateApiKey: (userId: string) => `/auth/generate_api_key/${userId}`,
+    },
+
     // Additional endpoints
     mapping: '/mapping',
     delete: '/delete',
