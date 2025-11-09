@@ -8,3 +8,4 @@ export { UserDetailView } from './user-detail-view';
 export { EnhancedUserTable } from './enhanced-user-table';
 export { UserManagementPage, UserManagementPageWithProvider } from './user-management-page';
 export { UserEditModal } from './user-edit-modal';
+export { ApiKeyDisplay } from './api-key-display';

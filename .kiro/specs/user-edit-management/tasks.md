@@ -78,7 +78,7 @@
   - Trigger parent refresh on successful actions
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 6.1, 6.2, 6.3, 6.4, 6.5, 7.1, 7.2, 7.3, 7.4, 7.5, 8.1, 8.2, 8.3, 8.4_
 
-- [ ] 8. Create ApiKeyDisplay component
+- [x] 8. Create ApiKeyDisplay component
 
   - Create `lib/components/users/api-key-display.tsx`
   - Display API key with masked/unmasked toggle
