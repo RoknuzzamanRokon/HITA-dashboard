@@ -19,6 +19,7 @@ interface SupplierManagementSectionProps {
   activeSuppliers: string[];
   totalSuppliers: number;
   onSuppliersUpdated: () => void;
+  onOptimisticUpdate?: (updates: any) => void;
 }
 
 /**
@@ -41,6 +42,7 @@ export function SupplierManagementSection({
   activeSuppliers,
   totalSuppliers,
   onSuppliersUpdated,
+  onOptimisticUpdate,
 }: SupplierManagementSectionProps) {
   // Hooks
   const toast = useToast();
@@ -92,6 +94,13 @@ export function SupplierManagementSection({
     setActionType("activate");
     setValidationError(null);
 
+    // Apply optimistic update
+    const newActiveSuppliers = [
+      ...activeSuppliers,
+      ...selectedSuppliers.filter((s) => !activeSuppliers.includes(s)),
+    ];
+    onOptimisticUpdate?.({ active_suppliers: newActiveSuppliers });
+
     try {
       const response = await UserEditService.activateSuppliers(
         userId,
@@ -112,6 +121,9 @@ export function SupplierManagementSection({
           "Failed to activate suppliers. Please try again.";
         toast.error("Activation Failed", errorMsg);
 
+        // Rollback optimistic update on error
+        onOptimisticUpdate?.(null);
+
         if (response.error?.status === 403) {
           setValidationError("You don't have permission to activate suppliers");
         }
@@ -123,6 +135,9 @@ export function SupplierManagementSection({
           : "An unexpected error occurred while activating suppliers";
       toast.error("Error", errorMsg);
       setValidationError(errorMsg);
+
+      // Rollback optimistic update on error
+      onOptimisticUpdate?.(null);
     } finally {
       setLoading(false);
       setActionType(null);
@@ -145,6 +160,12 @@ export function SupplierManagementSection({
     setActionType("deactivate");
     setValidationError(null);
 
+    // Apply optimistic update
+    const newActiveSuppliers = activeSuppliers.filter(
+      (s) => !selectedSuppliers.includes(s)
+    );
+    onOptimisticUpdate?.({ active_suppliers: newActiveSuppliers });
+
     try {
       const response = await UserEditService.deactivateSuppliers(
         userId,
@@ -165,6 +186,9 @@ export function SupplierManagementSection({
           "Failed to deactivate suppliers. Please try again.";
         toast.error("Deactivation Failed", errorMsg);
 
+        // Rollback optimistic update on error
+        onOptimisticUpdate?.(null);
+
         if (response.error?.status === 403) {
           setValidationError(
             "You don't have permission to deactivate suppliers"
@@ -178,6 +202,9 @@ export function SupplierManagementSection({
           : "An unexpected error occurred while deactivating suppliers";
       toast.error("Error", errorMsg);
       setValidationError(errorMsg);
+
+      // Rollback optimistic update on error
+      onOptimisticUpdate?.(null);
     } finally {
       setLoading(false);
       setActionType(null);
@@ -224,7 +251,10 @@ export function SupplierManagementSection({
         </div>
         {/* Active Suppliers Display */}
         <div
-          className="p-3 rounded-xl bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-100"
+          className={cn(
+            "p-3 rounded-xl bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-100 transition-all",
+            loading && "ring-2 ring-purple-400 ring-opacity-50 animate-pulse"
+          )}
           role="region"
           aria-label="Active suppliers list"
         >
@@ -233,10 +263,13 @@ export function SupplierManagementSection({
               Active Suppliers
             </span>
             <span
-              className="text-lg font-bold text-purple-600"
+              className="text-lg font-bold text-purple-600 flex items-center"
               aria-label={`${activeSuppliers.length} of ${totalSuppliers} suppliers active`}
             >
               {activeSuppliers.length} / {totalSuppliers}
+              {loading && (
+                <Loader2 className="inline-block h-4 w-4 ml-2 animate-spin text-purple-500" />
+              )}
             </span>
           </div>
           {activeSuppliers.length > 0 ? (
@@ -402,6 +435,15 @@ export function SupplierManagementSection({
             )}
           </Button>
         </div>
+
+        {/* Optimistic Update Indicator */}
+        {loading && (
+          <div className="text-xs text-purple-600 text-center animate-pulse">
+            {actionType === "activate"
+              ? "Activating suppliers..."
+              : "Deactivating suppliers..."}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

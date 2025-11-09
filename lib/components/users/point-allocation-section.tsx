@@ -20,6 +20,7 @@ interface PointAllocationSectionProps {
   userEmail: string;
   currentPoints: number;
   onAllocationComplete: () => void;
+  onOptimisticUpdate?: (updates: any) => void;
 }
 
 /**
@@ -38,6 +39,7 @@ export function PointAllocationSection({
   userEmail,
   currentPoints,
   onAllocationComplete,
+  onOptimisticUpdate,
 }: PointAllocationSectionProps) {
   // Hooks
   const toast = useToast();
@@ -59,6 +61,21 @@ export function PointAllocationSection({
   };
 
   /**
+   * Get estimated points for allocation type
+   */
+  const getEstimatedPoints = (allocationType: AllocationType): number => {
+    // These are estimated values - actual values come from backend
+    const pointsMap: Record<AllocationType, number> = {
+      admin_user_package: 10000,
+      one_year_package: 5000,
+      one_month_package: 500,
+      per_request_point: 10,
+      guest_point: 100,
+    };
+    return pointsMap[allocationType] || 0;
+  };
+
+  /**
    * Handle point allocation submission
    */
   const handleAllocatePoints = async () => {
@@ -71,6 +88,17 @@ export function PointAllocationSection({
 
     setLoading(true);
     setValidationError(null);
+
+    // Apply optimistic update
+    const estimatedPoints = getEstimatedPoints(selectedAllocationType);
+    const optimisticPoints = {
+      points: {
+        current_points: currentPoints + estimatedPoints,
+        total_points: currentPoints + estimatedPoints,
+      },
+    };
+
+    onOptimisticUpdate?.(optimisticPoints);
 
     try {
       const response = await UserEditService.allocatePoints(
@@ -92,6 +120,9 @@ export function PointAllocationSection({
           "Failed to allocate points. Please try again.";
         toast.error("Allocation Failed", errorMsg);
 
+        // Rollback optimistic update on error
+        onOptimisticUpdate?.(null);
+
         // Handle specific error cases
         if (response.error?.status === 403) {
           setValidationError("You don't have permission to allocate points");
@@ -106,6 +137,9 @@ export function PointAllocationSection({
           : "An unexpected error occurred while allocating points";
       toast.error("Error", errorMsg);
       setValidationError(errorMsg);
+
+      // Rollback optimistic update on error
+      onOptimisticUpdate?.(null);
     } finally {
       setLoading(false);
     }
@@ -142,7 +176,10 @@ export function PointAllocationSection({
         </div>
         {/* Current Points Display */}
         <div
-          className="p-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100"
+          className={cn(
+            "p-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 transition-all",
+            loading && "ring-2 ring-blue-400 ring-opacity-50 animate-pulse"
+          )}
           role="region"
           aria-label="Current points balance"
         >
@@ -155,6 +192,9 @@ export function PointAllocationSection({
               aria-label={`${currentPoints} points`}
             >
               {currentPoints}
+              {loading && (
+                <Loader2 className="inline-block h-4 w-4 ml-2 animate-spin text-blue-500" />
+              )}
             </span>
           </div>
         </div>
@@ -196,7 +236,10 @@ export function PointAllocationSection({
         <Button
           onClick={handleAllocatePoints}
           disabled={loading || !selectedAllocationType}
-          className={cn("w-full", loading && "cursor-not-allowed opacity-70")}
+          className={cn(
+            "w-full transition-all",
+            loading && "cursor-not-allowed opacity-70"
+          )}
           aria-label={`Allocate points using ${selectedAllocationType.replace(
             /_/g,
             " "
@@ -218,6 +261,13 @@ export function PointAllocationSection({
             </>
           )}
         </Button>
+
+        {/* Optimistic Update Indicator */}
+        {loading && (
+          <div className="text-xs text-blue-600 text-center animate-pulse">
+            Updating points...
+          </div>
+        )}
       </CardContent>
     </Card>
   );

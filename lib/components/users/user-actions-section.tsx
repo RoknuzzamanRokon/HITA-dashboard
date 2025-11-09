@@ -32,6 +32,7 @@ interface UserActionsSectionProps {
   isActive: boolean;
   currentPoints: number;
   onActionComplete: (action: string, success: boolean, message: string) => void;
+  onOptimisticUpdate?: (updates: any) => void;
 }
 
 type ConfirmationAction = "reset-points" | "delete-user" | null;
@@ -41,6 +42,7 @@ export function UserActionsSection({
   isActive,
   currentPoints,
   onActionComplete,
+  onOptimisticUpdate,
 }: UserActionsSectionProps) {
   // Hooks
   const toast = useToast();
@@ -58,6 +60,9 @@ export function UserActionsSection({
     setLoadingAction("toggle-status");
     setLocalError(null);
 
+    // Apply optimistic update
+    onOptimisticUpdate?.({ is_active: !isActive });
+
     try {
       const response = await UserEditService.activateUser(userId);
 
@@ -71,6 +76,9 @@ export function UserActionsSection({
           response.error?.message || "Failed to update user status";
         toast.error("Status Update Failed", errorMsg);
         setLocalError(errorMsg);
+
+        // Rollback optimistic update on error
+        onOptimisticUpdate?.(null);
         onActionComplete("toggle-status", false, errorMsg);
 
         if (response.error?.status === 403) {
@@ -82,6 +90,9 @@ export function UserActionsSection({
         err instanceof Error ? err.message : "An unexpected error occurred";
       toast.error("Error", errorMsg);
       setLocalError(errorMsg);
+
+      // Rollback optimistic update on error
+      onOptimisticUpdate?.(null);
       onActionComplete("toggle-status", false, errorMsg);
     } finally {
       setLoadingAction(null);
@@ -96,6 +107,15 @@ export function UserActionsSection({
     setLoadingAction("reset-points");
     setLocalError(null);
 
+    // Apply optimistic update
+    onOptimisticUpdate?.({
+      points: {
+        current_points: 0,
+        total_points: 0,
+        total_used_points: 0,
+      },
+    });
+
     try {
       const response = await UserEditService.resetUserPoints(userId);
 
@@ -107,6 +127,9 @@ export function UserActionsSection({
         const errorMsg = response.error?.message || "Failed to reset points";
         toast.error("Reset Failed", errorMsg);
         setLocalError(errorMsg);
+
+        // Rollback optimistic update on error
+        onOptimisticUpdate?.(null);
         onActionComplete("reset-points", false, errorMsg);
 
         if (response.error?.status === 403) {
@@ -118,6 +141,9 @@ export function UserActionsSection({
         err instanceof Error ? err.message : "An unexpected error occurred";
       toast.error("Error", errorMsg);
       setLocalError(errorMsg);
+
+      // Rollback optimistic update on error
+      onOptimisticUpdate?.(null);
       onActionComplete("reset-points", false, errorMsg);
     } finally {
       setLoadingAction(null);

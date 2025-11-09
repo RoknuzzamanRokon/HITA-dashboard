@@ -64,6 +64,8 @@ export function UserEditModal({
   const [error, setError] = useState<string | null>(null);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [retryAttempt, setRetryAttempt] = useState(0);
+  const [optimisticUpdate, setOptimisticUpdate] =
+    useState<Partial<DetailedUserInfo> | null>(null);
 
   /**
    * Fetch user details when modal opens
@@ -146,13 +148,40 @@ export function UserEditModal({
 
     if (success) {
       toast.success("Success", message);
+      // Clear optimistic update on success
+      setOptimisticUpdate(null);
       if (shouldRefresh) {
         refreshUserData();
       }
     } else {
       toast.error("Action Failed", message);
       setError(message);
+      // Rollback optimistic update on error
+      setOptimisticUpdate(null);
     }
+  };
+
+  /**
+   * Apply optimistic update to user details
+   */
+  const applyOptimisticUpdate = (updates: Partial<DetailedUserInfo>) => {
+    setOptimisticUpdate(updates);
+  };
+
+  /**
+   * Get current user details with optimistic updates applied
+   */
+  const getCurrentUserDetails = (): DetailedUserInfo | null => {
+    if (!userDetails) return null;
+    if (!optimisticUpdate) return userDetails;
+
+    return {
+      ...userDetails,
+      ...optimisticUpdate,
+      points: optimisticUpdate.points
+        ? { ...userDetails.points, ...optimisticUpdate.points }
+        : userDetails.points,
+    };
   };
 
   /**
@@ -290,365 +319,396 @@ export function UserEditModal({
           {loading && !userDetails && <UserDetailsSkeleton />}
 
           {/* User Details Content */}
-          {!loading && userDetails && (
-            <div className="p-6 space-y-6">
-              {/* User Information Section */}
-              <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <div
-                        className="p-2 rounded-lg bg-blue-100"
-                        aria-hidden="true"
-                      >
-                        <User className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <h3
-                        className="text-lg font-semibold text-gray-900"
-                        id="user-info-heading"
-                      >
-                        User Information
-                      </h3>
-                    </div>
-                    {getStatusBadge(userDetails.is_active)}
-                  </div>
-                </CardHeader>
-                <CardContent
-                  className="space-y-3"
-                  aria-labelledby="user-info-heading"
-                >
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Left Column */}
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span className="text-sm font-medium text-gray-500 flex items-center">
-                          <User className="h-4 w-4 mr-2" aria-hidden="true" />
-                          User ID
-                        </span>
-                        <span
-                          className="text-sm text-gray-900 font-mono"
-                          aria-label={`User ID: ${userDetails.id}`}
-                        >
-                          {userDetails.id}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span className="text-sm font-medium text-gray-500 flex items-center">
-                          <User className="h-4 w-4 mr-2" />
-                          Username
-                        </span>
-                        <span className="text-sm text-gray-900">
-                          {userDetails.username}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span className="text-sm font-medium text-gray-500 flex items-center">
-                          <Mail className="h-4 w-4 mr-2" />
-                          Email
-                        </span>
-                        <span className="text-sm text-gray-900">
-                          {userDetails.email}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span className="text-sm font-medium text-gray-500 flex items-center">
-                          <Shield className="h-4 w-4 mr-2" />
-                          Role
-                        </span>
-                        <Badge className={getRoleBadgeColor(userDetails.role)}>
-                          {userDetails.role}
-                        </Badge>
-                      </div>
-
-                      <div className="flex justify-between items-center py-2">
-                        <span className="text-sm font-medium text-gray-500 flex items-center">
-                          <Activity className="h-4 w-4 mr-2" />
-                          User Status
-                        </span>
-                        <span className="text-sm text-gray-900">
-                          {userDetails.user_status}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Right Column */}
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span className="text-sm font-medium text-gray-500 flex items-center">
-                          <Calendar className="h-4 w-4 mr-2" />
-                          Created At
-                        </span>
-                        <span className="text-xs text-gray-900">
-                          {formatDate(userDetails.created_at)}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span className="text-sm font-medium text-gray-500 flex items-center">
-                          <Clock className="h-4 w-4 mr-2" />
-                          Updated At
-                        </span>
-                        <span className="text-xs text-gray-900">
-                          {formatDate(userDetails.updated_at)}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span className="text-sm font-medium text-gray-500 flex items-center">
-                          <Users className="h-4 w-4 mr-2" />
-                          Created By
-                        </span>
-                        <span className="text-sm text-gray-900">
-                          {userDetails.created_by}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span className="text-sm font-medium text-gray-500 flex items-center">
-                          <Key className="h-4 w-4 mr-2" />
-                          API Key
-                        </span>
-                        <span className="text-xs text-gray-900 font-mono">
-                          {userDetails.api_key || "Not generated"}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-center py-2">
-                        <span className="text-sm font-medium text-gray-500 flex items-center">
-                          <Activity className="h-4 w-4 mr-2" />
-                          RQ Status
-                        </span>
-                        <span className="text-sm text-gray-900">
-                          {userDetails.using_rq_status}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Points Information Section */}
-              <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center space-x-2">
-                    <div
-                      className="p-2 rounded-lg bg-green-100"
-                      aria-hidden="true"
-                    >
-                      <Coins className="h-5 w-5 text-green-600" />
-                    </div>
-                    <h3
-                      className="text-lg font-semibold text-gray-900"
-                      id="points-heading"
-                    >
-                      Points & Usage
-                    </h3>
-                  </div>
-                </CardHeader>
-                <CardContent aria-labelledby="points-heading">
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    <div className="text-center p-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100">
-                      <div className="text-2xl font-bold text-blue-600">
-                        {userDetails.points.current_points}
-                      </div>
-                      <div className="text-xs text-blue-500 font-medium mt-1">
-                        Current Points
-                      </div>
-                    </div>
-
-                    <div className="text-center p-3 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 border border-green-100">
-                      <div className="text-2xl font-bold text-green-600">
-                        {userDetails.points.total_points}
-                      </div>
-                      <div className="text-xs text-green-500 font-medium mt-1">
-                        Total Points
-                      </div>
-                    </div>
-
-                    <div className="text-center p-3 rounded-xl bg-gradient-to-r from-red-50 to-rose-50 border border-red-100">
-                      <div className="text-2xl font-bold text-red-600">
-                        {userDetails.points.total_used_points}
-                      </div>
-                      <div className="text-xs text-red-500 font-medium mt-1">
-                        Used Points
-                      </div>
-                    </div>
-
-                    <div className="text-center p-3 rounded-xl bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-100">
-                      <div className="text-2xl font-bold text-purple-600">
-                        {userDetails.points.total_rq}
-                      </div>
-                      <div className="text-xs text-purple-500 font-medium mt-1">
-                        Total Requests
-                      </div>
-                    </div>
-
-                    <div className="text-center p-3 rounded-xl bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-100">
-                      <div className="text-sm font-bold text-yellow-700">
-                        {userDetails.points.paid_status}
-                      </div>
-                      <div className="text-xs text-yellow-600 font-medium mt-1">
-                        Payment Status
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Supplier Information Section */}
-              <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center space-x-2">
-                    <div
-                      className="p-2 rounded-lg bg-purple-100"
-                      aria-hidden="true"
-                    >
-                      <BarChart3 className="h-5 w-5 text-purple-600" />
-                    </div>
-                    <h3
-                      className="text-lg font-semibold text-gray-900"
-                      id="supplier-heading"
-                    >
-                      Supplier Access
-                    </h3>
-                  </div>
-                </CardHeader>
-                <CardContent aria-labelledby="supplier-heading">
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-500">
-                        Active Suppliers
-                      </span>
-                      <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                        {userDetails.active_suppliers.length} /{" "}
-                        {userDetails.total_suppliers}
-                      </Badge>
-                    </div>
-
-                    {userDetails.active_suppliers.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {userDetails.active_suppliers.map((supplier) => (
-                          <Badge
-                            key={supplier}
-                            className="bg-green-100 text-green-800 border-green-200"
+          {!loading &&
+            userDetails &&
+            (() => {
+              const displayDetails = getCurrentUserDetails();
+              if (!displayDetails) return null;
+              return (
+                <div className="p-6 space-y-6">
+                  {/* User Information Section */}
+                  <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <div
+                            className="p-2 rounded-lg bg-blue-100"
+                            aria-hidden="true"
                           >
-                            {supplier}
-                          </Badge>
-                        ))}
+                            <User className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <h3
+                            className="text-lg font-semibold text-gray-900"
+                            id="user-info-heading"
+                          >
+                            User Information
+                          </h3>
+                        </div>
+                        {getStatusBadge(displayDetails.is_active)}
                       </div>
-                    ) : (
-                      <p className="text-sm text-gray-500 italic">
-                        No active suppliers
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                    </CardHeader>
+                    <CardContent
+                      className="space-y-3"
+                      aria-labelledby="user-info-heading"
+                    >
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Left Column */}
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span className="text-sm font-medium text-gray-500 flex items-center">
+                              <User
+                                className="h-4 w-4 mr-2"
+                                aria-hidden="true"
+                              />
+                              User ID
+                            </span>
+                            <span
+                              className="text-sm text-gray-900 font-mono"
+                              aria-label={`User ID: ${displayDetails.id}`}
+                            >
+                              {displayDetails.id}
+                            </span>
+                          </div>
 
-              {/* Viewed By Information */}
-              {userDetails.viewed_by && (
-                <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center space-x-2">
-                      <div className="p-2 rounded-lg bg-indigo-100">
-                        <Users className="h-5 w-5 text-indigo-600" />
-                      </div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        Viewed By
-                      </h3>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span className="text-sm font-medium text-gray-500">
-                          User ID
-                        </span>
-                        <span className="text-sm text-gray-900 font-mono">
-                          {userDetails.viewed_by.user_id}
-                        </span>
-                      </div>
+                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span className="text-sm font-medium text-gray-500 flex items-center">
+                              <User className="h-4 w-4 mr-2" />
+                              Username
+                            </span>
+                            <span className="text-sm text-gray-900">
+                              {displayDetails.username}
+                            </span>
+                          </div>
 
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span className="text-sm font-medium text-gray-500">
-                          Username
-                        </span>
-                        <span className="text-sm text-gray-900">
-                          {userDetails.viewed_by.username}
-                        </span>
-                      </div>
+                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span className="text-sm font-medium text-gray-500 flex items-center">
+                              <Mail className="h-4 w-4 mr-2" />
+                              Email
+                            </span>
+                            <span className="text-sm text-gray-900">
+                              {displayDetails.email}
+                            </span>
+                          </div>
 
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span className="text-sm font-medium text-gray-500">
-                          Email
-                        </span>
-                        <span className="text-sm text-gray-900">
-                          {userDetails.viewed_by.email}
-                        </span>
-                      </div>
+                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span className="text-sm font-medium text-gray-500 flex items-center">
+                              <Shield className="h-4 w-4 mr-2" />
+                              Role
+                            </span>
+                            <Badge
+                              className={getRoleBadgeColor(displayDetails.role)}
+                            >
+                              {displayDetails.role}
+                            </Badge>
+                          </div>
 
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span className="text-sm font-medium text-gray-500">
-                          Role
-                        </span>
-                        <Badge
-                          className={getRoleBadgeColor(
-                            userDetails.viewed_by.role
+                          <div className="flex justify-between items-center py-2">
+                            <span className="text-sm font-medium text-gray-500 flex items-center">
+                              <Activity className="h-4 w-4 mr-2" />
+                              User Status
+                            </span>
+                            <span className="text-sm text-gray-900">
+                              {displayDetails.user_status}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Right Column */}
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span className="text-sm font-medium text-gray-500 flex items-center">
+                              <Calendar className="h-4 w-4 mr-2" />
+                              Created At
+                            </span>
+                            <span className="text-xs text-gray-900">
+                              {formatDate(displayDetails.created_at)}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span className="text-sm font-medium text-gray-500 flex items-center">
+                              <Clock className="h-4 w-4 mr-2" />
+                              Updated At
+                            </span>
+                            <span className="text-xs text-gray-900">
+                              {formatDate(displayDetails.updated_at)}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span className="text-sm font-medium text-gray-500 flex items-center">
+                              <Users className="h-4 w-4 mr-2" />
+                              Created By
+                            </span>
+                            <span className="text-sm text-gray-900">
+                              {displayDetails.created_by}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span className="text-sm font-medium text-gray-500 flex items-center">
+                              <Key className="h-4 w-4 mr-2" />
+                              API Key
+                            </span>
+                            <span className="text-xs text-gray-900 font-mono">
+                              {displayDetails.api_key || "Not generated"}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between items-center py-2">
+                            <span className="text-sm font-medium text-gray-500 flex items-center">
+                              <Activity className="h-4 w-4 mr-2" />
+                              RQ Status
+                            </span>
+                            <span className="text-sm text-gray-900">
+                              {displayDetails.using_rq_status}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Points Information Section */}
+                  <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center space-x-2">
+                        <div
+                          className="p-2 rounded-lg bg-green-100"
+                          aria-hidden="true"
+                        >
+                          <Coins className="h-5 w-5 text-green-600" />
+                        </div>
+                        <h3
+                          className="text-lg font-semibold text-gray-900"
+                          id="points-heading"
+                        >
+                          Points & Usage
+                        </h3>
+                      </div>
+                    </CardHeader>
+                    <CardContent aria-labelledby="points-heading">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        <div
+                          className={cn(
+                            "text-center p-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100",
+                            optimisticUpdate?.points &&
+                              "ring-2 ring-blue-400 ring-opacity-50"
                           )}
                         >
-                          {userDetails.viewed_by.role}
-                        </Badge>
+                          <div className="text-2xl font-bold text-blue-600">
+                            {displayDetails.points.current_points}
+                          </div>
+                          <div className="text-xs text-blue-500 font-medium mt-1">
+                            Current Points
+                          </div>
+                        </div>
+
+                        <div
+                          className={cn(
+                            "text-center p-3 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 border border-green-100",
+                            optimisticUpdate?.points &&
+                              "ring-2 ring-green-400 ring-opacity-50"
+                          )}
+                        >
+                          <div className="text-2xl font-bold text-green-600">
+                            {displayDetails.points.total_points}
+                          </div>
+                          <div className="text-xs text-green-500 font-medium mt-1">
+                            Total Points
+                          </div>
+                        </div>
+
+                        <div className="text-center p-3 rounded-xl bg-gradient-to-r from-red-50 to-rose-50 border border-red-100">
+                          <div className="text-2xl font-bold text-red-600">
+                            {displayDetails.points.total_used_points}
+                          </div>
+                          <div className="text-xs text-red-500 font-medium mt-1">
+                            Used Points
+                          </div>
+                        </div>
+
+                        <div className="text-center p-3 rounded-xl bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-100">
+                          <div className="text-2xl font-bold text-purple-600">
+                            {displayDetails.points.total_rq}
+                          </div>
+                          <div className="text-xs text-purple-500 font-medium mt-1">
+                            Total Requests
+                          </div>
+                        </div>
+
+                        <div className="text-center p-3 rounded-xl bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-100">
+                          <div className="text-sm font-bold text-yellow-700">
+                            {displayDetails.points.paid_status}
+                          </div>
+                          <div className="text-xs text-yellow-600 font-medium mt-1">
+                            Payment Status
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+                    </CardContent>
+                  </Card>
 
-              {/* Point Allocation Section */}
-              <PointAllocationSection
-                userId={userDetails.id}
-                userEmail={userDetails.email}
-                currentPoints={userDetails.points.current_points}
-                onAllocationComplete={refreshUserData}
-              />
+                  {/* Supplier Information Section */}
+                  <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center space-x-2">
+                        <div
+                          className="p-2 rounded-lg bg-purple-100"
+                          aria-hidden="true"
+                        >
+                          <BarChart3 className="h-5 w-5 text-purple-600" />
+                        </div>
+                        <h3
+                          className="text-lg font-semibold text-gray-900"
+                          id="supplier-heading"
+                        >
+                          Supplier Access
+                        </h3>
+                      </div>
+                    </CardHeader>
+                    <CardContent aria-labelledby="supplier-heading">
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm font-medium text-gray-500">
+                            Active Suppliers
+                          </span>
+                          <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+                            {displayDetails.active_suppliers.length} /{" "}
+                            {displayDetails.total_suppliers}
+                          </Badge>
+                        </div>
 
-              {/* User Actions Section */}
-              <UserActionsSection
-                userId={userDetails.id}
-                isActive={userDetails.is_active}
-                currentPoints={userDetails.points.current_points}
-                onActionComplete={(action, success, message) => {
-                  handleActionComplete(
-                    success,
-                    message,
-                    action !== "delete-user"
-                  );
-                  // Close modal if user was deleted
-                  if (action === "delete-user" && success) {
-                    setTimeout(() => {
-                      handleClose();
-                    }, 2000);
-                  }
-                }}
-              />
+                        {displayDetails.active_suppliers.length > 0 ? (
+                          <div
+                            className={cn(
+                              "flex flex-wrap gap-2",
+                              optimisticUpdate?.active_suppliers &&
+                                "ring-2 ring-purple-400 ring-opacity-50 rounded-lg p-2"
+                            )}
+                          >
+                            {displayDetails.active_suppliers.map((supplier) => (
+                              <Badge
+                                key={supplier}
+                                className="bg-green-100 text-green-800 border-green-200"
+                              >
+                                {supplier}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-500 italic">
+                            No active suppliers
+                          </p>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
 
-              {/* Action Sections Placeholder */}
-              {/* These sections will be implemented in subsequent tasks:
+                  {/* Viewed By Information */}
+                  {displayDetails.viewed_by && (
+                    <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center space-x-2">
+                          <div className="p-2 rounded-lg bg-indigo-100">
+                            <Users className="h-5 w-5 text-indigo-600" />
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            Viewed By
+                          </h3>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span className="text-sm font-medium text-gray-500">
+                              User ID
+                            </span>
+                            <span className="text-sm text-gray-900 font-mono">
+                              {displayDetails.viewed_by.user_id}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span className="text-sm font-medium text-gray-500">
+                              Username
+                            </span>
+                            <span className="text-sm text-gray-900">
+                              {displayDetails.viewed_by.username}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span className="text-sm font-medium text-gray-500">
+                              Email
+                            </span>
+                            <span className="text-sm text-gray-900">
+                              {displayDetails.viewed_by.email}
+                            </span>
+                          </div>
+
+                          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span className="text-sm font-medium text-gray-500">
+                              Role
+                            </span>
+                            <Badge
+                              className={getRoleBadgeColor(
+                                displayDetails.viewed_by.role
+                              )}
+                            >
+                              {displayDetails.viewed_by.role}
+                            </Badge>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Point Allocation Section */}
+                  <PointAllocationSection
+                    userId={displayDetails.id}
+                    userEmail={displayDetails.email}
+                    currentPoints={displayDetails.points.current_points}
+                    onAllocationComplete={refreshUserData}
+                    onOptimisticUpdate={applyOptimisticUpdate}
+                  />
+
+                  {/* User Actions Section */}
+                  <UserActionsSection
+                    userId={displayDetails.id}
+                    isActive={displayDetails.is_active}
+                    currentPoints={displayDetails.points.current_points}
+                    onActionComplete={(action, success, message) => {
+                      handleActionComplete(
+                        success,
+                        message,
+                        action !== "delete-user"
+                      );
+                      // Close modal if user was deleted
+                      if (action === "delete-user" && success) {
+                        setTimeout(() => {
+                          handleClose();
+                        }, 2000);
+                      }
+                    }}
+                    onOptimisticUpdate={applyOptimisticUpdate}
+                  />
+
+                  {/* Action Sections Placeholder */}
+                  {/* These sections will be implemented in subsequent tasks:
                 - Task 6: SupplierManagementSection
                 - Task 8: ApiKeyDisplay
             */}
-              <div className="p-4 rounded-xl bg-blue-50 border border-blue-200">
-                <p className="text-sm text-blue-800">
-                  <strong>Note:</strong> Additional action sections (Supplier
-                  Management, API Key Display) will be added in subsequent
-                  implementation tasks.
-                </p>
-              </div>
-            </div>
-          )}
+                  <div className="p-4 rounded-xl bg-blue-50 border border-blue-200">
+                    <p className="text-sm text-blue-800">
+                      <strong>Note:</strong> Additional action sections
+                      (Supplier Management, API Key Display) will be added in
+                      subsequent implementation tasks.
+                    </p>
+                  </div>
+                </div>
+              );
+            })()}
 
           {/* Error State - No Data */}
           {!loading && !userDetails && error && (
