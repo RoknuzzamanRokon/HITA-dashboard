@@ -18,6 +18,7 @@ import { Button } from "@/lib/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/lib/components/ui/card";
 import { Badge } from "@/lib/components/ui/badge";
 import { UserEditService, DetailedUserInfo } from "@/lib/api/user-edit";
+import { PointAllocationSection } from "./point-allocation-section";
 import {
   User,
   Mail,
@@ -520,18 +521,25 @@ export function UserEditModal({
               </Card>
             )}
 
+            {/* Point Allocation Section */}
+            <PointAllocationSection
+              userId={userDetails.id}
+              userEmail={userDetails.email}
+              currentPoints={userDetails.points.current_points}
+              onAllocationComplete={refreshUserData}
+            />
+
             {/* Action Sections Placeholder */}
             {/* These sections will be implemented in subsequent tasks:
-                - Task 5: PointAllocationSection
                 - Task 6: SupplierManagementSection
                 - Task 7: UserActionsSection
                 - Task 8: ApiKeyDisplay
             */}
             <div className="p-4 rounded-xl bg-blue-50 border border-blue-200">
               <p className="text-sm text-blue-800">
-                <strong>Note:</strong> Action sections (Point Allocation,
-                Supplier Management, User Actions, API Key Generation) will be
-                added in subsequent implementation tasks.
+                <strong>Note:</strong> Additional action sections (Supplier
+                Management, User Actions, API Key Generation) will be added in
+                subsequent implementation tasks.
               </p>
             </div>
           </div>

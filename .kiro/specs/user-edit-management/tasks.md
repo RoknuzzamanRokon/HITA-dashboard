@@ -41,7 +41,7 @@
   - Add modal layout with sections for info, actions, and messages
   - _Requirements: 1.1, 1.2, 1.4, 9.1, 9.2_
 
-- [ ] 5. Create PointAllocationSection component
+- [x] 5. Create PointAllocationSection component
 
   - Create `lib/components/users/point-allocation-section.tsx`
   - Implement dropdown with 5 allocation type options
