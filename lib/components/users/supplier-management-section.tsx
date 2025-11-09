@@ -188,31 +188,68 @@ export function SupplierManagementSection({
     <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
       <CardHeader className="pb-3">
         <div className="flex items-center space-x-2">
-          <div className="p-2 rounded-lg bg-purple-100">
+          <div className="p-2 rounded-lg bg-purple-100" aria-hidden="true">
             <Building2 className="h-5 w-5 text-purple-600" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3
+            className="text-lg font-semibold text-gray-900"
+            id="supplier-management-heading"
+          >
             Supplier Management
           </h3>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent
+        className="space-y-4"
+        aria-labelledby="supplier-management-heading"
+      >
+        {/* ARIA live region for supplier management status */}
+        <div
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className="sr-only"
+        >
+          {loading &&
+            actionType === "activate" &&
+            "Activating suppliers, please wait"}
+          {loading &&
+            actionType === "deactivate" &&
+            "Deactivating suppliers, please wait"}
+          {validationError && `Error: ${validationError}`}
+          {selectedSuppliers.length > 0 &&
+            `${selectedSuppliers.length} supplier${
+              selectedSuppliers.length > 1 ? "s" : ""
+            } selected`}
+        </div>
         {/* Active Suppliers Display */}
-        <div className="p-3 rounded-xl bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-100">
+        <div
+          className="p-3 rounded-xl bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-100"
+          role="region"
+          aria-label="Active suppliers list"
+        >
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm font-medium text-purple-700">
               Active Suppliers
             </span>
-            <span className="text-lg font-bold text-purple-600">
+            <span
+              className="text-lg font-bold text-purple-600"
+              aria-label={`${activeSuppliers.length} of ${totalSuppliers} suppliers active`}
+            >
               {activeSuppliers.length} / {totalSuppliers}
             </span>
           </div>
           {activeSuppliers.length > 0 ? (
-            <div className="flex flex-wrap gap-2 mt-2">
+            <div
+              className="flex flex-wrap gap-2 mt-2"
+              role="list"
+              aria-label="Active suppliers"
+            >
               {activeSuppliers.map((supplier) => (
                 <span
                   key={supplier}
                   className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-700 rounded-md"
+                  role="listitem"
                 >
                   {supplier}
                 </span>
@@ -225,8 +262,15 @@ export function SupplierManagementSection({
 
         {/* Validation Error */}
         {validationError && (
-          <div className="p-3 rounded-xl bg-red-50 border border-red-200 flex items-start space-x-2">
-            <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <div
+            className="p-3 rounded-xl bg-red-50 border border-red-200 flex items-start space-x-2"
+            role="alert"
+            aria-live="assertive"
+          >
+            <AlertCircle
+              className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5"
+              aria-hidden="true"
+            />
             <p className="text-sm font-medium text-red-900 flex-1">
               {validationError}
             </p>
@@ -236,7 +280,10 @@ export function SupplierManagementSection({
         {/* Supplier Selection */}
         <div>
           <div className="flex justify-between items-center mb-2">
-            <label className="text-sm font-medium text-gray-700">
+            <label
+              className="text-sm font-medium text-gray-700"
+              id="supplier-selection-label"
+            >
               Select Suppliers
             </label>
             <button
@@ -244,13 +291,22 @@ export function SupplierManagementSection({
               onClick={handleSelectAll}
               disabled={loading}
               className="text-xs text-purple-600 hover:text-purple-700 font-medium disabled:opacity-50"
+              aria-label={
+                selectedSuppliers.length === AVAILABLE_SUPPLIERS.length
+                  ? "Deselect all suppliers"
+                  : "Select all suppliers"
+              }
             >
               {selectedSuppliers.length === AVAILABLE_SUPPLIERS.length
                 ? "Deselect All"
                 : "Select All"}
             </button>
           </div>
-          <div className="grid grid-cols-2 gap-2 p-3 rounded-xl bg-gray-50 border border-gray-200">
+          <div
+            className="grid grid-cols-2 gap-2 p-3 rounded-xl bg-gray-50 border border-gray-200"
+            role="group"
+            aria-labelledby="supplier-selection-label"
+          >
             {AVAILABLE_SUPPLIERS.map((supplier) => (
               <label
                 key={supplier}
@@ -268,6 +324,7 @@ export function SupplierManagementSection({
                   onChange={() => handleSupplierToggle(supplier)}
                   disabled={loading}
                   className="h-4 w-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
+                  aria-label={`${supplier} supplier`}
                 />
                 <span className="text-sm font-medium text-gray-700">
                   {supplier}
@@ -275,7 +332,10 @@ export function SupplierManagementSection({
               </label>
             ))}
           </div>
-          <p className="mt-1 text-xs text-gray-500">
+          <p
+            className="mt-1 text-xs text-gray-500"
+            id="supplier-selection-description"
+          >
             Select suppliers to activate or deactivate for this user
           </p>
         </div>
@@ -291,15 +351,22 @@ export function SupplierManagementSection({
               (loading || selectedSuppliers.length === 0) &&
                 "cursor-not-allowed opacity-70"
             )}
+            aria-label={`Activate ${
+              selectedSuppliers.length
+            } selected supplier${selectedSuppliers.length !== 1 ? "s" : ""}`}
+            aria-busy={loading && actionType === "activate"}
           >
             {loading && actionType === "activate" ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2
+                  className="h-4 w-4 mr-2 animate-spin"
+                  aria-hidden="true"
+                />
                 Activating...
               </>
             ) : (
               <>
-                <CheckCircle className="h-4 w-4 mr-2" />
+                <CheckCircle className="h-4 w-4 mr-2" aria-hidden="true" />
                 Activate
               </>
             )}
@@ -314,15 +381,22 @@ export function SupplierManagementSection({
               (loading || selectedSuppliers.length === 0) &&
                 "cursor-not-allowed opacity-70"
             )}
+            aria-label={`Deactivate ${
+              selectedSuppliers.length
+            } selected supplier${selectedSuppliers.length !== 1 ? "s" : ""}`}
+            aria-busy={loading && actionType === "deactivate"}
           >
             {loading && actionType === "deactivate" ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2
+                  className="h-4 w-4 mr-2 animate-spin"
+                  aria-hidden="true"
+                />
                 Deactivating...
               </>
             ) : (
               <>
-                <AlertCircle className="h-4 w-4 mr-2" />
+                <AlertCircle className="h-4 w-4 mr-2" aria-hidden="true" />
                 Deactivate
               </>
             )}

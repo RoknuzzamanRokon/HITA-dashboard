@@ -115,22 +115,45 @@ export function PointAllocationSection({
     <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
       <CardHeader className="pb-3">
         <div className="flex items-center space-x-2">
-          <div className="p-2 rounded-lg bg-green-100">
+          <div className="p-2 rounded-lg bg-green-100" aria-hidden="true">
             <Coins className="h-5 w-5 text-green-600" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3
+            className="text-lg font-semibold text-gray-900"
+            id="point-allocation-heading"
+          >
             Point Allocation
           </h3>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent
+        className="space-y-4"
+        aria-labelledby="point-allocation-heading"
+      >
+        {/* ARIA live region for allocation status */}
+        <div
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className="sr-only"
+        >
+          {loading && "Allocating points, please wait"}
+          {validationError && `Error: ${validationError}`}
+        </div>
         {/* Current Points Display */}
-        <div className="p-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100">
+        <div
+          className="p-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100"
+          role="region"
+          aria-label="Current points balance"
+        >
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium text-blue-700">
               Current Points
             </span>
-            <span className="text-2xl font-bold text-blue-600">
+            <span
+              className="text-2xl font-bold text-blue-600"
+              aria-label={`${currentPoints} points`}
+            >
               {currentPoints}
             </span>
           </div>
@@ -138,8 +161,15 @@ export function PointAllocationSection({
 
         {/* Validation Error */}
         {validationError && (
-          <div className="p-3 rounded-xl bg-red-50 border border-red-200 flex items-start space-x-2">
-            <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <div
+            className="p-3 rounded-xl bg-red-50 border border-red-200 flex items-start space-x-2"
+            role="alert"
+            aria-live="assertive"
+          >
+            <AlertCircle
+              className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5"
+              aria-hidden="true"
+            />
             <p className="text-sm font-medium text-red-900 flex-1">
               {validationError}
             </p>
@@ -167,15 +197,23 @@ export function PointAllocationSection({
           onClick={handleAllocatePoints}
           disabled={loading || !selectedAllocationType}
           className={cn("w-full", loading && "cursor-not-allowed opacity-70")}
+          aria-label={`Allocate points using ${selectedAllocationType.replace(
+            /_/g,
+            " "
+          )}`}
+          aria-busy={loading}
         >
           {loading ? (
             <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <Loader2
+                className="h-4 w-4 mr-2 animate-spin"
+                aria-hidden="true"
+              />
               Allocating Points...
             </>
           ) : (
             <>
-              <Coins className="h-4 w-4 mr-2" />
+              <Coins className="h-4 w-4 mr-2" aria-hidden="true" />
               Allocate Points
             </>
           )}

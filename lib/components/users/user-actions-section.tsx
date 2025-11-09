@@ -243,25 +243,59 @@ export function UserActionsSection({
       <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
         <CardHeader className="pb-3">
           <div className="flex items-center space-x-2">
-            <div className="p-2 rounded-lg bg-orange-100">
+            <div className="p-2 rounded-lg bg-orange-100" aria-hidden="true">
               <Power className="h-5 w-5 text-orange-600" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3
+              className="text-lg font-semibold text-gray-900"
+              id="user-actions-heading"
+            >
               User Actions
             </h3>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent
+          className="space-y-4"
+          aria-labelledby="user-actions-heading"
+        >
+          {/* ARIA live region for action status */}
+          <div
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            className="sr-only"
+          >
+            {loadingAction === "toggle-status" &&
+              `${isActive ? "Deactivating" : "Activating"} user, please wait`}
+            {loadingAction === "reset-points" &&
+              "Resetting points, please wait"}
+            {loadingAction === "delete-user" && "Deleting user, please wait"}
+            {loadingAction === "generate-api-key" &&
+              "Generating API key, please wait"}
+            {localError && `Error: ${localError}`}
+          </div>
+
           {/* Local Error Message */}
           {localError && (
-            <div className="p-3 rounded-xl bg-red-50 border border-red-200 flex items-start space-x-2">
-              <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
+            <div
+              className="p-3 rounded-xl bg-red-50 border border-red-200 flex items-start space-x-2"
+              role="alert"
+              aria-live="assertive"
+            >
+              <AlertCircle
+                className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5"
+                aria-hidden="true"
+              />
               <p className="text-sm text-red-900">{localError}</p>
             </div>
           )}
 
           {/* Action Buttons Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div
+            className="grid grid-cols-1 md:grid-cols-2 gap-3"
+            role="group"
+            aria-label="User management actions"
+          >
             {/* Activate/Deactivate User Button */}
             <Button
               onClick={handleToggleUserStatus}
@@ -275,11 +309,15 @@ export function UserActionsSection({
               leftIcon={
                 loadingAction !== "toggle-status" &&
                 (isActive ? (
-                  <PowerOff className="h-4 w-4" />
+                  <PowerOff className="h-4 w-4" aria-hidden="true" />
                 ) : (
-                  <Power className="h-4 w-4" />
+                  <Power className="h-4 w-4" aria-hidden="true" />
                 ))
               }
+              aria-label={
+                isActive ? "Deactivate user account" : "Activate user account"
+              }
+              aria-busy={loadingAction === "toggle-status"}
             >
               {isActive ? "Deactivate User" : "Activate User"}
             </Button>
@@ -293,9 +331,11 @@ export function UserActionsSection({
               className="w-full justify-start space-x-2 border-blue-200 text-blue-700 hover:bg-blue-50"
               leftIcon={
                 loadingAction !== "generate-api-key" && (
-                  <Key className="h-4 w-4" />
+                  <Key className="h-4 w-4" aria-hidden="true" />
                 )
               }
+              aria-label="Generate new API key for user"
+              aria-busy={loadingAction === "generate-api-key"}
             >
               Generate API Key
             </Button>
@@ -306,7 +346,8 @@ export function UserActionsSection({
               disabled={isAnyActionLoading}
               variant="outline"
               className="w-full justify-start space-x-2 border-yellow-200 text-yellow-700 hover:bg-yellow-50"
-              leftIcon={<RotateCcw className="h-4 w-4" />}
+              leftIcon={<RotateCcw className="h-4 w-4" aria-hidden="true" />}
+              aria-label={`Reset user points to zero. Current points: ${currentPoints}`}
             >
               Reset Points
             </Button>
@@ -317,7 +358,8 @@ export function UserActionsSection({
               disabled={isAnyActionLoading}
               variant="outline"
               className="w-full justify-start space-x-2 border-red-200 text-red-700 hover:bg-red-50"
-              leftIcon={<Trash2 className="h-4 w-4" />}
+              leftIcon={<Trash2 className="h-4 w-4" aria-hidden="true" />}
+              aria-label="Delete user account permanently"
             >
               Delete User
             </Button>

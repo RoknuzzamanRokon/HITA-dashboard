@@ -57,6 +57,7 @@ export function Modal({
   animation = "slide",
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const previousActiveElementRef = useRef<HTMLElement | null>(null);
   const [isAnimating, setIsAnimating] = React.useState(false);
   const [shouldRender, setShouldRender] = React.useState(isOpen);
 
@@ -117,8 +118,13 @@ export function Modal({
     };
   }, [shouldRender, onClose]);
 
-  // Focus management
+  // Focus management - store previous focus and restore on close
   useEffect(() => {
+    if (isOpen) {
+      // Store the currently focused element when modal opens
+      previousActiveElementRef.current = document.activeElement as HTMLElement;
+    }
+
     if (isAnimating && modalRef.current) {
       const timer = setTimeout(() => {
         const focusableElements = modalRef.current?.querySelectorAll(
@@ -129,7 +135,13 @@ export function Modal({
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [isAnimating]);
+
+    // Restore focus to the trigger element when modal closes
+    if (!isOpen && !shouldRender && previousActiveElementRef.current) {
+      previousActiveElementRef.current.focus();
+      previousActiveElementRef.current = null;
+    }
+  }, [isAnimating, isOpen, shouldRender]);
 
   if (!shouldRender) return null;
 

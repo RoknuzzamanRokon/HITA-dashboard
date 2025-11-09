@@ -24,7 +24,11 @@ export const ApiKeyDisplay: React.FC<ApiKeyDisplayProps> = ({
   // Handle null/empty API key state
   if (!apiKey) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+      <div
+        className="rounded-lg border border-gray-200 bg-gray-50 p-4"
+        role="status"
+        aria-label="No API key available"
+      >
         <p className="text-sm text-gray-500 text-center">
           No API key generated yet
         </p>
@@ -70,13 +74,31 @@ export const ApiKeyDisplay: React.FC<ApiKeyDisplayProps> = ({
   const displayKey = isMasked ? getMaskedKey() : apiKey;
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4 space-y-3">
+    <div
+      className="rounded-lg border border-gray-200 bg-white p-4 space-y-3"
+      role="region"
+      aria-label="API key display"
+    >
+      {/* ARIA live region for copy status */}
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {copySuccess && "API key copied to clipboard"}
+        {isMasked ? "API key is hidden" : "API key is visible"}
+      </div>
+
       <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-gray-700">API Key</label>
+        <label className="text-sm font-medium text-gray-700" id="api-key-label">
+          API Key
+        </label>
         <button
           onClick={toggleMask}
           className="text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors"
           aria-label={isMasked ? "Show API key" : "Hide API key"}
+          aria-pressed={!isMasked}
         >
           {isMasked ? "Show" : "Hide"}
         </button>
@@ -88,6 +110,8 @@ export const ApiKeyDisplay: React.FC<ApiKeyDisplayProps> = ({
             "flex-1 rounded-md border border-gray-300 bg-gray-50 px-3 py-2",
             "font-mono text-sm text-gray-900 break-all"
           )}
+          aria-labelledby="api-key-label"
+          aria-live="polite"
         >
           {displayKey}
         </div>
@@ -108,6 +132,7 @@ export const ApiKeyDisplay: React.FC<ApiKeyDisplayProps> = ({
                 stroke="currentColor"
                 viewBox="0 0 24 24"
                 xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -126,6 +151,7 @@ export const ApiKeyDisplay: React.FC<ApiKeyDisplayProps> = ({
                 stroke="currentColor"
                 viewBox="0 0 24 24"
                 xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -151,6 +177,7 @@ export const ApiKeyDisplay: React.FC<ApiKeyDisplayProps> = ({
             fill="currentColor"
             viewBox="0 0 20 20"
             xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
           >
             <path
               fillRule="evenodd"

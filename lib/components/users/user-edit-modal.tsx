@@ -236,12 +236,38 @@ export function UserEditModal({
         title={`Edit User: ${userDetails?.username || "Loading..."}`}
         size="2xl"
         animation="slide"
+        aria-label="User edit modal"
+        aria-describedby="user-edit-description"
       >
         <ModalBody className="p-0">
+          {/* Hidden description for screen readers */}
+          <div id="user-edit-description" className="sr-only">
+            Modal for editing user details, allocating points, managing
+            suppliers, and performing user actions
+          </div>
+
+          {/* ARIA live region for success/error announcements */}
+          <div
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+            className="sr-only"
+          >
+            {error && `Error: ${error}`}
+            {!loading && userDetails && "User details loaded successfully"}
+          </div>
+
           {/* Error Message */}
           {error && !loading && (
-            <div className="mx-6 mt-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-start space-x-3">
-              <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div
+              className="mx-6 mt-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-start space-x-3"
+              role="alert"
+              aria-live="assertive"
+            >
+              <AlertCircle
+                className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5"
+                aria-hidden="true"
+              />
               <div className="flex-1">
                 <p className="text-sm font-medium text-red-900">{error}</p>
                 {retryAttempt < 3 && (
@@ -251,6 +277,7 @@ export function UserEditModal({
                     size="sm"
                     className="mt-2"
                     leftIcon={<RefreshCw className="h-3 w-3" />}
+                    aria-label="Retry loading user details"
                   >
                     Retry
                   </Button>
@@ -270,26 +297,38 @@ export function UserEditModal({
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <div className="p-2 rounded-lg bg-blue-100">
+                      <div
+                        className="p-2 rounded-lg bg-blue-100"
+                        aria-hidden="true"
+                      >
                         <User className="h-5 w-5 text-blue-600" />
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900">
+                      <h3
+                        className="text-lg font-semibold text-gray-900"
+                        id="user-info-heading"
+                      >
                         User Information
                       </h3>
                     </div>
                     {getStatusBadge(userDetails.is_active)}
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent
+                  className="space-y-3"
+                  aria-labelledby="user-info-heading"
+                >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Left Column */}
                     <div className="space-y-3">
                       <div className="flex justify-between items-center py-2 border-b border-gray-100">
                         <span className="text-sm font-medium text-gray-500 flex items-center">
-                          <User className="h-4 w-4 mr-2" />
+                          <User className="h-4 w-4 mr-2" aria-hidden="true" />
                           User ID
                         </span>
-                        <span className="text-sm text-gray-900 font-mono">
+                        <span
+                          className="text-sm text-gray-900 font-mono"
+                          aria-label={`User ID: ${userDetails.id}`}
+                        >
                           {userDetails.id}
                         </span>
                       </div>
@@ -395,15 +434,21 @@ export function UserEditModal({
               <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
                 <CardHeader className="pb-3">
                   <div className="flex items-center space-x-2">
-                    <div className="p-2 rounded-lg bg-green-100">
+                    <div
+                      className="p-2 rounded-lg bg-green-100"
+                      aria-hidden="true"
+                    >
                       <Coins className="h-5 w-5 text-green-600" />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3
+                      className="text-lg font-semibold text-gray-900"
+                      id="points-heading"
+                    >
                       Points & Usage
                     </h3>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent aria-labelledby="points-heading">
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                     <div className="text-center p-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100">
                       <div className="text-2xl font-bold text-blue-600">
@@ -457,15 +502,21 @@ export function UserEditModal({
               <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50">
                 <CardHeader className="pb-3">
                   <div className="flex items-center space-x-2">
-                    <div className="p-2 rounded-lg bg-purple-100">
+                    <div
+                      className="p-2 rounded-lg bg-purple-100"
+                      aria-hidden="true"
+                    >
                       <BarChart3 className="h-5 w-5 text-purple-600" />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3
+                      className="text-lg font-semibold text-gray-900"
+                      id="supplier-heading"
+                    >
                       Supplier Access
                     </h3>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent aria-labelledby="supplier-heading">
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium text-gray-500">
@@ -623,6 +674,7 @@ export function UserEditModal({
             variant="outline"
             onClick={handleClose}
             disabled={loading || actionInProgress !== null}
+            aria-label="Close user edit modal"
           >
             Close
           </Button>
