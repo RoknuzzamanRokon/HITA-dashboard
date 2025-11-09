@@ -292,10 +292,6 @@ export default function ProfilePage() {
         setPasswordError("New password is required");
         return;
       }
-      if (passwordData.newPassword.length < 8) {
-        setPasswordError("New password must be at least 8 characters long");
-        return;
-      }
       if (passwordData.newPassword !== passwordData.confirmPassword) {
         setPasswordError("New passwords do not match");
         return;

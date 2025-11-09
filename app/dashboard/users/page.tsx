@@ -28,6 +28,10 @@ import {
   Shield,
   Crown,
   RefreshCw,
+  TrendingUp,
+  AlertTriangle,
+  Minus,
+  Calendar,
 } from "lucide-react";
 import type {
   UserListItem,
@@ -40,6 +44,7 @@ import {
   usePermissions,
 } from "@/lib/components/auth/permission-guard";
 import { Permission } from "@/lib/utils/rbac";
+import "@/app/globals.css";
 
 export default function UsersPage() {
   const router = useRouter();
@@ -57,6 +62,11 @@ export default function UsersPage() {
     pageSize: 25,
     total: 0,
   });
+
+  // All Users Check state
+  const [allUsersData, setAllUsersData] = useState<any>(null);
+  const [allUsersLoading, setAllUsersLoading] = useState(false);
+  const [allUsersError, setAllUsersError] = useState<string | null>(null);
 
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -85,6 +95,15 @@ export default function UsersPage() {
   const [createUserError, setCreateUserError] = useState<string | null>(null);
   const [createUserLoading, setCreateUserLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Analytics search and filter state
+  const [analyticsSearchQuery, setAnalyticsSearchQuery] = useState("");
+  const [analyticsFilters, setAnalyticsFilters] = useState({
+    sortBy: "name" as "name" | "date" | "points",
+    sortOrder: "asc" as "asc" | "desc",
+    dateFrom: "",
+    dateTo: "",
+  });
 
   /**
    * Fetch users with current parameters
@@ -252,6 +271,247 @@ export default function UsersPage() {
     }
   }, [searchQuery, filters]);
 
+  // MetricCard Component Definition
+  const MetricCard = ({
+    title,
+    value,
+    change,
+    color,
+    icon,
+    trend,
+  }: {
+    title: string;
+    value: number;
+    change: string;
+    color: "cyan" | "red" | "green" | "purple";
+    icon: string;
+    trend: "up" | "alert" | "stable";
+  }) => {
+    const colorConfig = {
+      cyan: {
+        gradient: "from-cyan-500 to-blue-600",
+        glow: "shadow-cyan-500/20",
+        text: "text-cyan-300",
+        border: "border-cyan-400",
+      },
+      red: {
+        gradient: "from-red-500 to-pink-600",
+        glow: "shadow-red-500/20",
+        text: "text-red-300",
+        border: "border-red-400",
+      },
+      green: {
+        gradient: "from-green-500 to-emerald-600",
+        glow: "shadow-green-500/20",
+        text: "text-green-300",
+        border: "border-green-400",
+      },
+      purple: {
+        gradient: "from-purple-500 to-indigo-600",
+        glow: "shadow-purple-500/20",
+        text: "text-purple-300",
+        border: "border-purple-400",
+      },
+    };
+
+    const config = colorConfig[color] || colorConfig.cyan;
+
+    return (
+      <div
+        className={`relative overflow-hidden bg-gray-800/50 border border-gray-700 rounded-2xl p-6 backdrop-blur-sm hover:border-${config.border}/50 transition-all duration-500 group hover:scale-105 hover:${config.glow} hover:shadow-xl`}
+      >
+        {/* Animated Border */}
+        <div
+          className={`absolute inset-0 bg-gradient-to-r ${config.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}
+        ></div>
+
+        {/* Corner Accents */}
+        <div
+          className={`absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 ${config.border} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+        ></div>
+        <div
+          className={`absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 ${config.border} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+        ></div>
+        <div
+          className={`absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 ${config.border} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+        ></div>
+        <div
+          className={`absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 ${config.border} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+        ></div>
+
+        <div className="relative">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-gray-400 font-mono text-sm uppercase tracking-wider">
+              {title}
+            </span>
+            <span className="text-2xl">{icon}</span>
+          </div>
+
+          <div className="flex items-end justify-between">
+            <div>
+              <p className={`text-4xl font-bold ${config.text} font-mono`}>
+                {value}
+              </p>
+              <p className="text-gray-400 text-sm mt-2 font-mono">{change}</p>
+            </div>
+
+            <div
+              className={`w-12 h-12 rounded-full bg-gradient-to-br ${config.gradient} flex items-center justify-center ${config.glow} shadow-lg`}
+            >
+              {trend === "up" && <TrendingUp className="h-6 w-6 text-white" />}
+              {trend === "alert" && (
+                <AlertTriangle className="h-6 w-6 text-white" />
+              )}
+              {trend === "stable" && <Minus className="h-6 w-6 text-white" />}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // UserMatrixCard Component Definition
+  const UserMatrixCard = ({ user, index }: { user: any; index: number }) => {
+    return (
+      <div className="relative bg-gray-800/30 border border-gray-700 rounded-2xl p-6 backdrop-blur-sm hover:border-cyan-400/50 transition-all duration-500 group hover:scale-105 hover:shadow-2xl hover:shadow-cyan-500/10">
+        {/* Matrix Background Effect */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(12,150,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(12,150,255,0.05)_1px,transparent_1px)] bg-[size:32px_32px] rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+        {/* Glow Effect */}
+        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-purple-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+        <div className="relative">
+          {/* User Header */}
+          <div className="flex items-start justify-between mb-6">
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <div className="w-16 h-16 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-cyan-500/20">
+                  {user.username?.charAt(0).toUpperCase()}
+                </div>
+                {user.is_active && (
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-400 border-2 border-gray-900 rounded-full animate-pulse"></div>
+                )}
+              </div>
+              <div>
+                <h4 className="font-bold text-white text-xl font-mono">
+                  {user.username}
+                </h4>
+                <p className="text-cyan-300 text-sm font-mono mt-1">
+                  {user.email}
+                </p>
+                <div className="flex items-center space-x-2 mt-2">
+                  <Calendar className="w-3 h-3 text-gray-400" />
+                  <span className="text-gray-400 text-xs font-mono">
+                    {new Date(user.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Status Badges */}
+            <div className="flex flex-col items-end space-y-2">
+              <div
+                className={`px-3 py-1 rounded-full border font-mono text-xs ${
+                  user.is_active
+                    ? "bg-green-400/10 text-green-400 border-green-400/30"
+                    : "bg-gray-400/10 text-gray-400 border-gray-400/30"
+                }`}
+              >
+                {user.is_active ? "ACTIVE" : "INACTIVE"}
+              </div>
+              <div
+                className={`px-3 py-1 rounded-full border font-mono text-xs ${
+                  user.points?.paid_status === "Paid"
+                    ? "bg-cyan-400/10 text-cyan-400 border-cyan-400/30"
+                    : "bg-amber-400/10 text-amber-400 border-amber-400/30"
+                }`}
+              >
+                {user.points?.paid_status === "Paid" ? "PAID" : "PENDING"}
+              </div>
+            </div>
+          </div>
+
+          {/* Digital Stats Grid */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+              <p className="text-gray-400 font-mono text-xs uppercase tracking-wider mb-2">
+                CURRENT POINTS
+              </p>
+              <p className="text-2xl font-bold text-cyan-400 font-mono">
+                {user.points?.current_points?.toLocaleString() || "0"}
+              </p>
+            </div>
+            <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+              <p className="text-gray-400 font-mono text-xs uppercase tracking-wider mb-2">
+                TOTAL POINTS
+              </p>
+              <p className="text-2xl font-bold text-purple-400 font-mono">
+                {user.points?.total_points?.toLocaleString() || "0"}
+              </p>
+            </div>
+            <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+              <p className="text-gray-400 font-mono text-xs uppercase tracking-wider mb-2">
+                REQUESTS
+              </p>
+              <p className="text-2xl font-bold text-blue-400 font-mono">
+                {user.total_requests || "0"}
+              </p>
+            </div>
+            <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+              <p className="text-gray-400 font-mono text-xs uppercase tracking-wider mb-2">
+                ACTIVITY
+              </p>
+              <p className="text-lg font-bold text-green-400 font-mono">
+                {user.activity_status || "UNKNOWN"}
+              </p>
+            </div>
+          </div>
+
+          {/* Suppliers */}
+          {user.active_suppliers && user.active_suppliers.length > 0 && (
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-gray-400 font-mono text-xs uppercase tracking-wider">
+                  ACTIVE SUPPLIERS
+                </p>
+                <span className="text-cyan-300 text-xs font-mono">
+                  ({user.total_suppliers})
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {user.active_suppliers
+                  .slice(0, 4)
+                  .map((supplier: string, idx: number) => (
+                    <span
+                      key={idx}
+                      className="px-3 py-1 bg-cyan-400/10 text-cyan-300 rounded-full text-xs font-mono border border-cyan-400/30"
+                    >
+                      {supplier}
+                    </span>
+                  ))}
+                {user.active_suppliers.length > 4 && (
+                  <span className="px-3 py-1 bg-purple-400/10 text-purple-300 rounded-full text-xs font-mono border border-purple-400/30">
+                    +{user.active_suppliers.length - 4}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Footer */}
+          <div className="pt-4 border-t border-gray-700 flex items-center justify-between text-gray-400 font-mono text-xs">
+            <span>
+              CREATED: {new Date(user.created_at).toLocaleDateString()}
+            </span>
+            <span className="max-w-[120px] truncate" title={user.created_by}>
+              BY: {user.created_by}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   /**
    * Fetch current user details
    */
@@ -276,11 +536,62 @@ export default function UsersPage() {
     }
   }, []);
 
+  /**
+   * Fetch all users check data
+   */
+  const fetchAllUsersCheck = useCallback(async () => {
+    try {
+      setAllUsersLoading(true);
+      setAllUsersError(null);
+      console.log("🔍 Fetching all general users data...");
+      console.log("🔍 API Base URL:", process.env.NEXT_PUBLIC_API_BASE_URL);
+
+      const response = await apiClient.get<any>("/user/all-general-user");
+
+      console.log("🔍 Full response:", response);
+      console.log("🔍 Response success:", response.success);
+      console.log("🔍 Response data:", response.data);
+      console.log("🔍 Response error:", response.error);
+
+      if (response.success && response.data) {
+        setAllUsersData(response.data);
+        console.log("✅ All users check data fetched successfully!");
+        console.log("✅ Users count:", response.data.users?.length);
+        console.log("✅ Statistics:", response.data.statistics);
+        console.log("✅ Pagination:", response.data.pagination);
+      } else {
+        console.error("❌ Failed to fetch all users check:", response.error);
+        const errorMsg =
+          response.error?.message ||
+          (typeof response.error === "string"
+            ? response.error
+            : "Failed to fetch all users data");
+        setAllUsersError(errorMsg);
+        console.error("❌ Error message set:", errorMsg);
+      }
+    } catch (err) {
+      console.error("❌ Error fetching all users check:", err);
+      const errorMsg = err instanceof Error ? err.message : "An error occurred";
+      setAllUsersError(errorMsg);
+      console.error("❌ Error message set:", errorMsg);
+    } finally {
+      setAllUsersLoading(false);
+      console.log("🔍 Loading state set to false");
+    }
+  }, []);
+
   // Fetch users and current user details on component mount
   useEffect(() => {
     if (isAuthenticated) {
+      console.log("🔄 useEffect triggered - fetching data...");
       fetchUsers();
       fetchCurrentUserDetails();
+
+      // Delay the all users check slightly to avoid race conditions
+      setTimeout(() => {
+        console.log("🔄 Calling fetchAllUsersCheck...");
+        fetchAllUsersCheck();
+      }, 500);
     }
   }, [isAuthenticated, fetchUsers, fetchCurrentUserDetails]);
 
@@ -479,12 +790,6 @@ export default function UsersPage() {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(createUserData.email)) {
         setCreateUserError("Please enter a valid email address");
-        return;
-      }
-
-      // Password validation
-      if (createUserData.password.length < 8) {
-        setCreateUserError("Password must be at least 8 characters long");
         return;
       }
 
@@ -1038,6 +1343,1098 @@ export default function UsersPage() {
               </div>
             </div>
           </div>
+
+          {/* Users Table */}
+          <DataTable
+            data={users}
+            columns={columns}
+            loading={loading}
+            pagination={{
+              page: pagination.page,
+              pageSize: pagination.pageSize,
+              total: pagination.total,
+            }}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            searchable
+            onSearch={handleSearch}
+            searchPlaceholder="Search users by username or email..."
+            emptyMessage="No users found"
+            actions={
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  leftIcon={<Filter className="h-4 w-4" />}
+                  onClick={() => {
+                    // TODO: Implement filter modal
+                    console.log("Open filters");
+                  }}
+                >
+                  Filters
+                </Button>
+              </div>
+            }
+          />
+
+          {/* User Details Modal */}
+          <Modal
+            isOpen={showUserModal}
+            onClose={() => {
+              setShowUserModal(false);
+              setSelectedUser(null);
+            }}
+            title="User Details"
+            size="lg"
+          >
+            {selectedUser && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Username
+                    </label>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {selectedUser.username}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Email
+                    </label>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {selectedUser.email}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Role
+                    </label>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {selectedUser.role}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Status
+                    </label>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {selectedUser.isActive ? "Active" : "Inactive"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Current Points
+                    </label>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {selectedUser.pointBalance !== undefined
+                        ? selectedUser.pointBalance.toLocaleString()
+                        : "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Total Points
+                    </label>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {selectedUser.totalPoints !== undefined
+                        ? selectedUser.totalPoints.toLocaleString()
+                        : "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Payment Status
+                    </label>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {selectedUser.paidStatus ===
+                      "I am super user, I have unlimited points."
+                        ? "Unlimited Points"
+                        : selectedUser.paidStatus || "Unknown"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Total Requests
+                    </label>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {selectedUser.totalRequests !== undefined
+                        ? selectedUser.totalRequests.toLocaleString()
+                        : "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Request Status
+                    </label>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {selectedUser.usingRqStatus || "Unknown"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Created
+                    </label>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {new Date(selectedUser.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                  {selectedUser.createdBy && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Created By
+                      </label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedUser.createdBy}
+                      </p>
+                    </div>
+                  )}
+                  {selectedUser.updatedAt && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Updated
+                      </label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {new Date(selectedUser.updatedAt).toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {selectedUser.activeSuppliers &&
+                  selectedUser.activeSuppliers.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Active Suppliers
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedUser.activeSuppliers.map((supplier, index) => (
+                          <Badge key={index} variant="outline">
+                            {supplier}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                <div className="flex justify-end space-x-3 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowUserModal(false);
+                      setSelectedUser(null);
+                    }}
+                  >
+                    Close
+                  </Button>
+                </div>
+              </div>
+            )}
+          </Modal>
+
+          {/* Delete Confirmation Modal */}
+          <Modal
+            isOpen={showDeleteModal}
+            onClose={() => {
+              setShowDeleteModal(false);
+              setSelectedUser(null);
+            }}
+            title="Delete User"
+            size="md"
+          >
+            {selectedUser && (
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600">
+                  Are you sure you want to delete the user{" "}
+                  <strong>{selectedUser.username}</strong>? This action cannot
+                  be undone.
+                </p>
+
+                <div className="flex justify-end space-x-3 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowDeleteModal(false);
+                      setSelectedUser(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="danger"
+                    onClick={confirmDeleteUser}
+                    leftIcon={<Trash2 className="h-4 w-4" />}
+                  >
+                    Delete User
+                  </Button>
+                </div>
+              </div>
+            )}
+          </Modal>
+
+          {/* Create User Modal */}
+          <Modal
+            isOpen={showCreateModal}
+            onClose={() => {
+              setShowCreateModal(false);
+              setCreateUserData({
+                username: "",
+                email: "",
+                password: "",
+                business_id: "",
+              });
+            }}
+            title="Create New User"
+            size="lg"
+          >
+            <div className="space-y-6">
+              {/* Error Display */}
+              {createUserError && (
+                <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                  <div className="flex">
+                    <div className="ml-3">
+                      <h3 className="text-sm font-medium text-red-800">
+                        Error
+                      </h3>
+                      <div className="mt-2 text-sm text-red-700">
+                        {typeof createUserError === "string"
+                          ? createUserError
+                          : JSON.stringify(createUserError)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* User Type Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  User Type
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setCreateUserType("general")}
+                    className={`p-3 border rounded-lg text-center transition-colors ${
+                      createUserType === "general"
+                        ? "border-blue-500 bg-blue-50 text-blue-700"
+                        : "border-gray-300 hover:border-gray-400"
+                    }`}
+                  >
+                    <Users className="h-6 w-6 mx-auto mb-2 text-emerald-500" />
+                    <div className="text-sm text-gray-900 font-medium">
+                      General User
+                    </div>
+                    <div className="text-xs text-gray-500">Standard access</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCreateUserType("admin")}
+                    className={`p-3 border rounded-lg text-center transition-colors ${
+                      createUserType === "admin"
+                        ? "border-blue-500 bg-blue-50 text-blue-700"
+                        : "border-gray-300 hover:border-gray-400"
+                    }`}
+                  >
+                    <Shield className="h-6 w-6 mx-auto mb-2 text-emerald-500" />
+                    <div className="text-sm font-medium  text-gray-900">
+                      Admin User
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Business management
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCreateUserType("super")}
+                    className={`p-3 border rounded-lg text-center transition-colors ${
+                      createUserType === "super"
+                        ? "border-blue-500 bg-blue-50 text-blue-700"
+                        : "border-gray-300 hover:border-gray-400"
+                    }`}
+                  >
+                    <Crown className="h-6 w-6 mx-auto mb-2 text-emerald-500" />
+                    <div className="text-sm font-medium  text-gray-900">
+                      Super User
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Full system access
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* User Form Fields */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Username *
+                  </label>
+                  <input
+                    type="text"
+                    value={createUserData.username}
+                    onChange={(e) => {
+                      setCreateUserData({
+                        ...createUserData,
+                        username: e.target.value,
+                      });
+                      if (createUserError) setCreateUserError(null);
+                    }}
+                    className={`w-full px-3 py-2 border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      createUserError &&
+                      createUserError.toLowerCase().includes("username")
+                        ? "border-red-300 bg-red-50"
+                        : "border-gray-300"
+                    }`}
+                    placeholder="Enter username"
+                    required
+                    disabled={createUserLoading}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email *
+                  </label>
+                  <input
+                    type="email"
+                    value={createUserData.email}
+                    onChange={(e) => {
+                      setCreateUserData({
+                        ...createUserData,
+                        email: e.target.value,
+                      });
+                      if (createUserError) setCreateUserError(null);
+                    }}
+                    className={`w-full px-3 py-2 border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      createUserError &&
+                      createUserError.toLowerCase().includes("email")
+                        ? "border-red-300 bg-red-50"
+                        : "border-gray-300"
+                    }`}
+                    placeholder="Enter email"
+                    required
+                    disabled={createUserLoading}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Password *
+                  </label>
+                  <input
+                    type="password"
+                    value={createUserData.password}
+                    onChange={(e) => {
+                      setCreateUserData({
+                        ...createUserData,
+                        password: e.target.value,
+                      });
+                      if (createUserError) setCreateUserError(null);
+                    }}
+                    className={`w-full px-3 py-2 border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      createUserError &&
+                      createUserError.toLowerCase().includes("password")
+                        ? "border-red-300 bg-red-50"
+                        : "border-gray-300"
+                    }`}
+                    placeholder="Enter password"
+                    required
+                    disabled={createUserLoading}
+                  />
+                </div>
+                {createUserType === "admin" && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Business ID *
+                    </label>
+                    <input
+                      type="text"
+                      value={createUserData.business_id}
+                      onChange={(e) => {
+                        setCreateUserData({
+                          ...createUserData,
+                          business_id: e.target.value,
+                        });
+                        if (createUserError) setCreateUserError(null);
+                      }}
+                      className={`w-full px-3 py-2 border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        createUserError &&
+                        createUserError.toLowerCase().includes("business")
+                          ? "border-red-300 bg-red-50"
+                          : "border-gray-300"
+                      }`}
+                      placeholder="Enter business ID"
+                      required
+                      disabled={createUserLoading}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setCreateUserData({
+                      username: "",
+                      email: "",
+                      password: "",
+                      business_id: "",
+                    });
+                    setCreateUserError(null);
+                    setCreateUserType("general");
+                  }}
+                  disabled={createUserLoading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreateUser}
+                  disabled={
+                    !createUserData.username.trim() ||
+                    !createUserData.email.trim() ||
+                    !createUserData.password.trim() ||
+                    (createUserType === "admin" &&
+                      !createUserData.business_id.trim()) ||
+                    createUserLoading
+                  }
+                  leftIcon={
+                    createUserLoading ? (
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4" />
+                    )
+                  }
+                >
+                  {createUserLoading ? "Creating..." : "Create User"}
+                </Button>
+              </div>
+            </div>
+          </Modal>
+
+          {/* General Users Analytics Section */}
+          <div className="mt-8">
+            <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-xl shadow-lg overflow-hidden">
+              {/* Header */}
+              <div className="px-8 py-6 bg-white/10 backdrop-blur-sm">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                      <Users className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-white">
+                        General Users Analytics
+                      </h2>
+                      <p className="text-white/80 text-sm mt-1">
+                        Real-time insights and user activity monitoring
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={fetchAllUsersCheck}
+                    disabled={allUsersLoading}
+                    className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+                    leftIcon={
+                      allUsersLoading ? (
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-4 w-4" />
+                      )
+                    }
+                  >
+                    {allUsersLoading ? "Refreshing..." : "Refresh Data"}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="bg-white p-8">
+                {allUsersLoading && !allUsersData && (
+                  <div className="flex flex-col items-center justify-center py-20">
+                    <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-indigo-600 mb-4"></div>
+                    <p className="text-gray-600 font-medium">
+                      Loading user data...
+                    </p>
+                  </div>
+                )}
+
+                {allUsersError && (
+                  <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-6">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0">
+                        <svg
+                          className="h-6 w-6 text-red-500"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                      </div>
+                      <div className="ml-3 flex-1">
+                        <h3 className="text-red-800 font-semibold">
+                          Unable to load data
+                        </h3>
+                        <p className="text-red-700 text-sm mt-1">
+                          {allUsersError}
+                        </p>
+                        <button
+                          onClick={fetchAllUsersCheck}
+                          className="mt-3 text-sm font-medium text-red-600 hover:text-red-800 underline"
+                        >
+                          Try again
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {allUsersData && !allUsersError && (
+                  <div className="space-y-8">
+                    {/* Key Metrics */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                      <div className="relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg transform hover:scale-105 transition-transform">
+                        <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full"></div>
+                        <div className="relative">
+                          <p className="text-blue-100 text-sm font-medium uppercase tracking-wide">
+                            Total Users
+                          </p>
+                          <p className="text-4xl font-bold mt-2">
+                            {allUsersData.pagination?.total || 0}
+                          </p>
+                          <p className="text-blue-100 text-xs mt-2">
+                            Showing {allUsersData.statistics?.showing || 0}{" "}
+                            users
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="relative overflow-hidden bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-6 text-white shadow-lg transform hover:scale-105 transition-transform">
+                        <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full"></div>
+                        <div className="relative">
+                          <p className="text-red-100 text-sm font-medium uppercase tracking-wide">
+                            Unpaid Users
+                          </p>
+                          <p className="text-4xl font-bold mt-2">
+                            {allUsersData.statistics?.total_unpaid_users || 0}
+                          </p>
+                          <p className="text-red-100 text-xs mt-2">
+                            Require payment
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg transform hover:scale-105 transition-transform">
+                        <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full"></div>
+                        <div className="relative">
+                          <p className="text-green-100 text-sm font-medium uppercase tracking-wide">
+                            Active Users
+                          </p>
+                          <p className="text-4xl font-bold mt-2">
+                            {allUsersData.users?.filter((u: any) => u.is_active)
+                              .length || 0}
+                          </p>
+                          <p className="text-green-100 text-xs mt-2">
+                            Currently active
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="relative overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg transform hover:scale-105 transition-transform">
+                        <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full"></div>
+                        <div className="relative">
+                          <p className="text-purple-100 text-sm font-medium uppercase tracking-wide">
+                            Paid Users
+                          </p>
+                          <p className="text-4xl font-bold mt-2">
+                            {allUsersData.users?.filter(
+                              (u: any) => u.points?.paid_status === "Paid"
+                            ).length || 0}
+                          </p>
+                          <p className="text-purple-100 text-xs mt-2">
+                            Payment complete
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Users Grid */}
+                    {allUsersData.users && allUsersData.users.length > 0 && (
+                      <div>
+                        {/* Search and Filter Section */}
+                        <div className="mb-6 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-xl font-bold text-gray-900">
+                              User Directory
+                              <span className="ml-2 text-sm font-normal text-gray-500">
+                                (
+                                {(() => {
+                                  let filtered = allUsersData.users;
+                                  if (analyticsSearchQuery) {
+                                    filtered = filtered.filter(
+                                      (u: any) =>
+                                        u.username
+                                          ?.toLowerCase()
+                                          .includes(
+                                            analyticsSearchQuery.toLowerCase()
+                                          ) ||
+                                        u.email
+                                          ?.toLowerCase()
+                                          .includes(
+                                            analyticsSearchQuery.toLowerCase()
+                                          )
+                                    );
+                                  }
+                                  if (analyticsFilters.dateFrom) {
+                                    filtered = filtered.filter(
+                                      (u: any) =>
+                                        new Date(u.created_at) >=
+                                        new Date(analyticsFilters.dateFrom)
+                                    );
+                                  }
+                                  if (analyticsFilters.dateTo) {
+                                    filtered = filtered.filter(
+                                      (u: any) =>
+                                        new Date(u.created_at) <=
+                                        new Date(analyticsFilters.dateTo)
+                                    );
+                                  }
+                                  return filtered.length;
+                                })()}{" "}
+                                users)
+                              </span>
+                            </h3>
+                          </div>
+
+                          {/* Search and Filter Controls */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {/* Search Input */}
+                            <div className="relative">
+                              <input
+                                type="text"
+                                placeholder="Search by name or email..."
+                                value={analyticsSearchQuery}
+                                onChange={(e) =>
+                                  setAnalyticsSearchQuery(e.target.value)
+                                }
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                              />
+                              <svg
+                                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                />
+                              </svg>
+                            </div>
+
+                            {/* Sort By */}
+                            <select
+                              value={analyticsFilters.sortBy}
+                              onChange={(e) =>
+                                setAnalyticsFilters({
+                                  ...analyticsFilters,
+                                  sortBy: e.target.value as
+                                    | "name"
+                                    | "date"
+                                    | "points",
+                                })
+                              }
+                              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                            >
+                              <option value="name">Sort by Name</option>
+                              <option value="date">Sort by Date</option>
+                              <option value="points">Sort by Points</option>
+                            </select>
+
+                            {/* Date From */}
+                            <input
+                              type="date"
+                              value={analyticsFilters.dateFrom}
+                              onChange={(e) =>
+                                setAnalyticsFilters({
+                                  ...analyticsFilters,
+                                  dateFrom: e.target.value,
+                                })
+                              }
+                              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                              placeholder="From Date"
+                            />
+
+                            {/* Date To */}
+                            <input
+                              type="date"
+                              value={analyticsFilters.dateTo}
+                              onChange={(e) =>
+                                setAnalyticsFilters({
+                                  ...analyticsFilters,
+                                  dateTo: e.target.value,
+                                })
+                              }
+                              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                              placeholder="To Date"
+                            />
+                          </div>
+
+                          {/* Sort Order Toggle */}
+                          <div className="flex items-center space-x-4">
+                            <button
+                              onClick={() =>
+                                setAnalyticsFilters({
+                                  ...analyticsFilters,
+                                  sortOrder:
+                                    analyticsFilters.sortOrder === "asc"
+                                      ? "desc"
+                                      : "asc",
+                                })
+                              }
+                              className="flex items-center space-x-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors"
+                            >
+                              <svg
+                                className={`w-4 h-4 transition-transform ${
+                                  analyticsFilters.sortOrder === "desc"
+                                    ? "rotate-180"
+                                    : ""
+                                }`}
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M5 15l7-7 7 7"
+                                />
+                              </svg>
+                              <span className="text-sm font-medium">
+                                {analyticsFilters.sortOrder === "asc"
+                                  ? "Ascending"
+                                  : "Descending"}
+                              </span>
+                            </button>
+
+                            {/* Clear Filters */}
+                            {(analyticsSearchQuery ||
+                              analyticsFilters.dateFrom ||
+                              analyticsFilters.dateTo) && (
+                              <button
+                                onClick={() => {
+                                  setAnalyticsSearchQuery("");
+                                  setAnalyticsFilters({
+                                    sortBy: "name",
+                                    sortOrder: "asc",
+                                    dateFrom: "",
+                                    dateTo: "",
+                                  });
+                                }}
+                                className="flex items-center space-x-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M6 18L18 6M6 6l12 12"
+                                  />
+                                </svg>
+                                <span className="text-sm font-medium">
+                                  Clear Filters
+                                </span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-h-[600px] overflow-y-auto pr-2">
+                          {(() => {
+                            let filtered = [...allUsersData.users];
+
+                            // Apply search filter
+                            if (analyticsSearchQuery) {
+                              filtered = filtered.filter(
+                                (u: any) =>
+                                  u.username
+                                    ?.toLowerCase()
+                                    .includes(
+                                      analyticsSearchQuery.toLowerCase()
+                                    ) ||
+                                  u.email
+                                    ?.toLowerCase()
+                                    .includes(
+                                      analyticsSearchQuery.toLowerCase()
+                                    )
+                              );
+                            }
+
+                            // Apply date filters
+                            if (analyticsFilters.dateFrom) {
+                              filtered = filtered.filter(
+                                (u: any) =>
+                                  new Date(u.created_at) >=
+                                  new Date(analyticsFilters.dateFrom)
+                              );
+                            }
+                            if (analyticsFilters.dateTo) {
+                              filtered = filtered.filter(
+                                (u: any) =>
+                                  new Date(u.created_at) <=
+                                  new Date(analyticsFilters.dateTo)
+                              );
+                            }
+
+                            // Apply sorting
+                            filtered.sort((a: any, b: any) => {
+                              let comparison = 0;
+
+                              if (analyticsFilters.sortBy === "name") {
+                                comparison = (a.username || "").localeCompare(
+                                  b.username || ""
+                                );
+                              } else if (analyticsFilters.sortBy === "date") {
+                                comparison =
+                                  new Date(a.created_at).getTime() -
+                                  new Date(b.created_at).getTime();
+                              } else if (analyticsFilters.sortBy === "points") {
+                                comparison =
+                                  (a.points?.current_points || 0) -
+                                  (b.points?.current_points || 0);
+                              }
+
+                              return analyticsFilters.sortOrder === "asc"
+                                ? comparison
+                                : -comparison;
+                            });
+
+                            return filtered.map((user: any, index: number) => (
+                              <div
+                                key={user.id || index}
+                                className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-xl p-6 hover:shadow-xl transition-all duration-300 hover:border-indigo-300"
+                              >
+                                {/* User Header */}
+                                <div className="flex items-start justify-between mb-4">
+                                  <div className="flex items-center space-x-3">
+                                    <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                                      {user.username?.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                      <h4 className="font-bold text-gray-900 text-lg">
+                                        {user.username}
+                                      </h4>
+                                      <p className="text-sm text-gray-600">
+                                        {user.email}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-col items-end space-y-1">
+                                    <Badge
+                                      className={
+                                        user.is_active
+                                          ? "bg-green-100 text-green-800 border-green-200"
+                                          : "bg-gray-100 text-gray-800 border-gray-200"
+                                      }
+                                    >
+                                      {user.is_active
+                                        ? "● Active"
+                                        : "○ Inactive"}
+                                    </Badge>
+                                    <Badge
+                                      className={
+                                        user.points?.paid_status === "Paid"
+                                          ? "bg-emerald-100 text-emerald-800 border-emerald-200"
+                                          : "bg-red-100 text-red-800 border-red-200"
+                                      }
+                                    >
+                                      {user.points?.paid_status || "Unknown"}
+                                    </Badge>
+                                  </div>
+                                </div>
+
+                                {/* User Stats */}
+                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                  <div className="bg-white rounded-lg p-3 border border-gray-200">
+                                    <p className="text-xs text-gray-500 font-medium uppercase">
+                                      Current Points
+                                    </p>
+                                    <p className="text-2xl font-bold text-indigo-600 mt-1">
+                                      {user.points?.current_points?.toLocaleString() ||
+                                        0}
+                                    </p>
+                                  </div>
+                                  <div className="bg-white rounded-lg p-3 border border-gray-200">
+                                    <p className="text-xs text-gray-500 font-medium uppercase">
+                                      Total Points
+                                    </p>
+                                    <p className="text-2xl font-bold text-purple-600 mt-1">
+                                      {user.points?.total_points?.toLocaleString() ||
+                                        0}
+                                    </p>
+                                  </div>
+                                  <div className="bg-white rounded-lg p-3 border border-gray-200">
+                                    <p className="text-xs text-gray-500 font-medium uppercase">
+                                      Requests
+                                    </p>
+                                    <p className="text-2xl font-bold text-blue-600 mt-1">
+                                      {user.total_requests || 0}
+                                    </p>
+                                  </div>
+                                  <div className="bg-white rounded-lg p-3 border border-gray-200">
+                                    <p className="text-xs text-gray-500 font-medium uppercase">
+                                      Activity
+                                    </p>
+                                    <p className="text-sm font-semibold text-gray-900 mt-2">
+                                      {user.activity_status || "Unknown"}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Suppliers */}
+                                {user.active_suppliers &&
+                                  user.active_suppliers.length > 0 && (
+                                    <div className="mb-4">
+                                      <p className="text-xs text-gray-500 font-medium uppercase mb-2">
+                                        Active Suppliers ({user.total_suppliers}
+                                        )
+                                      </p>
+                                      <div className="flex flex-wrap gap-2">
+                                        {user.active_suppliers.map(
+                                          (supplier: string, idx: number) => (
+                                            <span
+                                              key={idx}
+                                              className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium"
+                                            >
+                                              {supplier}
+                                            </span>
+                                          )
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                {/* Footer */}
+                                <div className="pt-4 border-t border-gray-200 flex items-center justify-between text-xs text-gray-500">
+                                  <span>
+                                    Created:{" "}
+                                    {new Date(
+                                      user.created_at
+                                    ).toLocaleDateString()}
+                                  </span>
+                                  <span
+                                    className="truncate max-w-[150px]"
+                                    title={user.created_by}
+                                  >
+                                    By: {user.created_by}
+                                  </span>
+                                </div>
+                              </div>
+                            ));
+                          })()}
+                        </div>
+
+                        {/* No Results Message */}
+                        {(() => {
+                          let filtered = allUsersData.users;
+                          if (analyticsSearchQuery) {
+                            filtered = filtered.filter(
+                              (u: any) =>
+                                u.username
+                                  ?.toLowerCase()
+                                  .includes(
+                                    analyticsSearchQuery.toLowerCase()
+                                  ) ||
+                                u.email
+                                  ?.toLowerCase()
+                                  .includes(analyticsSearchQuery.toLowerCase())
+                            );
+                          }
+                          if (analyticsFilters.dateFrom) {
+                            filtered = filtered.filter(
+                              (u: any) =>
+                                new Date(u.created_at) >=
+                                new Date(analyticsFilters.dateFrom)
+                            );
+                          }
+                          if (analyticsFilters.dateTo) {
+                            filtered = filtered.filter(
+                              (u: any) =>
+                                new Date(u.created_at) <=
+                                new Date(analyticsFilters.dateTo)
+                            );
+                          }
+
+                          if (filtered.length === 0) {
+                            return (
+                              <div className="text-center py-12">
+                                <svg
+                                  className="mx-auto h-12 w-12 text-gray-400"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                  />
+                                </svg>
+                                <h3 className="mt-2 text-sm font-medium text-gray-900">
+                                  No users found
+                                </h3>
+                                <p className="mt-1 text-sm text-gray-500">
+                                  Try adjusting your search or filter criteria
+                                </p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
+                    )}
+
+                    {/* Footer Info */}
+                    <div className="flex items-center justify-between pt-6 border-t border-gray-200">
+                      <div className="flex items-center space-x-6 text-sm text-gray-600">
+                        <div>
+                          <span className="font-medium">Page:</span>{" "}
+                          {allUsersData.pagination?.page || 1} of{" "}
+                          {allUsersData.pagination?.total_pages || 1}
+                        </div>
+                        <div>
+                          <span className="font-medium">Limit:</span>{" "}
+                          {allUsersData.pagination?.limit || 25} per page
+                        </div>
+                      </div>
+                      {allUsersData.timestamp && (
+                        <div className="text-xs text-gray-500">
+                          Last updated:{" "}
+                          {new Date(allUsersData.timestamp).toLocaleString()}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Error Display */}
@@ -1065,476 +2462,6 @@ export default function UsersPage() {
             </div>
           </div>
         )}
-
-        {/* Users Table */}
-        <DataTable
-          data={users}
-          columns={columns}
-          loading={loading}
-          pagination={{
-            page: pagination.page,
-            pageSize: pagination.pageSize,
-            total: pagination.total,
-          }}
-          onPageChange={handlePageChange}
-          onPageSizeChange={handlePageSizeChange}
-          searchable
-          onSearch={handleSearch}
-          searchPlaceholder="Search users by username or email..."
-          emptyMessage="No users found"
-          actions={
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                leftIcon={<Filter className="h-4 w-4" />}
-                onClick={() => {
-                  // TODO: Implement filter modal
-                  console.log("Open filters");
-                }}
-              >
-                Filters
-              </Button>
-            </div>
-          }
-        />
-
-        {/* User Details Modal */}
-        <Modal
-          isOpen={showUserModal}
-          onClose={() => {
-            setShowUserModal(false);
-            setSelectedUser(null);
-          }}
-          title="User Details"
-          size="lg"
-        >
-          {selectedUser && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Username
-                  </label>
-                  <p className="mt-1 text-sm text-gray-900">
-                    {selectedUser.username}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Email
-                  </label>
-                  <p className="mt-1 text-sm text-gray-900">
-                    {selectedUser.email}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Role
-                  </label>
-                  <p className="mt-1 text-sm text-gray-900">
-                    {selectedUser.role}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Status
-                  </label>
-                  <p className="mt-1 text-sm text-gray-900">
-                    {selectedUser.isActive ? "Active" : "Inactive"}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Current Points
-                  </label>
-                  <p className="mt-1 text-sm text-gray-900">
-                    {selectedUser.pointBalance !== undefined
-                      ? selectedUser.pointBalance.toLocaleString()
-                      : "N/A"}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Total Points
-                  </label>
-                  <p className="mt-1 text-sm text-gray-900">
-                    {selectedUser.totalPoints !== undefined
-                      ? selectedUser.totalPoints.toLocaleString()
-                      : "N/A"}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Payment Status
-                  </label>
-                  <p className="mt-1 text-sm text-gray-900">
-                    {selectedUser.paidStatus ===
-                    "I am super user, I have unlimited points."
-                      ? "Unlimited Points"
-                      : selectedUser.paidStatus || "Unknown"}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Total Requests
-                  </label>
-                  <p className="mt-1 text-sm text-gray-900">
-                    {selectedUser.totalRequests !== undefined
-                      ? selectedUser.totalRequests.toLocaleString()
-                      : "N/A"}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Request Status
-                  </label>
-                  <p className="mt-1 text-sm text-gray-900">
-                    {selectedUser.usingRqStatus || "Unknown"}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Created
-                  </label>
-                  <p className="mt-1 text-sm text-gray-900">
-                    {new Date(selectedUser.createdAt).toLocaleString()}
-                  </p>
-                </div>
-                {selectedUser.createdBy && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Created By
-                    </label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {selectedUser.createdBy}
-                    </p>
-                  </div>
-                )}
-                {selectedUser.updatedAt && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Updated
-                    </label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {new Date(selectedUser.updatedAt).toLocaleString()}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {selectedUser.activeSuppliers &&
-                selectedUser.activeSuppliers.length > 0 && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Active Suppliers
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedUser.activeSuppliers.map((supplier, index) => (
-                        <Badge key={index} variant="outline">
-                          {supplier}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-              <div className="flex justify-end space-x-3 pt-4 border-t">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowUserModal(false);
-                    setSelectedUser(null);
-                  }}
-                >
-                  Close
-                </Button>
-              </div>
-            </div>
-          )}
-        </Modal>
-
-        {/* Delete Confirmation Modal */}
-        <Modal
-          isOpen={showDeleteModal}
-          onClose={() => {
-            setShowDeleteModal(false);
-            setSelectedUser(null);
-          }}
-          title="Delete User"
-          size="md"
-        >
-          {selectedUser && (
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600">
-                Are you sure you want to delete the user{" "}
-                <strong>{selectedUser.username}</strong>? This action cannot be
-                undone.
-              </p>
-
-              <div className="flex justify-end space-x-3 pt-4 border-t">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowDeleteModal(false);
-                    setSelectedUser(null);
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="danger"
-                  onClick={confirmDeleteUser}
-                  leftIcon={<Trash2 className="h-4 w-4" />}
-                >
-                  Delete User
-                </Button>
-              </div>
-            </div>
-          )}
-        </Modal>
-
-        {/* Create User Modal */}
-        <Modal
-          isOpen={showCreateModal}
-          onClose={() => {
-            setShowCreateModal(false);
-            setCreateUserData({
-              username: "",
-              email: "",
-              password: "",
-              business_id: "",
-            });
-          }}
-          title="Create New User"
-          size="lg"
-        >
-          <div className="space-y-6">
-            {/* Error Display */}
-            {createUserError && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-4">
-                <div className="flex">
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800">Error</h3>
-                    <div className="mt-2 text-sm text-red-700">
-                      {typeof createUserError === "string"
-                        ? createUserError
-                        : JSON.stringify(createUserError)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* User Type Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                User Type
-              </label>
-              <div className="grid grid-cols-3 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setCreateUserType("general")}
-                  className={`p-3 border rounded-lg text-center transition-colors ${
-                    createUserType === "general"
-                      ? "border-blue-500 bg-blue-50 text-blue-700"
-                      : "border-gray-300 hover:border-gray-400"
-                  }`}
-                >
-                  <Users className="h-6 w-6 mx-auto mb-2 text-emerald-500" />
-                  <div className="text-sm text-gray-900 font-medium">
-                    General User
-                  </div>
-                  <div className="text-xs text-gray-500">Standard access</div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCreateUserType("admin")}
-                  className={`p-3 border rounded-lg text-center transition-colors ${
-                    createUserType === "admin"
-                      ? "border-blue-500 bg-blue-50 text-blue-700"
-                      : "border-gray-300 hover:border-gray-400"
-                  }`}
-                >
-                  <Shield className="h-6 w-6 mx-auto mb-2 text-emerald-500" />
-                  <div className="text-sm font-medium  text-gray-900">
-                    Admin User
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    Business management
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCreateUserType("super")}
-                  className={`p-3 border rounded-lg text-center transition-colors ${
-                    createUserType === "super"
-                      ? "border-blue-500 bg-blue-50 text-blue-700"
-                      : "border-gray-300 hover:border-gray-400"
-                  }`}
-                >
-                  <Crown className="h-6 w-6 mx-auto mb-2 text-emerald-500" />
-                  <div className="text-sm font-medium  text-gray-900">
-                    Super User
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    Full system access
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {/* User Form Fields */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Username *
-                </label>
-                <input
-                  type="text"
-                  value={createUserData.username}
-                  onChange={(e) => {
-                    setCreateUserData({
-                      ...createUserData,
-                      username: e.target.value,
-                    });
-                    if (createUserError) setCreateUserError(null);
-                  }}
-                  className={`w-full px-3 py-2 border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    createUserError &&
-                    createUserError.toLowerCase().includes("username")
-                      ? "border-red-300 bg-red-50"
-                      : "border-gray-300"
-                  }`}
-                  placeholder="Enter username"
-                  required
-                  disabled={createUserLoading}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email *
-                </label>
-                <input
-                  type="email"
-                  value={createUserData.email}
-                  onChange={(e) => {
-                    setCreateUserData({
-                      ...createUserData,
-                      email: e.target.value,
-                    });
-                    if (createUserError) setCreateUserError(null);
-                  }}
-                  className={`w-full px-3 py-2 border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    createUserError &&
-                    createUserError.toLowerCase().includes("email")
-                      ? "border-red-300 bg-red-50"
-                      : "border-gray-300"
-                  }`}
-                  placeholder="Enter email"
-                  required
-                  disabled={createUserLoading}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Password *
-                </label>
-                <input
-                  type="password"
-                  value={createUserData.password}
-                  onChange={(e) => {
-                    setCreateUserData({
-                      ...createUserData,
-                      password: e.target.value,
-                    });
-                    if (createUserError) setCreateUserError(null);
-                  }}
-                  className={`w-full px-3 py-2 border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    createUserError &&
-                    createUserError.toLowerCase().includes("password")
-                      ? "border-red-300 bg-red-50"
-                      : "border-gray-300"
-                  }`}
-                  placeholder="Enter password (min 8 characters)"
-                  required
-                  disabled={createUserLoading}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Password must be at least 8 characters long
-                </p>
-              </div>
-              {createUserType === "admin" && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Business ID *
-                  </label>
-                  <input
-                    type="text"
-                    value={createUserData.business_id}
-                    onChange={(e) => {
-                      setCreateUserData({
-                        ...createUserData,
-                        business_id: e.target.value,
-                      });
-                      if (createUserError) setCreateUserError(null);
-                    }}
-                    className={`w-full px-3 py-2 border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      createUserError &&
-                      createUserError.toLowerCase().includes("business")
-                        ? "border-red-300 bg-red-50"
-                        : "border-gray-300"
-                    }`}
-                    placeholder="Enter business ID"
-                    required
-                    disabled={createUserLoading}
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex justify-end space-x-3 pt-4 border-t">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowCreateModal(false);
-                  setCreateUserData({
-                    username: "",
-                    email: "",
-                    password: "",
-                    business_id: "",
-                  });
-                  setCreateUserError(null);
-                  setCreateUserType("general");
-                }}
-                disabled={createUserLoading}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreateUser}
-                disabled={
-                  !createUserData.username.trim() ||
-                  !createUserData.email.trim() ||
-                  !createUserData.password.trim() ||
-                  (createUserType === "admin" &&
-                    !createUserData.business_id.trim()) ||
-                  createUserLoading
-                }
-                leftIcon={
-                  createUserLoading ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Plus className="h-4 w-4" />
-                  )
-                }
-              >
-                {createUserLoading ? "Creating..." : "Create User"}
-              </Button>
-            </div>
-          </div>
-        </Modal>
       </div>
     </PermissionGuard>
   );

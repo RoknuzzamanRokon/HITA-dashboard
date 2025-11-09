@@ -60,7 +60,7 @@ export const apiEndpoints = {
         createGeneralUser: '/user/create_general_user/',
         // Admin endpoints
         getAllUsers: '/user/list',
-        getUserInfo: (id: string) => `/user/check/user_info/${id}/`,
+        getUserInfo: (id: string) => `/user/check-user-info/${id}/`,
         // Delete endpoints
         deleteSuperUser: (id: string) => `/delete/delete_super_user/${id}/`,
         deleteUser: (id: string) => `/delete/delete_user/${id}/`,

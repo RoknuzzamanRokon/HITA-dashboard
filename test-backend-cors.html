@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Test Backend CORS</title>
+  </head>
+  <body>
+    <h1>Backend CORS Test</h1>
+    <button onclick="testBackend()">Test Backend Connection</button>
+    <pre id="result"></pre>
+
+    <script>
+      async function testBackend() {
+        const result = document.getElementById("result");
+        result.textContent = "Testing...";
+
+        try {
+          const response = await fetch("http://127.0.0.1:8002/v1.0/health", {
+            method: "GET",
+            mode: "cors",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+
+          result.textContent = `✅ Success!\nStatus: ${
+            response.status
+          }\nResponse: ${await response.text()}`;
+        } catch (error) {
+          result.textContent = `❌ CORS Error:\n${error.message}\n\nThis confirms your backend needs CORS configuration.`;
+        }
+      }
+    </script>
+  </body>
+</html>

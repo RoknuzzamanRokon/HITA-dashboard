@@ -898,3 +898,50 @@ erformance Optimizations */
     background-size: 200% 200%;
     animation: gradient-shift 3s ease infinite;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.futuristic-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.futuristic-scrollbar::-webkit-scrollbar-track {
+    background: rgba(12, 150, 255, 0.1);
+    border-radius: 4px;
+}
+
+.futuristic-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, #00f5ff, #9d4edd);
+    border-radius: 4px;
+}
+
+.futuristic-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(to bottom, #00f5ff, #7b2cbf);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
