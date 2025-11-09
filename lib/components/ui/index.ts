@@ -8,6 +8,7 @@ export { Button } from './button';
 export { Select } from "./select";
 export { Textarea } from "./textarea";
 export { Modal, ModalBody, ModalFooter } from "./modal";
+export { ConfirmationDialog } from "./confirmation-dialog";
 export { DataTable } from "./data-table";
 export { Badge } from "./badge";
 export { Card, CardHeader, CardContent, CardFooter } from "./card";
