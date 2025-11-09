@@ -13,7 +13,7 @@
   - Implement generateApiKey method for endpoint 8 (generate_api_key)
   - _Requirements: 1.1, 2.2, 3.2, 4.2, 5.1, 6.2, 7.2, 8.1_
 
-- [ ] 2. Add TypeScript types for user edit functionality
+- [x] 2. Add TypeScript types for user edit functionality
 
   - Create DetailedUserInfo interface in `lib/types/user.ts`
   - Create PointAllocationRequest interface
