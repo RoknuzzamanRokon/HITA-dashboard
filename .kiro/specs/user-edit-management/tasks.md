@@ -65,7 +65,7 @@
   - Trigger parent refresh on successful changes
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 4.1, 4.2, 4.3, 4.4, 4.5_
 
-- [ ] 7. Create UserActionsSection component
+- [x] 7. Create UserActionsSection component
 
   - Create `lib/components/users/user-actions-section.tsx`
   - Implement activate/deactivate user button

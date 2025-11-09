@@ -288,7 +288,7 @@ export function SupplierManagementSection({
           <Button
             onClick={handleActivateSuppliers}
             disabled={loading || selectedSuppliers.length === 0}
-            variant="default"
+            variant="primary"
             className={cn(
               "w-full bg-green-600 hover:bg-green-700",
               (loading || selectedSuppliers.length === 0) &&
@@ -311,7 +311,7 @@ export function SupplierManagementSection({
           <Button
             onClick={handleDeactivateSuppliers}
             disabled={loading || selectedSuppliers.length === 0}
-            variant="destructive"
+            variant="danger"
             className={cn(
               "w-full",
               (loading || selectedSuppliers.length === 0) &&

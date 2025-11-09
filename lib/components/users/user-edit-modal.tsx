@@ -19,6 +19,7 @@ import { Card, CardHeader, CardContent } from "@/lib/components/ui/card";
 import { Badge } from "@/lib/components/ui/badge";
 import { UserEditService, DetailedUserInfo } from "@/lib/api/user-edit";
 import { PointAllocationSection } from "./point-allocation-section";
+import { UserActionsSection } from "./user-actions-section";
 import {
   User,
   Mail,
@@ -529,17 +530,36 @@ export function UserEditModal({
               onAllocationComplete={refreshUserData}
             />
 
+            {/* User Actions Section */}
+            <UserActionsSection
+              userId={userDetails.id}
+              isActive={userDetails.is_active}
+              currentPoints={userDetails.points.current_points}
+              onActionComplete={(action, success, message) => {
+                handleActionComplete(
+                  success,
+                  message,
+                  action !== "delete-user"
+                );
+                // Close modal if user was deleted
+                if (action === "delete-user" && success) {
+                  setTimeout(() => {
+                    handleClose();
+                  }, 2000);
+                }
+              }}
+            />
+
             {/* Action Sections Placeholder */}
             {/* These sections will be implemented in subsequent tasks:
                 - Task 6: SupplierManagementSection
-                - Task 7: UserActionsSection
                 - Task 8: ApiKeyDisplay
             */}
             <div className="p-4 rounded-xl bg-blue-50 border border-blue-200">
               <p className="text-sm text-blue-800">
                 <strong>Note:</strong> Additional action sections (Supplier
-                Management, User Actions, API Key Generation) will be added in
-                subsequent implementation tasks.
+                Management, API Key Display) will be added in subsequent
+                implementation tasks.
               </p>
             </div>
           </div>
