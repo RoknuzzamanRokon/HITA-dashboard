@@ -182,18 +182,18 @@ export class ApiClient {
       console.error('Request URL:', url);
       console.error('Request config:', requestConfig);
 
+      let errorMessage = 'Network error';
+      let errorStatus = 0;
+
       // Check if this is a CORS error
       if (err instanceof TypeError && err.message.includes('fetch')) {
         console.error('🚨 CORS Error detected - this is likely a backend CORS configuration issue');
         console.error('💡 Your backend needs to allow requests from http://localhost:3000');
 
-        return {
-          success: false,
-          error: {
-            status: 0,
-            message: `CORS Error: Cannot connect to ${url}. Backend must allow requests from http://localhost:3000. Check backend CORS configuration.`
-          },
-        };
+        errorMessage = `Cannot connect to backend API at ${this.baseUrl}. Please ensure:\n1. Backend server is running at ${this.baseUrl}\n2. CORS is configured to allow requests from ${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}`;
+        errorStatus = 0;
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
       }
 
       // Retry on network errors
@@ -210,8 +210,9 @@ export class ApiClient {
       return {
         success: false,
         error: {
-          status: 0,
-          message: err instanceof Error ? err.message : 'Network error'
+          status: errorStatus,
+          message: errorMessage,
+          details: err instanceof Error ? { name: err.name, stack: err.stack } : undefined
         },
       };
     }

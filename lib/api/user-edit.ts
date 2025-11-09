@@ -6,6 +6,7 @@
 
 import { apiClient } from './client';
 import type { ApiResponse } from '@/lib/types/api';
+import { generateMockUserDetails, mockSuccessResponse } from './mock-data';
 
 /**
  * Allocation types for point distribution
@@ -84,6 +85,14 @@ export class UserEditService {
         if (response.success) {
             console.log('✅ User details retrieved successfully');
         } else {
+            // Use mock data if backend is not available (status 0 = network error)
+            if (response.error?.status === 0 && process.env.NODE_ENV === 'development') {
+                console.log('🔧 Backend unavailable - using mock data for development');
+                const mockData = generateMockUserDetails(userId);
+                return mockSuccessResponse(mockData);
+            }
+
+            // Only log error if we're not using mock data
             console.error('❌ Failed to fetch user details:', response.error);
         }
 
@@ -112,6 +121,13 @@ export class UserEditService {
         if (response.success) {
             console.log('✅ Points allocated successfully');
         } else {
+            // Use mock success if backend is not available
+            if (response.error?.status === 0 && process.env.NODE_ENV === 'development') {
+                console.log('🔧 Backend unavailable - using mock response for development');
+                return mockSuccessResponse({ message: 'Points allocated successfully (mock)' });
+            }
+
+            // Only log error if we're not using mock data
             console.error('❌ Failed to allocate points:', response.error);
         }
 
@@ -140,6 +156,13 @@ export class UserEditService {
         if (response.success) {
             console.log('✅ Suppliers activated successfully');
         } else {
+            // Use mock success if backend is not available
+            if (response.error?.status === 0 && process.env.NODE_ENV === 'development') {
+                console.log('🔧 Backend unavailable - using mock response for development');
+                return mockSuccessResponse({ message: 'Suppliers activated successfully (mock)' });
+            }
+
+            // Only log error if we're not using mock data
             console.error('❌ Failed to activate suppliers:', response.error);
         }
 
@@ -168,6 +191,13 @@ export class UserEditService {
         if (response.success) {
             console.log('✅ Suppliers deactivated successfully');
         } else {
+            // Use mock success if backend is not available
+            if (response.error?.status === 0 && process.env.NODE_ENV === 'development') {
+                console.log('🔧 Backend unavailable - using mock response for development');
+                return mockSuccessResponse({ message: 'Suppliers deactivated successfully (mock)' });
+            }
+
+            // Only log error if we're not using mock data
             console.error('❌ Failed to deactivate suppliers:', response.error);
         }
 
@@ -189,6 +219,13 @@ export class UserEditService {
         if (response.success) {
             console.log('✅ User activated successfully');
         } else {
+            // Use mock success if backend is not available
+            if (response.error?.status === 0 && process.env.NODE_ENV === 'development') {
+                console.log('🔧 Backend unavailable - using mock response for development');
+                return mockSuccessResponse({ message: 'User status toggled successfully (mock)' });
+            }
+
+            // Only log error if we're not using mock data
             console.error('❌ Failed to activate user:', response.error);
         }
 
@@ -210,6 +247,13 @@ export class UserEditService {
         if (response.success) {
             console.log('✅ User points reset successfully');
         } else {
+            // Use mock success if backend is not available
+            if (response.error?.status === 0 && process.env.NODE_ENV === 'development') {
+                console.log('🔧 Backend unavailable - using mock response for development');
+                return mockSuccessResponse({ message: 'User points reset successfully (mock)' });
+            }
+
+            // Only log error if we're not using mock data
             console.error('❌ Failed to reset user points:', response.error);
         }
 
@@ -230,6 +274,13 @@ export class UserEditService {
         if (response.success) {
             console.log('✅ User deleted successfully');
         } else {
+            // Use mock success if backend is not available
+            if (response.error?.status === 0 && process.env.NODE_ENV === 'development') {
+                console.log('🔧 Backend unavailable - using mock response for development');
+                return mockSuccessResponse({ message: 'User deleted successfully (mock)' });
+            }
+
+            // Only log error if we're not using mock data
             console.error('❌ Failed to delete user:', response.error);
         }
 
@@ -251,6 +302,14 @@ export class UserEditService {
         if (response.success) {
             console.log('✅ API key generated successfully');
         } else {
+            // Use mock success if backend is not available
+            if (response.error?.status === 0 && process.env.NODE_ENV === 'development') {
+                console.log('🔧 Backend unavailable - using mock response for development');
+                const mockApiKey = `mock_api_key_${Date.now()}_${userId.slice(0, 8)}`;
+                return mockSuccessResponse({ api_key: mockApiKey });
+            }
+
+            // Only log error if we're not using mock data
             console.error('❌ Failed to generate API key:', response.error);
         }
 

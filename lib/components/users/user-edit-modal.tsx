@@ -107,7 +107,13 @@ export function UserEditModal({
         setError(errorMsg);
 
         // Show toast for specific error types
-        if (response.error?.status === 403) {
+        if (response.error?.status === 0) {
+          // Network/CORS error
+          toast.error(
+            "Connection Error",
+            "Cannot connect to backend API. Please ensure the backend server is running."
+          );
+        } else if (response.error?.status === 403) {
           toast.error(
             "Permission Denied",
             "You don't have permission to view this user"
@@ -116,6 +122,8 @@ export function UserEditModal({
           toast.error("User Not Found", "This user may have been deleted");
         } else if (response.error?.status && response.error.status >= 500) {
           toast.error("Server Error", "Please try again later");
+        } else {
+          toast.error("Error", errorMsg);
         }
       }
     } catch (err) {
@@ -289,28 +297,55 @@ export function UserEditModal({
           {/* Error Message */}
           {error && !loading && (
             <div
-              className="mx-6 mt-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-start space-x-3"
+              className="mx-6 mt-6 p-4 rounded-xl bg-red-50 border border-red-200"
               role="alert"
               aria-live="assertive"
             >
-              <AlertCircle
-                className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5"
-                aria-hidden="true"
-              />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-red-900">{error}</p>
-                {retryAttempt < 3 && (
-                  <Button
-                    onClick={handleRetry}
-                    variant="outline"
-                    size="sm"
-                    className="mt-2"
-                    leftIcon={<RefreshCw className="h-3 w-3" />}
-                    aria-label="Retry loading user details"
-                  >
-                    Retry
-                  </Button>
-                )}
+              <div className="flex items-start space-x-3">
+                <AlertCircle
+                  className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5"
+                  aria-hidden="true"
+                />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-red-900 mb-1">
+                    Failed to Load User Details
+                  </p>
+                  <p className="text-sm text-red-800 whitespace-pre-line">
+                    {error}
+                  </p>
+                  {error.includes("Cannot connect") && (
+                    <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <p className="text-xs font-medium text-yellow-900 mb-1">
+                        💡 Troubleshooting Steps:
+                      </p>
+                      <ul className="text-xs text-yellow-800 space-y-1 list-disc list-inside">
+                        <li>
+                          Verify backend server is running at
+                          http://127.0.0.1:8002
+                        </li>
+                        <li>
+                          Check CORS configuration allows requests from{" "}
+                          {typeof window !== "undefined"
+                            ? window.location.origin
+                            : "localhost:3000"}
+                        </li>
+                        <li>Ensure you're logged in with valid credentials</li>
+                      </ul>
+                    </div>
+                  )}
+                  {retryAttempt < 3 && (
+                    <Button
+                      onClick={handleRetry}
+                      variant="outline"
+                      size="sm"
+                      className="mt-3"
+                      leftIcon={<RefreshCw className="h-3 w-3" />}
+                      aria-label="Retry loading user details"
+                    >
+                      Retry ({3 - retryAttempt} attempts remaining)
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           )}

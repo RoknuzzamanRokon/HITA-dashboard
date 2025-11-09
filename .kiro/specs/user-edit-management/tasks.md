@@ -135,7 +135,7 @@
   - Implement rollback on error
   - _Requirements: 1.2, 2.2, 3.2, 4.2, 5.1, 6.2, 7.2, 8.1_
 
-- [ ]\* 14. Write unit tests for components
+- [x] 14. Write unit tests for components
 
   - Test UserEditModal rendering and data fetching
   - Test PointAllocationSection with all allocation types
