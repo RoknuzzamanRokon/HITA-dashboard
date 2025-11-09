@@ -13,6 +13,7 @@ import React, { useState } from "react";
 import { Card, CardHeader, CardContent } from "@/lib/components/ui/card";
 import { Button } from "@/lib/components/ui/button";
 import { ConfirmationDialog } from "@/lib/components/ui/confirmation-dialog";
+import { useToast } from "@/lib/components/ui/toast";
 import { UserEditService } from "@/lib/api/user-edit";
 import {
   Power,
@@ -41,25 +42,14 @@ export function UserActionsSection({
   currentPoints,
   onActionComplete,
 }: UserActionsSectionProps) {
+  // Hooks
+  const toast = useToast();
+
   // State management
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [confirmationAction, setConfirmationAction] =
     useState<ConfirmationAction>(null);
   const [localError, setLocalError] = useState<string | null>(null);
-  const [localSuccess, setLocalSuccess] = useState<string | null>(null);
-
-  /**
-   * Clear local messages after 3 seconds
-   */
-  React.useEffect(() => {
-    if (localError || localSuccess) {
-      const timer = setTimeout(() => {
-        setLocalError(null);
-        setLocalSuccess(null);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [localError, localSuccess]);
 
   /**
    * Handle activate/deactivate user
@@ -67,7 +57,6 @@ export function UserActionsSection({
   const handleToggleUserStatus = async () => {
     setLoadingAction("toggle-status");
     setLocalError(null);
-    setLocalSuccess(null);
 
     try {
       const response = await UserEditService.activateUser(userId);
@@ -75,17 +64,23 @@ export function UserActionsSection({
       if (response.success) {
         const action = isActive ? "deactivated" : "activated";
         const message = `User ${action} successfully`;
-        setLocalSuccess(message);
+        toast.success("Status Updated", message);
         onActionComplete("toggle-status", true, message);
       } else {
         const errorMsg =
           response.error?.message || "Failed to update user status";
+        toast.error("Status Update Failed", errorMsg);
         setLocalError(errorMsg);
         onActionComplete("toggle-status", false, errorMsg);
+
+        if (response.error?.status === 403) {
+          setLocalError("You don't have permission to change user status");
+        }
       }
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : "An unexpected error occurred";
+      toast.error("Error", errorMsg);
       setLocalError(errorMsg);
       onActionComplete("toggle-status", false, errorMsg);
     } finally {
@@ -100,23 +95,28 @@ export function UserActionsSection({
     setConfirmationAction(null);
     setLoadingAction("reset-points");
     setLocalError(null);
-    setLocalSuccess(null);
 
     try {
       const response = await UserEditService.resetUserPoints(userId);
 
       if (response.success) {
         const message = "User points reset to zero successfully";
-        setLocalSuccess(message);
+        toast.success("Points Reset", message);
         onActionComplete("reset-points", true, message);
       } else {
         const errorMsg = response.error?.message || "Failed to reset points";
+        toast.error("Reset Failed", errorMsg);
         setLocalError(errorMsg);
         onActionComplete("reset-points", false, errorMsg);
+
+        if (response.error?.status === 403) {
+          setLocalError("You don't have permission to reset points");
+        }
       }
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : "An unexpected error occurred";
+      toast.error("Error", errorMsg);
       setLocalError(errorMsg);
       onActionComplete("reset-points", false, errorMsg);
     } finally {
@@ -131,23 +131,28 @@ export function UserActionsSection({
     setConfirmationAction(null);
     setLoadingAction("delete-user");
     setLocalError(null);
-    setLocalSuccess(null);
 
     try {
       const response = await UserEditService.deleteUser(userId);
 
       if (response.success) {
         const message = "User deleted successfully";
-        setLocalSuccess(message);
+        toast.success("User Deleted", message);
         onActionComplete("delete-user", true, message);
       } else {
         const errorMsg = response.error?.message || "Failed to delete user";
+        toast.error("Deletion Failed", errorMsg);
         setLocalError(errorMsg);
         onActionComplete("delete-user", false, errorMsg);
+
+        if (response.error?.status === 403) {
+          setLocalError("You don't have permission to delete users");
+        }
       }
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : "An unexpected error occurred";
+      toast.error("Error", errorMsg);
       setLocalError(errorMsg);
       onActionComplete("delete-user", false, errorMsg);
     } finally {
@@ -161,24 +166,29 @@ export function UserActionsSection({
   const handleGenerateApiKey = async () => {
     setLoadingAction("generate-api-key");
     setLocalError(null);
-    setLocalSuccess(null);
 
     try {
       const response = await UserEditService.generateApiKey(userId);
 
       if (response.success) {
         const message = "API key generated successfully";
-        setLocalSuccess(message);
+        toast.success("API Key Generated", message);
         onActionComplete("generate-api-key", true, message);
       } else {
         const errorMsg =
           response.error?.message || "Failed to generate API key";
+        toast.error("Generation Failed", errorMsg);
         setLocalError(errorMsg);
         onActionComplete("generate-api-key", false, errorMsg);
+
+        if (response.error?.status === 403) {
+          setLocalError("You don't have permission to generate API keys");
+        }
       }
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : "An unexpected error occurred";
+      toast.error("Error", errorMsg);
       setLocalError(errorMsg);
       onActionComplete("generate-api-key", false, errorMsg);
     } finally {
@@ -242,14 +252,6 @@ export function UserActionsSection({
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Local Success Message */}
-          {localSuccess && (
-            <div className="p-3 rounded-xl bg-green-50 border border-green-200 flex items-start space-x-2">
-              <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-green-900">{localSuccess}</p>
-            </div>
-          )}
-
           {/* Local Error Message */}
           {localError && (
             <div className="p-3 rounded-xl bg-red-50 border border-red-200 flex items-start space-x-2">

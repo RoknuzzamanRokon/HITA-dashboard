@@ -9,6 +9,7 @@
 import React, { useState } from "react";
 import { Card, CardHeader, CardContent } from "@/lib/components/ui/card";
 import { Button } from "@/lib/components/ui/button";
+import { useToast } from "@/lib/components/ui/toast";
 import { UserEditService } from "@/lib/api/user-edit";
 import { Building2, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -41,27 +42,16 @@ export function SupplierManagementSection({
   totalSuppliers,
   onSuppliersUpdated,
 }: SupplierManagementSectionProps) {
+  // Hooks
+  const toast = useToast();
+
   // State management
   const [selectedSuppliers, setSelectedSuppliers] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [actionType, setActionType] = useState<
     "activate" | "deactivate" | null
   >(null);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  /**
-   * Clear messages after 5 seconds
-   */
-  React.useEffect(() => {
-    if (successMessage || error) {
-      const timer = setTimeout(() => {
-        setSuccessMessage(null);
-        setError(null);
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [successMessage, error]);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   /**
    * Handle supplier selection toggle
@@ -72,8 +62,7 @@ export function SupplierManagementSection({
         ? prev.filter((s) => s !== supplier)
         : [...prev, supplier]
     );
-    setError(null);
-    setSuccessMessage(null);
+    setValidationError(null);
   };
 
   /**
@@ -91,15 +80,17 @@ export function SupplierManagementSection({
    * Handle activate suppliers
    */
   const handleActivateSuppliers = async () => {
+    // Validation
     if (selectedSuppliers.length === 0) {
-      setError("Please select at least one supplier to activate");
+      const errorMsg = "Please select at least one supplier to activate";
+      setValidationError(errorMsg);
+      toast.warning("Validation Error", errorMsg);
       return;
     }
 
     setLoading(true);
     setActionType("activate");
-    setError(null);
-    setSuccessMessage(null);
+    setValidationError(null);
 
     try {
       const response = await UserEditService.activateSuppliers(
@@ -108,25 +99,30 @@ export function SupplierManagementSection({
       );
 
       if (response.success) {
-        setSuccessMessage(
-          `Successfully activated ${selectedSuppliers.length} supplier${
-            selectedSuppliers.length > 1 ? "s" : ""
-          }`
+        const count = selectedSuppliers.length;
+        toast.success(
+          "Suppliers Activated",
+          `Successfully activated ${count} supplier${count > 1 ? "s" : ""}`
         );
         setSelectedSuppliers([]);
         onSuppliersUpdated();
       } else {
-        setError(
+        const errorMsg =
           response.error?.message ||
-            "Failed to activate suppliers. Please try again."
-        );
+          "Failed to activate suppliers. Please try again.";
+        toast.error("Activation Failed", errorMsg);
+
+        if (response.error?.status === 403) {
+          setValidationError("You don't have permission to activate suppliers");
+        }
       }
     } catch (err) {
-      setError(
+      const errorMsg =
         err instanceof Error
           ? err.message
-          : "An unexpected error occurred while activating suppliers"
-      );
+          : "An unexpected error occurred while activating suppliers";
+      toast.error("Error", errorMsg);
+      setValidationError(errorMsg);
     } finally {
       setLoading(false);
       setActionType(null);
@@ -137,15 +133,17 @@ export function SupplierManagementSection({
    * Handle deactivate suppliers
    */
   const handleDeactivateSuppliers = async () => {
+    // Validation
     if (selectedSuppliers.length === 0) {
-      setError("Please select at least one supplier to deactivate");
+      const errorMsg = "Please select at least one supplier to deactivate";
+      setValidationError(errorMsg);
+      toast.warning("Validation Error", errorMsg);
       return;
     }
 
     setLoading(true);
     setActionType("deactivate");
-    setError(null);
-    setSuccessMessage(null);
+    setValidationError(null);
 
     try {
       const response = await UserEditService.deactivateSuppliers(
@@ -154,25 +152,32 @@ export function SupplierManagementSection({
       );
 
       if (response.success) {
-        setSuccessMessage(
-          `Successfully deactivated ${selectedSuppliers.length} supplier${
-            selectedSuppliers.length > 1 ? "s" : ""
-          }`
+        const count = selectedSuppliers.length;
+        toast.success(
+          "Suppliers Deactivated",
+          `Successfully deactivated ${count} supplier${count > 1 ? "s" : ""}`
         );
         setSelectedSuppliers([]);
         onSuppliersUpdated();
       } else {
-        setError(
+        const errorMsg =
           response.error?.message ||
-            "Failed to deactivate suppliers. Please try again."
-        );
+          "Failed to deactivate suppliers. Please try again.";
+        toast.error("Deactivation Failed", errorMsg);
+
+        if (response.error?.status === 403) {
+          setValidationError(
+            "You don't have permission to deactivate suppliers"
+          );
+        }
       }
     } catch (err) {
-      setError(
+      const errorMsg =
         err instanceof Error
           ? err.message
-          : "An unexpected error occurred while deactivating suppliers"
-      );
+          : "An unexpected error occurred while deactivating suppliers";
+      toast.error("Error", errorMsg);
+      setValidationError(errorMsg);
     } finally {
       setLoading(false);
       setActionType(null);
@@ -218,21 +223,13 @@ export function SupplierManagementSection({
           )}
         </div>
 
-        {/* Success Message */}
-        {successMessage && (
-          <div className="p-3 rounded-xl bg-green-50 border border-green-200 flex items-start space-x-2">
-            <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-            <p className="text-sm font-medium text-green-900 flex-1">
-              {successMessage}
-            </p>
-          </div>
-        )}
-
-        {/* Error Message */}
-        {error && (
+        {/* Validation Error */}
+        {validationError && (
           <div className="p-3 rounded-xl bg-red-50 border border-red-200 flex items-start space-x-2">
             <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <p className="text-sm font-medium text-red-900 flex-1">{error}</p>
+            <p className="text-sm font-medium text-red-900 flex-1">
+              {validationError}
+            </p>
           </div>
         )}
 

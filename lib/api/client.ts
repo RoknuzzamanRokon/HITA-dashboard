@@ -7,6 +7,8 @@ export interface RequestConfig {
   headers?: Record<string, string>;
   body?: any;
   requiresAuth?: boolean;
+  retryCount?: number;
+  retryDelay?: number;
 }
 
 export interface ApiError {
@@ -48,9 +50,16 @@ export class ApiClient {
     });
   }
 
-  // Main request method
+  // Main request method with retry logic
   async request<T = any>(endpoint: string, options: RequestConfig = {}): Promise<ApiResponse<T>> {
-    const { method = 'GET', headers = {}, body, requiresAuth = true } = options;
+    const {
+      method = 'GET',
+      headers = {},
+      body,
+      requiresAuth = true,
+      retryCount = 0,
+      retryDelay = 1000
+    } = options;
 
     // In development, return realistic mock responses for known endpoints when explicitly enabled
     if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_MOCKS === 'true') {
@@ -125,7 +134,49 @@ export class ApiClient {
       const response = await fetch(url, requestConfig);
       console.log(`📡 Response status: ${response.status}`);
 
-      return await this.handleResponse<T>(response);
+      const result = await this.handleResponse<T>(response);
+
+      // Handle authentication errors (401)
+      if (!result.success && result.error?.status === 401) {
+        console.warn('🔒 Authentication error detected - redirecting to login');
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('admin_auth_token');
+          window.location.href = '/login';
+        }
+        return result;
+      }
+
+      // Handle permission errors (403)
+      if (!result.success && result.error?.status === 403) {
+        console.warn('🚫 Permission denied');
+        return {
+          success: false,
+          error: {
+            status: 403,
+            message: "You don't have permission to perform this action",
+            details: result.error?.details
+          }
+        };
+      }
+
+      // Retry on network errors or 5xx server errors
+      if (!result.success && retryCount > 0) {
+        const shouldRetry =
+          result.error?.status === 0 || // Network error
+          (result.error?.status && result.error.status >= 500); // Server error
+
+        if (shouldRetry) {
+          console.log(`🔄 Retrying request (${retryCount} attempts remaining)...`);
+          await this.delay(retryDelay);
+          return this.request<T>(endpoint, {
+            ...options,
+            retryCount: retryCount - 1,
+            retryDelay: retryDelay * 1.5 // Exponential backoff
+          });
+        }
+      }
+
+      return result;
     } catch (err) {
       console.error('API request failed:', err);
       console.error('Request URL:', url);
@@ -145,6 +196,17 @@ export class ApiClient {
         };
       }
 
+      // Retry on network errors
+      if (retryCount > 0) {
+        console.log(`🔄 Retrying request after error (${retryCount} attempts remaining)...`);
+        await this.delay(retryDelay);
+        return this.request<T>(endpoint, {
+          ...options,
+          retryCount: retryCount - 1,
+          retryDelay: retryDelay * 1.5
+        });
+      }
+
       return {
         success: false,
         error: {
@@ -153,6 +215,11 @@ export class ApiClient {
         },
       };
     }
+  }
+
+  // Delay helper for retry logic
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   // Parse and normalize responses
@@ -197,25 +264,25 @@ export class ApiClient {
     return { success: true, data: data as T };
   }
 
-  // Convenience methods
-  async get<T = any>(endpoint: string, requiresAuth = true): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: 'GET', requiresAuth });
+  // Convenience methods with retry support
+  async get<T = any>(endpoint: string, requiresAuth = true, retryCount = 2): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: 'GET', requiresAuth, retryCount });
   }
 
-  async post<T = any>(endpoint: string, body?: any, requiresAuth = true): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: 'POST', body, requiresAuth });
+  async post<T = any>(endpoint: string, body?: any, requiresAuth = true, retryCount = 2): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: 'POST', body, requiresAuth, retryCount });
   }
 
-  async put<T = any>(endpoint: string, body?: any, requiresAuth = true): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: 'PUT', body, requiresAuth });
+  async put<T = any>(endpoint: string, body?: any, requiresAuth = true, retryCount = 2): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: 'PUT', body, requiresAuth, retryCount });
   }
 
-  async patch<T = any>(endpoint: string, body?: any, requiresAuth = true): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: 'PATCH', body, requiresAuth });
+  async patch<T = any>(endpoint: string, body?: any, requiresAuth = true, retryCount = 2): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: 'PATCH', body, requiresAuth, retryCount });
   }
 
-  async delete<T = any>(endpoint: string, requiresAuth = true): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: 'DELETE', requiresAuth });
+  async delete<T = any>(endpoint: string, requiresAuth = true, retryCount = 2): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: 'DELETE', requiresAuth, retryCount });
   }
 
   // Simple health check helper used by dashboard

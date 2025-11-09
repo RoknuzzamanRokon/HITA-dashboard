@@ -10,6 +10,7 @@ import React, { useState } from "react";
 import { Card, CardHeader, CardContent } from "@/lib/components/ui/card";
 import { Button } from "@/lib/components/ui/button";
 import { Select, SelectOption } from "@/lib/components/ui/select";
+import { useToast } from "@/lib/components/ui/toast";
 import { UserEditService, AllocationType } from "@/lib/api/user-edit";
 import { Coins, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -38,25 +39,14 @@ export function PointAllocationSection({
   currentPoints,
   onAllocationComplete,
 }: PointAllocationSectionProps) {
+  // Hooks
+  const toast = useToast();
+
   // State management
   const [selectedAllocationType, setSelectedAllocationType] =
     useState<AllocationType>("admin_user_package");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  /**
-   * Clear messages after 5 seconds
-   */
-  React.useEffect(() => {
-    if (successMessage || error) {
-      const timer = setTimeout(() => {
-        setSuccessMessage(null);
-        setError(null);
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [successMessage, error]);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   /**
    * Handle allocation type change
@@ -65,17 +55,22 @@ export function PointAllocationSection({
     e: React.ChangeEvent<HTMLSelectElement>
   ) => {
     setSelectedAllocationType(e.target.value as AllocationType);
-    setError(null);
-    setSuccessMessage(null);
+    setValidationError(null);
   };
 
   /**
    * Handle point allocation submission
    */
   const handleAllocatePoints = async () => {
+    // Validation
+    if (!selectedAllocationType) {
+      setValidationError("Please select an allocation type");
+      toast.warning("Validation Error", "Please select an allocation type");
+      return;
+    }
+
     setLoading(true);
-    setError(null);
-    setSuccessMessage(null);
+    setValidationError(null);
 
     try {
       const response = await UserEditService.allocatePoints(
@@ -85,25 +80,32 @@ export function PointAllocationSection({
       );
 
       if (response.success) {
-        setSuccessMessage(
-          `Points allocated successfully using ${selectedAllocationType.replace(
-            /_/g,
-            " "
-          )}`
+        const packageName = selectedAllocationType.replace(/_/g, " ");
+        toast.success(
+          "Points Allocated",
+          `Successfully allocated points using ${packageName}`
         );
         onAllocationComplete();
       } else {
-        setError(
+        const errorMsg =
           response.error?.message ||
-            "Failed to allocate points. Please try again."
-        );
+          "Failed to allocate points. Please try again.";
+        toast.error("Allocation Failed", errorMsg);
+
+        // Handle specific error cases
+        if (response.error?.status === 403) {
+          setValidationError("You don't have permission to allocate points");
+        } else if (response.error?.status === 400) {
+          setValidationError(errorMsg);
+        }
       }
     } catch (err) {
-      setError(
+      const errorMsg =
         err instanceof Error
           ? err.message
-          : "An unexpected error occurred while allocating points"
-      );
+          : "An unexpected error occurred while allocating points";
+      toast.error("Error", errorMsg);
+      setValidationError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -134,21 +136,13 @@ export function PointAllocationSection({
           </div>
         </div>
 
-        {/* Success Message */}
-        {successMessage && (
-          <div className="p-3 rounded-xl bg-green-50 border border-green-200 flex items-start space-x-2">
-            <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-            <p className="text-sm font-medium text-green-900 flex-1">
-              {successMessage}
-            </p>
-          </div>
-        )}
-
-        {/* Error Message */}
-        {error && (
+        {/* Validation Error */}
+        {validationError && (
           <div className="p-3 rounded-xl bg-red-50 border border-red-200 flex items-start space-x-2">
             <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <p className="text-sm font-medium text-red-900 flex-1">{error}</p>
+            <p className="text-sm font-medium text-red-900 flex-1">
+              {validationError}
+            </p>
           </div>
         )}
 

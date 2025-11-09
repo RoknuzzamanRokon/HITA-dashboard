@@ -3,6 +3,7 @@ import "./globals.css";
 import { config } from "@/lib/config";
 import { AuthProvider } from "@/lib/contexts/auth-context";
 import { ThemeProvider } from "@/lib/contexts/theme-context";
+import { ToastProvider } from "@/lib/components/ui/toast";
 
 export const metadata: Metadata = {
   title: config.app.name,
@@ -18,7 +19,9 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
         <ThemeProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
