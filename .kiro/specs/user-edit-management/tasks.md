@@ -52,7 +52,7 @@
   - Trigger parent refresh on successful allocation
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-- [ ] 6. Create SupplierManagementSection component
+- [x] 6. Create SupplierManagementSection component
 
   - Create `lib/components/users/supplier-management-section.tsx`
   - Display list of currently active suppliers
