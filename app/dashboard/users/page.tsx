@@ -16,6 +16,7 @@ import { Button } from "@/lib/components/ui/button";
 import { Badge } from "@/lib/components/ui/badge";
 import { Modal } from "@/lib/components/ui/modal";
 import { UserForm } from "@/lib/components/users/user-form";
+import { UserEditModal } from "@/lib/components/users/user-edit-modal";
 import {
   Plus,
   Edit,
@@ -84,6 +85,8 @@ export default function UsersPage() {
   const [createUserType, setCreateUserType] = useState<
     "super" | "admin" | "general"
   >("general");
+  const [showUserEditModal, setShowUserEditModal] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   // Create user form state
   const [createUserData, setCreateUserData] = useState({
@@ -645,8 +648,8 @@ export default function UsersPage() {
   };
 
   const handleEditUser = (user: UserListItem) => {
-    setSelectedUser(user);
-    setShowEditModal(true);
+    setSelectedUserId(user.id);
+    setShowUserEditModal(true);
   };
 
   const handleUpdateUser = async (userData: UserFormData) => {
@@ -1813,6 +1816,23 @@ export default function UsersPage() {
             </div>
           </Modal>
 
+          {/* User Edit Modal */}
+          {selectedUserId && (
+            <UserEditModal
+              isOpen={showUserEditModal}
+              onClose={() => {
+                setShowUserEditModal(false);
+                setSelectedUserId(null);
+              }}
+              userId={selectedUserId}
+              onUserUpdated={() => {
+                // Refresh both the users list and analytics data
+                fetchUsers();
+                fetchAllUsersCheck();
+              }}
+            />
+          )}
+
           {/* General Users Analytics Section */}
           <div className="mt-8">
             <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-xl shadow-lg overflow-hidden">
@@ -2227,7 +2247,11 @@ export default function UsersPage() {
                             return filtered.map((user: any, index: number) => (
                               <div
                                 key={user.id || index}
-                                className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-xl p-6 hover:shadow-xl transition-all duration-300 hover:border-indigo-300"
+                                onClick={() => {
+                                  setSelectedUserId(user.id);
+                                  setShowUserEditModal(true);
+                                }}
+                                className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-xl p-6 hover:shadow-xl transition-all duration-300 hover:border-indigo-300 cursor-pointer"
                               >
                                 {/* User Header */}
                                 <div className="flex items-start justify-between mb-4">
