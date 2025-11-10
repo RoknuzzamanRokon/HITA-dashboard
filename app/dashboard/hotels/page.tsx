@@ -82,7 +82,10 @@ export default function HotelsPage() {
   } | null>(null);
 
   const handleHotelSelect = (hotel: Hotel) => {
-    window.location.href = `/dashboard/hotels/${hotel.ittid}`;
+    // Log the selected hotel for now - can be extended to show modal or navigate
+    console.log("Selected hotel:", hotel);
+    // Optional: Navigate to hotel details page
+    // window.location.href = `/dashboard/hotels/${hotel.ittid}`;
   };
 
   const handleExport = async () => {
@@ -783,10 +786,10 @@ export default function HotelsPage() {
         )}
 
         {/* Main Content Area */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
           {/* Hotel Search */}
           <div className="lg:col-span-2">
-            <Card>
+            <Card hover={false}>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>

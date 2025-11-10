@@ -6,6 +6,9 @@ export interface Hotel {
     ittid: string;
     id: number;
     name: string;
+    city?: string;
+    country?: string;
+    countryCode?: string;
     latitude?: string;
     longitude?: string;
     addressLine1?: string;
@@ -13,6 +16,7 @@ export interface Hotel {
     postalCode?: string;
     rating?: string;
     propertyType?: string;
+    chainName?: string;
     primaryPhoto?: string;
     mapStatus?: string;
     contentUpdateStatus?: string;

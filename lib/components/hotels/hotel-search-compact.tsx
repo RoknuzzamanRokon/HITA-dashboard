@@ -64,7 +64,9 @@ export function HotelSearchCompact({
 
       if (response.success && response.data) {
         console.log("✅ Got suggestions:", response.data.length);
-        setSuggestions(response.data);
+        // Limit to first 6 results
+        const limitedSuggestions = response.data.slice(0, 6);
+        setSuggestions(limitedSuggestions);
         setShowSuggestions(true);
       } else {
         console.error("❌ Failed to fetch suggestions:", response.error);
@@ -98,11 +100,15 @@ export function HotelSearchCompact({
           ittid: response.data.ittid,
           id: parseInt(response.data.ittid.replace(/\D/g, "")) || 0,
           name: response.data.name,
+          city: response.data.city,
+          country: response.data.country,
+          countryCode: response.data.countrycode,
           latitude: response.data.latitude,
           longitude: response.data.longitude,
           addressLine1: response.data.addressline1,
           addressLine2: response.data.addressline2,
           postalCode: response.data.postalcode,
+          chainName: response.data.chainname,
           propertyType: response.data.propertytype,
           mapStatus: "mapped",
           createdAt: new Date().toISOString(),
@@ -164,36 +170,51 @@ export function HotelSearchCompact({
 
   return (
     <div className="space-y-4">
-      {/* Search Input with Autocomplete */}
-      <div className="relative">
+      {/* Search Input with Autocomplete (Enhanced) */}
+      <div className="relative flex-grow">
+        {/* The Search Input Field */}
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
         <Input
           type="text"
           placeholder="Type to search hotels (e.g., 'brazil', 'savoy')..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          // Open suggestions on focus, but ensure we have results to show
           onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-          className="pl-10"
+          // Delay hiding the dropdown to allow onMouseDown on suggestions to register
+          onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+          className="pl-10 h-10" // Ensure consistent height
         />
 
-        {/* Autocomplete Suggestions Dropdown */}
+        {/* Autocomplete Suggestions Dropdown - No Animation, Scrollable */}
         {showSuggestions && suggestions.length > 0 && (
-          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto">
-            {suggestions.map((suggestion, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                onClick={() => handleSuggestionClick(suggestion.name)}
-              >
-                <div className="flex items-center space-x-3 flex-1 min-w-0">
-                  <Building className="h-4 w-4 text-gray-400 flex-shrink-0" />
+          <div className="absolute z-30 w-full mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-xl overflow-hidden">
+            <div
+              className="max-h-80 overflow-y-auto"
+              style={{
+                scrollbarWidth: "thin",
+                scrollbarColor: "#9CA3AF #F3F4F6",
+              }}
+            >
+              {suggestions.map((suggestion, index) => (
+                <div
+                  key={index}
+                  onMouseDown={() => handleSuggestionClick(suggestion.name)}
+                  className="flex items-center px-3 py-2.5 cursor-pointer border-b border-gray-100 last:border-b-0"
+                >
+                  {/* Icon */}
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mr-3">
+                    <Building className="h-4 w-4 text-blue-600" />
+                  </div>
+
+                  {/* Hotel Info */}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">
                       {suggestion.name}
                     </p>
                     {(suggestion.city || suggestion.country) && (
-                      <div className="flex items-center space-x-2 text-xs text-gray-500">
-                        <MapPin className="h-3 w-3" />
+                      <div className="flex items-center text-xs text-gray-500 mt-0.5">
+                        <MapPin className="h-3 w-3 mr-1" />
                         <span className="truncate">
                           {[suggestion.city, suggestion.country]
                             .filter(Boolean)
@@ -202,15 +223,11 @@ export function HotelSearchCompact({
                       </div>
                     )}
                   </div>
+
+
                 </div>
-                <Badge
-                  variant="secondary"
-                  className="text-xs ml-2 flex-shrink-0"
-                >
-                  {suggestion.type}
-                </Badge>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -232,83 +249,181 @@ export function HotelSearchCompact({
         </div>
       )}
 
-      {/* Results */}
-      {!loading && hotels.length > 0 && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-600">
-              Found {hotels.length} hotel{hotels.length !== 1 ? "s" : ""}
-            </p>
-            {hotels.length === maxResults && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  (window.location.href = "/dashboard/hotels/manage")
-                }
-              >
-                View All Results
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            )}
+      {/* Results - Hotel Details Card - HIGHLY VISIBLE */}
+      {!loading && !loadingDetails && hotels.length > 0 && (
+        <div className="mt-6 space-y-4">
+          {/* Results Header */}
+          <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-xs font-bold">✓</span>
+              </div>
+              <h3 className="text-base font-bold text-gray-900">
+                Hotel Found!
+              </h3>
+            </div>
+            <Badge className="bg-green-100 text-green-800 border-green-300">
+              {hotels.length} result{hotels.length !== 1 ? "s" : ""}
+            </Badge>
           </div>
 
-          <div className="space-y-2 max-h-96 overflow-y-auto">
+          {/* Hotel Cards - Scrollable if multiple results */}
+          <div
+            className="space-y-4 max-h-[600px] overflow-y-auto pr-2"
+            style={{
+              scrollbarWidth: "thin",
+              scrollbarColor: "#3B82F6 #E5E7EB",
+            }}
+          >
             {hotels.map((hotel) => (
               <div
                 key={hotel.ittid}
-                className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer border border-gray-200 transition-colors"
-                onClick={() => onHotelSelect?.(hotel)}
+                className="bg-gradient-to-br from-white to-blue-50 border-2 border-blue-300 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all"
               >
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Building className="h-5 w-5 text-blue-600" />
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <h3 className="text-sm font-medium text-gray-900 truncate">
+                {/* Hotel Header - PROMINENT */}
+                <div className="flex items-start space-x-4 mb-6 pb-4 border-b-2 border-blue-200">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                    <Building className="h-8 w-8 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-xl font-bold text-gray-900 mb-2">
                       {hotel.name}
-                    </h3>
-                    {hotel.rating && (
-                      <div className="flex items-center space-x-1">
-                        <Star className="h-3 w-3 text-yellow-400 fill-current" />
-                        <span className="text-xs text-gray-600">
-                          {hotel.rating}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center space-x-4 text-xs text-gray-500">
-                    <span className="font-mono">ID: {hotel.ittid}</span>
-                    {hotel.addressLine1 && (
-                      <div className="flex items-center space-x-1">
-                        <MapPin className="h-3 w-3" />
-                        <span className="truncate max-w-32">
-                          {hotel.addressLine1}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center space-x-2 mt-2">
-                    {hotel.mapStatus && (
-                      <Badge
-                        className={`text-xs ${getStatusColor(hotel.mapStatus)}`}
-                      >
-                        {hotel.mapStatus}
+                    </h4>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge className="text-xs bg-blue-600 text-white px-3 py-1">
+                        ID: {hotel.ittid}
                       </Badge>
-                    )}
-                    {hotel.propertyType && (
-                      <Badge variant="secondary" className="text-xs">
-                        {hotel.propertyType}
-                      </Badge>
-                    )}
+                      {hotel.rating && (
+                        <div className="flex items-center space-x-1 bg-yellow-100 px-2 py-1 rounded-full">
+                          <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                          <span className="text-sm font-bold text-yellow-700">
+                            {hotel.rating}
+                          </span>
+                        </div>
+                      )}
+                      {hotel.mapStatus && (
+                        <Badge
+                          className={`text-xs px-3 py-1 ${getStatusColor(
+                            hotel.mapStatus
+                          )}`}
+                        >
+                          {hotel.mapStatus.toUpperCase()}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex-shrink-0">
-                  <Eye className="h-4 w-4 text-gray-400" />
+                {/* Hotel Details Grid - CLEAR & VISIBLE */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  {/* Address */}
+                  {hotel.addressLine1 && (
+                    <div className="bg-white p-4 rounded-lg border border-gray-200">
+                      <div className="flex items-start space-x-3">
+                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <MapPin className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-gray-500 uppercase mb-1">
+                            Address
+                          </p>
+                          <p className="text-sm font-medium text-gray-900">
+                            {hotel.addressLine1}
+                          </p>
+                          {hotel.addressLine2 && (
+                            <p className="text-sm text-gray-700">
+                              {hotel.addressLine2}
+                            </p>
+                          )}
+                          <p className="text-sm text-gray-700">
+                            {[hotel.city, hotel.postalCode]
+                              .filter(Boolean)
+                              .join(", ")}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Country */}
+                  {hotel.country && (
+                    <div className="bg-white p-4 rounded-lg border border-gray-200">
+                      <div className="flex items-start space-x-3">
+                        <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <MapPin className="h-4 w-4 text-green-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-gray-500 uppercase mb-1">
+                            Country
+                          </p>
+                          <p className="text-sm font-medium text-gray-900">
+                            {hotel.country}
+                            {hotel.countryCode && (
+                              <span className="text-gray-500 ml-1">
+                                ({hotel.countryCode})
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Coordinates */}
+                  {hotel.latitude && hotel.longitude && (
+                    <div className="bg-white p-4 rounded-lg border border-gray-200">
+                      <div className="flex items-start space-x-3">
+                        <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <MapPin className="h-4 w-4 text-purple-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-gray-500 uppercase mb-1">
+                            Coordinates
+                          </p>
+                          <p className="text-sm font-mono font-medium text-gray-900">
+                            {hotel.latitude}, {hotel.longitude}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Property Type */}
+                  {hotel.propertyType && (
+                    <div className="bg-white p-4 rounded-lg border border-gray-200">
+                      <div className="flex items-start space-x-3">
+                        <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Building className="h-4 w-4 text-orange-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-gray-500 uppercase mb-1">
+                            Property Type
+                          </p>
+                          <p className="text-sm font-medium text-gray-900">
+                            {hotel.propertyType}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer Actions */}
+                <div className="flex flex-wrap items-center gap-3 pt-4 border-t-2 border-gray-200">
+                  {hotel.chainName && (
+                    <Badge className="bg-indigo-100 text-indigo-800 border border-indigo-300 px-3 py-1">
+                      Chain: {hotel.chainName}
+                    </Badge>
+                  )}
+                  {onHotelSelect && (
+                    <button
+                      onClick={() => onHotelSelect(hotel)}
+                      className="ml-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2 transition-colors shadow-md"
+                    >
+                      <span>View Full Details</span>
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -344,6 +459,66 @@ export function HotelSearchCompact({
             </p>
           </div>
         )}
+
+      {/* Footer Section */}
+      <div className="mt-8 pt-6 border-t-2 border-gray-200">
+        <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-xl p-6 border border-gray-200">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Search Tips */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                  <Search className="h-4 w-4 text-white" />
+                </div>
+                <h4 className="font-bold text-gray-900">Search Tips</h4>
+              </div>
+              <ul className="text-sm text-gray-600 space-y-1 ml-10">
+                <li>• Type at least 2 characters</li>
+                <li>• Use hotel name or location</li>
+                <li>• Select from suggestions</li>
+              </ul>
+            </div>
+
+            {/* Features */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                  <Building className="h-4 w-4 text-white" />
+                </div>
+                <h4 className="font-bold text-gray-900">Features</h4>
+              </div>
+              <ul className="text-sm text-gray-600 space-y-1 ml-10">
+                <li>• Real-time autocomplete</li>
+                <li>• Detailed hotel information</li>
+                <li>• Location coordinates</li>
+              </ul>
+            </div>
+
+            {/* Support */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+                  <MapPin className="h-4 w-4 text-white" />
+                </div>
+                <h4 className="font-bold text-gray-900">Data Includes</h4>
+              </div>
+              <ul className="text-sm text-gray-600 space-y-1 ml-10">
+                <li>• Full address details</li>
+                <li>• Property type & chain</li>
+                <li>• Geographic coordinates</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Footer Bottom */}
+          <div className="mt-6 pt-4 border-t border-gray-300 text-center">
+            <p className="text-xs text-gray-500">
+              Powered by Hotel Content API • Real-time data • Updated
+              continuously
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -542,8 +542,27 @@ export class HotelService {
         city?: string;
     }>>> {
         try {
-            const response = await apiClient.get(`/content/autocomplete/?query=${encodeURIComponent(query)}`);
-            return response;
+            const response = await apiClient.get<{
+                results: string[];
+                count: number;
+            }>(`/content/autocomplete?query=${encodeURIComponent(query)}`);
+
+            if (response.success && response.data) {
+                // Transform the API response format to match our expected format
+                const suggestions = response.data.results.map((name: string) => ({
+                    name,
+                    type: 'hotel',
+                    country: undefined,
+                    city: undefined,
+                }));
+
+                return {
+                    success: true,
+                    data: suggestions,
+                };
+            }
+
+            return response as any;
         } catch (error) {
             return {
                 success: false,
@@ -566,6 +585,7 @@ export class HotelService {
         addressline2: string;
         city: string;
         country: string;
+        countrycode: string;
         latitude: string;
         longitude: string;
         postalcode: string;
@@ -573,7 +593,20 @@ export class HotelService {
         propertytype: string;
     }>> {
         try {
-            const response = await apiClient.post('/content/search_with_hotel_name', {
+            const response = await apiClient.post<{
+                ittid: string;
+                name: string;
+                addressline1: string;
+                addressline2: string;
+                city: string;
+                country: string;
+                countrycode: string;
+                latitude: string;
+                longitude: string;
+                postalcode: string;
+                chainname: string;
+                propertytype: string;
+            }>('/content/search_with_hotel_name', {
                 hotel_name: hotelName
             });
             return response;
