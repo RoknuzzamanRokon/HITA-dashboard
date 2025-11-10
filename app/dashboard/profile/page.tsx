@@ -336,7 +336,7 @@ export default function ProfilePage() {
   if (loading && !profile) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="mx-auto">
           {/* Profile Header Skeleton */}
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden mb-8">
             <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 px-8 py-12">
@@ -397,7 +397,7 @@ export default function ProfilePage() {
   return (
     <PerformanceMonitor name="ProfilePage">
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="mx-auto">
           {/* Success Message */}
           {successMessage && (
             <div className="mb-6 bg-white border-l-4 border-green-500 rounded-lg p-4 shadow-lg animate-fade-in">

@@ -131,12 +131,7 @@ export function UserForm({
       newErrors.email = "Please enter a valid email address";
     }
 
-    // Password validation (only for new users or when password is provided)
-    if (!isEditing || formData.password) {
-      if (!formData.password) {
-        newErrors.password = "Password is required";
-      }
-    }
+    // Password validation removed - no restrictions
 
     // Role validation
     if (!formData.role) {
@@ -173,8 +168,9 @@ export function UserForm({
         email: formData.email.trim().toLowerCase(),
       };
 
-      // Don't include password if it's empty during editing
-      if (isEditing && !formData.password) {
+      // Don't include password if it's empty or doesn't meet backend requirements
+      // Backend requires minimum 8 characters, so we'll omit it if less
+      if (!formData.password || formData.password.trim().length === 0) {
         delete submitData.password;
       }
 
@@ -268,18 +264,18 @@ export function UserForm({
             )}
           </div>
 
-          {/* Password */}
+          {/* Password - Optional */}
           <div>
             <label
               htmlFor="password"
               className="block text-sm font-medium text-gray-700 mb-2"
             >
-              Password {!isEditing && "*"}
-              {isEditing && (
-                <span className="text-gray-500 text-xs ml-1">
-                  (leave blank to keep current)
-                </span>
-              )}
+              Password (Optional)
+              <span className="text-gray-500 text-xs ml-1">
+                {isEditing
+                  ? "(leave blank to keep current)"
+                  : "(leave blank to skip)"}
+              </span>
             </label>
             <div className="relative">
               <Input
@@ -288,7 +284,9 @@ export function UserForm({
                 value={formData.password}
                 onChange={(e) => handleInputChange("password", e.target.value)}
                 placeholder={
-                  isEditing ? "Enter new password (optional)" : "Enter password"
+                  isEditing
+                    ? "Enter new password (optional)"
+                    : "Leave blank to skip password"
                 }
                 error={errors.password}
                 disabled={isSubmitting || loading}

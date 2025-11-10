@@ -293,7 +293,7 @@ export default function HotelsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-start justify-between">
@@ -514,7 +514,7 @@ export default function HotelsPage() {
         {hotelInfo && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* Top Suppliers */}
-            <Card>
+            <Card hover={false}>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
@@ -559,59 +559,69 @@ export default function HotelsPage() {
                   </div>
                 </div>
 
-                {/* Suppliers List */}
-                <div className="max-h-80 overflow-y-auto pr-2 space-y-3">
-                  {hotelInfo.topSuppliers
-                    .filter((supplier) =>
-                      supplier.name
-                        .toLowerCase()
-                        .includes(supplierFilter.toLowerCase())
-                    )
-                    .map((supplier, filteredIndex) => {
-                      // Get the original index for ranking
-                      const originalIndex = hotelInfo.topSuppliers.findIndex(
-                        (s) => s.name === supplier.name
-                      );
-                      return (
-                        <div
-                          key={supplier.name}
-                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                              <span className="text-sm font-medium text-blue-600">
-                                {originalIndex + 1}
-                              </span>
+                {/* Suppliers List - Scrollable Container with visible scrollbar */}
+                <div
+                  className="border border-gray-200 rounded-lg p-2 bg-gray-50"
+                  style={{
+                    maxHeight: "400px",
+                    overflowY: "scroll",
+                    scrollbarWidth: "thin",
+                    scrollbarColor: "#3B82F6 #E5E7EB",
+                  }}
+                >
+                  <div className="space-y-3">
+                    {hotelInfo.topSuppliers
+                      .filter((supplier) =>
+                        supplier.name
+                          .toLowerCase()
+                          .includes(supplierFilter.toLowerCase())
+                      )
+                      .map((supplier, filteredIndex) => {
+                        // Get the original index for ranking
+                        const originalIndex = hotelInfo.topSuppliers.findIndex(
+                          (s) => s.name === supplier.name
+                        );
+                        return (
+                          <div
+                            key={supplier.name}
+                            className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span className="text-sm font-medium text-blue-600">
+                                  {originalIndex + 1}
+                                </span>
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="font-medium text-gray-900 truncate capitalize">
+                                  {supplier.name}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  {supplier.hotelCount.toLocaleString()} hotels
+                                </p>
+                              </div>
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="font-medium text-gray-900 truncate capitalize">
-                                {supplier.name}
-                              </p>
-                              <p className="text-sm text-gray-500">
-                                {supplier.hotelCount.toLocaleString()} hotels
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2 flex-shrink-0">
-                            <div
-                              className={`px-2 py-1 rounded-full text-xs ${
-                                supplier.status === "active"
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-gray-100 text-gray-800"
-                              }`}
-                            >
-                              {supplier.status}
-                            </div>
-                            {originalIndex < 3 && (
+                            <div className="flex items-center space-x-2 flex-shrink-0">
                               <div
-                                className="w-2 h-2 bg-yellow-400 rounded-full"
-                                title="Top 3 Supplier"
-                              />
-                            )}
+                                className={`px-2 py-1 rounded-full text-xs ${
+                                  supplier.status === "active"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-gray-100 text-gray-800"
+                                }`}
+                              >
+                                {supplier.status}
+                              </div>
+                              {originalIndex < 3 && (
+                                <div
+                                  className="w-2 h-2 bg-yellow-400 rounded-full"
+                                  title="Top 3 Supplier"
+                                />
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                  </div>
                 </div>
 
                 {/* Scroll indicator and filter info */}
@@ -639,7 +649,7 @@ export default function HotelsPage() {
             </Card>
 
             {/* Hotels by Region */}
-            <Card>
+            <Card hover={false}>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>

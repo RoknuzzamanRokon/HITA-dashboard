@@ -174,27 +174,24 @@ export class UserService {
      */
     static async createUser(userData: UserFormData): Promise<ApiResponse<User>> {
         // Route to the appropriate specific endpoint based on role
+        // Only include password if it's provided (not empty/undefined)
+        const baseData = {
+            username: userData.username,
+            email: userData.email,
+            ...(userData.password && userData.password.trim() ? { password: userData.password } : {}),
+        };
+
         switch (userData.role) {
             case UserRole.SUPER_USER:
-                return this.createSuperUser({
-                    username: userData.username,
-                    email: userData.email,
-                    password: userData.password || '',
-                });
+                return this.createSuperUser(baseData);
             case UserRole.ADMIN_USER:
                 return this.createAdminUser({
-                    username: userData.username,
-                    email: userData.email,
-                    password: userData.password || '',
+                    ...baseData,
                     business_id: '', // You might need to add this to UserFormData if needed
                 });
             case UserRole.GENERAL_USER:
             default:
-                return this.createGeneralUser({
-                    username: userData.username,
-                    email: userData.email,
-                    password: userData.password || '',
-                });
+                return this.createGeneralUser(baseData);
         }
     }
 
@@ -204,7 +201,7 @@ export class UserService {
     static async createSuperUser(userData: {
         username: string;
         email: string;
-        password: string;
+        password?: string;
     }): Promise<ApiResponse<User>> {
         console.log("📡 Creating super user:", { username: userData.username, email: userData.email });
         return apiClient.post<User>(apiEndpoints.users.createSuperUser, userData);
@@ -217,7 +214,7 @@ export class UserService {
         username: string;
         email: string;
         business_id: string;
-        password: string;
+        password?: string;
     }): Promise<ApiResponse<User>> {
         console.log("📡 Creating admin user:", { username: userData.username, email: userData.email, business_id: userData.business_id });
         return apiClient.post<User>(apiEndpoints.users.createAdminUser, userData);
@@ -229,7 +226,7 @@ export class UserService {
     static async createGeneralUser(userData: {
         username: string;
         email: string;
-        password: string;
+        password?: string;
     }): Promise<ApiResponse<User>> {
         console.log("📡 Creating general user:", { username: userData.username, email: userData.email });
         return apiClient.post<User>(apiEndpoints.users.createGeneralUser, userData);

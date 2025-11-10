@@ -771,17 +771,13 @@ export default function UsersPage() {
       setCreateUserError(null);
       console.log("👤 Creating user:", createUserType, createUserData);
 
-      // Basic validation
+      // Basic validation (password is optional)
       if (!createUserData.username.trim()) {
         setCreateUserError("Username is required");
         return;
       }
       if (!createUserData.email.trim()) {
         setCreateUserError("Email is required");
-        return;
-      }
-      if (!createUserData.password.trim()) {
-        setCreateUserError("Password is required");
         return;
       }
       if (createUserType === "admin" && !createUserData.business_id.trim()) {
@@ -796,31 +792,39 @@ export default function UsersPage() {
         return;
       }
 
+      // Prepare user data - only include password if provided
+      const baseUserData: any = {
+        username: createUserData.username.trim(),
+        email: createUserData.email.trim(),
+      };
+
+      // Only add password if it's not empty
+      if (createUserData.password && createUserData.password.trim()) {
+        baseUserData.password = createUserData.password.trim();
+      }
+
+      console.log("🔧 Creating user with data:", {
+        ...baseUserData,
+        password: baseUserData.password ? "***" : "not provided",
+      });
+
       let response;
       switch (createUserType) {
         case "super":
-          response = await UserService.createSuperUser({
-            username: createUserData.username.trim(),
-            email: createUserData.email.trim(),
-            password: createUserData.password,
-          });
+          response = await UserService.createSuperUser(baseUserData);
           break;
         case "admin":
           response = await UserService.createAdminUser({
-            username: createUserData.username.trim(),
-            email: createUserData.email.trim(),
+            ...baseUserData,
             business_id: createUserData.business_id.trim(),
-            password: createUserData.password,
           });
           break;
         case "general":
-          response = await UserService.createGeneralUser({
-            username: createUserData.username.trim(),
-            email: createUserData.email.trim(),
-            password: createUserData.password,
-          });
+          response = await UserService.createGeneralUser(baseUserData);
           break;
       }
+
+      console.log("📡 API Response:", response);
 
       if (response && response.success) {
         console.log("✅ User created successfully:", response.data);
@@ -856,12 +860,14 @@ export default function UsersPage() {
           setSuccessMessage(null);
         }, 5000);
       } else {
-        console.error("❌ Failed to create user:", response?.error);
+        console.error("❌ Failed to create user - Full response:", response);
+        console.error("❌ Error object:", response?.error);
+        console.error("❌ Error type:", typeof response?.error);
         const errorMessage =
           response?.error?.message ||
           (typeof response?.error === "string"
             ? response.error
-            : "Failed to create user");
+            : "Failed to create user. Please check console for details.");
         setCreateUserError(errorMessage);
       }
     } catch (err) {
@@ -1049,7 +1055,7 @@ export default function UsersPage() {
     <PermissionGuard
       permission={Permission.VIEW_ALL_USERS}
       fallback={
-        <div className="max-w-7xl mx-auto">
+        <div className="mx-auto">
           <div className="text-center py-12">
             <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
               <Shield className="h-6 w-6 text-red-600" />
@@ -1072,7 +1078,7 @@ export default function UsersPage() {
         </div>
       }
     >
-      <div className="max-w-7xl mx-auto">
+      <div className="mx-auto">
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">

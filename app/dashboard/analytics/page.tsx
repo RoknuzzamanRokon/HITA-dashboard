@@ -227,7 +227,7 @@ export default function AnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="max-w-7xl mx-auto space-y-8 p-6">
+      <div className="mx-auto space-y-8 p-6">
         {/* Animated Background Elements */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-20 left-10 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>

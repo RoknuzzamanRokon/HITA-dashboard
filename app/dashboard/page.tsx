@@ -141,7 +141,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="mx-auto">
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>

@@ -180,7 +180,7 @@ export function HotelSearchCompact({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           // Open suggestions on focus, but ensure we have results to show
-          onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+          onFocus={() => suggestions.length > 0 && setShowSuggestions(false)}
           // Delay hiding the dropdown to allow onMouseDown on suggestions to register
           onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
           className="pl-10 h-10" // Ensure consistent height
@@ -199,7 +199,7 @@ export function HotelSearchCompact({
               {suggestions.map((suggestion, index) => (
                 <div
                   key={index}
-                  onMouseDown={() => handleSuggestionClick(suggestion.name)}
+                  onClick={() => handleSuggestionClick(suggestion.name)}
                   className="flex items-center px-3 py-2.5 cursor-pointer border-b border-gray-100 last:border-b-0"
                 >
                   {/* Icon */}
@@ -223,8 +223,6 @@ export function HotelSearchCompact({
                       </div>
                     )}
                   </div>
-
-
                 </div>
               ))}
             </div>
