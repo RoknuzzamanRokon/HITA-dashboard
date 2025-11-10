@@ -12,6 +12,7 @@ import { Badge } from "@/lib/components/ui/badge";
 import { Modal } from "@/lib/components/ui/modal";
 import { PermissionGuard } from "@/lib/components/auth/permission-guard";
 import { Permission } from "@/lib/utils/rbac";
+import { SupplierStatus } from "@/lib/components/profile/supplier-status";
 import {
   User,
   Shield,
@@ -732,33 +733,8 @@ export default function ProfilePage() {
                 </PermissionGuard>
               </div>
 
-              {/* Active Suppliers */}
-              {profile.activeSuppliers.length > 0 && (
-                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold text-gray-900 flex items-center">
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                        <Settings className="h-5 w-5 text-blue-600" />
-                      </div>
-                      Active Suppliers
-                    </h3>
-                    <Badge variant="outline" className="text-sm">
-                      {profile.activeSuppliers.length} suppliers
-                    </Badge>
-                  </div>
-
-                  <div className="flex flex-wrap gap-3">
-                    {profile.activeSuppliers.map((supplier, index) => (
-                      <div
-                        key={index}
-                        className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl text-blue-800 font-medium text-sm"
-                      >
-                        {supplier}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Supplier Status - Active/Inactive Suppliers */}
+              <SupplierStatus />
             </div>
 
             {/* Sidebar - 1 column */}
