@@ -287,7 +287,7 @@ export function HotelSearch({ onHotelSelect, className }: HotelSearchProps) {
     <div className={className}>
       <Card>
         <CardHeader
-          title="Hotel Search"
+          title="Hotel Search using Hotel name"
           subtitle="Search and filter hotels by name, location, or other criteria"
           actions={
             <Button
