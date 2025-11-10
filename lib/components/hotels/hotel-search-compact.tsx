@@ -153,6 +153,10 @@ export function HotelSearchCompact({
   const handleSuggestionClick = (suggestionName: string) => {
     setSearchQuery(suggestionName);
     fetchHotelByName(suggestionName);
+
+    setTimeout(() => {
+      setShowSuggestions(false);
+    }, 900);
   };
 
   const getStatusColor = (status: string) => {
@@ -179,10 +183,8 @@ export function HotelSearchCompact({
           placeholder="Type to search hotels (e.g., 'brazil', 'savoy')..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          // Open suggestions on focus, but ensure we have results to show
-          onFocus={() => suggestions.length > 0 && setShowSuggestions(false)}
-          // Delay hiding the dropdown to allow onMouseDown on suggestions to register
-          onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+          // onFocus={() => suggestions.length > 0 && setShowSuggestions(false)}
+          // onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
           className="pl-10 h-10" // Ensure consistent height
         />
 
@@ -202,12 +204,10 @@ export function HotelSearchCompact({
                   onClick={() => handleSuggestionClick(suggestion.name)}
                   className="flex items-center px-3 py-2.5 cursor-pointer border-b border-gray-100 last:border-b-0"
                 >
-                  {/* Icon */}
                   <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mr-3">
                     <Building className="h-4 w-4 text-blue-600" />
                   </div>
 
-                  {/* Hotel Info */}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">
                       {suggestion.name}
