@@ -1600,7 +1600,6 @@ export default function ProviderUpdatePage() {
                   ) : (
                     <>
                       <option value="agoda">Agoda</option>
-                      <option value="booking">Booking.com</option>
                       <option value="expedia">Expedia</option>
                       <option value="restel">Restel</option>
                       <option value="hotelbeds">Hotelbeds</option>
@@ -1654,9 +1653,6 @@ export default function ProviderUpdatePage() {
                               ITTID
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Provider Mapping ID
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Provider
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1673,9 +1669,6 @@ export default function ProviderUpdatePage() {
                               <tr key={index} className="hover:bg-gray-50">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                   {mapping.ittid || "N/A"}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                  {mapping.provider_mapping_id || "N/A"}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                   {getSupplierDisplayName(
