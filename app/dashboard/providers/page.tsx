@@ -635,6 +635,7 @@ export default function ProviderUpdatePage() {
 
     setLoading(true);
     setError(null);
+    setProviderMappingResult(null);
 
     try {
       console.log(
@@ -650,8 +651,10 @@ export default function ProviderUpdatePage() {
 
       if (response.success && response.data) {
         console.log("✅ Setting provider mapping result:", response.data);
-        console.log("✅ Hotel data:", (response.data as any).hotel);
+        console.log("✅ Hotel data:", response.data.hotel);
         console.log("✅ Provider mappings:", response.data.provider_mappings);
+        console.log("✅ Total suppliers:", response.data.total_supplier);
+        console.log("✅ Provider list:", response.data.provider_list);
         setProviderMappingResult(response.data);
       } else {
         console.error("❌ Provider mapping request failed:", response.error);
@@ -1778,7 +1781,7 @@ export default function ProviderUpdatePage() {
                     Mapping Results
                   </h3>
                   <span className="text-sm text-gray-500">
-                    ITTID: {providerMappingResult.ittid} |{" "}
+                    ITTID: {providerMappingResult.hotel.ittid} |{" "}
                     {providerMappingResult.total_supplier} Suppliers
                   </span>
                 </div>
@@ -1793,7 +1796,7 @@ export default function ProviderUpdatePage() {
                           ITTID
                         </p>
                         <p className="text-lg font-bold text-blue-700">
-                          {providerMappingResult.ittid}
+                          {providerMappingResult.hotel.ittid}
                         </p>
                       </div>
                     </div>

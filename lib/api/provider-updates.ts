@@ -88,13 +88,31 @@ export interface HotelSearchResponse {
 }
 
 export interface ProviderMappingResponse {
-    ittid: string;
     total_supplier: number;
     provider_list: string[];
+    hotel: {
+        name: string;
+        primary_photo: string;
+        latitude: string;
+        created_at: string;
+        longitude: string;
+        updated_at: string;
+        address_line1: string;
+        map_status: string;
+        address_line2: string;
+        content_update_status: string;
+        postal_code: string;
+        ittid: string;
+        rating: string;
+        id: number;
+        property_type: string;
+    };
     provider_mappings: Array<{
+        id: number;
+        ittid: string;
         provider_name: string;
         provider_id: string;
-        updated_at: string;
+        full_details: any;
     }>;
 }
 
@@ -217,10 +235,9 @@ export class ProviderUpdatesApi {
         request: HotelSearchRequest
     ): Promise<ApiResponse<ProviderMappingResponse>> {
         try {
-            console.log('📡 Making request to provider mapping API:', request);
-            const response = await apiClient.post<ProviderMappingResponse>(
-                '/mapping/get-mapping-hotel-with-ittid',
-                request
+            console.log('📡 Making request to provider mapping API with ITTID:', request.ittid);
+            const response = await apiClient.get<ProviderMappingResponse>(
+                `/content/get-hotel-with-ittid/${request.ittid}`
             );
             console.log('📡 Provider mapping API response:', response);
 

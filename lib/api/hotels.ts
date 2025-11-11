@@ -606,7 +606,7 @@ export class HotelService {
                 postalcode: string;
                 chainname: string;
                 propertytype: string;
-            }>('/content/search_with_hotel_name', {
+            }>('/content/search-with-hotel-name', {
                 hotel_name: hotelName
             });
             return response;
