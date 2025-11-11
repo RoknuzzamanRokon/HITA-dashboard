@@ -122,7 +122,6 @@ export default function ProviderUpdatePage() {
   // Function to get display name for suppliers
   const getSupplierDisplayName = (supplier: string): string => {
     const displayNames: Record<string, string> = {
-      booking: "Booking.com",
       expedia: "Expedia",
       agoda: "Agoda",
       hotelbeds: "Hotelbeds",
@@ -513,33 +512,33 @@ export default function ProviderUpdatePage() {
     }
   };
 
-  const searchHotelByIttid = async () => {
-    if (!searchIttid) {
-      setError("Please enter an ITTID");
-      return;
-    }
+  // const searchHotelByIttid = async () => {
+  //   if (!searchIttid) {
+  //     setError("Please enter an ITTID");
+  //     return;
+  //   }
 
-    setLoading(true);
-    setError(null);
+  //   setLoading(true);
+  //   setError(null);
 
-    try {
-      const response = await ProviderUpdatesApi.getHotelMappingByIttid({
-        ittid: searchIttid,
-      });
+  //   try {
+  //     const response = await ProviderUpdatesApi.getHotelMappingByIttid({
+  //       ittid: searchIttid,
+  //     });
 
-      if (response.success && response.data) {
-        setSelectedHotel(response.data.hotel || null);
-      } else {
-        setError(response.error?.message || "Failed to fetch hotel mapping");
-      }
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to fetch hotel data"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  //     if (response.success && response.data) {
+  //       setSelectedHotel(response.data.hotel || null);
+  //     } else {
+  //       setError(response.error?.message || "Failed to fetch hotel mapping");
+  //     }
+  //   } catch (err) {
+  //     setError(
+  //       err instanceof Error ? err.message : "Failed to fetch hotel data"
+  //     );
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const searchByProviderIdentity = async () => {
     if (!providerIdentityName || !providerIdentityId) {
@@ -651,6 +650,8 @@ export default function ProviderUpdatePage() {
 
       if (response.success && response.data) {
         console.log("✅ Setting provider mapping result:", response.data);
+        console.log("✅ Hotel data:", (response.data as any).hotel);
+        console.log("✅ Provider mappings:", response.data.provider_mappings);
         setProviderMappingResult(response.data);
       } else {
         console.error("❌ Provider mapping request failed:", response.error);
@@ -1850,6 +1851,15 @@ export default function ProviderUpdatePage() {
                     <thead className="bg-gray-50">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Hotel Name
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Country Code
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Property Type
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Provider Name
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1860,31 +1870,86 @@ export default function ProviderUpdatePage() {
                         </th>
                       </tr>
                     </thead>
+
                     <tbody className="bg-white divide-y divide-gray-200">
                       {providerMappingResult.provider_mappings.map(
-                        (mapping, index) => (
-                          <tr key={index} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                              <div className="flex items-center">
-                                <UserCheck className="h-4 w-4 text-green-500 mr-2" />
-                                {getSupplierDisplayName(mapping.provider_name)}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              <code className="bg-gray-100 px-2 py-1 rounded text-xs">
-                                {mapping.provider_id}
-                              </code>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {new Date(
-                                mapping.updated_at
-                              ).toLocaleDateString()}{" "}
-                              {new Date(
-                                mapping.updated_at
-                              ).toLocaleTimeString()}
-                            </td>
-                          </tr>
-                        )
+                        (mapping: any, index) => {
+                          // Get hotel info from the main result object
+                          const result = providerMappingResult as any;
+                          const hotel = result.hotel || {};
+                          const details = mapping.full_details || {};
+
+                          // Priority: full_details > hotel object > default
+                          // Handle empty strings properly
+                          const hotelName = details.name || hotel.name || "N/A";
+                          const countryCode =
+                            details.country_code || hotel.country_code || "N/A";
+                          const propertyType =
+                            details.property_type ||
+                            (hotel.property_type &&
+                              hotel.property_type.trim()) ||
+                            "Hotel";
+
+                          // Debug log
+                          if (index === 0) {
+                            console.log("First row data:", {
+                              hotelName,
+                              countryCode,
+                              propertyType,
+                              hotelObject: hotel,
+                              detailsObject: details,
+                            });
+                          }
+
+                          return (
+                            <tr key={index} className="hover:bg-gray-50">
+                              {/* Hotel Name */}
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {hotelName}
+                              </td>
+
+                              {/* Country Code */}
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {countryCode}
+                              </td>
+
+                              {/* Property Type */}
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {propertyType}
+                              </td>
+
+                              {/* Provider Name */}
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                <div className="flex items-center">
+                                  <UserCheck className="h-4 w-4 text-green-500 mr-2" />
+                                  {getSupplierDisplayName(
+                                    mapping.provider_name
+                                  )}
+                                </div>
+                              </td>
+
+                              {/* Provider ID */}
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <code className="bg-gray-100 px-2 py-1 rounded text-xs">
+                                  {mapping.provider_id}
+                                </code>
+                              </td>
+
+                              {/* Last Updated */}
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {mapping.full_details?.created
+                                  ? new Date(
+                                      mapping.full_details.created
+                                    ).toLocaleDateString() +
+                                    " " +
+                                    new Date(
+                                      mapping.full_details.created
+                                    ).toLocaleTimeString()
+                                  : "—"}
+                              </td>
+                            </tr>
+                          );
+                        }
                       )}
                     </tbody>
                   </table>

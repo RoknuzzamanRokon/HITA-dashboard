@@ -211,31 +211,6 @@ export class ProviderUpdatesApi {
     }
 
     /**
-     * Get hotel mapping info using ITTID
-     */
-    static async getHotelMappingByIttid(
-        request: HotelSearchRequest
-    ): Promise<ApiResponse<HotelSearchResponse>> {
-        try {
-            const response = await apiClient.post<HotelSearchResponse>(
-                '/mapping/get-mapping-hotel-with-ittid',
-                request
-            );
-
-            return response;
-        } catch (error) {
-            console.error('Failed to fetch hotel mapping by ITTID:', error);
-            return {
-                success: false,
-                error: {
-                    status: 500,
-                    message: 'Failed to fetch hotel mapping data',
-                },
-            };
-        }
-    }
-
-    /**
      * Get provider mapping info using ITTID (comprehensive mapping data)
      */
     static async getProviderMappingByIttid(
