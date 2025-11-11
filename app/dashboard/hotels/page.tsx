@@ -800,7 +800,7 @@ export default function HotelsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-lg font-semibold text-gray-900">
-                      Hotel Search
+                      Search With Hotel Name
                     </h2>
                     <p className="text-sm text-gray-600">
                       Search and filter hotels by various criteria

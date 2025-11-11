@@ -11,6 +11,7 @@ import {
   Clock,
   Database,
   UserCheck,
+  Globe,
 } from "lucide-react";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { ProviderUpdatesApi } from "@/lib/api/provider-updates";
@@ -1854,6 +1855,12 @@ export default function ProviderUpdatePage() {
                     <thead className="bg-gray-50">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Provider Name
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Provider ID
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Hotel Name
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1863,10 +1870,7 @@ export default function ProviderUpdatePage() {
                           Property Type
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Provider Name
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Provider ID
+                          Country
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Last Updated
@@ -1906,21 +1910,6 @@ export default function ProviderUpdatePage() {
 
                           return (
                             <tr key={index} className="hover:bg-gray-50">
-                              {/* Hotel Name */}
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                {hotelName}
-                              </td>
-
-                              {/* Country Code */}
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {countryCode}
-                              </td>
-
-                              {/* Property Type */}
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {propertyType}
-                              </td>
-
                               {/* Provider Name */}
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                 <div className="flex items-center">
@@ -1937,16 +1926,39 @@ export default function ProviderUpdatePage() {
                                   {mapping.provider_id}
                                 </code>
                               </td>
+                              {/* Hotel Name */}
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {hotelName}
+                              </td>
+
+                              {/* Country Code */}
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {countryCode}
+                              </td>
+
+                              {/* Property Type */}
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {propertyType}
+                              </td>
+
+                              {/* Country Name */}
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                <div className="flex items-center">
+                                  <Globe className="h-4 w-4 text-blue-500 mr-2" />
+                                  {mapping.full_details?.address?.country ||
+                                    "N/A"}
+                                </div>
+                              </td>
 
                               {/* Last Updated */}
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {mapping.full_details?.created
+                                {mapping.updated_at
                                   ? new Date(
-                                      mapping.full_details.created
+                                      mapping.updated_at
                                     ).toLocaleDateString() +
                                     " " +
                                     new Date(
-                                      mapping.full_details.created
+                                      mapping.updated_at
                                     ).toLocaleTimeString()
                                   : "—"}
                               </td>
