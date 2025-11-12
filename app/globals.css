@@ -1,63 +1,132 @@
 @import "tailwindcss";
+@import "./dark-mode-utilities.css";
 
 /* Base styles for the admin management panel */
 :root {
-    --foreground-rgb: 0, 0, 0;
-    --background-start-rgb: 214, 219, 220;
-    --background-end-rgb: 255, 255, 255;
     --accent-color: blue;
     --border-radius: 0.5rem;
     --animation-duration: 150ms;
 }
 
-/* Light theme */
+/* Light theme - Modern, clean design */
 .light {
-    --foreground-rgb: 0, 0, 0;
-    --background-start-rgb: 214, 219, 220;
-    --background-end-rgb: 255, 255, 255;
+    /* Backgrounds */
     --bg-primary: 255, 255, 255;
     --bg-secondary: 249, 250, 251;
+    --bg-tertiary: 243, 244, 246;
+    --bg-hover: 243, 244, 246;
+    --bg-active: 229, 231, 235;
+
+    /* Text colors */
     --text-primary: 17, 24, 39;
-    --text-secondary: 107, 114, 128;
-    --border-color: 229, 231, 235;
+    --text-secondary: 75, 85, 99;
+    --text-tertiary: 107, 114, 128;
+    --text-inverse: 255, 255, 255;
+
+    /* Border colors */
+    --border-primary: 229, 231, 235;
+    --border-secondary: 209, 213, 219;
+    --border-focus: 59, 130, 246;
+
+    /* Status colors */
+    --success: 34, 197, 94;
+    --warning: 234, 179, 8;
+    --error: 239, 68, 68;
+    --info: 59, 130, 246;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
-/* Dark theme */
+/* Dark theme - Professional, high contrast design */
 .dark {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-    --bg-primary: 17, 24, 39;
-    --bg-secondary: 31, 41, 55;
-    --text-primary: 243, 244, 246;
-    --text-secondary: 156, 163, 175;
-    --border-color: 75, 85, 99;
+    /* Backgrounds - Using slate/gray palette for better readability */
+    --bg-primary: 15, 23, 42;
+    /* slate-900 */
+    --bg-secondary: 30, 41, 59;
+    /* slate-800 */
+    --bg-tertiary: 51, 65, 85;
+    /* slate-700 */
+    --bg-hover: 51, 65, 85;
+    /* slate-700 */
+    --bg-active: 71, 85, 105;
+    /* slate-600 */
+
+    /* Text colors - High contrast for accessibility */
+    --text-primary: 248, 250, 252;
+    /* slate-50 */
+    --text-secondary: 226, 232, 240;
+    /* slate-200 */
+    --text-tertiary: 203, 213, 225;
+    /* slate-300 */
+    --text-inverse: 15, 23, 42;
+    /* slate-900 */
+
+    /* Border colors - Subtle but visible */
+    --border-primary: 51, 65, 85;
+    /* slate-700 */
+    --border-secondary: 71, 85, 105;
+    /* slate-600 */
+    --border-focus: 96, 165, 250;
+    /* blue-400 */
+
+    /* Status colors - Adjusted for dark backgrounds */
+    --success: 74, 222, 128;
+    /* green-400 */
+    --warning: 250, 204, 21;
+    /* yellow-400 */
+    --error: 248, 113, 113;
+    /* red-400 */
+    --info: 96, 165, 250;
+    /* blue-400 */
+
+    /* Shadows - Lighter for dark mode */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
 }
 
 body {
-    color: rgb(var(--foreground-rgb));
-    background: linear-gradient(to bottom,
-            transparent,
-            rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
+    background-color: rgb(var(--bg-primary));
+    color: rgb(var(--text-primary));
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Custom scrollbar styles */
+/* Custom scrollbar styles - Theme aware */
 ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: rgb(var(--bg-secondary));
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 3px;
+    background: rgb(var(--border-secondary));
+    border-radius: 4px;
+    border: 2px solid rgb(var(--bg-secondary));
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
+    background: rgb(var(--text-tertiary));
+}
+
+.dark ::-webkit-scrollbar-track {
+    background: rgb(var(--bg-primary));
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background: rgb(var(--border-primary));
+    border: 2px solid rgb(var(--bg-primary));
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--border-secondary));
 }
 
 /* Focus styles for accessibility */

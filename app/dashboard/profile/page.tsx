@@ -57,11 +57,12 @@ export default function ProfilePage() {
 
   // State management
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Changed to false for instant render
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [initialLoad, setInitialLoad] = useState(true);
 
   // Edit form state
   const [editData, setEditData] = useState({
@@ -112,11 +113,11 @@ export default function ProfilePage() {
   }, []);
 
   /**
-   * Fetch user profile data with parallel API calls for better performance
+   * Fetch user profile data with optimistic loading
+   * Shows UI immediately with cached/default data, then updates in background
    */
   const fetchProfile = useCallback(async () => {
     try {
-      setLoading(true);
       setError(null);
 
       // Make all API calls in parallel for better performance
@@ -205,44 +206,64 @@ export default function ProfilePage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
-      setLoading(false);
+      setInitialLoad(false);
     }
-  }, []);
+  }, [measureApiCall]);
 
-  // Memoize formatted dates to avoid recalculation on every render
-  const formattedDates = useMemo(() => {
-    if (!profile) return {};
-
-    return {
-      createdAt: new Date(profile.createdAt).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      }),
-      lastLogin: profile.lastLogin
-        ? new Date(profile.lastLogin).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })
-        : null,
-      updatedAt: profile.updatedAt
-        ? new Date(profile.updatedAt).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })
-        : null,
-      createdAtShort: new Date(profile.createdAt).toLocaleDateString(),
-    };
-  }, [profile]);
-
-  // Fetch profile on mount
+  // Fetch profile on mount - runs in background
   useEffect(() => {
     if (isAuthenticated) {
+      // Fetch immediately without blocking UI
       fetchProfile();
     }
   }, [isAuthenticated, fetchProfile]);
+
+  // Show placeholder data while loading actual profile
+  const displayProfile = profile || {
+    id: "...",
+    username: "Loading...",
+    email: "loading@example.com",
+    role: UserRole.GENERAL_USER,
+    isActive: true,
+    pointBalance: 0,
+    totalPoints: 0,
+    paidStatus: "Loading...",
+    totalRequests: 0,
+    activityStatus: "Loading...",
+    createdAt: new Date().toISOString(),
+    activeSuppliers: [],
+  };
+
+  // Memoize formatted dates to avoid recalculation on every render
+  const formattedDates = useMemo(() => {
+    if (!displayProfile) return {};
+
+    return {
+      createdAt: new Date(displayProfile.createdAt).toLocaleDateString(
+        "en-US",
+        {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }
+      ),
+      lastLogin: displayProfile.lastLogin
+        ? new Date(displayProfile.lastLogin).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })
+        : null,
+      updatedAt: displayProfile.updatedAt
+        ? new Date(displayProfile.updatedAt).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })
+        : null,
+      createdAtShort: new Date(displayProfile.createdAt).toLocaleDateString(),
+    };
+  }, [displayProfile]);
 
   /**
    * Handle profile update
@@ -320,77 +341,20 @@ export default function ProfilePage() {
     }
   };
 
-  // Show loading while checking authentication
+  // Show minimal loading only for auth check
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your profile...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show loading skeleton while fetching profile data
-  if (loading && !profile) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto">
-          {/* Profile Header Skeleton */}
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden mb-8">
-            <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 px-8 py-12">
-              <div className="flex flex-col lg:flex-row items-center justify-between">
-                <div className="flex items-center space-x-6 mb-6 lg:mb-0">
-                  <div className="w-28 h-28 bg-white/20 rounded-2xl animate-pulse"></div>
-                  <div className="space-y-3">
-                    <div className="h-8 w-48 bg-white/20 rounded animate-pulse"></div>
-                    <div className="h-4 w-64 bg-white/20 rounded animate-pulse"></div>
-                    <div className="h-4 w-32 bg-white/20 rounded animate-pulse"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Content Skeleton */}
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-            <div className="xl:col-span-3 space-y-8">
-              <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-                <div className="animate-pulse space-y-4">
-                  <div className="h-6 w-48 bg-gray-200 rounded"></div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-4">
-                      <div className="h-20 bg-gray-100 rounded-xl"></div>
-                      <div className="h-20 bg-gray-100 rounded-xl"></div>
-                    </div>
-                    <div className="space-y-4">
-                      <div className="h-20 bg-gray-100 rounded-xl"></div>
-                      <div className="h-20 bg-gray-100 rounded-xl"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="space-y-8">
-              <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-                <div className="animate-pulse space-y-4">
-                  <div className="h-6 w-32 bg-gray-200 rounded"></div>
-                  <div className="space-y-3">
-                    <div className="h-16 bg-gray-100 rounded-xl"></div>
-                    <div className="h-16 bg-gray-100 rounded-xl"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <p className="text-gray-600">Loading...</p>
         </div>
       </div>
     );
   }
 
   // Don't render if not authenticated
-  if (!isAuthenticated || !profile) {
+  if (!isAuthenticated) {
     return null;
   }
 
@@ -398,6 +362,16 @@ export default function ProfilePage() {
     <PerformanceMonitor name="ProfilePage">
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
         <div className="mx-auto">
+          {/* Loading Indicator - Non-blocking */}
+          {initialLoad && (
+            <div className="fixed top-20 right-4 z-50 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2 animate-fade-in">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              <span className="text-sm font-medium">
+                Loading displayProfile...
+              </span>
+            </div>
+          )}
+
           {/* Success Message */}
           {successMessage && (
             <div className="mb-6 bg-white border-l-4 border-green-500 rounded-lg p-4 shadow-lg animate-fade-in">
@@ -448,34 +422,34 @@ export default function ProfilePage() {
                   <div className="relative">
                     <div className="w-28 h-28 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border-4 border-white/30 shadow-2xl">
                       <span className="text-4xl font-bold text-white">
-                        {profile.username.charAt(0).toUpperCase()}
+                        {displayProfile.username.charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div className="absolute -bottom-2 -right-2">
                       <div
                         className={`px-3 py-1 rounded-full text-xs font-semibold shadow-lg ${getStatusColor(
-                          profile.isActive
+                          displayProfile.isActive
                         )}`}
                       >
-                        {profile.isActive ? "✓ Active" : "Inactive"}
+                        {displayProfile.isActive ? "✓ Active" : "Inactive"}
                       </div>
                     </div>
                   </div>
                   <div className="text-white">
                     <h1 className="text-4xl font-bold mb-2">
-                      {profile.username}
+                      {displayProfile.username}
                     </h1>
                     <div className="flex items-center space-x-4 mb-3">
                       <div className="flex items-center space-x-2">
                         <Mail className="h-4 w-4 text-blue-200" />
-                        <p className="text-blue-100">{profile.email}</p>
+                        <p className="text-blue-100">{displayProfile.email}</p>
                       </div>
                       <div
                         className={`px-3 py-1 rounded-full text-sm font-semibold ${getRoleColor(
-                          profile.role
+                          displayProfile.role
                         )}`}
                       >
-                        {getRoleLabel(profile.role)}
+                        {getRoleLabel(displayProfile.role)}
                       </div>
                     </div>
                     <p className="text-blue-200 text-sm">
@@ -574,8 +548,8 @@ export default function ProfilePage() {
                         onClick={() => {
                           setIsEditing(false);
                           setEditData({
-                            username: profile.username,
-                            email: profile.email,
+                            username: displayProfile.username,
+                            email: displayProfile.email,
                           });
                         }}
                         className="px-6 py-3 rounded-xl"
@@ -592,14 +566,16 @@ export default function ProfilePage() {
                           Username
                         </label>
                         <p className="text-lg text-gray-900 font-semibold">
-                          {profile.username}
+                          {displayProfile.username}
                         </p>
                       </div>
                       <div className="p-4 bg-gray-50 rounded-xl">
                         <label className="block text-sm font-semibold text-gray-500 mb-2">
                           Email Address
                         </label>
-                        <p className="text-lg text-gray-900">{profile.email}</p>
+                        <p className="text-lg text-gray-900">
+                          {displayProfile.email}
+                        </p>
                       </div>
                     </div>
                     <div className="space-y-6">
@@ -609,10 +585,10 @@ export default function ProfilePage() {
                         </label>
                         <div
                           className={`inline-flex px-4 py-2 rounded-full text-sm font-semibold ${getRoleColor(
-                            profile.role
+                            displayProfile.role
                           )}`}
                         >
-                          {getRoleLabel(profile.role)}
+                          {getRoleLabel(displayProfile.role)}
                         </div>
                       </div>
                       <div className="p-4 bg-gray-50 rounded-xl">
@@ -622,7 +598,7 @@ export default function ProfilePage() {
                         <div className="flex items-center space-x-2">
                           <IdCard className="h-4 w-4 text-gray-400" />
                           <code className="text-sm text-gray-600 font-mono bg-gray-100 px-2 py-1 rounded">
-                            {profile.id}
+                            {displayProfile.id}
                           </code>
                         </div>
                       </div>
@@ -653,10 +629,11 @@ export default function ProfilePage() {
                         <TrendingUp className="h-4 w-4 text-amber-200" />
                       </div>
                       <p className="text-3xl font-bold">
-                        {profile.pointBalance.toLocaleString()}
+                        {displayProfile.pointBalance.toLocaleString()}
                       </p>
                       <div className="mt-2 text-amber-100 text-sm">
-                        Total Earned: {profile.totalPoints.toLocaleString()}
+                        Total Earned:{" "}
+                        {displayProfile.totalPoints.toLocaleString()}
                       </div>
                     </div>
 
@@ -664,18 +641,18 @@ export default function ProfilePage() {
                       <div className="text-center">
                         <Badge
                           className={
-                            profile.paidStatus === "Paid"
+                            displayProfile.paidStatus === "Paid"
                               ? "bg-green-100 text-green-800 px-4 py-2 text-sm"
-                              : profile.paidStatus ===
+                              : displayProfile.paidStatus ===
                                 "I am super user, I have unlimited points."
                               ? "bg-purple-100 text-purple-800 px-4 py-2 text-sm"
                               : "bg-red-100 text-red-800 px-4 py-2 text-sm"
                           }
                         >
-                          {profile.paidStatus ===
+                          {displayProfile.paidStatus ===
                           "I am super user, I have unlimited points."
                             ? "✨ Unlimited Points"
-                            : profile.paidStatus}
+                            : displayProfile.paidStatus}
                         </Badge>
                       </div>
                     </div>
@@ -704,7 +681,7 @@ export default function ProfilePage() {
                               Total Requests
                             </p>
                             <p className="text-2xl font-bold">
-                              {profile.totalRequests}
+                              {displayProfile.totalRequests}
                             </p>
                           </div>
                           <Activity className="h-8 w-8 text-green-200" />
@@ -718,12 +695,14 @@ export default function ProfilePage() {
                               Status
                             </p>
                             <p className="text-lg font-semibold text-gray-900">
-                              {profile.activityStatus}
+                              {displayProfile.activityStatus}
                             </p>
                           </div>
                           <div
                             className={`w-3 h-3 rounded-full ${
-                              profile.isActive ? "bg-green-500" : "bg-red-500"
+                              displayProfile.isActive
+                                ? "bg-green-500"
+                                : "bg-red-500"
                             }`}
                           ></div>
                         </div>
@@ -763,7 +742,7 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  {profile.lastLogin && (
+                  {displayProfile.lastLogin && (
                     <div className="flex items-start space-x-4">
                       <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                         <Clock className="h-5 w-5 text-blue-600" />
@@ -779,7 +758,7 @@ export default function ProfilePage() {
                     </div>
                   )}
 
-                  {profile.updatedAt && (
+                  {displayProfile.updatedAt && (
                     <div className="flex items-start space-x-4">
                       <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
                         <Edit className="h-5 w-5 text-amber-600" />
@@ -796,7 +775,7 @@ export default function ProfilePage() {
                   )}
 
                   <PermissionGuard permissions={[Permission.VIEW_ALL_USERS]}>
-                    {profile.createdBy && (
+                    {displayProfile.createdBy && (
                       <div className="flex items-start space-x-4">
                         <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
                           <User className="h-5 w-5 text-gray-600" />
@@ -806,7 +785,7 @@ export default function ProfilePage() {
                             Created By
                           </p>
                           <p className="text-sm text-gray-600">
-                            {profile.createdBy}
+                            {displayProfile.createdBy}
                           </p>
                         </div>
                       </div>

@@ -129,8 +129,8 @@ export default function DashboardPage() {
   // Show loading while checking authentication
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[rgb(var(--bg-primary))]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
       </div>
     );
   }
@@ -145,7 +145,7 @@ export default function DashboardPage() {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-[rgb(var(--text-primary))]">
               Real-Time Dashboard
             </h1>
             <div className="mt-1 flex items-center space-x-4">
@@ -155,22 +155,22 @@ export default function DashboardPage() {
                   Permission.MANAGE_SYSTEM_SETTINGS,
                 ]}
                 fallback={
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-[rgb(var(--text-secondary))]">
                     Welcome to your Dashboard
                   </p>
                 }
               >
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-[rgb(var(--text-secondary))]">
                   Welcome to the Admin Management Panel
                 </p>
               </PermissionGuard>
               {lastFetch && (
-                <div className="flex items-center space-x-2 text-xs text-gray-500">
+                <div className="flex items-center space-x-2 text-xs text-[rgb(var(--text-tertiary))]">
                   <div
                     className={`w-2 h-2 rounded-full ${
                       realTimeEnabled
-                        ? "bg-green-500 animate-pulse"
-                        : "bg-gray-400"
+                        ? "bg-green-500 dark:bg-green-400 animate-pulse"
+                        : "bg-gray-400 dark:bg-gray-600"
                     }`}
                   ></div>
                   <span>Last updated: {lastFetch.toLocaleTimeString()}</span>
@@ -181,10 +181,10 @@ export default function DashboardPage() {
           <div className="flex space-x-2">
             <button
               onClick={() => setRealTimeEnabled(!realTimeEnabled)}
-              className={`px-4 py-2 rounded-md flex items-center space-x-2 ${
+              className={`px-4 py-2 rounded-md flex items-center space-x-2 transition-colors ${
                 realTimeEnabled
-                  ? "bg-green-600 text-white hover:bg-green-700"
-                  : "bg-gray-600 text-black hover:bg-gray-700"
+                  ? "bg-green-600 dark:bg-green-500 text-white hover:bg-green-700 dark:hover:bg-green-600"
+                  : "bg-gray-600 dark:bg-gray-700 text-white hover:bg-gray-700 dark:hover:bg-gray-600"
               }`}
             >
               <Activity className="w-4 h-4" />
@@ -193,7 +193,7 @@ export default function DashboardPage() {
             <button
               onClick={handleRefreshStats}
               disabled={statsLoading}
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center space-x-2"
+              className="px-4 py-2 bg-green-600 dark:bg-green-500 text-white rounded-md hover:bg-green-700 dark:hover:bg-green-600 disabled:opacity-50 flex items-center space-x-2 transition-colors"
             >
               <RefreshCw
                 className={`w-4 h-4 ${statsLoading ? "animate-spin" : ""}`}
@@ -209,7 +209,7 @@ export default function DashboardPage() {
               <button
                 onClick={handleTestAPI}
                 disabled={testingAPI}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center space-x-2"
+                className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 flex items-center space-x-2 transition-colors"
               >
                 <RefreshCw
                   className={`w-4 h-4 ${testingAPI ? "animate-spin" : ""}`}
@@ -218,7 +218,7 @@ export default function DashboardPage() {
               </button>
               <button
                 onClick={handleCheckToken}
-                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 flex items-center space-x-2"
+                className="px-4 py-2 bg-purple-600 dark:bg-purple-500 text-white rounded-md hover:bg-purple-700 dark:hover:bg-purple-600 flex items-center space-x-2 transition-colors"
               >
                 <Shield className="w-4 h-4" />
                 <span>Check Token</span>
@@ -478,7 +478,7 @@ export default function DashboardPage() {
 
       {/* Role-Based Navigation */}
       <div className="mb-8">
-        <h2 className="text-lg font-medium text-gray-900 mb-4">
+        <h2 className="text-lg font-medium text-[rgb(var(--text-primary))] mb-4">
           Available Features
         </h2>
         <RoleBasedNav variant="grid" />

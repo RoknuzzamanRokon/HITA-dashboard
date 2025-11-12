@@ -28,10 +28,12 @@ export function RootLayout({ children }: RootLayoutProps) {
   // Show loading spinner while checking authentication
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="min-h-screen flex items-center justify-center bg-[rgb(var(--bg-primary))]">
         <div className="flex flex-col items-center gap-3">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 dark:border-blue-400"></div>
-          <p className="text-blue-600 dark:text-blue-400 font-medium">Loading...</p>
+          <p className="text-blue-600 dark:text-blue-400 font-medium">
+            Loading...
+          </p>
         </div>
       </div>
     );
@@ -43,7 +45,7 @@ export function RootLayout({ children }: RootLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
+    <div className="min-h-screen bg-[rgb(var(--bg-primary))] transition-colors duration-300">
       {/* Navbar */}
       <Navbar
         user={user}
@@ -66,8 +68,8 @@ export function RootLayout({ children }: RootLayoutProps) {
             sidebarOpen ? "lg:ml-72" : "lg:ml-20"
           )}
         >
-          <div className="p-6 pt-20  mx-auto">
-            <div className="bg-white dark:bg-gray-200 rounded-xl shadow-sm border border-gray-100 dark:border-gray-400">
+          <div className="p-6 pt-20 mx-auto">
+            <div className="bg-[rgb(var(--bg-secondary))] rounded-xl shadow-[var(--shadow-sm)] border border-[rgb(var(--border-primary))]">
               <div className="p-6">{children}</div>
             </div>
           </div>

@@ -127,21 +127,9 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
 
   return (
     <nav
-      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 dark:text-white"
+      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-[rgba(var(--bg-primary),0.95)] backdrop-blur-xl border-b border-[rgb(var(--border-primary))]"
       style={{
-        background:
-          theme === "dark"
-            ? "linear-gradient(135deg, rgba(17, 24, 39, 0.95) 0%, rgba(17, 24, 39, 0.8) 100%)"
-            : "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.8) 100%)",
-        backdropFilter: "blur(20px)",
-        borderBottom:
-          theme === "dark"
-            ? "1px solid rgba(55, 65, 81, 0.3)"
-            : "1px solid rgba(255, 255, 255, 0.2)",
-        boxShadow:
-          theme === "dark"
-            ? "0 8px 32px rgba(0, 0, 0, 0.3)"
-            : "0 8px 32px rgba(0, 0, 0, 0.1)",
+        boxShadow: "var(--shadow-lg)",
       }}
     >
       <div className="px-4 sm:px-6 lg:px-8">
@@ -175,7 +163,7 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
               <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
                 <Shield className="h-4 w-4 text-white" />
               </div>
-              <h1 className="text-xl font-bold text-gray-800 tracking-tight">
+              <h1 className="text-xl font-bold text-[rgb(var(--text-primary))] tracking-tight">
                 Admin Panel
               </h1>
             </div>

@@ -1,0 +1,294 @@
+/* Dark Mode Utility Classes */
+
+/* Background utilities */
+.bg-primary {
+    background-color: rgb(var(--bg-primary));
+}
+
+.bg-secondary {
+    background-color: rgb(var(--bg-secondary));
+}
+
+.bg-tertiary {
+    background-color: rgb(var(--bg-tertiary));
+}
+
+.bg-hover:hover {
+    background-color: rgb(var(--bg-hover));
+}
+
+/* Text utilities */
+.text-primary {
+    color: rgb(var(--text-primary));
+}
+
+.text-secondary {
+    color: rgb(var(--text-secondary));
+}
+
+.text-tertiary {
+    color: rgb(var(--text-tertiary));
+}
+
+/* Border utilities */
+.border-primary {
+    border-color: rgb(var(--border-primary));
+}
+
+.border-secondary {
+    border-color: rgb(var(--border-secondary));
+}
+
+/* Card styles */
+.card {
+    background-color: rgb(var(--bg-primary));
+    border: 1px solid rgb(var(--border-primary));
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: var(--shadow-lg);
+    border-color: rgb(var(--border-secondary));
+}
+
+/* Button styles */
+.btn-primary {
+    background-color: rgb(var(--info));
+    color: rgb(var(--text-inverse));
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background-color: rgb(var(--bg-secondary));
+    color: rgb(var(--text-primary));
+    border: 1px solid rgb(var(--border-primary));
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background-color: rgb(var(--bg-hover));
+}
+
+/* Input styles */
+.input {
+    background-color: rgb(var(--bg-primary));
+    color: rgb(var(--text-primary));
+    border: 1px solid rgb(var(--border-primary));
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--border-radius);
+    transition: all 0.2s ease;
+}
+
+.input:focus {
+    outline: none;
+    border-color: rgb(var(--border-focus));
+    box-shadow: 0 0 0 3px rgba(var(--border-focus), 0.1);
+}
+
+.input::placeholder {
+    color: rgb(var(--text-tertiary));
+}
+
+/* Status badges */
+.badge-success {
+    background-color: rgba(var(--success), 0.1);
+    color: rgb(var(--success));
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.badge-warning {
+    background-color: rgba(var(--warning), 0.1);
+    color: rgb(var(--warning));
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.badge-error {
+    background-color: rgba(var(--error), 0.1);
+    color: rgb(var(--error));
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.badge-info {
+    background-color: rgba(var(--info), 0.1);
+    color: rgb(var(--info));
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Modal/Dialog styles */
+.modal-overlay {
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.dark .modal-overlay {
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.modal-content {
+    background-color: rgb(var(--bg-primary));
+    border: 1px solid rgb(var(--border-primary));
+    border-radius: calc(var(--border-radius) * 2);
+    box-shadow: var(--shadow-xl);
+}
+
+/* Dropdown styles */
+.dropdown {
+    background-color: rgb(var(--bg-primary));
+    border: 1px solid rgb(var(--border-primary));
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+}
+
+.dropdown-item {
+    color: rgb(var(--text-primary));
+    padding: 0.5rem 1rem;
+    transition: background-color 0.15s ease;
+}
+
+.dropdown-item:hover {
+    background-color: rgb(var(--bg-hover));
+}
+
+/* Table styles */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table thead {
+    background-color: rgb(var(--bg-secondary));
+    border-bottom: 2px solid rgb(var(--border-primary));
+}
+
+.table th {
+    color: rgb(var(--text-secondary));
+    font-weight: 600;
+    text-align: left;
+    padding: 0.75rem 1rem;
+}
+
+.table td {
+    color: rgb(var(--text-primary));
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgb(var(--border-primary));
+}
+
+.table tbody tr:hover {
+    background-color: rgb(var(--bg-hover));
+}
+
+/* Sidebar styles */
+.sidebar {
+    background-color: rgb(var(--bg-primary));
+    border-right: 1px solid rgb(var(--border-primary));
+}
+
+.sidebar-item {
+    color: rgb(var(--text-secondary));
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+}
+
+.sidebar-item:hover {
+    background-color: rgb(var(--bg-hover));
+    color: rgb(var(--text-primary));
+}
+
+.sidebar-item.active {
+    background-color: rgba(var(--info), 0.1);
+    color: rgb(var(--info));
+    border-left: 3px solid rgb(var(--info));
+}
+
+/* Loading skeleton */
+.skeleton {
+    background: linear-gradient(90deg,
+            rgb(var(--bg-secondary)) 25%,
+            rgb(var(--bg-tertiary)) 50%,
+            rgb(var(--bg-secondary)) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: var(--border-radius);
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* Divider */
+.divider {
+    height: 1px;
+    background-color: rgb(var(--border-primary));
+    margin: 1rem 0;
+}
+
+/* Code block */
+.code-block {
+    background-color: rgb(var(--bg-secondary));
+    color: rgb(var(--text-primary));
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    border: 1px solid rgb(var(--border-primary));
+    font-family: 'Courier New', monospace;
+    overflow-x: auto;
+}
+
+/* Alert styles */
+.alert {
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    border: 1px solid;
+}
+
+.alert-success {
+    background-color: rgba(var(--success), 0.1);
+    border-color: rgb(var(--success));
+    color: rgb(var(--success));
+}
+
+.alert-warning {
+    background-color: rgba(var(--warning), 0.1);
+    border-color: rgb(var(--warning));
+    color: rgb(var(--warning));
+}
+
+.alert-error {
+    background-color: rgba(var(--error), 0.1);
+    border-color: rgb(var(--error));
+    color: rgb(var(--error));
+}
+
+.alert-info {
+    background-color: rgba(var(--info), 0.1);
+    border-color: rgb(var(--info));
+    color: rgb(var(--info));
+}
