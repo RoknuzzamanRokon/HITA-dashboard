@@ -863,11 +863,50 @@ export default function UsersPage() {
         console.error("❌ Failed to create user - Full response:", response);
         console.error("❌ Error object:", response?.error);
         console.error("❌ Error type:", typeof response?.error);
-        const errorMessage =
-          response?.error?.message ||
-          (typeof response?.error === "string"
-            ? response.error
-            : "Failed to create user. Please check console for details.");
+
+        // Parse the error message from the backend
+        let errorMessage = "Failed to create user";
+
+        if (response?.error) {
+          // Check if error has details (Pydantic validation errors)
+          if (response.error.details) {
+            console.log("❌ Error details:", response.error.details);
+
+            // Handle array of validation errors
+            if (Array.isArray(response.error.details)) {
+              const validationErrors = response.error.details
+                .map((err: any) => {
+                  if (typeof err === "string") return err;
+                  if (err.msg) return err.msg;
+                  if (err.message) return err.message;
+                  return JSON.stringify(err);
+                })
+                .join(", ");
+              errorMessage = validationErrors || errorMessage;
+            } else if (typeof response.error.details === "string") {
+              errorMessage = response.error.details;
+            }
+          }
+          // Check if error has a message
+          else if (response.error.message) {
+            errorMessage = response.error.message;
+          }
+          // Check if error is a string
+          else if (typeof response.error === "string") {
+            errorMessage = response.error;
+          }
+        }
+
+        // Make the error message more user-friendly
+        if (
+          errorMessage.includes(
+            "Password must contain at least one uppercase letter"
+          )
+        ) {
+          errorMessage =
+            "Password must contain at least one uppercase letter. Please update the password and try again.";
+        }
+
         setCreateUserError(errorMessage);
       }
     } catch (err) {

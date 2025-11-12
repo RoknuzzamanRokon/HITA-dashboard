@@ -13,7 +13,7 @@ import { Modal } from "@/lib/components/ui/modal";
 import { UserRole } from "@/lib/types/auth";
 import { UserFormData, UserListItem } from "@/lib/types/user";
 import { useAuth } from "@/lib/contexts/auth-context";
-import { Save, X, Eye, EyeOff } from "lucide-react";
+import { Save, X } from "lucide-react";
 
 interface UserFormProps {
   user?: UserListItem | null;
@@ -52,7 +52,6 @@ export function UserForm({
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
-  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialize form data when user changes
@@ -177,11 +176,24 @@ export function UserForm({
       await onSubmit(submitData);
       onClose();
     } catch (error) {
+      let errorMessage = "An error occurred while saving the user";
+
+      if (error instanceof Error) {
+        errorMessage = error.message;
+
+        // Make password validation errors more user-friendly
+        if (
+          errorMessage.includes(
+            "Password must contain at least one uppercase letter"
+          )
+        ) {
+          errorMessage =
+            "Password must contain at least one uppercase letter. Please update the password and try again.";
+        }
+      }
+
       setErrors({
-        general:
-          error instanceof Error
-            ? error.message
-            : "An error occurred while saving the user",
+        general: errorMessage,
       });
     } finally {
       setIsSubmitting(false);
@@ -277,32 +289,25 @@ export function UserForm({
                   : "(leave blank to skip)"}
               </span>
             </label>
-            <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                value={formData.password}
-                onChange={(e) => handleInputChange("password", e.target.value)}
-                placeholder={
-                  isEditing
-                    ? "Enter new password (optional)"
-                    : "Leave blank to skip password"
-                }
-                error={errors.password}
-                disabled={isSubmitting || loading}
-              />
-              <button
-                type="button"
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4 text-gray-400" />
-                ) : (
-                  <Eye className="h-4 w-4 text-gray-400" />
-                )}
-              </button>
-            </div>
+            <Input
+              id="password"
+              type="password"
+              value={formData.password}
+              onChange={(e) => handleInputChange("password", e.target.value)}
+              placeholder={
+                isEditing
+                  ? "Enter new password (optional)"
+                  : "Leave blank to skip password"
+              }
+              error={errors.password}
+              disabled={isSubmitting || loading}
+            />
+            {formData.password && formData.password.length > 0 && (
+              <p className="mt-1 text-xs text-amber-600 font-medium">
+                ⚠️ Backend requires: Password must contain at least one
+                uppercase letter
+              </p>
+            )}
             {errors.password && (
               <p className="mt-1 text-sm text-red-600">{errors.password}</p>
             )}
