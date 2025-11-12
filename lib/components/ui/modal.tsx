@@ -19,6 +19,9 @@ interface ModalProps {
   closeOnOverlayClick?: boolean;
   className?: string;
   animation?: "slide" | "fade" | "scale";
+  role?: "dialog" | "alertdialog";
+  "aria-labelledby"?: string;
+  "aria-describedby"?: string;
 }
 
 const sizeClasses = {
@@ -55,6 +58,9 @@ export function Modal({
   closeOnOverlayClick = true,
   className,
   animation = "slide",
+  role = "dialog",
+  "aria-labelledby": ariaLabelledBy,
+  "aria-describedby": ariaDescribedBy,
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElementRef = useRef<HTMLElement | null>(null);
@@ -154,8 +160,9 @@ export function Modal({
   return (
     <div
       className="fixed inset-0 z-50 overflow-y-auto"
-      aria-labelledby={title ? "modal-title" : undefined}
-      role="dialog"
+      aria-labelledby={ariaLabelledBy || (title ? "modal-title" : undefined)}
+      aria-describedby={ariaDescribedBy}
+      role={role}
       aria-modal="true"
     >
       {/* Enhanced Backdrop with blur */}
