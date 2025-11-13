@@ -413,7 +413,7 @@ export function HotelSearch({ onHotelSelect, className }: HotelSearchProps) {
                         <li>
                           Backend server is running on{" "}
                           {process.env.NEXT_PUBLIC_API_BASE_URL ||
-                            "http://127.0.0.1:8002"}
+                            "http://127.0.0.1:8001"}
                         </li>
                         <li>No firewall blocking the connection</li>
                         <li>CORS is properly configured</li>

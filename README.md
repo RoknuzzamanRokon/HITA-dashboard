@@ -4,9 +4,9 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 This frontend application requires a backend API server to be running. The backend should be available at:
 
-- **Default URL**: `http://127.0.0.1:8002`
+- **Default URL**: `http://127.0.0.1:8001`
 - **API Version**: `v1.0`
-- **Full API URL**: `http://127.0.0.1:8002/v1.0`
+- **Full API URL**: `http://127.0.0.1:8001/v1.0`
 
 ### Backend Requirements
 
@@ -46,7 +46,7 @@ Create a `.env.local` file in the root directory with the following variables:
 
 ```env
 # API Configuration
-NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8002
+NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8001
 NEXT_PUBLIC_API_VERSION=v1.0
 
 # Disable mock auth - only use real API
@@ -81,7 +81,7 @@ When running in development mode (`NODE_ENV=development`), the application autom
 
 If you see "Cannot connect to backend API" errors:
 
-1. **Check Backend Status**: Ensure your backend server is running at `http://127.0.0.1:8002`
+1. **Check Backend Status**: Ensure your backend server is running at `http://127.0.0.1:8001`
 2. **Verify CORS**: Backend must allow requests from `http://localhost:3000`
 3. **Check Network**: Use browser DevTools Network tab to inspect failed requests
 4. **Authentication**: Ensure you're logged in with valid credentials

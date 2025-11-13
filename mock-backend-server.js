@@ -292,7 +292,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-const PORT = 8002;
+const PORT = 8001;
 const HOST = "127.0.0.1";
 
 server.listen(PORT, HOST, () => {
