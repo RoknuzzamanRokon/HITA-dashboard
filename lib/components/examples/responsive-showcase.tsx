@@ -13,8 +13,6 @@ import {
 } from "../layout/responsive-layout";
 import {
   ResponsiveWrapper,
-  ResponsiveText,
-  ResponsiveSpacing,
   LazyWrapper,
   Card,
   CardHeader,
@@ -37,17 +35,17 @@ export const ResponsiveShowcase: React.FC = () => {
 
   return (
     <ResponsiveContainer maxWidth="xl" padding="md">
-      <ResponsiveSpacing size="lg">
-        <ResponsiveText as="h1" size="3xl" className="text-center mb-8">
+      <div className="space-y-8">
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center mb-8">
           Responsive Design Showcase
-        </ResponsiveText>
+        </h1>
 
         {/* Device Detection Display */}
         <Card className="mb-8">
           <CardHeader>
-            <ResponsiveText as="h2" size="xl">
+            <h2 className="text-xl md:text-2xl font-semibold">
               Device Detection
-            </ResponsiveText>
+            </h2>
           </CardHeader>
           <CardContent>
             <ResponsiveStack
@@ -59,36 +57,36 @@ export const ResponsiveShowcase: React.FC = () => {
                   isMobile ? "bg-blue-100" : "bg-gray-100"
                 }`}
               >
-                <ResponsiveText size="lg" className="font-semibold">
+                <p className="text-lg md:text-xl font-semibold">
                   Mobile: {isMobile ? "✓" : "✗"}
-                </ResponsiveText>
+                </p>
               </div>
               <div
                 className={`p-4 rounded-lg ${
                   isTablet ? "bg-green-100" : "bg-gray-100"
                 }`}
               >
-                <ResponsiveText size="lg" className="font-semibold">
+                <p className="text-lg md:text-xl font-semibold">
                   Tablet: {isTablet ? "✓" : "✗"}
-                </ResponsiveText>
+                </p>
               </div>
               <div
                 className={`p-4 rounded-lg ${
                   isDesktop ? "bg-purple-100" : "bg-gray-100"
                 }`}
               >
-                <ResponsiveText size="lg" className="font-semibold">
+                <p className="text-lg md:text-xl font-semibold">
                   Desktop: {isDesktop ? "✓" : "✗"}
-                </ResponsiveText>
+                </p>
               </div>
               <div
                 className={`p-4 rounded-lg ${
                   isTouchDevice ? "bg-orange-100" : "bg-gray-100"
                 }`}
               >
-                <ResponsiveText size="lg" className="font-semibold">
+                <p className="text-lg md:text-xl font-semibold">
                   Touch: {isTouchDevice ? "✓" : "✗"}
-                </ResponsiveText>
+                </p>
               </div>
             </ResponsiveStack>
           </CardContent>
@@ -97,9 +95,9 @@ export const ResponsiveShowcase: React.FC = () => {
         {/* Responsive Grid Example */}
         <Card className="mb-8">
           <CardHeader>
-            <ResponsiveText as="h2" size="xl">
+            <h2 className="text-xl md:text-2xl font-semibold">
               Responsive Grid
-            </ResponsiveText>
+            </h2>
           </CardHeader>
           <CardContent>
             <ResponsiveGrid
@@ -108,7 +106,7 @@ export const ResponsiveShowcase: React.FC = () => {
             >
               {Array.from({ length: 6 }, (_, i) => (
                 <Card key={i} className="p-4">
-                  <ResponsiveText size="base">Grid Item {i + 1}</ResponsiveText>
+                  <p className="text-base md:text-lg">Grid Item {i + 1}</p>
                 </Card>
               ))}
             </ResponsiveGrid>
@@ -118,9 +116,9 @@ export const ResponsiveShowcase: React.FC = () => {
         {/* Touch-Friendly Buttons */}
         <Card className="mb-8">
           <CardHeader>
-            <ResponsiveText as="h2" size="xl">
+            <h2 className="text-xl md:text-2xl font-semibold">
               Touch-Friendly Buttons
-            </ResponsiveText>
+            </h2>
           </CardHeader>
           <CardContent>
             <ResponsiveStack
@@ -149,16 +147,14 @@ export const ResponsiveShowcase: React.FC = () => {
         {/* Lazy Loading Example */}
         <Card className="mb-8">
           <CardHeader>
-            <ResponsiveText as="h2" size="xl">
-              Lazy Loading
-            </ResponsiveText>
+            <h2 className="text-xl md:text-2xl font-semibold">Lazy Loading</h2>
           </CardHeader>
           <CardContent>
             <LazyWrapper minHeight="200px" showSkeleton>
               <div className="p-8 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg">
-                <ResponsiveText size="lg" className="text-center">
+                <p className="text-lg md:text-xl text-center">
                   This content was lazy loaded!
-                </ResponsiveText>
+                </p>
               </div>
             </LazyWrapper>
           </CardContent>
@@ -167,20 +163,20 @@ export const ResponsiveShowcase: React.FC = () => {
         {/* Touch Gestures Example */}
         <Card className="mb-8">
           <CardHeader>
-            <ResponsiveText as="h2" size="xl">
+            <h2 className="text-xl md:text-2xl font-semibold">
               Touch Gestures
-            </ResponsiveText>
+            </h2>
           </CardHeader>
           <CardContent>
             <div
               {...touchGestures}
               className="p-8 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 text-center"
             >
-              <ResponsiveText size="base">
+              <p className="text-base md:text-lg">
                 {isTouchDevice
                   ? "Try swiping on this area (check console for gesture events)"
                   : "Touch gestures are available on touch devices"}
-              </ResponsiveText>
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -188,9 +184,9 @@ export const ResponsiveShowcase: React.FC = () => {
         {/* Responsive Wrapper Example */}
         <Card className="mb-8">
           <CardHeader>
-            <ResponsiveText as="h2" size="xl">
+            <h2 className="text-xl md:text-2xl font-semibold">
               Responsive Wrapper
-            </ResponsiveText>
+            </h2>
           </CardHeader>
           <CardContent>
             <ResponsiveWrapper
@@ -201,15 +197,12 @@ export const ResponsiveShowcase: React.FC = () => {
               centerOnDesktop
               className="p-6 bg-gradient-to-br from-green-400 to-blue-500 text-white rounded-lg"
             >
-              <ResponsiveText size="lg" className="text-center">
+              <p className="text-lg md:text-xl text-center">
                 This wrapper adapts to your device automatically!
-              </ResponsiveText>
-              <ResponsiveText
-                size="base"
-                className="text-center mt-2 opacity-90"
-              >
+              </p>
+              <p className="text-base md:text-lg text-center mt-2 opacity-90">
                 Full width on mobile, centered on desktop, touch-optimized
-              </ResponsiveText>
+              </p>
             </ResponsiveWrapper>
           </CardContent>
         </Card>
@@ -221,9 +214,9 @@ export const ResponsiveShowcase: React.FC = () => {
           title="Responsive Modal"
           size="md"
         >
-          <ResponsiveText size="base" className="mb-4">
+          <p className="text-base md:text-lg mb-4">
             This modal adapts to different screen sizes:
-          </ResponsiveText>
+          </p>
           <ul className="list-disc list-inside space-y-2">
             <li>Full screen on mobile devices</li>
             <li>Centered dialog on tablets and desktops</li>
@@ -239,7 +232,7 @@ export const ResponsiveShowcase: React.FC = () => {
             </TouchFriendlyButton>
           </div>
         </ResponsiveModal>
-      </ResponsiveSpacing>
+      </div>
     </ResponsiveContainer>
   );
 };

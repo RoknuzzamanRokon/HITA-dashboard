@@ -29,11 +29,13 @@ const defaultSettings: ThemeSettings = {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
   const [settings, setSettings] = useState<ThemeSettings>(defaultSettings);
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
 
   // Load settings from localStorage on mount
   useEffect(() => {
+    setMounted(true);
     const savedSettings = localStorage.getItem("theme-settings");
     if (savedSettings) {
       try {
@@ -68,8 +70,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return () => mediaQuery.removeEventListener("change", updateResolvedTheme);
   }, [settings.theme]);
 
-  // Apply theme to document
+  // Apply theme to document (only after mount to avoid hydration issues)
   useEffect(() => {
+    if (!mounted) return;
+
     const root = document.documentElement;
 
     // Apply theme class
@@ -95,7 +99,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } else {
       root.style.setProperty("--animation-duration", "150ms");
     }
-  }, [resolvedTheme, settings]);
+  }, [mounted, resolvedTheme, settings]);
 
   const updateSettings = (newSettings: Partial<ThemeSettings>) => {
     const updatedSettings = { ...settings, ...newSettings };
@@ -117,21 +121,21 @@ export function useTheme() {
   if (context === undefined) {
     throw new Error("useTheme must be used within a ThemeProvider");
   }
-  
+
   // Add simplified theme helpers
   const theme = context.resolvedTheme;
   const setTheme = (newTheme: "light" | "dark" | "system") => {
     context.updateSettings({ theme: newTheme });
   };
-  
+
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
   };
-  
-  return { 
-    ...context, 
-    theme, 
+
+  return {
+    ...context,
+    theme,
     setTheme,
-    toggleTheme
+    toggleTheme,
   };
 }

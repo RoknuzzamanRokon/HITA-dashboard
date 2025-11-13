@@ -274,7 +274,10 @@ export function SupplierManagementModal({
           </Button>
           <div className="flex space-x-3">
             <Button
-              onClick={handleDeactivate}
+              onClick={() => {
+                setActionType("deactivate");
+                handleDeactivate();
+              }}
               disabled={selectedSuppliers.length === 0 || loading || success}
               variant="outline"
               leftIcon={
@@ -285,10 +288,6 @@ export function SupplierManagementModal({
                 )
               }
               className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
-              onClick={() => {
-                setActionType("deactivate");
-                handleDeactivate();
-              }}
             >
               Deactivate
             </Button>
