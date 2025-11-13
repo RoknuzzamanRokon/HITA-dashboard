@@ -1,15 +1,15 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   // Proxy disabled - using backend CORS instead
-  // async rewrites() {
+  // rewrites() {
   //   return [
   //     {
   //       source: '/api/:path*',
   //       destination: 'http://127.0.0.1:8001/:path*',
   //     },
-  //   ]
+  //   ];
   // },
 };
 
-export default nextConfig;
+module.exports = nextConfig;
+
