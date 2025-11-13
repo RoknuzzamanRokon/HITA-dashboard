@@ -6,8 +6,28 @@
 const https = require("https");
 const http = require("http");
 
-const BACKEND_URL =
-  "http://127.0.0.1:8002/v1.0/hotels/check-my-active-suppliers-info";
+// Load environment variables from .env.local if available
+const fs = require("fs");
+const path = require("path");
+
+let API_BASE_URL = "http://127.0.0.1:8002";
+let API_VERSION = "v1.0";
+
+try {
+  const envPath = path.join(__dirname, ".env.local");
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, "utf8");
+    const apiBaseMatch = envContent.match(/NEXT_PUBLIC_API_BASE_URL=(.+)/);
+    const apiVersionMatch = envContent.match(/NEXT_PUBLIC_API_VERSION=(.+)/);
+
+    if (apiBaseMatch) API_BASE_URL = apiBaseMatch[1].trim();
+    if (apiVersionMatch) API_VERSION = apiVersionMatch[1].trim();
+  }
+} catch (err) {
+  console.log("Using default API configuration");
+}
+
+const BACKEND_URL = `${API_BASE_URL}/${API_VERSION}/hotels/check-my-active-suppliers-info`;
 const FRONTEND_URL = "http://localhost:3000/dashboard/hotels";
 const TEST_TOKEN =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1cnNhbXJva28iLCJ1c2VyX2lkIjoiMWEyMDNjY2RhNCIsInJvbGUiOiJzdXBlcl91c2VyIiwiZXhwIjoxNzY0MjM3NDE2LCJ0eXBlIjoiYWNjZXNzIiwiaWF0IjoxNzYyNDM3NDE2fQ.Ri1GAYk-PYv9rrwnYcjNxemUyKOIRbFoI2QtBgmjsOI";
@@ -166,9 +186,7 @@ async function main() {
     console.log("");
     console.log("🔧 Troubleshooting:");
     if (!backendOk) {
-      console.log(
-        "- Check if backend server is running on http://127.0.0.1:8002"
-      );
+      console.log(`- Check if backend server is running on ${API_BASE_URL}`);
       console.log("- Verify the token is valid and not expired");
     }
     if (!frontendOk) {

@@ -163,16 +163,18 @@ export default function AnalyticsPage() {
         return;
       }
 
-      const response = await fetch(
-        "http://127.0.0.1:8002/v1.0/dashboard/export-data",
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const apiBaseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8002";
+      const apiVersion = process.env.NEXT_PUBLIC_API_VERSION || "v1.0";
+      const apiUrl = `${apiBaseUrl}/${apiVersion}`;
+
+      const response = await fetch(`${apiUrl}/dashboard/export-data`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!response.ok) {
         if (response.status === 401) {

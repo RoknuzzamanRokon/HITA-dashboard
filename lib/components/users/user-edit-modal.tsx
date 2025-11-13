@@ -320,8 +320,9 @@ export function UserEditModal({
                       </p>
                       <ul className="text-xs text-yellow-800 space-y-1 list-disc list-inside">
                         <li>
-                          Verify backend server is running at
-                          http://127.0.0.1:8002
+                          Verify backend server is running at{" "}
+                          {process.env.NEXT_PUBLIC_API_BASE_URL ||
+                            "http://127.0.0.1:8002"}
                         </li>
                         <li>
                           Check CORS configuration allows requests from{" "}
