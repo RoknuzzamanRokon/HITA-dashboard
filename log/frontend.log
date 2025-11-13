@@ -88,3 +88,95 @@
 
  ✓ Starting...
  ✓ Ready in 695ms
+
+> frontend@0.1.0 start
+> next start
+
+   ▲ Next.js 15.5.4
+   - Local:        http://localhost:3000
+   - Network:      http://75.119.140.164:3000
+
+ ✓ Starting...
+ ✓ Ready in 406ms
+
+> frontend@0.1.0 start
+> next start
+
+   ▲ Next.js 15.5.4
+   - Local:        http://localhost:3000
+   - Network:      http://75.119.140.164:3000
+
+ ✓ Starting...
+ ✓ Ready in 396ms
+🔧 API Client initialized: {
+  baseUrl: '',
+  apiBaseUrl: '',
+  apiVersion: 'v1.0',
+  NODE_ENV: 'production',
+  NEXT_PUBLIC_API_BASE_URL: undefined,
+  NEXT_PUBLIC_USE_MOCK_AUTH: undefined
+}
+
+> frontend@0.1.0 start
+> next start
+
+   ▲ Next.js 15.5.4
+   - Local:        http://localhost:3000
+   - Network:      http://75.119.140.164:3000
+
+ ✓ Starting...
+ ✓ Ready in 335ms
+🔧 API Client initialized: {
+  baseUrl: '',
+  apiBaseUrl: '',
+  apiVersion: 'v1.0',
+  NODE_ENV: 'production',
+  NEXT_PUBLIC_API_BASE_URL: undefined,
+  NEXT_PUBLIC_USE_MOCK_AUTH: undefined
+}
+
+> frontend@0.1.0 start
+> next start
+
+   ▲ Next.js 15.5.4
+   - Local:        http://localhost:3000
+   - Network:      http://75.119.140.164:3000
+
+ ✓ Starting...
+ ✓ Ready in 388ms
+🔧 API Client initialized: {
+  baseUrl: '',
+  apiBaseUrl: '',
+  apiVersion: 'v1.0',
+  NODE_ENV: 'production',
+  NEXT_PUBLIC_API_BASE_URL: undefined,
+  NEXT_PUBLIC_USE_MOCK_AUTH: undefined
+}
+
+> frontend@0.1.0 start
+> next start
+
+   ▲ Next.js 15.5.4
+   - Local:        http://localhost:3000
+   - Network:      http://75.119.140.164:3000
+
+ ✓ Starting...
+ ✓ Ready in 360ms
+🔧 API Client initialized: {
+  baseUrl: '',
+  apiBaseUrl: '',
+  apiVersion: 'v1.0',
+  NODE_ENV: 'production',
+  NEXT_PUBLIC_API_BASE_URL: undefined,
+  NEXT_PUBLIC_USE_MOCK_AUTH: undefined
+}
+
+> frontend@0.1.0 start
+> next start
+
+   ▲ Next.js 15.5.4
+   - Local:        http://localhost:3000
+   - Network:      http://75.119.140.164:3000
+
+ ✓ Starting...
+ ✓ Ready in 352ms
