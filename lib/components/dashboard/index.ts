@@ -19,11 +19,13 @@ export {
     SupplierHotelCountsChart,
     UserRegistrationTrendChart,
     SupplierFreshnessScatterChart,
+    UserLoginTimelineChart,
 } from "./analytics-charts-new";
 export type {
     SupplierHotelCountsChartProps,
     UserRegistrationTrendChartProps,
     SupplierFreshnessScatterChartProps,
+    UserLoginTimelineChartProps,
 } from "./analytics-charts-new";
 
 export { LiveActivityFeed } from "./live-activity-feed";
