@@ -110,7 +110,8 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
       icon: <BarChart3 className="w-5 h-5" />,
       color: "bg-indigo-500 hover:bg-indigo-600",
       onClick: () => {
-        alert("Advanced analytics panel coming soon!");
+        window.location.href =
+          "https://testcontent.innovatedemo.com/dashboard/analytics";
       },
     },
     {
