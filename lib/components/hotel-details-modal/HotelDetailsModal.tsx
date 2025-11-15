@@ -1,6 +1,13 @@
 "use client";
 
-import React, { useEffect, useRef, useCallback, useState } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useCallback,
+  useState,
+  lazy,
+  Suspense,
+} from "react";
 import FocusLock from "react-focus-lock";
 import { RemoveScroll } from "react-remove-scroll";
 import { ModalOverlay } from "./ModalOverlay";
@@ -16,19 +23,47 @@ import { ContactInfo } from "./ContactInfo";
 import { EnhancedLocationInfo } from "./EnhancedLocationInfo";
 import { TabNavigation, type TabType } from "./TabNavigation";
 import { TabContent } from "./TabContent";
-import { RoomList } from "./RoomList";
-import { FacilitiesList } from "./FacilitiesList";
-import { AmenitiesList } from "./AmenitiesList";
-import { CheckInOutInfo } from "./CheckInOutInfo";
-import { ChildPolicy } from "./ChildPolicy";
-import { PetPolicy } from "./PetPolicy";
-import { SpecialInstructions } from "./SpecialInstructions";
-import { ProvidersTab } from "./ProvidersTab";
-import { PhotosTab } from "./PhotosTab";
 import { HotelService } from "@/lib/api/hotels";
 import { transformFullHotelDetails } from "@/lib/utils/hotel-details-transform";
 import type { FullHotelDetails } from "@/lib/types/full-hotel-details";
 import type { ApiError } from "@/lib/api/client";
+
+// Lazy load heavy tab components
+const RoomList = lazy(() =>
+  import("./RoomList").then((module) => ({ default: module.RoomList }))
+);
+const FacilitiesList = lazy(() =>
+  import("./FacilitiesList").then((module) => ({
+    default: module.FacilitiesList,
+  }))
+);
+const AmenitiesList = lazy(() =>
+  import("./AmenitiesList").then((module) => ({
+    default: module.AmenitiesList,
+  }))
+);
+const CheckInOutInfo = lazy(() =>
+  import("./CheckInOutInfo").then((module) => ({
+    default: module.CheckInOutInfo,
+  }))
+);
+const ChildPolicy = lazy(() =>
+  import("./ChildPolicy").then((module) => ({ default: module.ChildPolicy }))
+);
+const PetPolicy = lazy(() =>
+  import("./PetPolicy").then((module) => ({ default: module.PetPolicy }))
+);
+const SpecialInstructions = lazy(() =>
+  import("./SpecialInstructions").then((module) => ({
+    default: module.SpecialInstructions,
+  }))
+);
+const ProvidersTab = lazy(() =>
+  import("./ProvidersTab").then((module) => ({ default: module.ProvidersTab }))
+);
+const PhotosTab = lazy(() =>
+  import("./PhotosTab").then((module) => ({ default: module.PhotosTab }))
+);
 
 export interface HotelDetailsModalProps {
   isOpen: boolean;
@@ -58,7 +93,7 @@ export const HotelDetailsModal: React.FC<HotelDetailsModalProps> = ({
     () => `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   );
 
-  // Fetch hotel details
+  // Fetch hotel details - memoized with useCallback
   const fetchHotelDetails = useCallback(async () => {
     if (!ittid) return;
 
@@ -136,6 +171,13 @@ export const HotelDetailsModal: React.FC<HotelDetailsModalProps> = ({
   const handleTabChange = useCallback((tab: TabType) => {
     setActiveTab(tab);
   }, []);
+
+  // Tab content loading fallback
+  const TabLoadingFallback = () => (
+    <div className="flex items-center justify-center py-12">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+    </div>
+  );
 
   // Handle modal close with cleanup
   const handleClose = useCallback(() => {
@@ -370,11 +412,13 @@ export const HotelDetailsModal: React.FC<HotelDetailsModalProps> = ({
                     {activeTab === "rooms" && (
                       <div>
                         {hotelData.primaryProvider?.full_details?.room_type ? (
-                          <RoomList
-                            rooms={
-                              hotelData.primaryProvider.full_details.room_type
-                            }
-                          />
+                          <Suspense fallback={<TabLoadingFallback />}>
+                            <RoomList
+                              rooms={
+                                hotelData.primaryProvider.full_details.room_type
+                              }
+                            />
+                          </Suspense>
                         ) : (
                           <div className="text-center py-12 text-gray-500">
                             <p className="text-lg font-medium">
@@ -389,154 +433,167 @@ export const HotelDetailsModal: React.FC<HotelDetailsModalProps> = ({
                     )}
 
                     {activeTab === "facilities" && (
-                      <div className="space-y-6">
-                        {hotelData.primaryProvider?.full_details?.facilities ? (
-                          <FacilitiesList
-                            facilities={
-                              hotelData.primaryProvider.full_details.facilities
-                            }
-                          />
-                        ) : (
-                          <div className="text-center py-8 text-gray-500">
-                            <p className="text-sm">
-                              No facilities information available
-                            </p>
-                          </div>
-                        )}
-
-                        {hotelData.primaryProvider?.full_details?.amenities && (
-                          <div className="pt-4 border-t border-gray-200">
-                            <AmenitiesList
-                              amenities={
-                                hotelData.primaryProvider.full_details.amenities
+                      <Suspense fallback={<TabLoadingFallback />}>
+                        <div className="space-y-6">
+                          {hotelData.primaryProvider?.full_details
+                            ?.facilities ? (
+                            <FacilitiesList
+                              facilities={
+                                hotelData.primaryProvider.full_details
+                                  .facilities
                               }
                             />
-                          </div>
-                        )}
-                      </div>
+                          ) : (
+                            <div className="text-center py-8 text-gray-500">
+                              <p className="text-sm">
+                                No facilities information available
+                              </p>
+                            </div>
+                          )}
+
+                          {hotelData.primaryProvider?.full_details
+                            ?.amenities && (
+                            <div className="pt-4 border-t border-gray-200">
+                              <AmenitiesList
+                                amenities={
+                                  hotelData.primaryProvider.full_details
+                                    .amenities
+                                }
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </Suspense>
                     )}
 
                     {activeTab === "policies" && (
-                      <div className="space-y-6">
-                        {hotelData.primaryProvider?.full_details?.policies ? (
-                          <>
-                            {/* Check-In/Out Information */}
-                            {(hotelData.primaryProvider.full_details.policies
-                              .checkin ||
-                              hotelData.primaryProvider.full_details.policies
-                                .checkout) && (
-                              <CheckInOutInfo
-                                checkin={
-                                  hotelData.primaryProvider.full_details
-                                    .policies.checkin
-                                }
-                                checkout={
-                                  hotelData.primaryProvider.full_details
-                                    .policies.checkout
-                                }
-                              />
-                            )}
-
-                            {/* Child Policy */}
-                            {hotelData.primaryProvider.full_details.policies
-                              .child_and_extra_bed_policy && (
-                              <div className="pt-4 border-t border-gray-200">
-                                <ChildPolicy
-                                  childPolicy={
+                      <Suspense fallback={<TabLoadingFallback />}>
+                        <div className="space-y-6">
+                          {hotelData.primaryProvider?.full_details?.policies ? (
+                            <>
+                              {/* Check-In/Out Information */}
+                              {(hotelData.primaryProvider.full_details.policies
+                                .checkin ||
+                                hotelData.primaryProvider.full_details.policies
+                                  .checkout) && (
+                                <CheckInOutInfo
+                                  checkin={
                                     hotelData.primaryProvider.full_details
-                                      .policies.child_and_extra_bed_policy
+                                      .policies.checkin
+                                  }
+                                  checkout={
+                                    hotelData.primaryProvider.full_details
+                                      .policies.checkout
                                   }
                                 />
-                              </div>
-                            )}
+                              )}
 
-                            {/* Pet Policy */}
-                            {hotelData.primaryProvider.full_details.policies
-                              .pets && (
-                              <div className="pt-4 border-t border-gray-200">
-                                <PetPolicy
-                                  petPolicy={
-                                    hotelData.primaryProvider.full_details
-                                      .policies.pets
-                                  }
-                                />
-                              </div>
-                            )}
-
-                            {/* Special Instructions */}
-                            {hotelData.primaryProvider.full_details.policies
-                              .remark && (
-                              <div className="pt-4 border-t border-gray-200">
-                                <SpecialInstructions
-                                  remark={
-                                    hotelData.primaryProvider.full_details
-                                      .policies.remark
-                                  }
-                                />
-                              </div>
-                            )}
-
-                            {/* No policies message if all are empty */}
-                            {!hotelData.primaryProvider.full_details.policies
-                              .checkin &&
-                              !hotelData.primaryProvider.full_details.policies
-                                .checkout &&
-                              !hotelData.primaryProvider.full_details.policies
-                                .child_and_extra_bed_policy &&
-                              !hotelData.primaryProvider.full_details.policies
-                                .pets &&
-                              !hotelData.primaryProvider.full_details.policies
-                                .remark && (
-                                <div className="text-center py-8 text-gray-500">
-                                  <p className="text-sm">
-                                    No policy information available
-                                  </p>
+                              {/* Child Policy */}
+                              {hotelData.primaryProvider.full_details.policies
+                                .child_and_extra_bed_policy && (
+                                <div className="pt-4 border-t border-gray-200">
+                                  <ChildPolicy
+                                    childPolicy={
+                                      hotelData.primaryProvider.full_details
+                                        .policies.child_and_extra_bed_policy
+                                    }
+                                  />
                                 </div>
                               )}
-                          </>
-                        ) : (
-                          <div className="text-center py-12 text-gray-500">
-                            <p className="text-lg font-medium">
-                              No Policy Information
-                            </p>
-                            <p className="text-sm mt-2">
-                              Policy details are not available for this hotel.
-                            </p>
-                          </div>
-                        )}
-                      </div>
+
+                              {/* Pet Policy */}
+                              {hotelData.primaryProvider.full_details.policies
+                                .pets && (
+                                <div className="pt-4 border-t border-gray-200">
+                                  <PetPolicy
+                                    petPolicy={
+                                      hotelData.primaryProvider.full_details
+                                        .policies.pets
+                                    }
+                                  />
+                                </div>
+                              )}
+
+                              {/* Special Instructions */}
+                              {hotelData.primaryProvider.full_details.policies
+                                .remark && (
+                                <div className="pt-4 border-t border-gray-200">
+                                  <SpecialInstructions
+                                    remark={
+                                      hotelData.primaryProvider.full_details
+                                        .policies.remark
+                                    }
+                                  />
+                                </div>
+                              )}
+
+                              {/* No policies message if all are empty */}
+                              {!hotelData.primaryProvider.full_details.policies
+                                .checkin &&
+                                !hotelData.primaryProvider.full_details.policies
+                                  .checkout &&
+                                !hotelData.primaryProvider.full_details.policies
+                                  .child_and_extra_bed_policy &&
+                                !hotelData.primaryProvider.full_details.policies
+                                  .pets &&
+                                !hotelData.primaryProvider.full_details.policies
+                                  .remark && (
+                                  <div className="text-center py-8 text-gray-500">
+                                    <p className="text-sm">
+                                      No policy information available
+                                    </p>
+                                  </div>
+                                )}
+                            </>
+                          ) : (
+                            <div className="text-center py-12 text-gray-500">
+                              <p className="text-lg font-medium">
+                                No Policy Information
+                              </p>
+                              <p className="text-sm mt-2">
+                                Policy details are not available for this hotel.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </Suspense>
                     )}
 
                     {activeTab === "providers" && (
-                      <ProvidersTab
-                        providers={hotelData.providers}
-                        totalSuppliers={hotelData.totalSuppliers}
-                      />
+                      <Suspense fallback={<TabLoadingFallback />}>
+                        <ProvidersTab
+                          providers={hotelData.providers}
+                          totalSuppliers={hotelData.totalSuppliers}
+                        />
+                      </Suspense>
                     )}
 
                     {activeTab === "photos" && (
-                      <div>
-                        {hotelData.primaryProvider?.full_details
-                          ?.hotel_photo ? (
-                          <PhotosTab
-                            photos={
-                              hotelData.primaryProvider.full_details.hotel_photo
-                            }
-                            providerName={
-                              hotelData.primaryProvider.provider_name
-                            }
-                          />
-                        ) : (
-                          <div className="text-center py-12 text-gray-500">
-                            <p className="text-lg font-medium">
-                              No Photos Available
-                            </p>
-                            <p className="text-sm mt-2">
-                              There are no photos available for this hotel.
-                            </p>
-                          </div>
-                        )}
-                      </div>
+                      <Suspense fallback={<TabLoadingFallback />}>
+                        <div>
+                          {hotelData.primaryProvider?.full_details
+                            ?.hotel_photo ? (
+                            <PhotosTab
+                              photos={
+                                hotelData.primaryProvider.full_details
+                                  .hotel_photo
+                              }
+                              providerName={
+                                hotelData.primaryProvider.provider_name
+                              }
+                            />
+                          ) : (
+                            <div className="text-center py-12 text-gray-500">
+                              <p className="text-lg font-medium">
+                                No Photos Available
+                              </p>
+                              <p className="text-sm mt-2">
+                                There are no photos available for this hotel.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </Suspense>
                     )}
                   </TabContent>
                 </div>

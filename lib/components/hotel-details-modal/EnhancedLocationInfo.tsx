@@ -63,9 +63,13 @@ export const EnhancedLocationInfo: React.FC<EnhancedLocationInfoProps> = ({
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="text-sm text-gray-700 font-mono">
               <span className="font-medium">Lat:</span>{" "}
-              {address.latitude.toFixed(6)},{" "}
-              <span className="font-medium">Lng:</span>{" "}
-              {address.longitude.toFixed(6)}
+              {typeof address.latitude === "number"
+                ? address.latitude.toFixed(6)
+                : parseFloat(String(address.latitude)).toFixed(6)}
+              , <span className="font-medium">Lng:</span>{" "}
+              {typeof address.longitude === "number"
+                ? address.longitude.toFixed(6)
+                : parseFloat(String(address.longitude)).toFixed(6)}
             </div>
 
             <div className="flex items-center gap-2">

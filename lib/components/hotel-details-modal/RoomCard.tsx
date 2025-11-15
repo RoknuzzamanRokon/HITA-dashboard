@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, memo, useMemo } from "react";
 import Image from "next/image";
 import { Users, Baby, User, ChevronDown, ChevronUp } from "lucide-react";
 import { RoomDetailsExpanded } from "./RoomDetailsExpanded";
@@ -10,16 +10,22 @@ export interface RoomCardProps {
   room: RoomType;
 }
 
-export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
+export const RoomCard: React.FC<RoomCardProps> = memo(({ room }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Truncate description to 150 characters
-  const shortDescription =
-    room.description && room.description.length > 150
-      ? room.description.substring(0, 150) + "..."
-      : room.description;
+  // Memoize computed values
+  const shortDescription = useMemo(
+    () =>
+      room.description && room.description.length > 150
+        ? room.description.substring(0, 150) + "..."
+        : room.description,
+    [room.description]
+  );
 
-  const hasMoreContent = room.description && room.description.length > 150;
+  const hasMoreContent = useMemo(
+    () => room.description && room.description.length > 150,
+    [room.description]
+  );
 
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200">
@@ -34,6 +40,9 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
             fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            loading="lazy"
+            placeholder="blur"
+            blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiLz4="
             onError={(e) => {
               // Fallback to placeholder on error
               const target = e.target as HTMLImageElement;
@@ -144,27 +153,25 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
           </div>
         )}
 
-        {/* Expandable Button */}
-        {hasMoreContent && (
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-2 min-h-[44px] text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors mt-3 py-2"
-            aria-expanded={isExpanded}
-            aria-controls={`room-details-${room.room_id}`}
-          >
-            {isExpanded ? (
-              <>
-                <span>Show less</span>
-                <ChevronUp className="w-4 h-4" aria-hidden="true" />
-              </>
-            ) : (
-              <>
-                <span>View details</span>
-                <ChevronDown className="w-4 h-4" aria-hidden="true" />
-              </>
-            )}
-          </button>
-        )}
+        {/* Expandable Button - Always show to allow viewing full details */}
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="flex items-center gap-2 min-h-[44px] text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors mt-3 py-2"
+          aria-expanded={isExpanded}
+          aria-controls={`room-details-${room.room_id}`}
+        >
+          {isExpanded ? (
+            <>
+              <span>Show less</span>
+              <ChevronUp className="w-4 h-4" aria-hidden="true" />
+            </>
+          ) : (
+            <>
+              <span>View full details</span>
+              <ChevronDown className="w-4 h-4" aria-hidden="true" />
+            </>
+          )}
+        </button>
       </div>
 
       {/* Expanded Details */}
@@ -178,4 +185,4 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
       )}
     </div>
   );
-};
+});

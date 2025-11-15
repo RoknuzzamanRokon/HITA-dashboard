@@ -30,6 +30,11 @@ export const Lightbox: React.FC<LightboxProps> = ({
   // Minimum swipe distance (in px)
   const minSwipeDistance = 50;
 
+  // Convert HTTP to HTTPS for image URLs
+  const normalizeImageUrl = (url: string) => {
+    return url.replace(/^http:\/\//i, "https://");
+  };
+
   // Update active index when currentIndex prop changes
   useEffect(() => {
     if (isOpen) {
@@ -190,7 +195,7 @@ export const Lightbox: React.FC<LightboxProps> = ({
           <div className="flex items-center justify-center h-full p-4 md:p-8">
             <div className="relative w-full h-full max-w-7xl max-h-full">
               <Image
-                src={currentPhoto.url}
+                src={normalizeImageUrl(currentPhoto.url)}
                 alt={`${
                   currentPhoto.title || "Hotel photo"
                 } - Full size view, image ${activeIndex + 1} of ${
@@ -198,8 +203,20 @@ export const Lightbox: React.FC<LightboxProps> = ({
                 }`}
                 fill
                 sizes="100vw"
-                className="object-contain"
+                className="object-contain bg-black"
                 priority
+                unoptimized
+                onError={(e) => {
+                  console.error(
+                    "Lightbox image failed to load:",
+                    normalizeImageUrl(currentPhoto.url),
+                    "Original:",
+                    currentPhoto.url
+                  );
+                  const target = e.target as HTMLImageElement;
+                  target.src =
+                    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600'%3E%3Crect width='800' height='600' fill='%23000'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%23fff'%3EImage unavailable%3C/text%3E%3C/svg%3E";
+                }}
               />
             </div>
           </div>

@@ -48,6 +48,11 @@ export const HotelDescription: React.FC<HotelDescriptionProps> = ({
 
       <div className="space-y-3 sm:space-y-4">
         {descriptions.map((desc, index) => {
+          // Skip if text is null or undefined
+          if (!desc.text) {
+            return null;
+          }
+
           const isExpanded = expandedDescriptions.has(index);
           const needsTruncation = desc.text.length > TRUNCATE_LENGTH;
           const displayText =

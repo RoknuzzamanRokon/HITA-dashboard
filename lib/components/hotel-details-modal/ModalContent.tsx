@@ -1,19 +1,17 @@
 "use client";
 
-import React from "react";
+import React, { memo } from "react";
 
 export interface ModalContentProps {
   children: React.ReactNode;
   isOpen: boolean;
 }
 
-export const ModalContent: React.FC<ModalContentProps> = ({
-  children,
-  isOpen,
-}) => {
-  return (
-    <div
-      className={`
+export const ModalContent: React.FC<ModalContentProps> = memo(
+  ({ children, isOpen }) => {
+    return (
+      <div
+        className={`
         relative z-10 bg-white shadow-xl
         w-full overflow-hidden
         transition-all duration-300 ease-in-out
@@ -43,8 +41,9 @@ export const ModalContent: React.FC<ModalContentProps> = ({
             : "lg:opacity-0 lg:translate-y-4 lg:scale-95"
         }
       `}
-    >
-      {children}
-    </div>
-  );
-};
+      >
+        {children}
+      </div>
+    );
+  }
+);

@@ -117,10 +117,8 @@ export function HotelSearchCompact({
 
         setHotels([hotel]);
 
-        // Optionally trigger the select callback immediately
-        if (onHotelSelect) {
-          onHotelSelect(hotel);
-        }
+        // Don't auto-open modal - let user click "View Full Details" button
+        // Modal will only open when user explicitly clicks the button
       } else {
         console.error("❌ Failed to fetch hotel details:", response.error);
         setError(response.error?.message || "Failed to fetch hotel details");
@@ -413,14 +411,37 @@ export function HotelSearchCompact({
                       Chain: {hotel.chainName}
                     </Badge>
                   )}
-                  {onHotelSelect && (
+                  {/* Always show button for debugging */}
+                  {onHotelSelect ? (
                     <button
-                      onClick={() => onHotelSelect(hotel)}
-                      className="ml-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2 transition-colors shadow-md"
+                      onMouseEnter={() =>
+                        console.log("🖱️ Mouse entered button")
+                      }
+                      onMouseDown={() => console.log("🖱️ Mouse down on button")}
+                      onClick={(e) => {
+                        console.log("🔘 BUTTON CLICKED - START");
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log("🔘 Button clicked!");
+                        console.log("🏨 Hotel data:", hotel);
+                        console.log(
+                          "📞 onHotelSelect function:",
+                          onHotelSelect
+                        );
+                        onHotelSelect(hotel);
+                        console.log("🔘 BUTTON CLICKED - END");
+                      }}
+                      className="ml-auto bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2 transition-all shadow-md hover:shadow-lg active:scale-95 cursor-pointer relative z-50"
+                      type="button"
+                      style={{ pointerEvents: "auto" }}
                     >
                       <span>View Full Details</span>
                       <ChevronRight className="h-4 w-4" />
                     </button>
+                  ) : (
+                    <div className="ml-auto bg-red-600 text-white px-4 py-2 rounded-lg">
+                      onHotelSelect is missing!
+                    </div>
                   )}
                 </div>
               </div>

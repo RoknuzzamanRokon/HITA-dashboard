@@ -89,10 +89,16 @@ export default function HotelsPage() {
   const triggerButtonRef = useRef<HTMLElement>(null);
 
   const handleHotelSelect = (hotel: Hotel) => {
+    console.log("🏨 Hotel selected:", hotel);
+    console.log("📋 ITTID:", hotel.ittid);
+    console.log("🏷️ Name:", hotel.name);
+
     // Store trigger button ref for focus return
     setSelectedHotelIttid(hotel.ittid);
     setSelectedHotelName(hotel.name);
     setIsModalOpen(true);
+
+    console.log("✅ Modal should open now");
   };
 
   const handleModalClose = () => {
