@@ -8,6 +8,9 @@ import { ModalContent } from "./ModalContent";
 import { ModalHeader } from "./ModalHeader";
 import { SkeletonLoader } from "./SkeletonLoader";
 import { ErrorState } from "./ErrorState";
+import { HeroSection } from "./HeroSection";
+import { BasicInfo } from "./BasicInfo";
+import { LocationInfo } from "./LocationInfo";
 import { HotelService } from "@/lib/api/hotels";
 import { transformFullHotelDetails } from "@/lib/utils/hotel-details-transform";
 import type { FullHotelDetails } from "@/lib/types/full-hotel-details";
@@ -197,75 +200,78 @@ export const HotelDetailsModal: React.FC<HotelDetailsModalProps> = ({
             />
 
             {/* Modal body with loading, error, and content states */}
-            <div className="p-6">
-              {isLoading && <SkeletonLoader />}
+            <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
+              {isLoading && (
+                <div className="p-6">
+                  <SkeletonLoader />
+                </div>
+              )}
 
               {error && !isLoading && (
-                <ErrorState
-                  error={error}
-                  ittid={ittid}
-                  requestId={requestId}
-                  onRetry={handleRetry}
-                />
+                <div className="p-6">
+                  <ErrorState
+                    error={error}
+                    ittid={ittid}
+                    requestId={requestId}
+                    onRetry={handleRetry}
+                  />
+                </div>
               )}
 
               {hotelData && !isLoading && !error && (
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {hotelData.basic.name}
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      ITTID: {hotelData.basic.ittid}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      Property Type: {hotelData.basic.property_type}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      Rating: {hotelData.basic.rating} stars
+                <div className="space-y-6">
+                  {/* Hero Section */}
+                  <HeroSection
+                    primaryPhoto={hotelData.basic.primary_photo}
+                    hotelName={hotelData.basic.name}
+                    rating={hotelData.basic.rating}
+                  />
+
+                  {/* Content Section */}
+                  <div className="px-6 space-y-6">
+                    {/* Basic Info */}
+                    <BasicInfo
+                      basic={hotelData.basic}
+                      contacts={hotelData.contacts}
+                    />
+
+                    {/* Location Info */}
+                    <LocationInfo
+                      basic={hotelData.basic}
+                      locations={hotelData.locations}
+                    />
+
+                    {/* Provider Info - Temporary until Providers tab is implemented */}
+                    <div className="pt-4 border-t border-gray-200">
+                      <h4 className="text-sm font-semibold text-gray-900 mb-2">
+                        Provider Information
+                      </h4>
+                      <div className="space-y-1 text-sm text-gray-700">
+                        <p>
+                          <span className="font-medium">Total Suppliers:</span>{" "}
+                          {hotelData.totalSuppliers}
+                        </p>
+                        <p>
+                          <span className="font-medium">
+                            Available Providers:
+                          </span>{" "}
+                          {hotelData.availableProviders.join(", ")}
+                        </p>
+                        {hotelData.primaryProvider && (
+                          <p className="text-green-600 font-medium">
+                            Primary Provider:{" "}
+                            {hotelData.primaryProvider.provider_name} (has full
+                            details)
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <p className="text-sm text-gray-500 italic pt-4">
+                      Additional tabs (Rooms, Facilities, Policies, Photos) will
+                      be implemented in future tasks...
                     </p>
                   </div>
-
-                  <div>
-                    <h4 className="text-md font-semibold text-gray-800 mb-2">
-                      Address
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      {hotelData.basic.address_line1}
-                    </p>
-                    {hotelData.basic.address_line2 && (
-                      <p className="text-sm text-gray-600">
-                        {hotelData.basic.address_line2}
-                      </p>
-                    )}
-                    <p className="text-sm text-gray-600">
-                      {hotelData.basic.postal_code}
-                    </p>
-                  </div>
-
-                  <div>
-                    <h4 className="text-md font-semibold text-gray-800 mb-2">
-                      Providers
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      Total Suppliers: {hotelData.totalSuppliers}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      Available Providers:{" "}
-                      {hotelData.availableProviders.join(", ")}
-                    </p>
-                    {hotelData.primaryProvider && (
-                      <p className="text-sm text-green-600 font-medium">
-                        Primary Provider:{" "}
-                        {hotelData.primaryProvider.provider_name} (has full
-                        details)
-                      </p>
-                    )}
-                  </div>
-
-                  <p className="text-sm text-gray-500 italic">
-                    Detailed content tabs will be implemented in future tasks...
-                  </p>
                 </div>
               )}
             </div>
