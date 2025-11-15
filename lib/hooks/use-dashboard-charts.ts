@@ -57,18 +57,19 @@ export const useDashboardCharts = (
             console.log('🔄 Fetching dashboard charts data from:', '/dashboard/new-user');
 
             // NOTE: The '/dashboard/new-user' endpoint currently returns the same data for all users
-            // regardless of their role (super_user, admin_user, general_user).
+            // regardless of their role (super_user, admin_user, user, general_user).
             // This should ideally be handled by the backend to return role-specific data.
             // 
             // Expected behavior:
             // - super_user: Should see all platform data (all users, all suppliers, all activity)
             // - admin_user: Should see their organization's data only
+            // - user: Should see only their own data
             // - general_user: Should see only their own data
             //
             // TODO: Backend should implement role-based data filtering on this endpoint
             // or provide separate endpoints like:
             // - /dashboard/admin (for super_user/admin_user)
-            // - /dashboard/user (for general_user)
+            // - /dashboard/user (for user/general_user)
 
             // Fetch data from the new dashboard endpoint
             const response = await apiClient.get<DashboardApiResponse>(
@@ -101,7 +102,8 @@ export const useDashboardCharts = (
             if (userRole && userRole !== 'super_user' && userRole !== 'admin_user') {
                 console.warn(
                     '⚠️ SECURITY NOTICE: User with role "' + userRole + '" is receiving platform-wide data. ' +
-                    'The backend endpoint /dashboard/new-user should filter data based on user role.'
+                    'The backend endpoint /dashboard/new-user should filter data based on user role. ' +
+                    'Expected: Users with roles "user" and "general_user" should only see their own data.'
                 );
             }
 

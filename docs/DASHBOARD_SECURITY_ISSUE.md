@@ -2,12 +2,13 @@
 
 ## Problem Description
 
-The `/dashboard/new-user` API endpoint currently returns the same platform-wide data to **all authenticated users**, regardless of their role (super_user, admin_user, or general_user). This is a security concern as regular users can see data they shouldn't have access to.
+The `/dashboard/new-user` API endpoint currently returns the same platform-wide data to **all authenticated users**, regardless of their role (super_user, admin_user, user, or general_user). This is a security concern as regular users can see data they shouldn't have access to.
 
 ## Current Behavior
 
 - **Super User**: Sees all platform data ✅ (Expected)
 - **Admin User**: Sees all platform data ❌ (Should only see their organization's data)
+- **User**: Sees all platform data ❌ (Should only see their own data)
 - **General User**: Sees all platform data ❌ (Should only see their own data)
 
 ## Expected Behavior
@@ -30,7 +31,7 @@ The `/dashboard/new-user` API endpoint currently returns the same platform-wide 
   - Packages available to their organization
   - Organization-specific statistics
 
-### General User (general_user)
+### User (user) / General User (general_user)
 
 - Should see **personal data only**:
   - Their own user information
@@ -38,6 +39,7 @@ The `/dashboard/new-user` API endpoint currently returns the same platform-wide 
   - Their own activity metrics
   - Packages available to them
   - Personal statistics
+  - No access to other users' data or platform-wide metrics
 
 ## Technical Details
 
@@ -83,7 +85,7 @@ async def get_dashboard_data(current_user: User):
         return get_all_platform_data()
     elif current_user.role == "admin_user":
         return get_organization_data(current_user.organization_id)
-    else:  # general_user
+    else:  # user or general_user
         return get_user_data(current_user.id)
 ```
 
@@ -93,7 +95,7 @@ Create role-specific endpoints:
 
 ```
 GET /dashboard/admin     # For super_user and admin_user
-GET /dashboard/user      # For general_user
+GET /dashboard/user      # For user and general_user
 ```
 
 ### Option 3: Frontend Filtering (Temporary Workaround)
@@ -155,11 +157,12 @@ The frontend has been updated to:
 
 To verify the issue:
 
-1. Log in as a general_user
+1. Log in as a user or general_user (non-admin role)
 2. Open browser dev tools → Network tab
 3. Navigate to dashboard
 4. Inspect the response from `/dashboard/new-user`
-5. Observe that platform-wide data is returned
+5. Observe that platform-wide data is returned (this is the security issue)
+6. Check browser console for security warning message
 
 ## References
 
