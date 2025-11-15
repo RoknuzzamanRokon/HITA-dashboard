@@ -28,6 +28,7 @@ import ChartWrapper from "./chart-wrapper";
 import {
   SupplierChartData,
   TimeSeriesChartData,
+  PackageChartData,
 } from "@/lib/utils/chart-data-transformers";
 
 // ============================================================================
@@ -140,6 +141,33 @@ const ApiRequestTooltip: React.FC<ApiRequestTooltipProps> = ({
         <p className="text-sm text-gray-900 dark:text-gray-100">
           API Requests:{" "}
           <span className="font-semibold">{data.value.toLocaleString()}</span>
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+interface PackageTooltipProps {
+  active?: boolean;
+  payload?: any[];
+  label?: string;
+}
+
+const PackageTooltip: React.FC<PackageTooltipProps> = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 backdrop-blur-sm">
+        <p className="font-medium text-gray-900 dark:text-gray-100 mb-2">
+          {data.type}
+        </p>
+        <p className="text-sm text-gray-700 dark:text-gray-300 mb-1">
+          Points:{" "}
+          <span className="font-semibold">{data.points.toLocaleString()}</span>
+        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          {data.description}
         </p>
       </div>
     );
@@ -639,6 +667,95 @@ export const ApiRequestTimelineChart: React.FC<
             isAnimationActive={true}
           />
         </AreaChart>
+      </ResponsiveContainer>
+    </ChartWrapper>
+  );
+};
+
+export interface PackagePointComparisonChartProps {
+  packages: PackageChartData[];
+  loading?: boolean;
+  height?: number;
+}
+
+/**
+ * PackagePointComparisonChart
+ * Displays a horizontal bar chart comparing package point allocations
+ * Sorted by point value in descending order with color coding by tier
+ * Formats point values with K/M suffixes
+ */
+export const PackagePointComparisonChart: React.FC<
+  PackagePointComparisonChartProps
+> = ({ packages, loading = false, height = 350 }) => {
+  const [animationKey, setAnimationKey] = useState(0);
+
+  useEffect(() => {
+    if (!loading) {
+      setAnimationKey((prev) => prev + 1);
+    }
+  }, [loading, packages]);
+
+  // Color coding by package tier based on point value
+  const getPackageColor = (points: number, maxPoints: number): string => {
+    const ratio = points / maxPoints;
+    if (ratio > 0.7) return "#8b5cf6"; // Purple for premium packages
+    if (ratio > 0.4) return "#3b82f6"; // Blue for mid-tier packages
+    if (ratio > 0.2) return "#10b981"; // Green for standard packages
+    return "#f59e0b"; // Orange for basic packages
+  };
+
+  const maxPoints = Math.max(...packages.map((p) => p.points), 1);
+
+  return (
+    <ChartWrapper
+      title="Package Point Allocations"
+      subtitle="Point values by package type"
+      loading={loading}
+      height={height}
+    >
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={packages}
+          layout="horizontal"
+          key={animationKey}
+          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <XAxis
+            type="number"
+            stroke="#666"
+            fontSize={12}
+            tickLine={false}
+            tickFormatter={(value) => {
+              // Format with K/M suffixes
+              if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+              if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+              return value.toString();
+            }}
+          />
+          <YAxis
+            type="category"
+            dataKey="type"
+            stroke="#666"
+            fontSize={12}
+            tickLine={false}
+            width={150}
+          />
+          <Tooltip content={<PackageTooltip />} />
+          <Bar
+            dataKey="points"
+            radius={[0, 4, 4, 0]}
+            animationDuration={1200}
+            animationBegin={0}
+          >
+            {packages.map((entry, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={getPackageColor(entry.points, maxPoints)}
+              />
+            ))}
+          </Bar>
+        </BarChart>
       </ResponsiveContainer>
     </ChartWrapper>
   );
