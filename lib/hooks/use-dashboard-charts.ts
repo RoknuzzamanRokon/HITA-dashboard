@@ -32,6 +32,7 @@ export interface UseDashboardChartsReturn {
     error: string | null;
     refetch: (isBackground?: boolean) => Promise<void>;
     lastFetch: Date | null;
+    isRefreshing: boolean;
 }
 
 export const useDashboardCharts = (realTimeInterval?: number): UseDashboardChartsReturn => {
@@ -39,11 +40,14 @@ export const useDashboardCharts = (realTimeInterval?: number): UseDashboardChart
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [lastFetch, setLastFetch] = useState<Date | null>(null);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     const fetchCharts = useCallback(async (isBackground = false) => {
         try {
             if (!isBackground) {
                 setLoading(true);
+            } else {
+                setIsRefreshing(true);
             }
             setError(null);
 
@@ -116,6 +120,8 @@ export const useDashboardCharts = (realTimeInterval?: number): UseDashboardChart
         } finally {
             if (!isBackground) {
                 setLoading(false);
+            } else {
+                setIsRefreshing(false);
             }
         }
     }, []);
@@ -143,5 +149,6 @@ export const useDashboardCharts = (realTimeInterval?: number): UseDashboardChart
         error,
         refetch: fetchCharts,
         lastFetch,
+        isRefreshing,
     };
 };

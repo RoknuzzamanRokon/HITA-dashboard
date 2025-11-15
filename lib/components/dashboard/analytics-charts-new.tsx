@@ -284,6 +284,7 @@ export interface SupplierHotelCountsChartProps {
   suppliers: SupplierChartData[];
   loading?: boolean;
   height?: number;
+  isRefreshing?: boolean;
 }
 
 /**
@@ -293,15 +294,15 @@ export interface SupplierHotelCountsChartProps {
  */
 export const SupplierHotelCountsChart: React.FC<
   SupplierHotelCountsChartProps
-> = ({ suppliers, loading = false, height = 350 }) => {
+> = ({ suppliers, loading = false, height = 350, isRefreshing = false }) => {
   const [animationKey, setAnimationKey] = useState(0);
   const { isMobile, isTablet } = useResponsiveChart();
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !isRefreshing) {
       setAnimationKey((prev) => prev + 1);
     }
-  }, [loading, suppliers]);
+  }, [loading, isRefreshing, suppliers]);
 
   // Generate color gradient based on hotel count magnitude
   const getBarColor = (hotelCount: number, maxCount: number): string => {
@@ -324,6 +325,7 @@ export const SupplierHotelCountsChart: React.FC<
       subtitle="Hotel counts by supplier"
       loading={loading}
       height={responsiveHeight}
+      isRefreshing={isRefreshing}
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
@@ -382,6 +384,7 @@ export interface UserRegistrationTrendChartProps {
   data: TimeSeriesChartData[];
   loading?: boolean;
   height?: number;
+  isRefreshing?: boolean;
 }
 
 /**
@@ -391,15 +394,15 @@ export interface UserRegistrationTrendChartProps {
  */
 export const UserRegistrationTrendChart: React.FC<
   UserRegistrationTrendChartProps
-> = ({ data, loading = false, height = 350 }) => {
+> = ({ data, loading = false, height = 350, isRefreshing = false }) => {
   const [animationKey, setAnimationKey] = useState(0);
   const { isMobile, isTablet } = useResponsiveChart();
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !isRefreshing) {
       setAnimationKey((prev) => prev + 1);
     }
-  }, [loading, data]);
+  }, [loading, isRefreshing, data]);
 
   // Custom dot component - only show on non-zero values
   const CustomDot = (props: any) => {
@@ -432,6 +435,7 @@ export const UserRegistrationTrendChart: React.FC<
       subtitle="Last 30 days of user registrations"
       loading={loading}
       height={responsiveHeight}
+      isRefreshing={isRefreshing}
     >
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
@@ -492,6 +496,7 @@ export interface SupplierFreshnessScatterChartProps {
   suppliers: SupplierChartData[];
   loading?: boolean;
   height?: number;
+  isRefreshing?: boolean;
 }
 
 /**
@@ -502,15 +507,15 @@ export interface SupplierFreshnessScatterChartProps {
  */
 export const SupplierFreshnessScatterChart: React.FC<
   SupplierFreshnessScatterChartProps
-> = ({ suppliers, loading = false, height = 400 }) => {
+> = ({ suppliers, loading = false, height = 400, isRefreshing = false }) => {
   const [animationKey, setAnimationKey] = useState(0);
   const { isMobile, isTablet } = useResponsiveChart();
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !isRefreshing) {
       setAnimationKey((prev) => prev + 1);
     }
-  }, [loading, suppliers]);
+  }, [loading, isRefreshing, suppliers]);
 
   // Transform data for scatter chart
   // X-axis: supplier index (for positioning)
@@ -567,6 +572,7 @@ export const SupplierFreshnessScatterChart: React.FC<
       subtitle="Data age by supplier (bubble size = hotel count)"
       loading={loading}
       height={responsiveHeight}
+      isRefreshing={isRefreshing}
     >
       <ResponsiveContainer width="100%" height="100%">
         <ScatterChart
@@ -644,6 +650,7 @@ export interface UserLoginTimelineChartProps {
   data: TimeSeriesChartData[];
   loading?: boolean;
   height?: number;
+  isRefreshing?: boolean;
 }
 
 /**
@@ -656,15 +663,16 @@ export const UserLoginTimelineChart: React.FC<UserLoginTimelineChartProps> = ({
   data,
   loading = false,
   height = 350,
+  isRefreshing = false,
 }) => {
   const [animationKey, setAnimationKey] = useState(0);
   const { isMobile, isTablet } = useResponsiveChart();
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !isRefreshing) {
       setAnimationKey((prev) => prev + 1);
     }
-  }, [loading, data]);
+  }, [loading, isRefreshing, data]);
 
   // Responsive dimensions
   const responsiveHeight = isMobile ? 280 : isTablet ? 300 : height;
@@ -678,6 +686,7 @@ export const UserLoginTimelineChart: React.FC<UserLoginTimelineChartProps> = ({
       subtitle="Last 30 days of user logins"
       loading={loading}
       height={responsiveHeight}
+      isRefreshing={isRefreshing}
     >
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
@@ -739,6 +748,7 @@ export interface ApiRequestTimelineChartProps {
   data: TimeSeriesChartData[];
   loading?: boolean;
   height?: number;
+  isRefreshing?: boolean;
 }
 
 /**
@@ -749,15 +759,15 @@ export interface ApiRequestTimelineChartProps {
  */
 export const ApiRequestTimelineChart: React.FC<
   ApiRequestTimelineChartProps
-> = ({ data, loading = false, height = 350 }) => {
+> = ({ data, loading = false, height = 350, isRefreshing = false }) => {
   const [animationKey, setAnimationKey] = useState(0);
   const { isMobile, isTablet } = useResponsiveChart();
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !isRefreshing) {
       setAnimationKey((prev) => prev + 1);
     }
-  }, [loading, data]);
+  }, [loading, isRefreshing, data]);
 
   // Responsive dimensions
   const responsiveHeight = isMobile ? 280 : isTablet ? 300 : height;
@@ -771,6 +781,7 @@ export const ApiRequestTimelineChart: React.FC<
       subtitle="Last 30 days of API requests"
       loading={loading}
       height={responsiveHeight}
+      isRefreshing={isRefreshing}
     >
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
@@ -833,6 +844,7 @@ export interface PackagePointComparisonChartProps {
   packages: PackageChartData[];
   loading?: boolean;
   height?: number;
+  isRefreshing?: boolean;
 }
 
 /**
@@ -843,15 +855,15 @@ export interface PackagePointComparisonChartProps {
  */
 export const PackagePointComparisonChart: React.FC<
   PackagePointComparisonChartProps
-> = ({ packages, loading = false, height = 350 }) => {
+> = ({ packages, loading = false, height = 350, isRefreshing = false }) => {
   const [animationKey, setAnimationKey] = useState(0);
   const { isMobile, isTablet } = useResponsiveChart();
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !isRefreshing) {
       setAnimationKey((prev) => prev + 1);
     }
-  }, [loading, packages]);
+  }, [loading, isRefreshing, packages]);
 
   // Color coding by package tier based on point value
   const getPackageColor = (points: number, maxPoints: number): string => {
@@ -875,6 +887,7 @@ export const PackagePointComparisonChart: React.FC<
       subtitle="Point values by package type"
       loading={loading}
       height={responsiveHeight}
+      isRefreshing={isRefreshing}
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
@@ -981,6 +994,7 @@ export interface CombinedActivityChartProps {
   apiRequests: TimeSeriesChartData[];
   loading?: boolean;
   height?: number;
+  isRefreshing?: boolean;
 }
 
 /**
@@ -995,6 +1009,7 @@ export const CombinedActivityChart: React.FC<CombinedActivityChartProps> = ({
   apiRequests,
   loading = false,
   height = 400,
+  isRefreshing = false,
 }) => {
   const [animationKey, setAnimationKey] = useState(0);
   const [visibleLines, setVisibleLines] = useState({
@@ -1005,10 +1020,10 @@ export const CombinedActivityChart: React.FC<CombinedActivityChartProps> = ({
   const { isMobile, isTablet } = useResponsiveChart();
 
   useEffect(() => {
-    if (!loading) {
+    if (!loading && !isRefreshing) {
       setAnimationKey((prev) => prev + 1);
     }
-  }, [loading, registrations, logins, apiRequests]);
+  }, [loading, isRefreshing, registrations, logins, apiRequests]);
 
   // Combine all data by date
   const combinedData = React.useMemo(() => {
@@ -1124,6 +1139,7 @@ export const CombinedActivityChart: React.FC<CombinedActivityChartProps> = ({
       subtitle="Combined metrics: registrations, logins, and API requests"
       loading={loading}
       height={responsiveHeight}
+      isRefreshing={isRefreshing}
     >
       <CustomLegend />
       <ResponsiveContainer width="100%" height="100%">

@@ -72,6 +72,7 @@ export default function DashboardPage() {
     loading: chartsLoading,
     error: chartsError,
     refetch: refetchCharts,
+    isRefreshing: chartsRefreshing,
   } = useDashboardCharts(realTimeEnabled ? 30000 : 0);
 
   // Check API connection on mount
@@ -521,6 +522,7 @@ export default function DashboardPage() {
               <SupplierHotelCountsChart
                 suppliers={chartsData?.suppliers || []}
                 loading={chartsLoading}
+                isRefreshing={chartsRefreshing}
               />
             </div>
 
@@ -529,6 +531,7 @@ export default function DashboardPage() {
               <PackagePointComparisonChart
                 packages={chartsData?.packages || []}
                 loading={chartsLoading}
+                isRefreshing={chartsRefreshing}
               />
             </div>
 
@@ -539,6 +542,7 @@ export default function DashboardPage() {
                 logins={chartsData?.logins || []}
                 apiRequests={chartsData?.apiRequests || []}
                 loading={chartsLoading}
+                isRefreshing={chartsRefreshing}
               />
             </div>
 
@@ -547,6 +551,7 @@ export default function DashboardPage() {
               <UserRegistrationTrendChart
                 data={chartsData?.registrations || []}
                 loading={chartsLoading}
+                isRefreshing={chartsRefreshing}
               />
             </div>
 
@@ -555,6 +560,7 @@ export default function DashboardPage() {
               <UserLoginTimelineChart
                 data={chartsData?.logins || []}
                 loading={chartsLoading}
+                isRefreshing={chartsRefreshing}
               />
             </div>
 
@@ -563,6 +569,7 @@ export default function DashboardPage() {
               <ApiRequestTimelineChart
                 data={chartsData?.apiRequests || []}
                 loading={chartsLoading}
+                isRefreshing={chartsRefreshing}
               />
             </div>
 
@@ -571,6 +578,7 @@ export default function DashboardPage() {
               <SupplierFreshnessScatterChart
                 suppliers={chartsData?.suppliers || []}
                 loading={chartsLoading}
+                isRefreshing={chartsRefreshing}
               />
             </div>
           </div>

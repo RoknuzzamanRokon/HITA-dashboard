@@ -18,6 +18,7 @@ export interface ChartWrapperProps {
   className?: string;
   actions?: React.ReactNode;
   height?: number;
+  isRefreshing?: boolean;
 }
 
 const ChartWrapper: React.FC<ChartWrapperProps> = ({
@@ -29,6 +30,7 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
   className,
   actions,
   height = 300,
+  isRefreshing = false,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -88,17 +90,32 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
     <Card
       variant="elevated"
       className={cn(
-        "overflow-hidden transition-all duration-700 ease-out",
+        "overflow-hidden transition-all duration-700 ease-out relative",
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
         className
       )}
     >
+      {/* Refresh indicator */}
+      {isRefreshing && (
+        <div className="absolute top-0 left-0 right-0 h-1 bg-blue-500 dark:bg-blue-400 z-10 overflow-hidden">
+          <div
+            className="h-full bg-blue-600 dark:bg-blue-300 animate-[shimmer_1.5s_ease-in-out_infinite]"
+            style={{
+              backgroundImage:
+                "linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)",
+              backgroundSize: "200% 100%",
+              animation: "shimmer 1.5s ease-in-out infinite",
+            }}
+          />
+        </div>
+      )}
       <CardHeader title={title} subtitle={subtitle} actions={actions} />
       <CardContent>
         <div
           className={cn(
             "transition-all duration-1000 ease-out",
-            isVisible ? "opacity-100 scale-100" : "opacity-0 scale-95"
+            isVisible ? "opacity-100 scale-100" : "opacity-0 scale-95",
+            isRefreshing && "opacity-90"
           )}
           style={{ height }}
         >
