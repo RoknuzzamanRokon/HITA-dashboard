@@ -24,6 +24,7 @@ import { ChildPolicy } from "./ChildPolicy";
 import { PetPolicy } from "./PetPolicy";
 import { SpecialInstructions } from "./SpecialInstructions";
 import { ProvidersTab } from "./ProvidersTab";
+import { PhotosTab } from "./PhotosTab";
 import { HotelService } from "@/lib/api/hotels";
 import { transformFullHotelDetails } from "@/lib/utils/hotel-details-transform";
 import type { FullHotelDetails } from "@/lib/types/full-hotel-details";
@@ -485,11 +486,27 @@ export const HotelDetailsModal: React.FC<HotelDetailsModalProps> = ({
                     )}
 
                     {activeTab === "photos" && (
-                      <div className="text-center py-12 text-gray-500">
-                        <p className="text-lg font-medium">Photos Tab</p>
-                        <p className="text-sm mt-2">
-                          Photo gallery will be implemented in task 12
-                        </p>
+                      <div>
+                        {hotelData.primaryProvider?.full_details
+                          ?.hotel_photo ? (
+                          <PhotosTab
+                            photos={
+                              hotelData.primaryProvider.full_details.hotel_photo
+                            }
+                            providerName={
+                              hotelData.primaryProvider.provider_name
+                            }
+                          />
+                        ) : (
+                          <div className="text-center py-12 text-gray-500">
+                            <p className="text-lg font-medium">
+                              No Photos Available
+                            </p>
+                            <p className="text-sm mt-2">
+                              There are no photos available for this hotel.
+                            </p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </TabContent>
