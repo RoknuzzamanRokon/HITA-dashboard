@@ -24,6 +24,7 @@ import {
   PackagePointComparisonChart,
   CombinedActivityChart,
 } from "@/lib/components/dashboard";
+import { ChartErrorBoundary } from "@/lib/components/dashboard/chart-error-boundary";
 import { useDashboardStats } from "@/lib/hooks/use-dashboard-stats";
 import { useDashboardCharts } from "@/lib/hooks/use-dashboard-charts";
 import {
@@ -512,77 +513,83 @@ export default function DashboardPage() {
       <PermissionGuard
         permissions={[Permission.VIEW_ANALYTICS, Permission.VIEW_ALL_USERS]}
       >
-        <div className="mb-8">
-          <h2 className="text-lg font-medium text-[rgb(var(--text-primary))] mb-4">
-            Platform Analytics
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Supplier Hotel Counts - 2 columns */}
-            <div className="col-span-1 md:col-span-2">
-              <SupplierHotelCountsChart
-                suppliers={chartsData?.suppliers || []}
-                loading={chartsLoading}
-                isRefreshing={chartsRefreshing}
-              />
-            </div>
+        <ChartErrorBoundary
+          onError={(error, errorInfo) => {
+            console.error("Chart section error:", error, errorInfo);
+          }}
+        >
+          <div className="mb-8">
+            <h2 className="text-lg font-medium text-[rgb(var(--text-primary))] mb-4">
+              Platform Analytics
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Supplier Hotel Counts - 2 columns */}
+              <div className="col-span-1 md:col-span-2">
+                <SupplierHotelCountsChart
+                  suppliers={chartsData?.suppliers || []}
+                  loading={chartsLoading}
+                  isRefreshing={chartsRefreshing}
+                />
+              </div>
 
-            {/* Package Points - 1 column */}
-            <div className="col-span-1">
-              <PackagePointComparisonChart
-                packages={chartsData?.packages || []}
-                loading={chartsLoading}
-                isRefreshing={chartsRefreshing}
-              />
-            </div>
+              {/* Package Points - 1 column */}
+              <div className="col-span-1">
+                <PackagePointComparisonChart
+                  packages={chartsData?.packages || []}
+                  loading={chartsLoading}
+                  isRefreshing={chartsRefreshing}
+                />
+              </div>
 
-            {/* Combined Activity - 3 columns */}
-            <div className="col-span-1 md:col-span-2 lg:col-span-3">
-              <CombinedActivityChart
-                registrations={chartsData?.registrations || []}
-                logins={chartsData?.logins || []}
-                apiRequests={chartsData?.apiRequests || []}
-                loading={chartsLoading}
-                isRefreshing={chartsRefreshing}
-              />
-            </div>
+              {/* Combined Activity - 3 columns */}
+              <div className="col-span-1 md:col-span-2 lg:col-span-3">
+                <CombinedActivityChart
+                  registrations={chartsData?.registrations || []}
+                  logins={chartsData?.logins || []}
+                  apiRequests={chartsData?.apiRequests || []}
+                  loading={chartsLoading}
+                  isRefreshing={chartsRefreshing}
+                />
+              </div>
 
-            {/* User Registration Trend - 1 column */}
-            <div className="col-span-1">
-              <UserRegistrationTrendChart
-                data={chartsData?.registrations || []}
-                loading={chartsLoading}
-                isRefreshing={chartsRefreshing}
-              />
-            </div>
+              {/* User Registration Trend - 1 column */}
+              <div className="col-span-1">
+                <UserRegistrationTrendChart
+                  data={chartsData?.registrations || []}
+                  loading={chartsLoading}
+                  isRefreshing={chartsRefreshing}
+                />
+              </div>
 
-            {/* User Login Timeline - 1 column */}
-            <div className="col-span-1">
-              <UserLoginTimelineChart
-                data={chartsData?.logins || []}
-                loading={chartsLoading}
-                isRefreshing={chartsRefreshing}
-              />
-            </div>
+              {/* User Login Timeline - 1 column */}
+              <div className="col-span-1">
+                <UserLoginTimelineChart
+                  data={chartsData?.logins || []}
+                  loading={chartsLoading}
+                  isRefreshing={chartsRefreshing}
+                />
+              </div>
 
-            {/* API Request Timeline - 1 column */}
-            <div className="col-span-1">
-              <ApiRequestTimelineChart
-                data={chartsData?.apiRequests || []}
-                loading={chartsLoading}
-                isRefreshing={chartsRefreshing}
-              />
-            </div>
+              {/* API Request Timeline - 1 column */}
+              <div className="col-span-1">
+                <ApiRequestTimelineChart
+                  data={chartsData?.apiRequests || []}
+                  loading={chartsLoading}
+                  isRefreshing={chartsRefreshing}
+                />
+              </div>
 
-            {/* Supplier Freshness - 2 columns */}
-            <div className="col-span-1 md:col-span-2">
-              <SupplierFreshnessScatterChart
-                suppliers={chartsData?.suppliers || []}
-                loading={chartsLoading}
-                isRefreshing={chartsRefreshing}
-              />
+              {/* Supplier Freshness - 2 columns */}
+              <div className="col-span-1 md:col-span-2">
+                <SupplierFreshnessScatterChart
+                  suppliers={chartsData?.suppliers || []}
+                  loading={chartsLoading}
+                  isRefreshing={chartsRefreshing}
+                />
+              </div>
             </div>
           </div>
-        </div>
+        </ChartErrorBoundary>
       </PermissionGuard>
 
       {/* Role-Based Navigation */}

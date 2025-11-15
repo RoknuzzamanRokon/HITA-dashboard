@@ -46,3 +46,5 @@ export type { ChartErrorProps } from "./chart-error";
 
 export { default as ChartEmptyState } from "./chart-empty-state";
 export type { ChartEmptyStateProps } from "./chart-empty-state";
+
+export { ChartErrorBoundary } from "./chart-error-boundary";

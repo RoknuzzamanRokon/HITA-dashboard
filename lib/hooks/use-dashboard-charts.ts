@@ -72,27 +72,50 @@ export const useDashboardCharts = (realTimeInterval?: number): UseDashboardChart
                 throw new Error(errorMessage);
             }
 
-            const data = response.data!;
+            // Validate response data structure
+            if (!response.data) {
+                throw new Error('Dashboard charts API returned no data');
+            }
+
+            const data = response.data;
             console.log('✅ Dashboard charts data received');
 
-            // Transform the data using utilities from task 1
-            const transformed: DashboardChartsData = {
-                suppliers: transformSupplierData(
-                    data.platform_overview?.available_suppliers || []
-                ),
-                registrations: transformTimeSeriesData(
-                    data.platform_trends?.user_registrations?.time_series || []
-                ),
-                logins: transformTimeSeriesData(
-                    data.activity_metrics?.user_logins?.time_series || []
-                ),
-                apiRequests: transformTimeSeriesData(
-                    data.activity_metrics?.api_requests?.time_series || []
-                ),
-                packages: transformPackageData(
-                    data.platform_overview?.available_packages || []
-                ),
-            };
+            // Safely access nested properties with fallbacks
+            const platformOverview = data.platform_overview || {};
+            const activityMetrics = data.activity_metrics || {};
+            const platformTrends = data.platform_trends || {};
+
+            // Transform the data using utilities from task 1 with comprehensive error handling
+            let transformed: DashboardChartsData;
+            try {
+                transformed = {
+                    suppliers: transformSupplierData(
+                        platformOverview.available_suppliers
+                    ),
+                    registrations: transformTimeSeriesData(
+                        platformTrends.user_registrations?.time_series
+                    ),
+                    logins: transformTimeSeriesData(
+                        activityMetrics.user_logins?.time_series
+                    ),
+                    apiRequests: transformTimeSeriesData(
+                        activityMetrics.api_requests?.time_series
+                    ),
+                    packages: transformPackageData(
+                        platformOverview.available_packages
+                    ),
+                };
+            } catch (transformError) {
+                console.error('❌ Error transforming chart data:', transformError);
+                // Set empty data on transformation error
+                transformed = {
+                    suppliers: [],
+                    registrations: [],
+                    logins: [],
+                    apiRequests: [],
+                    packages: [],
+                };
+            }
 
             console.log('📊 Transformed charts data:', {
                 suppliersCount: transformed.suppliers.length,
@@ -116,6 +139,15 @@ export const useDashboardCharts = (realTimeInterval?: number): UseDashboardChart
                     ? err.message
                     : "Failed to fetch dashboard charts data";
                 setError(errorMessage);
+
+                // Set empty data on error to prevent undefined issues
+                setChartsData({
+                    suppliers: [],
+                    registrations: [],
+                    logins: [],
+                    apiRequests: [],
+                    packages: [],
+                });
             }
         } finally {
             if (!isBackground) {

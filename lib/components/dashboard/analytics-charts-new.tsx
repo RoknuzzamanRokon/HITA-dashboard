@@ -304,6 +304,9 @@ export const SupplierHotelCountsChart: React.FC<
     }
   }, [loading, isRefreshing, suppliers]);
 
+  // Check for empty data
+  const isEmpty = !loading && (!suppliers || suppliers.length === 0);
+
   // Generate color gradient based on hotel count magnitude
   const getBarColor = (hotelCount: number, maxCount: number): string => {
     const ratio = hotelCount / maxCount;
@@ -312,7 +315,10 @@ export const SupplierHotelCountsChart: React.FC<
     return "#ffc658"; // Yellow for lower counts
   };
 
-  const maxCount = Math.max(...suppliers.map((s) => s.hotelCount), 1);
+  const maxCount =
+    suppliers && suppliers.length > 0
+      ? Math.max(...suppliers.map((s) => s.hotelCount), 1)
+      : 1;
 
   // Responsive dimensions
   const responsiveHeight = isMobile ? 300 : isTablet ? 320 : height;
@@ -326,6 +332,7 @@ export const SupplierHotelCountsChart: React.FC<
       loading={loading}
       height={responsiveHeight}
       isRefreshing={isRefreshing}
+      isEmpty={isEmpty}
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
@@ -404,6 +411,9 @@ export const UserRegistrationTrendChart: React.FC<
     }
   }, [loading, isRefreshing, data]);
 
+  // Check for empty data
+  const isEmpty = !loading && (!data || data.length === 0);
+
   // Custom dot component - only show on non-zero values
   const CustomDot = (props: any) => {
     const { cx, cy, payload } = props;
@@ -436,6 +446,7 @@ export const UserRegistrationTrendChart: React.FC<
       loading={loading}
       height={responsiveHeight}
       isRefreshing={isRefreshing}
+      isEmpty={isEmpty}
     >
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
@@ -517,6 +528,9 @@ export const SupplierFreshnessScatterChart: React.FC<
     }
   }, [loading, isRefreshing, suppliers]);
 
+  // Check for empty data
+  const isEmpty = !loading && (!suppliers || suppliers.length === 0);
+
   // Transform data for scatter chart
   // X-axis: supplier index (for positioning)
   // Y-axis: days since last update
@@ -573,6 +587,7 @@ export const SupplierFreshnessScatterChart: React.FC<
       loading={loading}
       height={responsiveHeight}
       isRefreshing={isRefreshing}
+      isEmpty={isEmpty}
     >
       <ResponsiveContainer width="100%" height="100%">
         <ScatterChart
@@ -674,6 +689,9 @@ export const UserLoginTimelineChart: React.FC<UserLoginTimelineChartProps> = ({
     }
   }, [loading, isRefreshing, data]);
 
+  // Check for empty data
+  const isEmpty = !loading && (!data || data.length === 0);
+
   // Responsive dimensions
   const responsiveHeight = isMobile ? 280 : isTablet ? 300 : height;
   const fontSize = isMobile ? 10 : 12;
@@ -687,6 +705,7 @@ export const UserLoginTimelineChart: React.FC<UserLoginTimelineChartProps> = ({
       loading={loading}
       height={responsiveHeight}
       isRefreshing={isRefreshing}
+      isEmpty={isEmpty}
     >
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
@@ -769,6 +788,9 @@ export const ApiRequestTimelineChart: React.FC<
     }
   }, [loading, isRefreshing, data]);
 
+  // Check for empty data
+  const isEmpty = !loading && (!data || data.length === 0);
+
   // Responsive dimensions
   const responsiveHeight = isMobile ? 280 : isTablet ? 300 : height;
   const fontSize = isMobile ? 10 : 12;
@@ -782,6 +804,7 @@ export const ApiRequestTimelineChart: React.FC<
       loading={loading}
       height={responsiveHeight}
       isRefreshing={isRefreshing}
+      isEmpty={isEmpty}
     >
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
@@ -865,6 +888,9 @@ export const PackagePointComparisonChart: React.FC<
     }
   }, [loading, isRefreshing, packages]);
 
+  // Check for empty data
+  const isEmpty = !loading && (!packages || packages.length === 0);
+
   // Color coding by package tier based on point value
   const getPackageColor = (points: number, maxPoints: number): string => {
     const ratio = points / maxPoints;
@@ -874,7 +900,10 @@ export const PackagePointComparisonChart: React.FC<
     return "#f59e0b"; // Orange for basic packages
   };
 
-  const maxPoints = Math.max(...packages.map((p) => p.points), 1);
+  const maxPoints =
+    packages && packages.length > 0
+      ? Math.max(...packages.map((p) => p.points), 1)
+      : 1;
 
   // Responsive dimensions
   const responsiveHeight = isMobile ? 300 : isTablet ? 320 : height;
@@ -888,6 +917,7 @@ export const PackagePointComparisonChart: React.FC<
       loading={loading}
       height={responsiveHeight}
       isRefreshing={isRefreshing}
+      isEmpty={isEmpty}
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
@@ -1025,6 +1055,13 @@ export const CombinedActivityChart: React.FC<CombinedActivityChartProps> = ({
     }
   }, [loading, isRefreshing, registrations, logins, apiRequests]);
 
+  // Check for empty data
+  const isEmpty =
+    !loading &&
+    (!registrations || registrations.length === 0) &&
+    (!logins || logins.length === 0) &&
+    (!apiRequests || apiRequests.length === 0);
+
   // Combine all data by date
   const combinedData = React.useMemo(() => {
     const dateMap = new Map<string, any>();
@@ -1140,6 +1177,7 @@ export const CombinedActivityChart: React.FC<CombinedActivityChartProps> = ({
       loading={loading}
       height={responsiveHeight}
       isRefreshing={isRefreshing}
+      isEmpty={isEmpty}
     >
       <CustomLegend />
       <ResponsiveContainer width="100%" height="100%">
