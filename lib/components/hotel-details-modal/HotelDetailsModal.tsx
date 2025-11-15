@@ -11,6 +11,8 @@ import { ErrorState } from "./ErrorState";
 import { HeroSection } from "./HeroSection";
 import { BasicInfo } from "./BasicInfo";
 import { LocationInfo } from "./LocationInfo";
+import { TabNavigation, type TabType } from "./TabNavigation";
+import { TabContent } from "./TabContent";
 import { HotelService } from "@/lib/api/hotels";
 import { transformFullHotelDetails } from "@/lib/utils/hotel-details-transform";
 import type { FullHotelDetails } from "@/lib/types/full-hotel-details";
@@ -39,6 +41,7 @@ export const HotelDetailsModal: React.FC<HotelDetailsModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
   const [hotelData, setHotelData] = useState<FullHotelDetails | null>(null);
+  const [activeTab, setActiveTab] = useState<TabType>("overview");
   const [requestId] = useState<string>(
     () => `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   );
@@ -117,6 +120,11 @@ export const HotelDetailsModal: React.FC<HotelDetailsModalProps> = ({
     onClose();
   }, [onClose]);
 
+  // Handle tab change
+  const handleTabChange = useCallback((tab: TabType) => {
+    setActiveTab(tab);
+  }, []);
+
   // Handle modal close with cleanup
   const handleClose = useCallback(() => {
     // Cancel any pending API requests
@@ -129,6 +137,7 @@ export const HotelDetailsModal: React.FC<HotelDetailsModalProps> = ({
     setIsLoading(false);
     setError(null);
     setHotelData(null);
+    setActiveTab("overview");
 
     // Call parent onClose
     onClose();
@@ -219,7 +228,7 @@ export const HotelDetailsModal: React.FC<HotelDetailsModalProps> = ({
               )}
 
               {hotelData && !isLoading && !error && (
-                <div className="space-y-6">
+                <div className="space-y-0">
                   {/* Hero Section */}
                   <HeroSection
                     primaryPhoto={hotelData.basic.primary_photo}
@@ -227,51 +236,103 @@ export const HotelDetailsModal: React.FC<HotelDetailsModalProps> = ({
                     rating={hotelData.basic.rating}
                   />
 
-                  {/* Content Section */}
-                  <div className="px-6 space-y-6">
-                    {/* Basic Info */}
-                    <BasicInfo
-                      basic={hotelData.basic}
-                      contacts={hotelData.contacts}
-                    />
+                  {/* Tab Navigation */}
+                  <TabNavigation
+                    activeTab={activeTab}
+                    onTabChange={handleTabChange}
+                  />
 
-                    {/* Location Info */}
-                    <LocationInfo
-                      basic={hotelData.basic}
-                      locations={hotelData.locations}
-                    />
+                  {/* Tab Content */}
+                  <TabContent activeTab={activeTab}>
+                    {activeTab === "overview" && (
+                      <div className="space-y-6">
+                        {/* Basic Info */}
+                        <BasicInfo
+                          basic={hotelData.basic}
+                          contacts={hotelData.contacts}
+                        />
 
-                    {/* Provider Info - Temporary until Providers tab is implemented */}
-                    <div className="pt-4 border-t border-gray-200">
-                      <h4 className="text-sm font-semibold text-gray-900 mb-2">
-                        Provider Information
-                      </h4>
-                      <div className="space-y-1 text-sm text-gray-700">
-                        <p>
-                          <span className="font-medium">Total Suppliers:</span>{" "}
-                          {hotelData.totalSuppliers}
-                        </p>
-                        <p>
-                          <span className="font-medium">
-                            Available Providers:
-                          </span>{" "}
-                          {hotelData.availableProviders.join(", ")}
-                        </p>
-                        {hotelData.primaryProvider && (
-                          <p className="text-green-600 font-medium">
-                            Primary Provider:{" "}
-                            {hotelData.primaryProvider.provider_name} (has full
-                            details)
-                          </p>
-                        )}
+                        {/* Location Info */}
+                        <LocationInfo
+                          basic={hotelData.basic}
+                          locations={hotelData.locations}
+                        />
+
+                        {/* Provider Info - Temporary until Providers tab is implemented */}
+                        <div className="pt-4 border-t border-gray-200">
+                          <h4 className="text-sm font-semibold text-gray-900 mb-2">
+                            Provider Information
+                          </h4>
+                          <div className="space-y-1 text-sm text-gray-700">
+                            <p>
+                              <span className="font-medium">
+                                Total Suppliers:
+                              </span>{" "}
+                              {hotelData.totalSuppliers}
+                            </p>
+                            <p>
+                              <span className="font-medium">
+                                Available Providers:
+                              </span>{" "}
+                              {hotelData.availableProviders.join(", ")}
+                            </p>
+                            {hotelData.primaryProvider && (
+                              <p className="text-green-600 font-medium">
+                                Primary Provider:{" "}
+                                {hotelData.primaryProvider.provider_name} (has
+                                full details)
+                              </p>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
-                    <p className="text-sm text-gray-500 italic pt-4">
-                      Additional tabs (Rooms, Facilities, Policies, Photos) will
-                      be implemented in future tasks...
-                    </p>
-                  </div>
+                    {activeTab === "rooms" && (
+                      <div className="text-center py-12 text-gray-500">
+                        <p className="text-lg font-medium">Rooms Tab</p>
+                        <p className="text-sm mt-2">
+                          Room details will be implemented in task 8
+                        </p>
+                      </div>
+                    )}
+
+                    {activeTab === "facilities" && (
+                      <div className="text-center py-12 text-gray-500">
+                        <p className="text-lg font-medium">Facilities Tab</p>
+                        <p className="text-sm mt-2">
+                          Facilities will be implemented in task 9
+                        </p>
+                      </div>
+                    )}
+
+                    {activeTab === "policies" && (
+                      <div className="text-center py-12 text-gray-500">
+                        <p className="text-lg font-medium">Policies Tab</p>
+                        <p className="text-sm mt-2">
+                          Policies will be implemented in task 10
+                        </p>
+                      </div>
+                    )}
+
+                    {activeTab === "providers" && (
+                      <div className="text-center py-12 text-gray-500">
+                        <p className="text-lg font-medium">Providers Tab</p>
+                        <p className="text-sm mt-2">
+                          Provider details will be implemented in task 11
+                        </p>
+                      </div>
+                    )}
+
+                    {activeTab === "photos" && (
+                      <div className="text-center py-12 text-gray-500">
+                        <p className="text-lg font-medium">Photos Tab</p>
+                        <p className="text-sm mt-2">
+                          Photo gallery will be implemented in task 12
+                        </p>
+                      </div>
+                    )}
+                  </TabContent>
                 </div>
               )}
             </div>

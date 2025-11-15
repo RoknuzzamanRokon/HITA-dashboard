@@ -15,3 +15,7 @@ export { BasicInfo } from "./BasicInfo";
 export type { BasicInfoProps } from "./BasicInfo";
 export { LocationInfo } from "./LocationInfo";
 export type { LocationInfoProps } from "./LocationInfo";
+export { TabNavigation } from "./TabNavigation";
+export type { TabNavigationProps, TabType } from "./TabNavigation";
+export { TabContent } from "./TabContent";
+export type { TabContentProps } from "./TabContent";
