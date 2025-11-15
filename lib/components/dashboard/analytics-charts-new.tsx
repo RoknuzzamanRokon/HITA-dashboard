@@ -32,6 +32,43 @@ import {
 } from "@/lib/utils/chart-data-transformers";
 
 // ============================================================================
+// Responsive Utilities
+// ============================================================================
+
+/**
+ * Hook to detect screen size for responsive chart adjustments
+ */
+const useResponsiveChart = () => {
+  const [dimensions, setDimensions] = useState({
+    isMobile: false,
+    isTablet: false,
+    isDesktop: true,
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      setDimensions({
+        isMobile: width < 640,
+        isTablet: width >= 640 && width < 1024,
+        isDesktop: width >= 1024,
+      });
+    };
+
+    // Initial check
+    handleResize();
+
+    // Add event listener
+    window.addEventListener("resize", handleResize);
+
+    // Cleanup
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return dimensions;
+};
+
+// ============================================================================
 // Custom Tooltip Components
 // ============================================================================
 
@@ -48,7 +85,11 @@ const SupplierTooltip: React.FC<SupplierTooltipProps> = ({
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 backdrop-blur-sm">
+      <div
+        className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 backdrop-blur-sm"
+        role="tooltip"
+        aria-live="polite"
+      >
         <p className="font-medium text-gray-900 dark:text-gray-100 mb-2">
           {data.name}
         </p>
@@ -58,7 +99,7 @@ const SupplierTooltip: React.FC<SupplierTooltipProps> = ({
             {data.hotelCount.toLocaleString()}
           </span>
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
           Last Updated:{" "}
           {new Date(data.lastUpdated).toLocaleDateString("en-US", {
             month: "short",
@@ -86,7 +127,11 @@ const RegistrationTooltip: React.FC<RegistrationTooltipProps> = ({
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 backdrop-blur-sm">
+      <div
+        className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 backdrop-blur-sm"
+        role="tooltip"
+        aria-live="polite"
+      >
         <p className="text-sm text-gray-700 dark:text-gray-300 mb-1">{label}</p>
         <p className="text-sm text-gray-900 dark:text-gray-100">
           Registrations: <span className="font-semibold">{data.value}</span>
@@ -111,7 +156,11 @@ const LoginTooltip: React.FC<LoginTooltipProps> = ({
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 backdrop-blur-sm">
+      <div
+        className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 backdrop-blur-sm"
+        role="tooltip"
+        aria-live="polite"
+      >
         <p className="text-sm text-gray-700 dark:text-gray-300 mb-1">{label}</p>
         <p className="text-sm text-gray-900 dark:text-gray-100">
           Logins: <span className="font-semibold">{data.value}</span>
@@ -136,7 +185,11 @@ const ApiRequestTooltip: React.FC<ApiRequestTooltipProps> = ({
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 backdrop-blur-sm">
+      <div
+        className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 backdrop-blur-sm"
+        role="tooltip"
+        aria-live="polite"
+      >
         <p className="text-sm text-gray-700 dark:text-gray-300 mb-1">{label}</p>
         <p className="text-sm text-gray-900 dark:text-gray-100">
           API Requests:{" "}
@@ -158,7 +211,11 @@ const PackageTooltip: React.FC<PackageTooltipProps> = ({ active, payload }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 backdrop-blur-sm">
+      <div
+        className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 backdrop-blur-sm"
+        role="tooltip"
+        aria-live="polite"
+      >
         <p className="font-medium text-gray-900 dark:text-gray-100 mb-2">
           {data.type}
         </p>
@@ -166,7 +223,7 @@ const PackageTooltip: React.FC<PackageTooltipProps> = ({ active, payload }) => {
           Points:{" "}
           <span className="font-semibold">{data.points.toLocaleString()}</span>
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
           {data.description}
         </p>
       </div>
@@ -187,7 +244,11 @@ const FreshnessTooltip: React.FC<FreshnessTooltipProps> = ({
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 backdrop-blur-sm">
+      <div
+        className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 backdrop-blur-sm"
+        role="tooltip"
+        aria-live="polite"
+      >
         <p className="font-medium text-gray-900 dark:text-gray-100 mb-2">
           {data.name}
         </p>
@@ -201,7 +262,7 @@ const FreshnessTooltip: React.FC<FreshnessTooltipProps> = ({
           Days Since Update:{" "}
           <span className="font-semibold">{data.daysSinceUpdate}</span>
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
           Last Updated:{" "}
           {new Date(data.lastUpdated).toLocaleDateString("en-US", {
             month: "short",
@@ -234,6 +295,7 @@ export const SupplierHotelCountsChart: React.FC<
   SupplierHotelCountsChartProps
 > = ({ suppliers, loading = false, height = 350 }) => {
   const [animationKey, setAnimationKey] = useState(0);
+  const { isMobile, isTablet } = useResponsiveChart();
 
   useEffect(() => {
     if (!loading) {
@@ -251,35 +313,49 @@ export const SupplierHotelCountsChart: React.FC<
 
   const maxCount = Math.max(...suppliers.map((s) => s.hotelCount), 1);
 
+  // Responsive dimensions
+  const responsiveHeight = isMobile ? 300 : isTablet ? 320 : height;
+  const fontSize = isMobile ? 10 : 12;
+  const yAxisWidth = isMobile ? 70 : isTablet ? 85 : 100;
+
   return (
     <ChartWrapper
       title="Supplier Hotel Inventory"
       subtitle="Hotel counts by supplier"
       loading={loading}
-      height={height}
+      height={responsiveHeight}
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={suppliers}
           layout="horizontal"
           key={animationKey}
-          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          margin={{
+            top: 5,
+            right: isMobile ? 10 : 30,
+            left: isMobile ? 5 : 20,
+            bottom: 5,
+          }}
+          aria-label="Bar chart showing hotel counts by supplier"
+          role="img"
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
           <XAxis
             type="number"
             stroke="#666"
-            fontSize={12}
+            fontSize={fontSize}
             tickLine={false}
             tickFormatter={(value) => value.toLocaleString()}
+            aria-label="Hotel count axis"
           />
           <YAxis
             type="category"
             dataKey="name"
             stroke="#666"
-            fontSize={12}
+            fontSize={fontSize}
             tickLine={false}
-            width={100}
+            width={yAxisWidth}
+            aria-label="Supplier name axis"
           />
           <Tooltip content={<SupplierTooltip />} />
           <Bar
@@ -287,6 +363,7 @@ export const SupplierHotelCountsChart: React.FC<
             radius={[0, 4, 4, 0]}
             animationDuration={1200}
             animationBegin={0}
+            aria-label="Hotel count bars"
           >
             {suppliers.map((entry, index) => (
               <Cell
@@ -316,6 +393,7 @@ export const UserRegistrationTrendChart: React.FC<
   UserRegistrationTrendChartProps
 > = ({ data, loading = false, height = 350 }) => {
   const [animationKey, setAnimationKey] = useState(0);
+  const { isMobile, isTablet } = useResponsiveChart();
 
   useEffect(() => {
     if (!loading) {
@@ -333,26 +411,40 @@ export const UserRegistrationTrendChart: React.FC<
       <circle
         cx={cx}
         cy={cy}
-        r={4}
+        r={isMobile ? 3 : 4}
         fill="#8884d8"
         stroke="#fff"
         strokeWidth={2}
+        aria-label={`Registration count: ${payload.value}`}
       />
     );
   };
+
+  // Responsive dimensions
+  const responsiveHeight = isMobile ? 280 : isTablet ? 300 : height;
+  const fontSize = isMobile ? 10 : 12;
+  const xAxisHeight = isMobile ? 50 : 60;
+  const xAxisAngle = isMobile ? -60 : -45;
 
   return (
     <ChartWrapper
       title="User Registration Trends"
       subtitle="Last 30 days of user registrations"
       loading={loading}
-      height={height}
+      height={responsiveHeight}
     >
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={data}
           key={animationKey}
-          margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+          margin={{
+            top: 10,
+            right: isMobile ? 10 : 30,
+            left: isMobile ? -10 : 0,
+            bottom: 0,
+          }}
+          aria-label="Area chart showing user registration trends over time"
+          role="img"
         >
           <defs>
             <linearGradient id="colorRegistrations" x1="0" y1="0" x2="0" y2="1">
@@ -364,28 +456,31 @@ export const UserRegistrationTrendChart: React.FC<
           <XAxis
             dataKey="date"
             stroke="#666"
-            fontSize={12}
+            fontSize={fontSize}
             tickLine={false}
-            angle={-45}
+            angle={xAxisAngle}
             textAnchor="end"
-            height={60}
+            height={xAxisHeight}
+            aria-label="Date axis"
           />
           <YAxis
             stroke="#666"
-            fontSize={12}
+            fontSize={fontSize}
             tickLine={false}
             allowDecimals={false}
+            aria-label="Registration count axis"
           />
           <Tooltip content={<RegistrationTooltip />} />
           <Area
             type="monotone"
             dataKey="value"
             stroke="#8884d8"
-            strokeWidth={2}
+            strokeWidth={isMobile ? 1.5 : 2}
             fill="url(#colorRegistrations)"
             animationDuration={1200}
             animationBegin={0}
             dot={<CustomDot />}
+            aria-label="Registration trend line"
           />
         </AreaChart>
       </ResponsiveContainer>
@@ -409,6 +504,7 @@ export const SupplierFreshnessScatterChart: React.FC<
   SupplierFreshnessScatterChartProps
 > = ({ suppliers, loading = false, height = 400 }) => {
   const [animationKey, setAnimationKey] = useState(0);
+  const { isMobile, isTablet } = useResponsiveChart();
 
   useEffect(() => {
     if (!loading) {
@@ -434,7 +530,12 @@ export const SupplierFreshnessScatterChart: React.FC<
   // Custom shape for scatter points with color coding
   const CustomShape = (props: any) => {
     const { cx, cy, payload } = props;
-    const radius = Math.max(6, Math.min(20, Math.sqrt(payload.z) / 10));
+    const baseRadius = isMobile ? 4 : 6;
+    const maxRadius = isMobile ? 15 : 20;
+    const radius = Math.max(
+      baseRadius,
+      Math.min(maxRadius, Math.sqrt(payload.z) / 10)
+    );
 
     return (
       <circle
@@ -443,8 +544,9 @@ export const SupplierFreshnessScatterChart: React.FC<
         r={radius}
         fill={payload.freshnessColor}
         stroke="#fff"
-        strokeWidth={2}
+        strokeWidth={isMobile ? 1 : 2}
         opacity={0.8}
+        aria-label={`${payload.name}: ${payload.daysSinceUpdate} days since update, ${payload.hotelCount} hotels`}
       />
     );
   };
@@ -452,17 +554,31 @@ export const SupplierFreshnessScatterChart: React.FC<
   // Generate x-axis ticks with supplier names
   const xAxisTicks = suppliers.map((_, index) => index);
 
+  // Responsive dimensions
+  const responsiveHeight = isMobile ? 320 : isTablet ? 360 : height;
+  const fontSize = isMobile ? 9 : isTablet ? 10 : 11;
+  const yAxisFontSize = isMobile ? 10 : 12;
+  const bottomMargin = isMobile ? 60 : isTablet ? 70 : 80;
+  const xAxisAngle = isMobile ? -60 : -45;
+
   return (
     <ChartWrapper
       title="Supplier Data Freshness"
       subtitle="Data age by supplier (bubble size = hotel count)"
       loading={loading}
-      height={height}
+      height={responsiveHeight}
     >
       <ResponsiveContainer width="100%" height="100%">
         <ScatterChart
           key={animationKey}
-          margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+          margin={{
+            top: 20,
+            right: isMobile ? 10 : 30,
+            left: isMobile ? 5 : 20,
+            bottom: bottomMargin,
+          }}
+          aria-label="Scatter plot showing supplier data freshness with color coding"
+          role="img"
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
           <XAxis
@@ -470,35 +586,41 @@ export const SupplierFreshnessScatterChart: React.FC<
             dataKey="x"
             name="Supplier"
             stroke="#666"
-            fontSize={11}
+            fontSize={fontSize}
             tickLine={false}
             ticks={xAxisTicks}
             tickFormatter={(value) => {
               const supplier = suppliers[value];
               return supplier ? supplier.name : "";
             }}
-            angle={-45}
+            angle={xAxisAngle}
             textAnchor="end"
-            height={80}
+            height={bottomMargin}
+            aria-label="Supplier name axis"
           />
           <YAxis
             type="number"
             dataKey="y"
             name="Days Since Update"
             stroke="#666"
-            fontSize={12}
+            fontSize={yAxisFontSize}
             tickLine={false}
-            label={{
-              value: "Days Since Last Update",
-              angle: -90,
-              position: "insideLeft",
-              style: { fontSize: 12, fill: "#666" },
-            }}
+            label={
+              !isMobile
+                ? {
+                    value: "Days Since Last Update",
+                    angle: -90,
+                    position: "insideLeft",
+                    style: { fontSize: yAxisFontSize, fill: "#666" },
+                  }
+                : undefined
+            }
+            aria-label="Days since last update axis"
           />
           <ZAxis
             type="number"
             dataKey="z"
-            range={[100, 1000]}
+            range={isMobile ? [50, 500] : [100, 1000]}
             name="Hotel Count"
           />
           <Tooltip
@@ -510,6 +632,7 @@ export const SupplierFreshnessScatterChart: React.FC<
             shape={<CustomShape />}
             animationDuration={1200}
             animationBegin={0}
+            aria-label="Data freshness scatter points"
           />
         </ScatterChart>
       </ResponsiveContainer>
@@ -535,6 +658,7 @@ export const UserLoginTimelineChart: React.FC<UserLoginTimelineChartProps> = ({
   height = 350,
 }) => {
   const [animationKey, setAnimationKey] = useState(0);
+  const { isMobile, isTablet } = useResponsiveChart();
 
   useEffect(() => {
     if (!loading) {
@@ -542,18 +666,31 @@ export const UserLoginTimelineChart: React.FC<UserLoginTimelineChartProps> = ({
     }
   }, [loading, data]);
 
+  // Responsive dimensions
+  const responsiveHeight = isMobile ? 280 : isTablet ? 300 : height;
+  const fontSize = isMobile ? 10 : 12;
+  const xAxisHeight = isMobile ? 50 : 60;
+  const xAxisAngle = isMobile ? -60 : -45;
+
   return (
     <ChartWrapper
       title="User Login Activity"
       subtitle="Last 30 days of user logins"
       loading={loading}
-      height={height}
+      height={responsiveHeight}
     >
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={data}
           key={animationKey}
-          margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+          margin={{
+            top: 10,
+            right: isMobile ? 10 : 30,
+            left: isMobile ? -10 : 0,
+            bottom: 0,
+          }}
+          aria-label="Area chart showing user login activity over time"
+          role="img"
         >
           <defs>
             <linearGradient id="colorLogins" x1="0" y1="0" x2="0" y2="1">
@@ -565,29 +702,32 @@ export const UserLoginTimelineChart: React.FC<UserLoginTimelineChartProps> = ({
           <XAxis
             dataKey="date"
             stroke="#666"
-            fontSize={12}
+            fontSize={fontSize}
             tickLine={false}
-            angle={-45}
+            angle={xAxisAngle}
             textAnchor="end"
-            height={60}
+            height={xAxisHeight}
+            aria-label="Date axis"
           />
           <YAxis
             stroke="#666"
-            fontSize={12}
+            fontSize={fontSize}
             tickLine={false}
             allowDecimals={false}
+            aria-label="Login count axis"
           />
           <Tooltip content={<LoginTooltip />} />
           <Area
             type="monotone"
             dataKey="value"
             stroke="#82ca9d"
-            strokeWidth={2}
+            strokeWidth={isMobile ? 1.5 : 2}
             fill="url(#colorLogins)"
             animationDuration={1200}
             animationBegin={0}
             connectNulls
             isAnimationActive={true}
+            aria-label="Login activity trend line"
           />
         </AreaChart>
       </ResponsiveContainer>
@@ -611,6 +751,7 @@ export const ApiRequestTimelineChart: React.FC<
   ApiRequestTimelineChartProps
 > = ({ data, loading = false, height = 350 }) => {
   const [animationKey, setAnimationKey] = useState(0);
+  const { isMobile, isTablet } = useResponsiveChart();
 
   useEffect(() => {
     if (!loading) {
@@ -618,18 +759,31 @@ export const ApiRequestTimelineChart: React.FC<
     }
   }, [loading, data]);
 
+  // Responsive dimensions
+  const responsiveHeight = isMobile ? 280 : isTablet ? 300 : height;
+  const fontSize = isMobile ? 10 : 12;
+  const xAxisHeight = isMobile ? 50 : 60;
+  const xAxisAngle = isMobile ? -60 : -45;
+
   return (
     <ChartWrapper
       title="API Request Volume"
       subtitle="Last 30 days of API requests"
       loading={loading}
-      height={height}
+      height={responsiveHeight}
     >
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={data}
           key={animationKey}
-          margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+          margin={{
+            top: 10,
+            right: isMobile ? 10 : 30,
+            left: isMobile ? -10 : 0,
+            bottom: 0,
+          }}
+          aria-label="Area chart showing API request volume over time"
+          role="img"
         >
           <defs>
             <linearGradient id="colorApiRequests" x1="0" y1="0" x2="0" y2="1">
@@ -641,30 +795,33 @@ export const ApiRequestTimelineChart: React.FC<
           <XAxis
             dataKey="date"
             stroke="#666"
-            fontSize={12}
+            fontSize={fontSize}
             tickLine={false}
-            angle={-45}
+            angle={xAxisAngle}
             textAnchor="end"
-            height={60}
+            height={xAxisHeight}
+            aria-label="Date axis"
           />
           <YAxis
             stroke="#666"
-            fontSize={12}
+            fontSize={fontSize}
             tickLine={false}
             allowDecimals={false}
             tickFormatter={(value) => value.toLocaleString()}
+            aria-label="API request count axis"
           />
           <Tooltip content={<ApiRequestTooltip />} />
           <Area
             type="monotone"
             dataKey="value"
             stroke="#ffc658"
-            strokeWidth={2}
+            strokeWidth={isMobile ? 1.5 : 2}
             fill="url(#colorApiRequests)"
             animationDuration={1200}
             animationBegin={0}
             connectNulls
             isAnimationActive={true}
+            aria-label="API request volume trend line"
           />
         </AreaChart>
       </ResponsiveContainer>
@@ -688,6 +845,7 @@ export const PackagePointComparisonChart: React.FC<
   PackagePointComparisonChartProps
 > = ({ packages, loading = false, height = 350 }) => {
   const [animationKey, setAnimationKey] = useState(0);
+  const { isMobile, isTablet } = useResponsiveChart();
 
   useEffect(() => {
     if (!loading) {
@@ -706,25 +864,37 @@ export const PackagePointComparisonChart: React.FC<
 
   const maxPoints = Math.max(...packages.map((p) => p.points), 1);
 
+  // Responsive dimensions
+  const responsiveHeight = isMobile ? 300 : isTablet ? 320 : height;
+  const fontSize = isMobile ? 10 : 12;
+  const yAxisWidth = isMobile ? 100 : isTablet ? 125 : 150;
+
   return (
     <ChartWrapper
       title="Package Point Allocations"
       subtitle="Point values by package type"
       loading={loading}
-      height={height}
+      height={responsiveHeight}
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={packages}
           layout="horizontal"
           key={animationKey}
-          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          margin={{
+            top: 5,
+            right: isMobile ? 10 : 30,
+            left: isMobile ? 5 : 20,
+            bottom: 5,
+          }}
+          aria-label="Bar chart showing package point allocations by type"
+          role="img"
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
           <XAxis
             type="number"
             stroke="#666"
-            fontSize={12}
+            fontSize={fontSize}
             tickLine={false}
             tickFormatter={(value) => {
               // Format with K/M suffixes
@@ -732,14 +902,16 @@ export const PackagePointComparisonChart: React.FC<
               if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
               return value.toString();
             }}
+            aria-label="Point value axis"
           />
           <YAxis
             type="category"
             dataKey="type"
             stroke="#666"
-            fontSize={12}
+            fontSize={fontSize}
             tickLine={false}
-            width={150}
+            width={yAxisWidth}
+            aria-label="Package type axis"
           />
           <Tooltip content={<PackageTooltip />} />
           <Bar
@@ -747,6 +919,7 @@ export const PackagePointComparisonChart: React.FC<
             radius={[0, 4, 4, 0]}
             animationDuration={1200}
             animationBegin={0}
+            aria-label="Package point bars"
           >
             {packages.map((entry, index) => (
               <Cell
@@ -774,14 +947,18 @@ const CombinedActivityTooltip: React.FC<CombinedActivityTooltipProps> = ({
 }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 backdrop-blur-sm">
+      <div
+        className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 backdrop-blur-sm"
+        role="tooltip"
+        aria-live="polite"
+      >
         <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
           {label}
         </p>
         {payload.map((entry, index) => (
           <p
             key={`item-${index}`}
-            className="text-sm text-gray-700 dark:text-gray-300"
+            className="text-sm font-medium"
             style={{ color: entry.color }}
           >
             {entry.name}:{" "}
@@ -825,6 +1002,7 @@ export const CombinedActivityChart: React.FC<CombinedActivityChartProps> = ({
     logins: true,
     apiRequests: true,
   });
+  const { isMobile, isTablet } = useResponsiveChart();
 
   useEffect(() => {
     if (!loading) {
@@ -874,6 +1052,15 @@ export const CombinedActivityChart: React.FC<CombinedActivityChartProps> = ({
     }));
   };
 
+  // Responsive dimensions
+  const responsiveHeight = isMobile ? 320 : isTablet ? 360 : height;
+  const fontSize = isMobile ? 10 : 12;
+  const xAxisHeight = isMobile ? 50 : 60;
+  const xAxisAngle = isMobile ? -60 : -45;
+  const dotRadius = isMobile ? 2 : 3;
+  const activeDotRadius = isMobile ? 4 : 5;
+  const strokeWidth = isMobile ? 1.5 : 2;
+
   // Custom legend component
   const CustomLegend = () => {
     const legendItems = [
@@ -887,21 +1074,42 @@ export const CombinedActivityChart: React.FC<CombinedActivityChartProps> = ({
     ];
 
     return (
-      <div className="flex justify-center gap-6 mb-4">
+      <div
+        className={`flex ${
+          isMobile ? "flex-col gap-2" : "justify-center gap-6"
+        } mb-4`}
+        role="group"
+        aria-label="Chart legend - click to toggle metrics"
+      >
         {legendItems.map((item) => (
           <button
             key={item.key}
             onClick={() => handleLegendClick(item.key)}
-            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleLegendClick(item.key);
+              }
+            }}
+            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded px-2 py-1"
             style={{
               opacity: visibleLines[item.key] ? 1 : 0.4,
             }}
+            aria-pressed={visibleLines[item.key]}
+            aria-label={`Toggle ${item.label} line ${
+              visibleLines[item.key] ? "off" : "on"
+            }`}
           >
             <div
               className="w-4 h-4 rounded"
               style={{ backgroundColor: item.color }}
+              aria-hidden="true"
             />
-            <span className="text-sm text-gray-700 dark:text-gray-300">
+            <span
+              className={`${
+                isMobile ? "text-xs" : "text-sm"
+              } text-gray-700 dark:text-gray-300`}
+            >
               {item.label}
             </span>
           </button>
@@ -915,31 +1123,40 @@ export const CombinedActivityChart: React.FC<CombinedActivityChartProps> = ({
       title="Platform Activity Overview"
       subtitle="Combined metrics: registrations, logins, and API requests"
       loading={loading}
-      height={height}
+      height={responsiveHeight}
     >
       <CustomLegend />
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={combinedData}
           key={animationKey}
-          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          margin={{
+            top: 5,
+            right: isMobile ? 10 : 30,
+            left: isMobile ? 5 : 20,
+            bottom: 5,
+          }}
+          aria-label="Multi-line chart showing combined platform activity metrics"
+          role="img"
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
           <XAxis
             dataKey="date"
             stroke="#666"
-            fontSize={12}
+            fontSize={fontSize}
             tickLine={false}
-            angle={-45}
+            angle={xAxisAngle}
             textAnchor="end"
-            height={60}
+            height={xAxisHeight}
+            aria-label="Date axis"
           />
           <YAxis
             stroke="#666"
-            fontSize={12}
+            fontSize={fontSize}
             tickLine={false}
             allowDecimals={false}
             tickFormatter={(value) => value.toLocaleString()}
+            aria-label="Activity count axis"
           />
           <Tooltip content={<CombinedActivityTooltip />} />
 
@@ -949,12 +1166,13 @@ export const CombinedActivityChart: React.FC<CombinedActivityChartProps> = ({
               dataKey="registrations"
               name="Registrations"
               stroke="#8884d8"
-              strokeWidth={2}
-              dot={{ r: 3 }}
-              activeDot={{ r: 5 }}
+              strokeWidth={strokeWidth}
+              dot={{ r: dotRadius }}
+              activeDot={{ r: activeDotRadius }}
               animationDuration={1200}
               animationBegin={0}
               connectNulls
+              aria-label="Registrations trend line"
             />
           )}
 
@@ -964,12 +1182,13 @@ export const CombinedActivityChart: React.FC<CombinedActivityChartProps> = ({
               dataKey="logins"
               name="Logins"
               stroke="#82ca9d"
-              strokeWidth={2}
-              dot={{ r: 3 }}
-              activeDot={{ r: 5 }}
+              strokeWidth={strokeWidth}
+              dot={{ r: dotRadius }}
+              activeDot={{ r: activeDotRadius }}
               animationDuration={1200}
               animationBegin={100}
               connectNulls
+              aria-label="Logins trend line"
             />
           )}
 
@@ -979,12 +1198,13 @@ export const CombinedActivityChart: React.FC<CombinedActivityChartProps> = ({
               dataKey="apiRequests"
               name="API Requests"
               stroke="#ffc658"
-              strokeWidth={2}
-              dot={{ r: 3 }}
-              activeDot={{ r: 5 }}
+              strokeWidth={strokeWidth}
+              dot={{ r: dotRadius }}
+              activeDot={{ r: activeDotRadius }}
               animationDuration={1200}
               animationBegin={200}
               connectNulls
+              aria-label="API requests trend line"
             />
           )}
         </LineChart>
