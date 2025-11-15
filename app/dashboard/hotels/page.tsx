@@ -5,7 +5,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Search,
   Building2,
@@ -20,6 +20,7 @@ import {
 import { Button } from "@/lib/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/lib/components/ui/card";
 import { HotelSearchCompact } from "@/lib/components/hotels/hotel-search-compact";
+import { HotelDetailsModal } from "@/lib/components/hotel-details-modal/HotelDetailsModal";
 
 import { useAuth } from "@/lib/contexts/auth-context";
 import { HotelService } from "@/lib/api/hotels";
@@ -81,11 +82,22 @@ export default function HotelsPage() {
     }>;
   } | null>(null);
 
+  // Modal state management
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedHotelIttid, setSelectedHotelIttid] = useState<string>("");
+  const [selectedHotelName, setSelectedHotelName] = useState<string>("");
+  const triggerButtonRef = useRef<HTMLElement>(null);
+
   const handleHotelSelect = (hotel: Hotel) => {
-    // Log the selected hotel for now - can be extended to show modal or navigate
-    console.log("Selected hotel:", hotel);
-    // Optional: Navigate to hotel details page
-    // window.location.href = `/dashboard/hotels/${hotel.ittid}`;
+    // Store trigger button ref for focus return
+    setSelectedHotelIttid(hotel.ittid);
+    setSelectedHotelName(hotel.name);
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    // Focus will be returned to trigger button by the modal component
   };
 
   const handleExport = async () => {
@@ -819,6 +831,14 @@ export default function HotelsPage() {
           </div>
         </div>
       </div>
+
+      {/* Hotel Details Modal */}
+      <HotelDetailsModal
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        ittid={selectedHotelIttid}
+        hotelName={selectedHotelName}
+      />
     </div>
   );
 }
