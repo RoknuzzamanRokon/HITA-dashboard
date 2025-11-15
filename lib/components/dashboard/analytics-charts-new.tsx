@@ -13,8 +13,11 @@ import {
   Line,
   Area,
   AreaChart,
+  ScatterChart,
+  Scatter,
   XAxis,
   YAxis,
+  ZAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
@@ -86,6 +89,46 @@ const RegistrationTooltip: React.FC<RegistrationTooltipProps> = ({
         <p className="text-sm text-gray-700 dark:text-gray-300 mb-1">{label}</p>
         <p className="text-sm text-gray-900 dark:text-gray-100">
           Registrations: <span className="font-semibold">{data.value}</span>
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+interface FreshnessTooltipProps {
+  active?: boolean;
+  payload?: any[];
+}
+
+const FreshnessTooltip: React.FC<FreshnessTooltipProps> = ({
+  active,
+  payload,
+}) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 backdrop-blur-sm">
+        <p className="font-medium text-gray-900 dark:text-gray-100 mb-2">
+          {data.name}
+        </p>
+        <p className="text-sm text-gray-700 dark:text-gray-300">
+          Hotel Count:{" "}
+          <span className="font-semibold">
+            {data.hotelCount.toLocaleString()}
+          </span>
+        </p>
+        <p className="text-sm text-gray-700 dark:text-gray-300">
+          Days Since Update:{" "}
+          <span className="font-semibold">{data.daysSinceUpdate}</span>
+        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          Last Updated:{" "}
+          {new Date(data.lastUpdated).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })}
         </p>
       </div>
     );
@@ -266,6 +309,130 @@ export const UserRegistrationTrendChart: React.FC<
             dot={<CustomDot />}
           />
         </AreaChart>
+      </ResponsiveContainer>
+    </ChartWrapper>
+  );
+};
+
+export interface SupplierFreshnessScatterChartProps {
+  suppliers: SupplierChartData[];
+  loading?: boolean;
+  height?: number;
+}
+
+/**
+ * SupplierFreshnessScatterChart
+ * Displays a scatter plot showing supplier data freshness
+ * Color-coded by data age: green (< 7 days), yellow (7-30 days), red (> 30 days)
+ * Bubble size scaled by hotel count
+ */
+export const SupplierFreshnessScatterChart: React.FC<
+  SupplierFreshnessScatterChartProps
+> = ({ suppliers, loading = false, height = 400 }) => {
+  const [animationKey, setAnimationKey] = useState(0);
+
+  useEffect(() => {
+    if (!loading) {
+      setAnimationKey((prev) => prev + 1);
+    }
+  }, [loading, suppliers]);
+
+  // Transform data for scatter chart
+  // X-axis: supplier index (for positioning)
+  // Y-axis: days since last update
+  // Z-axis: hotel count (for bubble size)
+  const scatterData = suppliers.map((supplier, index) => ({
+    x: index,
+    y: supplier.daysSinceUpdate,
+    z: supplier.hotelCount,
+    name: supplier.name,
+    hotelCount: supplier.hotelCount,
+    lastUpdated: supplier.lastUpdated,
+    daysSinceUpdate: supplier.daysSinceUpdate,
+    freshnessColor: supplier.freshnessColor,
+  }));
+
+  // Custom shape for scatter points with color coding
+  const CustomShape = (props: any) => {
+    const { cx, cy, payload } = props;
+    const radius = Math.max(6, Math.min(20, Math.sqrt(payload.z) / 10));
+
+    return (
+      <circle
+        cx={cx}
+        cy={cy}
+        r={radius}
+        fill={payload.freshnessColor}
+        stroke="#fff"
+        strokeWidth={2}
+        opacity={0.8}
+      />
+    );
+  };
+
+  // Generate x-axis ticks with supplier names
+  const xAxisTicks = suppliers.map((_, index) => index);
+
+  return (
+    <ChartWrapper
+      title="Supplier Data Freshness"
+      subtitle="Data age by supplier (bubble size = hotel count)"
+      loading={loading}
+      height={height}
+    >
+      <ResponsiveContainer width="100%" height="100%">
+        <ScatterChart
+          key={animationKey}
+          margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <XAxis
+            type="number"
+            dataKey="x"
+            name="Supplier"
+            stroke="#666"
+            fontSize={11}
+            tickLine={false}
+            ticks={xAxisTicks}
+            tickFormatter={(value) => {
+              const supplier = suppliers[value];
+              return supplier ? supplier.name : "";
+            }}
+            angle={-45}
+            textAnchor="end"
+            height={80}
+          />
+          <YAxis
+            type="number"
+            dataKey="y"
+            name="Days Since Update"
+            stroke="#666"
+            fontSize={12}
+            tickLine={false}
+            label={{
+              value: "Days Since Last Update",
+              angle: -90,
+              position: "insideLeft",
+              style: { fontSize: 12, fill: "#666" },
+            }}
+          />
+          <ZAxis
+            type="number"
+            dataKey="z"
+            range={[100, 1000]}
+            name="Hotel Count"
+          />
+          <Tooltip
+            content={<FreshnessTooltip />}
+            cursor={{ strokeDasharray: "3 3" }}
+          />
+          <Scatter
+            data={scatterData}
+            shape={<CustomShape />}
+            animationDuration={1200}
+            animationBegin={0}
+          />
+        </ScatterChart>
       </ResponsiveContainer>
     </ChartWrapper>
   );
