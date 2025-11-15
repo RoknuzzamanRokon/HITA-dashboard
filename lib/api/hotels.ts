@@ -765,4 +765,151 @@ export class HotelService {
             };
         }
     }
+
+    /**
+     * Get full hotel details by ITTID
+     * Fetches comprehensive hotel information including provider mappings, rooms, facilities, policies, and photos
+     * Implements retry logic with exponential backoff for resilient error handling
+     * 
+     * @param ittid - Hotel ITT mapping ID
+     * @param abortSignal - Optional AbortSignal for request cancellation
+     * @returns Full hotel details with all provider information
+     */
+    static async getFullHotelDetails(
+        ittid: string,
+        abortSignal?: AbortSignal
+    ): Promise<ApiResponse<import('@/lib/types/full-hotel-details').FullHotelDetailsResponse>> {
+        try {
+            console.log(`🏨 Fetching full hotel details for ittid: ${ittid}`);
+
+            // Check if request was cancelled before starting
+            if (abortSignal?.aborted) {
+                return {
+                    success: false,
+                    error: {
+                        status: 0,
+                        message: 'Request cancelled',
+                        details: 'Request was cancelled before it started'
+                    }
+                };
+            }
+
+            // Make API request with retry logic (2 retries with exponential backoff)
+            // The apiClient.get method already implements retry logic with exponential backoff
+            const response = await apiClient.get<import('@/lib/types/full-hotel-details').FullHotelDetailsResponse>(
+                `/content/get-full-hotel-with-itt-mapping-id/${ittid}`,
+                true, // requiresAuth
+                2 // maxRetries - will retry with 500ms, then 1500ms delays (exponential backoff)
+            );
+
+            // Check if request was cancelled after API call
+            if (abortSignal?.aborted) {
+                return {
+                    success: false,
+                    error: {
+                        status: 0,
+                        message: 'Request cancelled',
+                        details: 'Request was cancelled after API call'
+                    }
+                };
+            }
+
+            if (response.success && response.data) {
+                console.log(`✅ Successfully fetched full hotel details for ${ittid}`);
+                return response;
+            }
+
+            // Handle different error types
+            if (response.error) {
+                const { status, message } = response.error;
+
+                // Network errors (status: 0)
+                if (status === 0) {
+                    return {
+                        success: false,
+                        error: {
+                            status: 0,
+                            message: 'No connection. Please check your network.',
+                            details: response.error.details
+                        }
+                    };
+                }
+
+                // Authentication errors (status: 401)
+                if (status === 401) {
+                    return {
+                        success: false,
+                        error: {
+                            status: 401,
+                            message: 'Session expired. Please log in again.',
+                            details: response.error.details
+                        }
+                    };
+                }
+
+                // Permission errors (status: 403)
+                if (status === 403) {
+                    return {
+                        success: false,
+                        error: {
+                            status: 403,
+                            message: "You don't have permission to view this hotel.",
+                            details: response.error.details
+                        }
+                    };
+                }
+
+                // Not found errors (status: 404)
+                if (status === 404) {
+                    return {
+                        success: false,
+                        error: {
+                            status: 404,
+                            message: 'Hotel details not found.',
+                            details: response.error.details
+                        }
+                    };
+                }
+
+                // Server errors (status: 500-599)
+                if (status >= 500 && status < 600) {
+                    return {
+                        success: false,
+                        error: {
+                            status,
+                            message: 'Server error. Please try again later.',
+                            details: response.error.details
+                        }
+                    };
+                }
+            }
+
+            console.warn(`⚠️ Failed to fetch full hotel details for ${ittid}:`, response.error);
+            return response;
+
+        } catch (error) {
+            console.error(`❌ Error fetching full hotel details for ${ittid}:`, error);
+
+            // Handle abort errors
+            if (error instanceof Error && error.name === 'AbortError') {
+                return {
+                    success: false,
+                    error: {
+                        status: 0,
+                        message: 'Request cancelled',
+                        details: error
+                    }
+                };
+            }
+
+            return {
+                success: false,
+                error: {
+                    status: 0,
+                    message: 'Failed to fetch hotel details',
+                    details: error
+                }
+            };
+        }
+    }
 }

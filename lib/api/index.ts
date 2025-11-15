@@ -12,4 +12,5 @@ export * from '@/lib/types/api';
 export * from '@/lib/types/auth';
 export * from '@/lib/types/user';
 export * from '@/lib/types/hotel';
+export * from '@/lib/types/hotel-details';
 export * from '@/lib/types/provider';

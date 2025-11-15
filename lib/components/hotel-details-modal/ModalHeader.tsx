@@ -6,7 +6,7 @@ import { X } from "lucide-react";
 export interface ModalHeaderProps {
   hotelName?: string;
   onClose: () => void;
-  closeButtonRef?: React.RefObject<HTMLButtonElement>;
+  closeButtonRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
 export const ModalHeader: React.FC<ModalHeaderProps> = ({

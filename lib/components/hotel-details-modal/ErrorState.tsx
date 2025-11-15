@@ -12,7 +12,7 @@ export interface ErrorStateProps {
   ittid: string;
   requestId?: string | null;
   onRetry: () => void;
-  onReport: () => void;
+  onReport?: () => void;
 }
 
 /**
@@ -30,6 +30,21 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   onRetry,
   onReport,
 }) => {
+  // Default report handler
+  const handleReport = () => {
+    if (onReport) {
+      onReport();
+    } else {
+      const report = generateErrorReport(ittid, error, requestId || null);
+      console.error("Error Report:", report);
+      alert(
+        `Error report generated. Please contact support with Request ID: ${
+          requestId || "N/A"
+        }`
+      );
+    }
+  };
+
   // Determine error-specific messaging
   const getErrorMessage = (): string => {
     if (error.status === 0) {
@@ -107,7 +122,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
 
         {/* Report Button - Secondary action */}
         <button
-          onClick={onReport}
+          onClick={handleReport}
           className="inline-flex items-center justify-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
           aria-label="Report this issue"
         >

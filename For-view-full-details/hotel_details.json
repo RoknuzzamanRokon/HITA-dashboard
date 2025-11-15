@@ -1,0 +1,571 @@
+{
+    "total_supplier": 1,
+    "have_provider_list": [
+        "itt",
+        "hotelbeds"
+    ],
+    "hotel": {
+        "id": 1119864,
+        "property_type": "Hotel",
+        "name": "Hotel Victoria",
+        "primary_photo": "https://photos.hotelbeds.com/giata/xl/10/1038133/1038133a_hb_a_003.jpeg",
+        "latitude": "42.5712",
+        "created_at": "2025-07-01T03:32:31",
+        "longitude": "1.40379",
+        "updated_at": "2025-07-01T03:32:31",
+        "address_line1": "Carretera General, 29/31",
+        "map_status": "pending",
+        "address_line2": "",
+        "content_update_status": "NewAdd",
+        "postal_code": "AD400",
+        "ittid": "11115304",
+        "rating": "3.0"
+    },
+    "provider_mappings": [
+        {
+            "id": 4425254,
+            "ittid": "11115304",
+            "provider_name": "hotelbeds",
+            "provider_id": "1038133",
+            "updated_at": "2025-10-29T13:14:34",
+            "full_details": {
+                "created": "2025-11-15T22:15:57",
+                "timestamp": 1763223357,
+                "hotel_id": 1038133,
+                "name": "Hotel Victoria",
+                "name_local": "Hotel Victoria",
+                "hotel_formerly_name": "Hotel Victoria",
+                "destination_code": "AND",
+                "country_code": "AD",
+                "brand_text": null,
+                "property_type": "Hotel",
+                "star_rating": "3",
+                "chain": null,
+                "brand": null,
+                "logo": null,
+                "primary_photo": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_a_002.jpeg",
+                "review_rating": {
+                    "source": null,
+                    "number_of_reviews": null,
+                    "rating_average": null,
+                    "popularity_score": null
+                },
+                "policies": {
+                    "checkin": {
+                        "begin_time": "16:00:00",
+                        "end_time": "11:00:00",
+                        "instructions": null,
+                        "min_age": null
+                    },
+                    "checkout": {
+                        "time": "11:00:00"
+                    },
+                    "fees": {
+                        "optional": null
+                    },
+                    "know_before_you_go": null,
+                    "pets": null,
+                    "remark": null,
+                    "child_and_extra_bed_policy": {
+                        "infant_age": null,
+                        "children_age_from": null,
+                        "children_age_to": null,
+                        "children_stay_free": null,
+                        "min_guest_age": null
+                    },
+                    "nationality_restrictions": null
+                },
+                "address": {
+                    "latitude": 42.5712244,
+                    "longitude": 1.4037897,
+                    "address_line_1": "Carretera General, 29/31",
+                    "address_line_2": null,
+                    "city": "Arinsal",
+                    "state": "ANDORRA LA VELLA",
+                    "country": "Andorra",
+                    "country_code": "AD",
+                    "postal_code": "AD400",
+                    "full_address": "Carretera General, 29/31, Arinsal, Andorra",
+                    "google_map_site_link": "http://maps.google.com/maps?q=Carretera+General,+29/31",
+                    "local_lang": {
+                        "latitude": 42.5712244,
+                        "longitude": 1.4037897,
+                        "address_line_1": "Carretera General, 29/31",
+                        "address_line_2": null,
+                        "city": "Arinsal",
+                        "state": "ANDORRA LA VELLA",
+                        "country": "Andorra",
+                        "country_code": "AD",
+                        "postal_code": "AD400",
+                        "full_address": "Carretera General, 29/31, Arinsal, Andorra",
+                        "google_map_site_link": "http://maps.google.com/maps?q=Carretera+General,+29/31"
+                    },
+                    "mapping": {
+                        "continent_id": null,
+                        "country_id": null,
+                        "province_id": null,
+                        "state_id": null,
+                        "city_id": null,
+                        "area_id": null
+                    }
+                },
+                "contacts": {
+                    "phone_numbers": [
+                        "+376856661",
+                        "+376372283"
+                    ],
+                    "fax": null,
+                    "email_address": [
+                        "hotelguineu@andorra.ad"
+                    ],
+                    "website": [
+                        ""
+                    ]
+                },
+                "descriptions": [
+                    {
+                        "title": null,
+                        "text": "The Hotel Victoria Arinsal *** is a family hotel located in Arinsal (Principality of Andorra)just a few metres away from the cable car of the ski resort. The hotel offers 85 spacious and comfortable rooms. All our rooms are equipped with central heating, satellite TV, telephone and a free safe. All our bathrooms are equipped with a hairdryer. The Hotel a restaurant offering breakfast and dinner with a buffet of a wide variety of hot and cold dishes. The reception is open 24 hours a day. Free ski storage is also available. \nThe hotel offers a peaceful environment to relax after a long day on the slopes. All the shops and restaurants of Arinsal are within walking distance. We have a paid car park subject to availability on arrival. It costs 15 euros per day. \nTourist tax is paid directly at the accommodation. \nCheck in is from 16. 00 hs and check out is at 10. 00 hs. "
+                    }
+                ],
+                "room_type": [
+                    {
+                        "room_id": "DBL.ST",
+                        "title": "DOUBLE STANDARD",
+                        "title_lang": null,
+                        "room_pic": "https://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_001.jpeg",
+                        "description": "DOUBLE STANDARD",
+                        "max_allowed": {
+                            "total": 2,
+                            "adults": 2,
+                            "children": 1,
+                            "infant": null
+                        },
+                        "no_of_room": null,
+                        "room_size": "Double bed 131-150 width",
+                        "bed_type": [
+                            {
+                                "description": "STANDARD",
+                                "configuration": [],
+                                "max_extrabeds": null
+                            }
+                        ],
+                        "shared_bathroom": null,
+                        "amenities": [
+                            "Living room",
+                            "Wheelchair-accessible",
+                            "Wi-fi",
+                            "Smoking rooms",
+                            "Room size (sqm)",
+                            "Number of bedrooms"
+                        ]
+                    },
+                    {
+                        "room_id": "QUA.C4",
+                        "title": "QUADRUPLE CAPACITY 4",
+                        "title_lang": null,
+                        "room_pic": "https://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_012.jpg",
+                        "description": "QUADRUPLE CAPACITY 4",
+                        "max_allowed": {
+                            "total": 4,
+                            "adults": 4,
+                            "children": 0,
+                            "infant": null
+                        },
+                        "no_of_room": null,
+                        "room_size": "Double bed 131-150 width",
+                        "bed_type": [
+                            {
+                                "description": "CAPACITY 4",
+                                "configuration": [],
+                                "max_extrabeds": null
+                            }
+                        ],
+                        "shared_bathroom": null,
+                        "amenities": [
+                            "Living room",
+                            "Wheelchair-accessible",
+                            "Wi-fi",
+                            "Smoking rooms",
+                            "Room size (sqm)",
+                            "Number of bedrooms"
+                        ]
+                    },
+                    {
+                        "room_id": "QUA.C4-1",
+                        "title": "QUADRUPLE CAPACITY 4",
+                        "title_lang": null,
+                        "room_pic": "https://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_011.jpg",
+                        "description": "QUADRUPLE CAPACITY 4",
+                        "max_allowed": {
+                            "total": 4,
+                            "adults": 3,
+                            "children": 1,
+                            "infant": null
+                        },
+                        "no_of_room": null,
+                        "room_size": "Double bed 131-150 width",
+                        "bed_type": [
+                            {
+                                "description": "CAPACITY 4",
+                                "configuration": [],
+                                "max_extrabeds": null
+                            }
+                        ],
+                        "shared_bathroom": null,
+                        "amenities": [
+                            "Living room",
+                            "Wheelchair-accessible",
+                            "Wi-fi",
+                            "Smoking rooms",
+                            "Room size (sqm)",
+                            "Number of bedrooms"
+                        ]
+                    },
+                    {
+                        "room_id": "QUA.ST",
+                        "title": "QUADRUPLE STANDARD",
+                        "title_lang": null,
+                        "room_pic": "https://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_008.jpeg",
+                        "description": "QUADRUPLE STANDARD",
+                        "max_allowed": {
+                            "total": 4,
+                            "adults": 4,
+                            "children": 2,
+                            "infant": null
+                        },
+                        "no_of_room": null,
+                        "room_size": "Single bed 80-130 width",
+                        "bed_type": [
+                            {
+                                "description": "STANDARD",
+                                "configuration": [],
+                                "max_extrabeds": null
+                            }
+                        ],
+                        "shared_bathroom": null,
+                        "amenities": [
+                            "Living room",
+                            "Wheelchair-accessible",
+                            "Wi-fi",
+                            "Smoking rooms",
+                            "Room size (sqm)",
+                            "Number of bedrooms"
+                        ]
+                    },
+                    {
+                        "room_id": "TPL.C3",
+                        "title": "TRIPLE CAPACITY 3",
+                        "title_lang": null,
+                        "room_pic": "https://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_010.jpg",
+                        "description": "TRIPLE CAPACITY 3",
+                        "max_allowed": {
+                            "total": 3,
+                            "adults": 3,
+                            "children": 0,
+                            "infant": null
+                        },
+                        "no_of_room": null,
+                        "room_size": "Single bed 80-130 width",
+                        "bed_type": [
+                            {
+                                "description": "CAPACITY 3",
+                                "configuration": [],
+                                "max_extrabeds": null
+                            }
+                        ],
+                        "shared_bathroom": null,
+                        "amenities": [
+                            "Living room",
+                            "Wheelchair-accessible",
+                            "Wi-fi",
+                            "Smoking rooms",
+                            "Room size (sqm)",
+                            "Number of bedrooms"
+                        ]
+                    },
+                    {
+                        "room_id": "TPL.ST",
+                        "title": "TRIPLE STANDARD",
+                        "title_lang": null,
+                        "room_pic": "https://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_006.jpeg",
+                        "description": "TRIPLE STANDARD",
+                        "max_allowed": {
+                            "total": 3,
+                            "adults": 3,
+                            "children": 1,
+                            "infant": null
+                        },
+                        "no_of_room": null,
+                        "room_size": "Single bed 80-130 width",
+                        "bed_type": [
+                            {
+                                "description": "STANDARD",
+                                "configuration": [],
+                                "max_extrabeds": null
+                            }
+                        ],
+                        "shared_bathroom": null,
+                        "amenities": [
+                            "Living room",
+                            "Wheelchair-accessible",
+                            "Wi-fi",
+                            "Smoking rooms",
+                            "Room size (sqm)",
+                            "Number of bedrooms"
+                        ]
+                    },
+                    {
+                        "room_id": "TWN.ST",
+                        "title": "TWIN STANDARD",
+                        "title_lang": null,
+                        "room_pic": "https://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_005.jpeg",
+                        "description": "TWIN STANDARD",
+                        "max_allowed": {
+                            "total": 2,
+                            "adults": 2,
+                            "children": 1,
+                            "infant": null
+                        },
+                        "no_of_room": null,
+                        "room_size": "Single bed 80-130 width",
+                        "bed_type": [
+                            {
+                                "description": "STANDARD",
+                                "configuration": [],
+                                "max_extrabeds": null
+                            }
+                        ],
+                        "shared_bathroom": null,
+                        "amenities": [
+                            "Living room",
+                            "Wheelchair-accessible",
+                            "Wi-fi",
+                            "Smoking rooms",
+                            "Room size (sqm)",
+                            "Number of bedrooms"
+                        ]
+                    }
+                ],
+                "spoken_languages": [
+                    {
+                        "type": "spoken_languages",
+                        "title": "English",
+                        "icon": "mdi mdi-translate-variant"
+                    }
+                ],
+                "amenities": null,
+                "facilities": [
+                    {
+                        "type": "Total number of rooms",
+                        "title": "Total number of rooms",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "hotel",
+                        "title": "hotel",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "MasterCard",
+                        "title": "MasterCard",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Visa Electrón",
+                        "title": "Visa Electrón",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "City centre",
+                        "title": "City centre",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Wheelchair-accessible",
+                        "title": "Wheelchair-accessible",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Car park",
+                        "title": "Car park",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Key Collection",
+                        "title": "Key Collection",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "24-hour reception",
+                        "title": "24-hour reception",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Check-in hour",
+                        "title": "Check-in hour",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Check-out hour",
+                        "title": "Check-out hour",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Wi-fi",
+                        "title": "Wi-fi",
+                        "icon": "mdi mdi-translate-variant"
+                    }
+                ],
+                "hotel_photo": [
+                    {
+                        "picture_id": 1,
+                        "title": "Restaurant",
+                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_r_001.jpg"
+                    },
+                    {
+                        "picture_id": 8,
+                        "title": "Room",
+                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_008.jpeg"
+                    },
+                    {
+                        "picture_id": 2,
+                        "title": "Restaurant",
+                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_r_002.jpg"
+                    },
+                    {
+                        "picture_id": 6,
+                        "title": "Room",
+                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_006.jpeg"
+                    },
+                    {
+                        "picture_id": 9,
+                        "title": "Room",
+                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_009.jpeg"
+                    },
+                    {
+                        "picture_id": 10,
+                        "title": "Room",
+                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_010.jpg"
+                    },
+                    {
+                        "picture_id": 11,
+                        "title": "Room",
+                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_011.jpg"
+                    },
+                    {
+                        "picture_id": 1,
+                        "title": "Sports and Entertainment",
+                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_f_001.jpeg"
+                    },
+                    {
+                        "picture_id": 7,
+                        "title": "Room",
+                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_007.jpeg"
+                    },
+                    {
+                        "picture_id": 1,
+                        "title": "Lobby",
+                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_l_001.jpeg"
+                    },
+                    {
+                        "picture_id": 5,
+                        "title": "Room",
+                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_005.jpeg"
+                    },
+                    {
+                        "picture_id": 3,
+                        "title": "Room",
+                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_003.jpeg"
+                    },
+                    {
+                        "picture_id": 2,
+                        "title": "Lobby",
+                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_l_002.jpeg"
+                    },
+                    {
+                        "picture_id": 1,
+                        "title": "Room",
+                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_001.jpeg"
+                    },
+                    {
+                        "picture_id": 2,
+                        "title": "Room",
+                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_002.jpeg"
+                    },
+                    {
+                        "picture_id": 4,
+                        "title": "Room",
+                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_004.jpeg"
+                    },
+                    {
+                        "picture_id": 2,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_a_002.jpeg"
+                    },
+                    {
+                        "picture_id": 1,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_a_001.jpeg"
+                    },
+                    {
+                        "picture_id": 4,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_a_004.jpg"
+                    },
+                    {
+                        "picture_id": 3,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_a_003.jpeg"
+                    },
+                    {
+                        "picture_id": 12,
+                        "title": "Room",
+                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_012.jpg"
+                    }
+                ],
+                "point_of_interests": [],
+                "nearest_airports": [],
+                "train_stations": null,
+                "connected_locations": null,
+                "stadiums": null
+            }
+        }
+    ],
+    "locations": [
+        {
+            "ittid": "11115304",
+            "city_name": "Arinsal",
+            "state_code": "AD",
+            "country_code": "AD",
+            "city_code": "ALV",
+            "created_at": "2025-07-01T03:32:31",
+            "state_name": "",
+            "id": 1119831,
+            "country_name": "Andorra",
+            "master_city_name": "Arinsal",
+            "city_location_id": "",
+            "updated_at": "2025-07-01T03:32:31"
+        }
+    ],
+    "contacts": [
+        {
+            "contact_type": "phone",
+            "ittid": "11115304",
+            "value": "+376856661",
+            "id": 1220408
+        },
+        {
+            "contact_type": "phone",
+            "ittid": "11115304",
+            "value": "+376372283",
+            "id": 1220410
+        },
+        {
+            "contact_type": "email",
+            "ittid": "11115304",
+            "value": "hotelguineu@andorra.ad",
+            "id": 1220413
+        }
+    ]
+}

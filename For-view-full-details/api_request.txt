@@ -1,0 +1,14 @@
+import requests
+import json
+
+url = "http://127.0.0.1:8001/v1.0/content/get-full-hotel-with-itt-mapping-id/11115304"
+
+payload = ""
+headers = {
+  'Content-Type': 'application/json',
+  'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyb24xMjMiLCJ1c2VyX2lkIjoiMmYwMTBmZTRjNSIsInJvbGUiOiJhZG1pbl91c2VyIiwiZXhwIjoxNzY1MDIxMDg1LCJ0eXBlIjoiYWNjZXNzIiwiaWF0IjoxNzYzMjIxMDg1fQ.krG-PNFA6v7HsmbNgzZWIecHptK4HsLuJwfksAbCc8w'
+}
+
+response = requests.request("GET", url, headers=headers, data=payload)
+
+print(response.text)
