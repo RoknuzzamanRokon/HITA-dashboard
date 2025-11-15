@@ -16,6 +16,7 @@ import { ContactInfo } from "./ContactInfo";
 import { EnhancedLocationInfo } from "./EnhancedLocationInfo";
 import { TabNavigation, type TabType } from "./TabNavigation";
 import { TabContent } from "./TabContent";
+import { RoomList } from "./RoomList";
 import { HotelService } from "@/lib/api/hotels";
 import { transformFullHotelDetails } from "@/lib/utils/hotel-details-transform";
 import type { FullHotelDetails } from "@/lib/types/full-hotel-details";
@@ -330,11 +331,23 @@ export const HotelDetailsModal: React.FC<HotelDetailsModalProps> = ({
                     )}
 
                     {activeTab === "rooms" && (
-                      <div className="text-center py-12 text-gray-500">
-                        <p className="text-lg font-medium">Rooms Tab</p>
-                        <p className="text-sm mt-2">
-                          Room details will be implemented in task 8
-                        </p>
+                      <div>
+                        {hotelData.primaryProvider?.full_details?.room_type ? (
+                          <RoomList
+                            rooms={
+                              hotelData.primaryProvider.full_details.room_type
+                            }
+                          />
+                        ) : (
+                          <div className="text-center py-12 text-gray-500">
+                            <p className="text-lg font-medium">
+                              No Room Information
+                            </p>
+                            <p className="text-sm mt-2">
+                              Room details are not available for this hotel.
+                            </p>
+                          </div>
+                        )}
                       </div>
                     )}
 
