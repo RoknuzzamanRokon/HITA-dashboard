@@ -31,3 +31,7 @@ export { RoomCard } from "./RoomCard";
 export type { RoomCardProps } from "./RoomCard";
 export { RoomDetailsExpanded } from "./RoomDetailsExpanded";
 export type { RoomDetailsExpandedProps } from "./RoomDetailsExpanded";
+export { FacilitiesList } from "./FacilitiesList";
+export type { FacilitiesListProps } from "./FacilitiesList";
+export { AmenitiesList } from "./AmenitiesList";
+export type { AmenitiesListProps } from "./AmenitiesList";

@@ -17,6 +17,8 @@ import { EnhancedLocationInfo } from "./EnhancedLocationInfo";
 import { TabNavigation, type TabType } from "./TabNavigation";
 import { TabContent } from "./TabContent";
 import { RoomList } from "./RoomList";
+import { FacilitiesList } from "./FacilitiesList";
+import { AmenitiesList } from "./AmenitiesList";
 import { HotelService } from "@/lib/api/hotels";
 import { transformFullHotelDetails } from "@/lib/utils/hotel-details-transform";
 import type { FullHotelDetails } from "@/lib/types/full-hotel-details";
@@ -352,11 +354,30 @@ export const HotelDetailsModal: React.FC<HotelDetailsModalProps> = ({
                     )}
 
                     {activeTab === "facilities" && (
-                      <div className="text-center py-12 text-gray-500">
-                        <p className="text-lg font-medium">Facilities Tab</p>
-                        <p className="text-sm mt-2">
-                          Facilities will be implemented in task 9
-                        </p>
+                      <div className="space-y-6">
+                        {hotelData.primaryProvider?.full_details?.facilities ? (
+                          <FacilitiesList
+                            facilities={
+                              hotelData.primaryProvider.full_details.facilities
+                            }
+                          />
+                        ) : (
+                          <div className="text-center py-8 text-gray-500">
+                            <p className="text-sm">
+                              No facilities information available
+                            </p>
+                          </div>
+                        )}
+
+                        {hotelData.primaryProvider?.full_details?.amenities && (
+                          <div className="pt-4 border-t border-gray-200">
+                            <AmenitiesList
+                              amenities={
+                                hotelData.primaryProvider.full_details.amenities
+                              }
+                            />
+                          </div>
+                        )}
                       </div>
                     )}
 
