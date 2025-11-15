@@ -15,6 +15,11 @@ export {
     BookingSourcesChart,
 } from "./analytics-charts";
 
+export {
+    SupplierHotelCountsChart,
+} from "./analytics-charts-new";
+export type { SupplierHotelCountsChartProps } from "./analytics-charts-new";
+
 export { LiveActivityFeed } from "./live-activity-feed";
 export { QuickActions } from "./quick-actions";
 export { RecentTransactions } from "./recent-transactions";
