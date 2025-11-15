@@ -19,6 +19,10 @@ import { TabContent } from "./TabContent";
 import { RoomList } from "./RoomList";
 import { FacilitiesList } from "./FacilitiesList";
 import { AmenitiesList } from "./AmenitiesList";
+import { CheckInOutInfo } from "./CheckInOutInfo";
+import { ChildPolicy } from "./ChildPolicy";
+import { PetPolicy } from "./PetPolicy";
+import { SpecialInstructions } from "./SpecialInstructions";
 import { HotelService } from "@/lib/api/hotels";
 import { transformFullHotelDetails } from "@/lib/utils/hotel-details-transform";
 import type { FullHotelDetails } from "@/lib/types/full-hotel-details";
@@ -382,11 +386,93 @@ export const HotelDetailsModal: React.FC<HotelDetailsModalProps> = ({
                     )}
 
                     {activeTab === "policies" && (
-                      <div className="text-center py-12 text-gray-500">
-                        <p className="text-lg font-medium">Policies Tab</p>
-                        <p className="text-sm mt-2">
-                          Policies will be implemented in task 10
-                        </p>
+                      <div className="space-y-6">
+                        {hotelData.primaryProvider?.full_details?.policies ? (
+                          <>
+                            {/* Check-In/Out Information */}
+                            {(hotelData.primaryProvider.full_details.policies
+                              .checkin ||
+                              hotelData.primaryProvider.full_details.policies
+                                .checkout) && (
+                              <CheckInOutInfo
+                                checkin={
+                                  hotelData.primaryProvider.full_details
+                                    .policies.checkin
+                                }
+                                checkout={
+                                  hotelData.primaryProvider.full_details
+                                    .policies.checkout
+                                }
+                              />
+                            )}
+
+                            {/* Child Policy */}
+                            {hotelData.primaryProvider.full_details.policies
+                              .child_and_extra_bed_policy && (
+                              <div className="pt-4 border-t border-gray-200">
+                                <ChildPolicy
+                                  childPolicy={
+                                    hotelData.primaryProvider.full_details
+                                      .policies.child_and_extra_bed_policy
+                                  }
+                                />
+                              </div>
+                            )}
+
+                            {/* Pet Policy */}
+                            {hotelData.primaryProvider.full_details.policies
+                              .pets && (
+                              <div className="pt-4 border-t border-gray-200">
+                                <PetPolicy
+                                  petPolicy={
+                                    hotelData.primaryProvider.full_details
+                                      .policies.pets
+                                  }
+                                />
+                              </div>
+                            )}
+
+                            {/* Special Instructions */}
+                            {hotelData.primaryProvider.full_details.policies
+                              .remark && (
+                              <div className="pt-4 border-t border-gray-200">
+                                <SpecialInstructions
+                                  remark={
+                                    hotelData.primaryProvider.full_details
+                                      .policies.remark
+                                  }
+                                />
+                              </div>
+                            )}
+
+                            {/* No policies message if all are empty */}
+                            {!hotelData.primaryProvider.full_details.policies
+                              .checkin &&
+                              !hotelData.primaryProvider.full_details.policies
+                                .checkout &&
+                              !hotelData.primaryProvider.full_details.policies
+                                .child_and_extra_bed_policy &&
+                              !hotelData.primaryProvider.full_details.policies
+                                .pets &&
+                              !hotelData.primaryProvider.full_details.policies
+                                .remark && (
+                                <div className="text-center py-8 text-gray-500">
+                                  <p className="text-sm">
+                                    No policy information available
+                                  </p>
+                                </div>
+                              )}
+                          </>
+                        ) : (
+                          <div className="text-center py-12 text-gray-500">
+                            <p className="text-lg font-medium">
+                              No Policy Information
+                            </p>
+                            <p className="text-sm mt-2">
+                              Policy details are not available for this hotel.
+                            </p>
+                          </div>
+                        )}
                       </div>
                     )}
 
