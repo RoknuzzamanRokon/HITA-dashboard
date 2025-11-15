@@ -11,6 +11,9 @@ import { ErrorState } from "./ErrorState";
 import { HeroSection } from "./HeroSection";
 import { BasicInfo } from "./BasicInfo";
 import { LocationInfo } from "./LocationInfo";
+import { HotelDescription } from "./HotelDescription";
+import { ContactInfo } from "./ContactInfo";
+import { EnhancedLocationInfo } from "./EnhancedLocationInfo";
 import { TabNavigation, type TabType } from "./TabNavigation";
 import { TabContent } from "./TabContent";
 import { HotelService } from "@/lib/api/hotels";
@@ -246,17 +249,55 @@ export const HotelDetailsModal: React.FC<HotelDetailsModalProps> = ({
                   <TabContent activeTab={activeTab}>
                     {activeTab === "overview" && (
                       <div className="space-y-6">
-                        {/* Basic Info */}
-                        <BasicInfo
-                          basic={hotelData.basic}
-                          contacts={hotelData.contacts}
-                        />
+                        {/* Hotel Description */}
+                        {hotelData.primaryProvider?.full_details
+                          ?.descriptions && (
+                          <HotelDescription
+                            descriptions={
+                              hotelData.primaryProvider.full_details
+                                .descriptions
+                            }
+                          />
+                        )}
 
-                        {/* Location Info */}
-                        <LocationInfo
-                          basic={hotelData.basic}
-                          locations={hotelData.locations}
-                        />
+                        {/* Contact Info from Provider */}
+                        {hotelData.primaryProvider?.full_details?.contacts && (
+                          <div className="pt-4 border-t border-gray-200">
+                            <ContactInfo
+                              contacts={
+                                hotelData.primaryProvider.full_details.contacts
+                              }
+                            />
+                          </div>
+                        )}
+
+                        {/* Enhanced Location Info from Provider */}
+                        {hotelData.primaryProvider?.full_details?.address && (
+                          <div className="pt-4 border-t border-gray-200">
+                            <EnhancedLocationInfo
+                              address={
+                                hotelData.primaryProvider.full_details.address
+                              }
+                            />
+                          </div>
+                        )}
+
+                        {/* Fallback: Basic Info if no provider details */}
+                        {!hotelData.primaryProvider?.full_details && (
+                          <>
+                            <BasicInfo
+                              basic={hotelData.basic}
+                              contacts={hotelData.contacts}
+                            />
+
+                            <div className="pt-4 border-t border-gray-200">
+                              <LocationInfo
+                                basic={hotelData.basic}
+                                locations={hotelData.locations}
+                              />
+                            </div>
+                          </>
+                        )}
 
                         {/* Provider Info - Temporary until Providers tab is implemented */}
                         <div className="pt-4 border-t border-gray-200">
