@@ -238,7 +238,19 @@ export function EnhancedUserTable({
           icon: Settings,
           color: "text-blue-600 bg-blue-100",
         };
+      case UserRole.USER:
+        return {
+          label: "User",
+          icon: User,
+          color: "text-green-600 bg-green-100",
+        };
       case UserRole.GENERAL_USER:
+        return {
+          label: "User",
+          icon: User,
+          color: "text-green-600 bg-green-100",
+        };
+      default:
         return {
           label: "User",
           icon: User,

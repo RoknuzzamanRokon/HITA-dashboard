@@ -959,19 +959,27 @@ export default function UsersPage() {
       label: "Role",
       sortable: true,
       render: (value: UserRole) => {
-        const roleColors = {
+        const roleColors: Record<string, string> = {
           [UserRole.SUPER_USER]: "bg-purple-100 text-purple-800",
           [UserRole.ADMIN_USER]: "bg-blue-100 text-blue-800",
+          [UserRole.USER]: "bg-green-100 text-green-800",
           [UserRole.GENERAL_USER]: "bg-green-100 text-green-800",
         };
 
-        const roleLabels = {
+        const roleLabels: Record<string, string> = {
           [UserRole.SUPER_USER]: "Super User",
           [UserRole.ADMIN_USER]: "Admin",
+          [UserRole.USER]: "User",
           [UserRole.GENERAL_USER]: "User",
         };
 
-        return <Badge className={roleColors[value]}>{roleLabels[value]}</Badge>;
+        return (
+          <Badge
+            className={roleColors[value] || roleColors[UserRole.GENERAL_USER]}
+          >
+            {roleLabels[value] || roleLabels[UserRole.GENERAL_USER]}
+          </Badge>
+        );
       },
     },
     {

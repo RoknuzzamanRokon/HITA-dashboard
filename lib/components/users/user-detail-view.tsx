@@ -73,9 +73,25 @@ export function UserDetailView({
           textColor: "text-white",
           description: "Administrative privileges",
         };
+      case UserRole.USER:
+        return {
+          label: "User",
+          icon: User,
+          color: "bg-gradient-to-r from-green-500 to-emerald-500",
+          textColor: "text-white",
+          description: "Standard user access",
+        };
       case UserRole.GENERAL_USER:
         return {
           label: "General User",
+          icon: User,
+          color: "bg-gradient-to-r from-green-500 to-emerald-500",
+          textColor: "text-white",
+          description: "Standard user access",
+        };
+      default:
+        return {
+          label: "User",
           icon: User,
           color: "bg-gradient-to-r from-green-500 to-emerald-500",
           textColor: "text-white",

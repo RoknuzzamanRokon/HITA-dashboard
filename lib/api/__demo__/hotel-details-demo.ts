@@ -86,17 +86,15 @@ export async function demoGetFullHotelDetails(ittid: string) {
 
 /**
  * Example with custom retry configuration
+ * Note: Retry logic is handled internally by the HotelService
  */
 export async function demoWithCustomRetry(ittid: string) {
-    console.log(`\n🔄 Fetching with custom retry configuration...\n`);
+    console.log(`\n🔄 Fetching hotel details (retry handled internally)...\n`);
 
-    const response = await HotelService.getFullHotelDetails(ittid, {
-        maxRetries: 3,
-        delays: [1000, 2000, 4000] // Custom exponential backoff
-    });
+    const response = await HotelService.getFullHotelDetails(ittid);
 
     if (response.success && response.data) {
-        console.log('✅ Successfully fetched with custom retry config');
+        console.log('✅ Successfully fetched hotel details');
         return transformFullHotelDetails(response.data);
     } else {
         console.error('❌ Failed after custom retries');
