@@ -508,9 +508,7 @@ export default function DashboardPage() {
       </div>
 
       {/* New Analytics Charts Section */}
-      <PermissionGuard
-        permissions={[Permission.VIEW_ANALYTICS, Permission.VIEW_ALL_USERS]}
-      >
+      <PermissionGuard permissions={[Permission.VIEW_ANALYTICS]}>
         <ChartErrorBoundary
           onError={(error, errorInfo) => {
             console.error("Chart section error:", error, errorInfo);

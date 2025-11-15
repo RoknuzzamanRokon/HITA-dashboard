@@ -100,9 +100,20 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
         Permission.GIVE_POINTS,
     ],
 
+    [UserRole.USER]: [
+        // Regular users can view their own dashboard and analytics
+        Permission.VIEW_DASHBOARD_STATS, // Can see basic dashboard
+        Permission.VIEW_ANALYTICS, // Can see their own analytics/charts
+        // Note: Cannot view all users, only their own profile
+        // Cannot create/edit/delete users
+        // Cannot manage hotels, content, providers
+        // Cannot access system settings
+    ],
+
     [UserRole.GENERAL_USER]: [
         // General users have very limited permissions
         Permission.VIEW_DASHBOARD_STATS, // Can see basic dashboard
+        Permission.VIEW_ANALYTICS, // Can see their own analytics/charts
         // Note: Cannot view all users, only their own profile
         // Cannot create/edit/delete users
         // Cannot manage hotels, content, providers
