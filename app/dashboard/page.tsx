@@ -16,8 +16,16 @@ import {
   LiveActivityFeed,
   QuickActions,
   RecentTransactions,
+  SupplierHotelCountsChart,
+  UserRegistrationTrendChart,
+  SupplierFreshnessScatterChart,
+  UserLoginTimelineChart,
+  ApiRequestTimelineChart,
+  PackagePointComparisonChart,
+  CombinedActivityChart,
 } from "@/lib/components/dashboard";
 import { useDashboardStats } from "@/lib/hooks/use-dashboard-stats";
+import { useDashboardCharts } from "@/lib/hooks/use-dashboard-charts";
 import {
   Users,
   UserCheck,
@@ -58,6 +66,14 @@ export default function DashboardPage() {
     lastFetch,
   } = useDashboardStats(realTimeEnabled ? 30000 : 0); // Real-time updates every 30 seconds when enabled
 
+  // Dashboard charts hook with conditional real-time updates
+  const {
+    chartsData,
+    loading: chartsLoading,
+    error: chartsError,
+    refetch: refetchCharts,
+  } = useDashboardCharts(realTimeEnabled ? 30000 : 0);
+
   // Check API connection on mount
   useEffect(() => {
     const checkApiConnection = async () => {
@@ -94,6 +110,7 @@ export default function DashboardPage() {
   // Refresh dashboard stats
   const handleRefreshStats = async () => {
     await refetch();
+    await refetchCharts();
   };
 
   // Check token status
@@ -256,6 +273,20 @@ export default function DashboardPage() {
               <div className="w-3 h-3 rounded-full mr-3 bg-red-500"></div>
               <span className="text-sm font-medium text-red-800">
                 Dashboard Stats Error: {statsError}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dashboard Charts Error */}
+      {chartsError && (
+        <div className="mb-6">
+          <div className="p-4 rounded-md bg-red-50 border border-red-200">
+            <div className="flex items-center">
+              <div className="w-3 h-3 rounded-full mr-3 bg-red-500"></div>
+              <span className="text-sm font-medium text-red-800">
+                Dashboard Charts Error: {chartsError}
               </span>
             </div>
           </div>
@@ -475,6 +506,76 @@ export default function DashboardPage() {
           <BookingSourcesChart loading={statsLoading} stats={stats} />
         </PermissionGuard>
       </div>
+
+      {/* New Analytics Charts Section */}
+      <PermissionGuard
+        permissions={[Permission.VIEW_ANALYTICS, Permission.VIEW_ALL_USERS]}
+      >
+        <div className="mb-8">
+          <h2 className="text-lg font-medium text-[rgb(var(--text-primary))] mb-4">
+            Platform Analytics
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Supplier Hotel Counts - 2 columns */}
+            <div className="col-span-1 md:col-span-2">
+              <SupplierHotelCountsChart
+                suppliers={chartsData?.suppliers || []}
+                loading={chartsLoading}
+              />
+            </div>
+
+            {/* Package Points - 1 column */}
+            <div className="col-span-1">
+              <PackagePointComparisonChart
+                packages={chartsData?.packages || []}
+                loading={chartsLoading}
+              />
+            </div>
+
+            {/* Combined Activity - 3 columns */}
+            <div className="col-span-1 md:col-span-2 lg:col-span-3">
+              <CombinedActivityChart
+                registrations={chartsData?.registrations || []}
+                logins={chartsData?.logins || []}
+                apiRequests={chartsData?.apiRequests || []}
+                loading={chartsLoading}
+              />
+            </div>
+
+            {/* User Registration Trend - 1 column */}
+            <div className="col-span-1">
+              <UserRegistrationTrendChart
+                data={chartsData?.registrations || []}
+                loading={chartsLoading}
+              />
+            </div>
+
+            {/* User Login Timeline - 1 column */}
+            <div className="col-span-1">
+              <UserLoginTimelineChart
+                data={chartsData?.logins || []}
+                loading={chartsLoading}
+              />
+            </div>
+
+            {/* API Request Timeline - 1 column */}
+            <div className="col-span-1">
+              <ApiRequestTimelineChart
+                data={chartsData?.apiRequests || []}
+                loading={chartsLoading}
+              />
+            </div>
+
+            {/* Supplier Freshness - 2 columns */}
+            <div className="col-span-1 md:col-span-2">
+              <SupplierFreshnessScatterChart
+                suppliers={chartsData?.suppliers || []}
+                loading={chartsLoading}
+              />
+            </div>
+          </div>
+        </div>
+      </PermissionGuard>
 
       {/* Role-Based Navigation */}
       <div className="mb-8">
