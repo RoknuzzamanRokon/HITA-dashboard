@@ -20,12 +20,14 @@ export {
     UserRegistrationTrendChart,
     SupplierFreshnessScatterChart,
     UserLoginTimelineChart,
+    ApiRequestTimelineChart,
 } from "./analytics-charts-new";
 export type {
     SupplierHotelCountsChartProps,
     UserRegistrationTrendChartProps,
     SupplierFreshnessScatterChartProps,
     UserLoginTimelineChartProps,
+    ApiRequestTimelineChartProps,
 } from "./analytics-charts-new";
 
 export { LiveActivityFeed } from "./live-activity-feed";

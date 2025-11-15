@@ -121,6 +121,32 @@ const LoginTooltip: React.FC<LoginTooltipProps> = ({
   return null;
 };
 
+interface ApiRequestTooltipProps {
+  active?: boolean;
+  payload?: any[];
+  label?: string;
+}
+
+const ApiRequestTooltip: React.FC<ApiRequestTooltipProps> = ({
+  active,
+  payload,
+  label,
+}) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 backdrop-blur-sm">
+        <p className="text-sm text-gray-700 dark:text-gray-300 mb-1">{label}</p>
+        <p className="text-sm text-gray-900 dark:text-gray-100">
+          API Requests:{" "}
+          <span className="font-semibold">{data.value.toLocaleString()}</span>
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 interface FreshnessTooltipProps {
   active?: boolean;
   payload?: any[];
@@ -530,6 +556,83 @@ export const UserLoginTimelineChart: React.FC<UserLoginTimelineChartProps> = ({
             stroke="#82ca9d"
             strokeWidth={2}
             fill="url(#colorLogins)"
+            animationDuration={1200}
+            animationBegin={0}
+            connectNulls
+            isAnimationActive={true}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </ChartWrapper>
+  );
+};
+
+export interface ApiRequestTimelineChartProps {
+  data: TimeSeriesChartData[];
+  loading?: boolean;
+  height?: number;
+}
+
+/**
+ * ApiRequestTimelineChart
+ * Displays a line chart with area fill showing API request volume
+ * Shows last 30 days of API request data with unique color scheme
+ * Uses smooth curve interpolation with area fill
+ */
+export const ApiRequestTimelineChart: React.FC<
+  ApiRequestTimelineChartProps
+> = ({ data, loading = false, height = 350 }) => {
+  const [animationKey, setAnimationKey] = useState(0);
+
+  useEffect(() => {
+    if (!loading) {
+      setAnimationKey((prev) => prev + 1);
+    }
+  }, [loading, data]);
+
+  return (
+    <ChartWrapper
+      title="API Request Volume"
+      subtitle="Last 30 days of API requests"
+      loading={loading}
+      height={height}
+    >
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart
+          data={data}
+          key={animationKey}
+          margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+        >
+          <defs>
+            <linearGradient id="colorApiRequests" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#ffc658" stopOpacity={0.8} />
+              <stop offset="95%" stopColor="#ffc658" stopOpacity={0.1} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <XAxis
+            dataKey="date"
+            stroke="#666"
+            fontSize={12}
+            tickLine={false}
+            angle={-45}
+            textAnchor="end"
+            height={60}
+          />
+          <YAxis
+            stroke="#666"
+            fontSize={12}
+            tickLine={false}
+            allowDecimals={false}
+            tickFormatter={(value) => value.toLocaleString()}
+          />
+          <Tooltip content={<ApiRequestTooltip />} />
+          <Area
+            type="monotone"
+            dataKey="value"
+            stroke="#ffc658"
+            strokeWidth={2}
+            fill="url(#colorApiRequests)"
             animationDuration={1200}
             animationBegin={0}
             connectNulls
