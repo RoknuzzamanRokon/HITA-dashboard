@@ -24,20 +24,22 @@ export const FacilitiesList: React.FC<FacilitiesListProps> = ({
   const hasMore = facilities.length > 10;
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-gray-900">Facilities</h3>
+    <div className="space-y-3 sm:space-y-4">
+      <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+        Facilities
+      </h3>
 
-      {/* Facilities Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+      {/* Facilities Grid - responsive columns */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
         {displayedFacilities.map((facility, index) => (
           <div
             key={`${facility.type}-${index}`}
-            className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-2 px-2 sm:px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
           >
             {/* Icon */}
             {facility.icon && (
               <span
-                className="text-lg flex-shrink-0"
+                className="text-base sm:text-lg flex-shrink-0"
                 role="img"
                 aria-label={facility.title}
               >
@@ -46,7 +48,7 @@ export const FacilitiesList: React.FC<FacilitiesListProps> = ({
             )}
 
             {/* Title */}
-            <span className="text-sm text-gray-700 truncate">
+            <span className="text-xs sm:text-sm text-gray-700 truncate">
               {facility.title}
             </span>
           </div>
@@ -57,7 +59,7 @@ export const FacilitiesList: React.FC<FacilitiesListProps> = ({
       {hasMore && (
         <button
           onClick={() => setShowAll(!showAll)}
-          className="text-sm text-blue-600 hover:text-blue-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded px-2 py-1"
+          className="min-h-[44px] text-xs sm:text-sm text-blue-600 hover:text-blue-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded px-2 py-2"
           aria-expanded={showAll}
           aria-controls="facilities-list"
         >

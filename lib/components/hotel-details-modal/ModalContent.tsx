@@ -14,28 +14,34 @@ export const ModalContent: React.FC<ModalContentProps> = ({
   return (
     <div
       className={`
-        relative z-10 bg-white rounded-lg shadow-xl
-        w-full max-w-[1200px] max-h-[90vh]
-        overflow-hidden
+        relative z-10 bg-white shadow-xl
+        w-full overflow-hidden
         transition-all duration-300 ease-in-out
+        
+        /* Mobile: Full width bottom sheet (<640px) */
+        max-sm:fixed max-sm:bottom-0 max-sm:left-0 max-sm:right-0
+        max-sm:max-w-full max-sm:rounded-t-2xl max-sm:rounded-b-none
+        max-sm:max-h-[90vh]
+        ${isOpen ? "max-sm:translate-y-0" : "max-sm:translate-y-full"}
+        max-sm:opacity-100
+        
+        /* Tablet: Centered modal (640-1024px) */
+        sm:max-lg:w-[90%] sm:max-lg:max-w-[800px]
+        sm:max-lg:mx-auto sm:max-lg:rounded-lg sm:max-lg:max-h-[90vh]
         ${
           isOpen
-            ? "opacity-100 translate-y-0 scale-100"
-            : "opacity-0 translate-y-4 scale-95"
+            ? "sm:max-lg:opacity-100 sm:max-lg:translate-y-0 sm:max-lg:scale-100"
+            : "sm:max-lg:opacity-0 sm:max-lg:translate-y-4 sm:max-lg:scale-95"
         }
         
-        /* Mobile: Full width bottom sheet */
-        max-[640px]:fixed max-[640px]:bottom-0 max-[640px]:left-0 max-[640px]:right-0
-        max-[640px]:max-w-full max-[640px]:rounded-t-lg max-[640px]:rounded-b-none
-        max-[640px]:max-h-[85vh]
-        ${isOpen ? "max-[640px]:translate-y-0" : "max-[640px]:translate-y-full"}
-        
-        /* Tablet: Centered modal */
-        min-[640px]:max-[1024px]:w-[90%] min-[640px]:max-[1024px]:max-w-[800px]
-        min-[640px]:mx-4
-        
-        /* Desktop: Centered modal with max width */
-        min-[1024px]:w-[80%] min-[1024px]:mx-8
+        /* Desktop: Centered modal with max width (>1024px) */
+        lg:w-[80%] lg:max-w-[1200px]
+        lg:mx-auto lg:rounded-lg lg:max-h-[90vh]
+        ${
+          isOpen
+            ? "lg:opacity-100 lg:translate-y-0 lg:scale-100"
+            : "lg:opacity-0 lg:translate-y-4 lg:scale-95"
+        }
       `}
     >
       {children}

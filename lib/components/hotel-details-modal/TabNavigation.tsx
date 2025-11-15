@@ -96,7 +96,8 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
               onClick={() => onTabChange(tab.id)}
               onKeyDown={handleKeyDown}
               className={`
-                flex-shrink-0 px-4 py-3 text-sm font-medium whitespace-nowrap
+                flex-shrink-0 min-h-[44px] px-3 py-2.5 sm:px-4 sm:py-3 
+                text-xs sm:text-sm font-medium whitespace-nowrap
                 border-b-2 transition-colors duration-150 ease-in-out
                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
                 ${

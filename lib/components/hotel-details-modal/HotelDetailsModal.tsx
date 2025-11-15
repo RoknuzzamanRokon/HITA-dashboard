@@ -221,7 +221,7 @@ export const HotelDetailsModal: React.FC<HotelDetailsModalProps> = ({
             />
 
             {/* Modal body with loading, error, and content states */}
-            <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
+            <div className="overflow-y-auto max-h-[calc(90vh-60px)] sm:max-h-[calc(90vh-72px)] lg:max-h-[calc(90vh-80px)]">
               {isLoading && (
                 <div className="p-6">
                   <SkeletonLoader />
@@ -257,82 +257,91 @@ export const HotelDetailsModal: React.FC<HotelDetailsModalProps> = ({
                   {/* Tab Content */}
                   <TabContent activeTab={activeTab}>
                     {activeTab === "overview" && (
-                      <div className="space-y-6">
-                        {/* Hotel Description */}
-                        {hotelData.primaryProvider?.full_details
-                          ?.descriptions && (
-                          <HotelDescription
-                            descriptions={
-                              hotelData.primaryProvider.full_details
-                                .descriptions
-                            }
-                          />
-                        )}
+                      <div className="space-y-4 sm:space-y-6">
+                        {/* Desktop: Two-column layout */}
+                        <div className="lg:grid lg:grid-cols-2 lg:gap-6 space-y-4 lg:space-y-0">
+                          {/* Left Column - Description and Details */}
+                          <div className="space-y-4 sm:space-y-6">
+                            {/* Hotel Description */}
+                            {hotelData.primaryProvider?.full_details
+                              ?.descriptions && (
+                              <HotelDescription
+                                descriptions={
+                                  hotelData.primaryProvider.full_details
+                                    .descriptions
+                                }
+                              />
+                            )}
 
-                        {/* Contact Info from Provider */}
-                        {hotelData.primaryProvider?.full_details?.contacts && (
-                          <div className="pt-4 border-t border-gray-200">
-                            <ContactInfo
-                              contacts={
-                                hotelData.primaryProvider.full_details.contacts
-                              }
-                            />
+                            {/* Contact Info from Provider */}
+                            {hotelData.primaryProvider?.full_details
+                              ?.contacts && (
+                              <div className="pt-4 border-t border-gray-200">
+                                <ContactInfo
+                                  contacts={
+                                    hotelData.primaryProvider.full_details
+                                      .contacts
+                                  }
+                                />
+                              </div>
+                            )}
+
+                            {/* Fallback: Basic Info if no provider details */}
+                            {!hotelData.primaryProvider?.full_details && (
+                              <BasicInfo
+                                basic={hotelData.basic}
+                                contacts={hotelData.contacts}
+                              />
+                            )}
                           </div>
-                        )}
 
-                        {/* Enhanced Location Info from Provider */}
-                        {hotelData.primaryProvider?.full_details?.address && (
-                          <div className="pt-4 border-t border-gray-200">
-                            <EnhancedLocationInfo
-                              address={
-                                hotelData.primaryProvider.full_details.address
-                              }
-                            />
-                          </div>
-                        )}
+                          {/* Right Column - Location and Provider Info */}
+                          <div className="space-y-4 sm:space-y-6">
+                            {/* Enhanced Location Info from Provider */}
+                            {hotelData.primaryProvider?.full_details
+                              ?.address && (
+                              <EnhancedLocationInfo
+                                address={
+                                  hotelData.primaryProvider.full_details.address
+                                }
+                              />
+                            )}
 
-                        {/* Fallback: Basic Info if no provider details */}
-                        {!hotelData.primaryProvider?.full_details && (
-                          <>
-                            <BasicInfo
-                              basic={hotelData.basic}
-                              contacts={hotelData.contacts}
-                            />
-
-                            <div className="pt-4 border-t border-gray-200">
+                            {/* Fallback: Location Info if no provider details */}
+                            {!hotelData.primaryProvider?.full_details && (
                               <LocationInfo
                                 basic={hotelData.basic}
                                 locations={hotelData.locations}
                               />
-                            </div>
-                          </>
-                        )}
-
-                        {/* Provider Info - Temporary until Providers tab is implemented */}
-                        <div className="pt-4 border-t border-gray-200">
-                          <h4 className="text-sm font-semibold text-gray-900 mb-2">
-                            Provider Information
-                          </h4>
-                          <div className="space-y-1 text-sm text-gray-700">
-                            <p>
-                              <span className="font-medium">
-                                Total Suppliers:
-                              </span>{" "}
-                              {hotelData.totalSuppliers}
-                            </p>
-                            <p>
-                              <span className="font-medium">
-                                Available Providers:
-                              </span>{" "}
-                              {hotelData.availableProviders.join(", ")}
-                            </p>
-                            {hotelData.primaryProvider && (
-                              <p className="text-green-600 font-medium">
-                                Primary Provider:{" "}
-                                {hotelData.primaryProvider.provider_name} (has
-                                full details)
-                              </p>
                             )}
+
+                            {/* Provider Info */}
+                            <div className="pt-4 border-t border-gray-200">
+                              <h4 className="text-sm font-semibold text-gray-900 mb-2">
+                                Provider Information
+                              </h4>
+                              <div className="space-y-1 text-xs sm:text-sm text-gray-700">
+                                <p>
+                                  <span className="font-medium">
+                                    Total Suppliers:
+                                  </span>{" "}
+                                  {hotelData.totalSuppliers}
+                                </p>
+                                <p>
+                                  <span className="font-medium">
+                                    Available Providers:
+                                  </span>{" "}
+                                  {hotelData.availableProviders.join(", ")}
+                                </p>
+                                {hotelData.primaryProvider && (
+                                  <p className="text-green-600 font-medium">
+                                    Primary Provider:{" "}
+                                    {hotelData.primaryProvider.provider_name}{" "}
+                                    (has full details)
+                                  </p>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>

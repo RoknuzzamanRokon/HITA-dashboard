@@ -71,48 +71,51 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
 
   return (
     <div
-      className="flex flex-col items-center justify-center p-8 space-y-4 min-h-[400px]"
+      className="flex flex-col items-center justify-center p-4 sm:p-8 space-y-3 sm:space-y-4 min-h-[300px] sm:min-h-[400px]"
       role="alert"
       aria-live="assertive"
     >
       {/* Error Icon */}
-      <AlertCircle className="h-16 w-16 text-red-500" aria-hidden="true" />
+      <AlertCircle
+        className="h-12 w-12 sm:h-16 sm:w-16 text-red-500"
+        aria-hidden="true"
+      />
 
       {/* Error Message */}
-      <div className="text-center max-w-md">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+      <div className="text-center max-w-md px-2">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
           {errorMessage}
         </h3>
 
         {/* Additional context for network errors */}
         {isNetworkError && (
-          <p className="text-sm text-gray-600 mt-2">
+          <p className="text-xs sm:text-sm text-gray-600 mt-2">
             Check your internet connection and try again.
           </p>
         )}
 
         {/* Error Code Display */}
         {error.status > 0 && (
-          <p className="text-xs text-gray-500 mt-3 font-mono">
+          <p className="text-xs text-gray-500 mt-2 sm:mt-3 font-mono">
             Error code: {error.status}
           </p>
         )}
 
         {/* Request ID for debugging */}
         {requestId && (
-          <p className="text-xs text-gray-400 mt-1 font-mono">
+          <p className="text-xs text-gray-400 mt-1 font-mono break-all">
             Request ID: {requestId}
           </p>
         )}
       </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-3 mt-4">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-3 sm:mt-4 w-full sm:w-auto px-4 sm:px-0">
         {/* Retry Button - Primary action for retryable errors */}
         {canRetry && (
           <button
             onClick={onRetry}
-            className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+            className="inline-flex items-center justify-center min-h-[44px] px-4 py-2.5 bg-blue-600 text-white text-sm sm:text-base rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
             aria-label="Retry loading hotel details"
           >
             <RefreshCw className="h-4 w-4 mr-2" aria-hidden="true" />
@@ -123,7 +126,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
         {/* Report Button - Secondary action */}
         <button
           onClick={handleReport}
-          className="inline-flex items-center justify-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+          className="inline-flex items-center justify-center min-h-[44px] px-4 py-2.5 bg-gray-200 text-gray-700 text-sm sm:text-base rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
           aria-label="Report this issue"
         >
           <FileText className="h-4 w-4 mr-2" aria-hidden="true" />
@@ -132,7 +135,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
       </div>
 
       {/* Additional help text */}
-      <p className="text-xs text-gray-500 mt-4 text-center max-w-sm">
+      <p className="text-xs text-gray-500 mt-3 sm:mt-4 text-center max-w-sm px-4">
         If the problem persists, please report the issue with the details above.
       </p>
     </div>

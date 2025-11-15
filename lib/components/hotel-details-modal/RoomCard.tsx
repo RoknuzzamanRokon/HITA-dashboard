@@ -141,7 +141,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
         {hasMoreContent && (
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors mt-3"
+            className="flex items-center gap-2 min-h-[44px] text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors mt-3 py-2"
             aria-expanded={isExpanded}
             aria-controls={`room-details-${room.room_id}`}
           >

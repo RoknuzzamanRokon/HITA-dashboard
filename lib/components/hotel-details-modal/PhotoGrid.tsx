@@ -25,12 +25,12 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
       {photos.map((photo, index) => (
         <button
           key={`${photo.picture_id}-${index}`}
           onClick={() => onPhotoClick(photo, index)}
-          className="relative aspect-square overflow-hidden rounded-lg bg-gray-100 hover:opacity-90 transition-opacity duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 group"
+          className="relative aspect-square overflow-hidden rounded-lg bg-gray-100 hover:opacity-90 active:opacity-75 transition-opacity duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 group min-h-[120px]"
           aria-label={`View ${photo.title} photo`}
         >
           <Image
@@ -41,9 +41,9 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({
             className="object-cover"
             loading="lazy"
           />
-          {/* Overlay with category on hover */}
-          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-150 flex items-end">
-            <div className="w-full p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+          {/* Overlay with category on hover/touch */}
+          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 group-active:bg-opacity-30 transition-all duration-150 flex items-end">
+            <div className="w-full p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-150">
               <p className="text-white text-xs font-medium truncate">
                 {photo.title}
               </p>

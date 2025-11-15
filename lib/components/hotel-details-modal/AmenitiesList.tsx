@@ -44,15 +44,17 @@ export const AmenitiesList: React.FC<AmenitiesListProps> = ({ amenities }) => {
   }
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-gray-900">Amenities</h3>
+    <div className="space-y-3 sm:space-y-4">
+      <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+        Amenities
+      </h3>
 
-      {/* Amenities Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+      {/* Amenities Grid - responsive columns */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
         {amenitiesList.map((amenity, index) => (
           <div
             key={`amenity-${index}`}
-            className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors"
+            className="flex items-center gap-2 px-2 sm:px-3 py-2 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors"
           >
             {/* Icon - using a generic checkmark */}
             <span
@@ -65,7 +67,7 @@ export const AmenitiesList: React.FC<AmenitiesListProps> = ({ amenities }) => {
 
             {/* Amenity text */}
             <span
-              className="text-sm text-gray-700 truncate"
+              className="text-xs sm:text-sm text-gray-700 truncate"
               title={amenity}
               aria-label={`Amenity: ${amenity}`}
             >

@@ -36,8 +36,8 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
   );
 
   return (
-    <div className="mb-6">
-      <h4 className="text-sm font-semibold text-gray-900 mb-3">
+    <div className="mb-4 sm:mb-6">
+      <h4 className="text-sm font-semibold text-gray-900 mb-2 sm:mb-3">
         Filter by Category
       </h4>
       <div className="flex flex-wrap gap-2">
@@ -48,12 +48,12 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
               key={category}
               onClick={() => onCategoryChange(category)}
               className={`
-                px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-150
+                min-h-[44px] px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors duration-150
                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
                 ${
                   isActive
                     ? "bg-blue-600 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300"
                 }
               `}
               aria-pressed={isActive}

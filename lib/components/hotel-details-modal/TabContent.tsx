@@ -18,7 +18,7 @@ export const TabContent: React.FC<TabContentProps> = ({
       id={`tabpanel-${activeTab}`}
       aria-labelledby={`tab-${activeTab}`}
       tabIndex={0}
-      className="px-6 py-6 focus:outline-none animate-fadeIn"
+      className="px-4 py-4 sm:px-6 sm:py-6 focus:outline-none animate-fadeIn"
     >
       {children}
     </div>

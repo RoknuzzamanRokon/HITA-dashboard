@@ -35,13 +35,18 @@ export const HotelDescription: React.FC<HotelDescriptionProps> = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       <div className="flex items-center gap-2">
-        <FileText className="w-5 h-5 text-gray-600" aria-hidden="true" />
-        <h4 className="text-sm font-semibold text-gray-900">Description</h4>
+        <FileText
+          className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600"
+          aria-hidden="true"
+        />
+        <h4 className="text-sm sm:text-base font-semibold text-gray-900">
+          Description
+        </h4>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {descriptions.map((desc, index) => {
           const isExpanded = expandedDescriptions.has(index);
           const needsTruncation = desc.text.length > TRUNCATE_LENGTH;
@@ -53,17 +58,17 @@ export const HotelDescription: React.FC<HotelDescriptionProps> = ({
           return (
             <div key={index} className="space-y-2">
               {desc.title && (
-                <h5 className="text-sm font-medium text-gray-900">
+                <h5 className="text-sm sm:text-base font-medium text-gray-900">
                   {desc.title}
                 </h5>
               )}
-              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+              <p className="text-xs sm:text-sm lg:text-base text-gray-700 leading-relaxed whitespace-pre-wrap">
                 {displayText}
               </p>
               {needsTruncation && (
                 <button
                   onClick={() => toggleDescription(index)}
-                  className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                  className="min-h-[44px] text-xs sm:text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded py-2"
                   aria-expanded={isExpanded}
                   aria-label={
                     isExpanded

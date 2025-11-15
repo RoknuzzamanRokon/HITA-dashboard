@@ -40,17 +40,19 @@ export const RoomList: React.FC<RoomListProps> = ({ rooms }) => {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Available Rooms</h3>
-        <p className="text-sm text-gray-600 mt-1">
+    <div className="space-y-3 sm:space-y-4">
+      <div className="mb-3 sm:mb-4">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+          Available Rooms
+        </h3>
+        <p className="text-xs sm:text-sm text-gray-600 mt-1">
           {rooms.length} {rooms.length === 1 ? "room type" : "room types"}{" "}
           available
         </p>
       </div>
 
-      {/* Responsive grid layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Responsive grid layout: 1 col mobile, 2 cols tablet+ */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
         {rooms.map((room) => (
           <RoomCard key={room.room_id} room={room} />
         ))}
