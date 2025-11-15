@@ -74,7 +74,10 @@ export default function DashboardPage() {
     error: chartsError,
     refetch: refetchCharts,
     isRefreshing: chartsRefreshing,
-  } = useDashboardCharts(realTimeEnabled ? 30000 : 0);
+  } = useDashboardCharts(
+    realTimeEnabled ? 30000 : 0,
+    user?.role // Pass user role to enable security logging
+  );
 
   // Check API connection on mount
   useEffect(() => {
