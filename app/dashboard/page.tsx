@@ -478,11 +478,6 @@ export default function DashboardPage() {
         </div>
       </PermissionGuard>
 
-      {/* Recent Activity & Transactions */}
-      <div className="mb-8">
-        <RecentTransactions isEnabled={realTimeEnabled} limit={8} />
-      </div>
-
       {/* Analytics Charts and Live Feed */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div className="lg:col-span-2">
