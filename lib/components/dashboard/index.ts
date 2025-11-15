@@ -17,8 +17,12 @@ export {
 
 export {
     SupplierHotelCountsChart,
+    UserRegistrationTrendChart,
 } from "./analytics-charts-new";
-export type { SupplierHotelCountsChartProps } from "./analytics-charts-new";
+export type {
+    SupplierHotelCountsChartProps,
+    UserRegistrationTrendChartProps,
+} from "./analytics-charts-new";
 
 export { LiveActivityFeed } from "./live-activity-feed";
 export { QuickActions } from "./quick-actions";
