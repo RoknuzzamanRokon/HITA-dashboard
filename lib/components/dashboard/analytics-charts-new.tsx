@@ -760,3 +760,235 @@ export const PackagePointComparisonChart: React.FC<
     </ChartWrapper>
   );
 };
+
+interface CombinedActivityTooltipProps {
+  active?: boolean;
+  payload?: any[];
+  label?: string;
+}
+
+const CombinedActivityTooltip: React.FC<CombinedActivityTooltipProps> = ({
+  active,
+  payload,
+  label,
+}) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 backdrop-blur-sm">
+        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+          {label}
+        </p>
+        {payload.map((entry, index) => (
+          <p
+            key={`item-${index}`}
+            className="text-sm text-gray-700 dark:text-gray-300"
+            style={{ color: entry.color }}
+          >
+            {entry.name}:{" "}
+            <span className="font-semibold">
+              {typeof entry.value === "number"
+                ? entry.value.toLocaleString()
+                : entry.value}
+            </span>
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
+export interface CombinedActivityChartProps {
+  registrations: TimeSeriesChartData[];
+  logins: TimeSeriesChartData[];
+  apiRequests: TimeSeriesChartData[];
+  loading?: boolean;
+  height?: number;
+}
+
+/**
+ * CombinedActivityChart
+ * Displays a multi-line chart with three metrics: registrations, logins, and API requests
+ * Features interactive legend to toggle line visibility and synchronized tooltip
+ * Shows last 30 days of data for all metrics
+ */
+export const CombinedActivityChart: React.FC<CombinedActivityChartProps> = ({
+  registrations,
+  logins,
+  apiRequests,
+  loading = false,
+  height = 400,
+}) => {
+  const [animationKey, setAnimationKey] = useState(0);
+  const [visibleLines, setVisibleLines] = useState({
+    registrations: true,
+    logins: true,
+    apiRequests: true,
+  });
+
+  useEffect(() => {
+    if (!loading) {
+      setAnimationKey((prev) => prev + 1);
+    }
+  }, [loading, registrations, logins, apiRequests]);
+
+  // Combine all data by date
+  const combinedData = React.useMemo(() => {
+    const dateMap = new Map<string, any>();
+
+    // Add registrations
+    registrations.forEach((item) => {
+      if (!dateMap.has(item.date)) {
+        dateMap.set(item.date, { date: item.date });
+      }
+      dateMap.get(item.date)!.registrations = item.value;
+    });
+
+    // Add logins
+    logins.forEach((item) => {
+      if (!dateMap.has(item.date)) {
+        dateMap.set(item.date, { date: item.date });
+      }
+      dateMap.get(item.date)!.logins = item.value;
+    });
+
+    // Add API requests
+    apiRequests.forEach((item) => {
+      if (!dateMap.has(item.date)) {
+        dateMap.set(item.date, { date: item.date });
+      }
+      dateMap.get(item.date)!.apiRequests = item.value;
+    });
+
+    // Convert to array and sort by date
+    return Array.from(dateMap.values()).sort((a, b) => {
+      return new Date(a.date).getTime() - new Date(b.date).getTime();
+    });
+  }, [registrations, logins, apiRequests]);
+
+  // Toggle line visibility
+  const handleLegendClick = (dataKey: keyof typeof visibleLines) => {
+    setVisibleLines((prev) => ({
+      ...prev,
+      [dataKey]: !prev[dataKey],
+    }));
+  };
+
+  // Custom legend component
+  const CustomLegend = () => {
+    const legendItems = [
+      {
+        key: "registrations" as const,
+        label: "Registrations",
+        color: "#8884d8",
+      },
+      { key: "logins" as const, label: "Logins", color: "#82ca9d" },
+      { key: "apiRequests" as const, label: "API Requests", color: "#ffc658" },
+    ];
+
+    return (
+      <div className="flex justify-center gap-6 mb-4">
+        {legendItems.map((item) => (
+          <button
+            key={item.key}
+            onClick={() => handleLegendClick(item.key)}
+            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+            style={{
+              opacity: visibleLines[item.key] ? 1 : 0.4,
+            }}
+          >
+            <div
+              className="w-4 h-4 rounded"
+              style={{ backgroundColor: item.color }}
+            />
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              {item.label}
+            </span>
+          </button>
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <ChartWrapper
+      title="Platform Activity Overview"
+      subtitle="Combined metrics: registrations, logins, and API requests"
+      loading={loading}
+      height={height}
+    >
+      <CustomLegend />
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart
+          data={combinedData}
+          key={animationKey}
+          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <XAxis
+            dataKey="date"
+            stroke="#666"
+            fontSize={12}
+            tickLine={false}
+            angle={-45}
+            textAnchor="end"
+            height={60}
+          />
+          <YAxis
+            stroke="#666"
+            fontSize={12}
+            tickLine={false}
+            allowDecimals={false}
+            tickFormatter={(value) => value.toLocaleString()}
+          />
+          <Tooltip content={<CombinedActivityTooltip />} />
+
+          {visibleLines.registrations && (
+            <Line
+              type="monotone"
+              dataKey="registrations"
+              name="Registrations"
+              stroke="#8884d8"
+              strokeWidth={2}
+              dot={{ r: 3 }}
+              activeDot={{ r: 5 }}
+              animationDuration={1200}
+              animationBegin={0}
+              connectNulls
+            />
+          )}
+
+          {visibleLines.logins && (
+            <Line
+              type="monotone"
+              dataKey="logins"
+              name="Logins"
+              stroke="#82ca9d"
+              strokeWidth={2}
+              dot={{ r: 3 }}
+              activeDot={{ r: 5 }}
+              animationDuration={1200}
+              animationBegin={100}
+              connectNulls
+            />
+          )}
+
+          {visibleLines.apiRequests && (
+            <Line
+              type="monotone"
+              dataKey="apiRequests"
+              name="API Requests"
+              stroke="#ffc658"
+              strokeWidth={2}
+              dot={{ r: 3 }}
+              activeDot={{ r: 5 }}
+              animationDuration={1200}
+              animationBegin={200}
+              connectNulls
+            />
+          )}
+        </LineChart>
+      </ResponsiveContainer>
+    </ChartWrapper>
+  );
+};

@@ -22,6 +22,7 @@ export {
     UserLoginTimelineChart,
     ApiRequestTimelineChart,
     PackagePointComparisonChart,
+    CombinedActivityChart,
 } from "./analytics-charts-new";
 export type {
     SupplierHotelCountsChartProps,
@@ -30,6 +31,7 @@ export type {
     UserLoginTimelineChartProps,
     ApiRequestTimelineChartProps,
     PackagePointComparisonChartProps,
+    CombinedActivityChartProps,
 } from "./analytics-charts-new";
 
 export { LiveActivityFeed } from "./live-activity-feed";
