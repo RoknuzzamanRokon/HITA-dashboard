@@ -63,20 +63,21 @@ export const useDashboardStats = (realTimeInterval?: number): UseDashboardStatsR
             }
             setError(null);
 
-            // Check if user has permission to view dashboard stats (admin or super_user only)
+            // Check if user is logged in
             if (!user) {
                 console.warn('🚫 No user found');
                 throw new Error('You must be logged in to view dashboard statistics.');
             }
 
-            if (user.role !== UserRole.ADMIN_USER && user.role !== UserRole.SUPER_USER) {
-                console.warn('🚫 User does not have permission to view dashboard stats', {
-                    username: user.username,
-                    role: user.role,
-                    requiredRoles: [UserRole.ADMIN_USER, UserRole.SUPER_USER]
-                });
-                throw new Error('You do not have permission to view dashboard statistics. This feature is only available for admin and super users.');
-            }
+            // Note: All authenticated users can now view dashboard stats
+            // The backend should filter data based on user role:
+            // - super_user: sees all platform data
+            // - admin_user: sees organization data
+            // - user/general_user: sees only their own data
+            console.log('✅ User authenticated:', {
+                username: user.username,
+                role: user.role
+            });
 
             console.log('🔄 Fetching dashboard stats from:', apiEndpoints.users.dashboardStats);
             console.log('🌐 API config:', {
