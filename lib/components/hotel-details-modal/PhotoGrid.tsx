@@ -31,11 +31,14 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({
           key={`${photo.picture_id}-${index}`}
           onClick={() => onPhotoClick(photo, index)}
           className="relative aspect-square overflow-hidden rounded-lg bg-gray-100 hover:opacity-90 active:opacity-75 transition-opacity duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 group min-h-[120px]"
-          aria-label={`View ${photo.title} photo`}
+          aria-label={`View ${photo.title || "hotel"} photo, image ${
+            index + 1
+          } of ${photos.length}`}
+          type="button"
         >
           <Image
             src={photo.url}
-            alt={photo.title || "Hotel photo"}
+            alt={`${photo.title || "Hotel photo"} - Click to view full size`}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className="object-cover"

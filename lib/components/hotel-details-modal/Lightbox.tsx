@@ -145,13 +145,21 @@ export const Lightbox: React.FC<LightboxProps> = ({
             onClick={onClose}
             className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-white"
             aria-label="Close image viewer"
+            type="button"
           >
-            <X className="h-6 w-6" />
+            <X className="h-6 w-6" aria-hidden="true" />
           </button>
 
           {/* Image counter */}
-          <div className="absolute top-4 left-4 z-10 px-3 py-1 bg-black/50 text-white text-sm rounded-full">
-            {activeIndex + 1} / {photos.length}
+          <div
+            className="absolute top-4 left-4 z-10 px-3 py-1 bg-black/50 text-white text-sm rounded-full"
+            role="status"
+            aria-live="polite"
+            aria-label={`Viewing image ${activeIndex + 1} of ${photos.length}`}
+          >
+            <span aria-hidden="true">
+              {activeIndex + 1} / {photos.length}
+            </span>
           </div>
 
           {/* Previous button */}
@@ -159,9 +167,10 @@ export const Lightbox: React.FC<LightboxProps> = ({
             <button
               onClick={handlePrevious}
               className="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-3 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-white"
-              aria-label="Previous image"
+              aria-label={`Previous image (${activeIndex} of ${photos.length})`}
+              type="button"
             >
-              <ChevronLeft className="h-8 w-8" />
+              <ChevronLeft className="h-8 w-8" aria-hidden="true" />
             </button>
           )}
 
@@ -170,9 +179,10 @@ export const Lightbox: React.FC<LightboxProps> = ({
             <button
               onClick={handleNext}
               className="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-3 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-white"
-              aria-label="Next image"
+              aria-label={`Next image (${activeIndex + 2} of ${photos.length})`}
+              type="button"
             >
-              <ChevronRight className="h-8 w-8" />
+              <ChevronRight className="h-8 w-8" aria-hidden="true" />
             </button>
           )}
 
@@ -181,7 +191,11 @@ export const Lightbox: React.FC<LightboxProps> = ({
             <div className="relative w-full h-full max-w-7xl max-h-full">
               <Image
                 src={currentPhoto.url}
-                alt={currentPhoto.title || "Hotel photo"}
+                alt={`${
+                  currentPhoto.title || "Hotel photo"
+                } - Full size view, image ${activeIndex + 1} of ${
+                  photos.length
+                }`}
                 fill
                 sizes="100vw"
                 className="object-contain"
@@ -191,7 +205,11 @@ export const Lightbox: React.FC<LightboxProps> = ({
           </div>
 
           {/* Caption */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+          <div
+            className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent"
+            role="region"
+            aria-label="Image caption"
+          >
             <div className="max-w-7xl mx-auto">
               <p className="text-white text-lg font-medium">
                 {currentPhoto.title}

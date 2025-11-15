@@ -205,6 +205,13 @@ export const HotelDetailsModal: React.FC<HotelDetailsModalProps> = ({
           role="dialog"
           aria-modal="true"
           aria-labelledby="modal-title"
+          aria-describedby={
+            isLoading
+              ? "loading-status"
+              : error
+              ? "error-status"
+              : "modal-content"
+          }
           aria-label={
             hotelName ? `Hotel details for ${hotelName}` : "Hotel details"
           }
@@ -221,15 +228,28 @@ export const HotelDetailsModal: React.FC<HotelDetailsModalProps> = ({
             />
 
             {/* Modal body with loading, error, and content states */}
-            <div className="overflow-y-auto max-h-[calc(90vh-60px)] sm:max-h-[calc(90vh-72px)] lg:max-h-[calc(90vh-80px)]">
+            <div
+              id="modal-content"
+              className="overflow-y-auto max-h-[calc(90vh-60px)] sm:max-h-[calc(90vh-72px)] lg:max-h-[calc(90vh-80px)]"
+              role="region"
+              aria-label="Hotel information"
+            >
               {isLoading && (
-                <div className="p-6">
+                <div
+                  className="p-6"
+                  id="loading-status"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <span className="sr-only">
+                    Loading hotel details, please wait...
+                  </span>
                   <SkeletonLoader />
                 </div>
               )}
 
               {error && !isLoading && (
-                <div className="p-6">
+                <div className="p-6" id="error-status">
                   <ErrorState
                     error={error}
                     ittid={ittid}
@@ -240,7 +260,7 @@ export const HotelDetailsModal: React.FC<HotelDetailsModalProps> = ({
               )}
 
               {hotelData && !isLoading && !error && (
-                <div className="space-y-0">
+                <div className="space-y-0" role="document">
                   {/* Hero Section */}
                   <HeroSection
                     primaryPhoto={hotelData.basic.primary_photo}

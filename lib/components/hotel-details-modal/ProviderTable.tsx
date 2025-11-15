@@ -100,7 +100,14 @@ export const ProviderTable: React.FC<ProviderTableProps> = ({
 
       {/* Table */}
       <div className="overflow-x-auto border border-gray-200 rounded-lg">
-        <table className="min-w-full divide-y divide-gray-200">
+        <table
+          className="min-w-full divide-y divide-gray-200"
+          aria-label="Hotel provider mappings"
+        >
+          <caption className="sr-only">
+            List of hotel providers showing provider name, ID, full details
+            availability, and last update time. Click column headers to sort.
+          </caption>
           <thead className="bg-gray-50">
             <tr>
               <th
@@ -181,28 +188,28 @@ export const ProviderTable: React.FC<ProviderTableProps> = ({
                   <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                     {provider.provider_name}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 font-mono">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 font-mono">
                     {provider.provider_id}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm">
                     {hasFullDetails ? (
-                      <span className="inline-flex items-center text-green-600">
+                      <span className="inline-flex items-center text-green-700">
                         <Check className="h-5 w-5 mr-1" aria-hidden="true" />
                         <span className="font-medium">Yes</span>
                         <span className="sr-only">Has full details</span>
                       </span>
                     ) : (
-                      <span className="inline-flex items-center text-gray-400">
+                      <span className="inline-flex items-center text-gray-600">
                         <X className="h-5 w-5 mr-1" aria-hidden="true" />
                         <span>No</span>
                         <span className="sr-only">No full details</span>
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
                     <span
                       title={isoTimestamp}
-                      className="cursor-help border-b border-dotted border-gray-400"
+                      className="cursor-help border-b border-dotted border-gray-500"
                     >
                       {displayTimestamp}
                     </span>

@@ -28,7 +28,9 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
         {room.room_pic ? (
           <Image
             src={room.room_pic}
-            alt={room.title || "Room photo"}
+            alt={`${
+              room.title || "Room"
+            } - Photo showing room layout and amenities`}
             fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -39,12 +41,17 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room }) => {
             }}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
+          <div
+            className="w-full h-full flex items-center justify-center"
+            role="img"
+            aria-label="No room photo available"
+          >
             <svg
               className="w-16 h-16 text-gray-300"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"

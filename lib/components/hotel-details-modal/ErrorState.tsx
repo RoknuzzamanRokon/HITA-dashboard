@@ -89,21 +89,21 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
 
         {/* Additional context for network errors */}
         {isNetworkError && (
-          <p className="text-xs sm:text-sm text-gray-600 mt-2">
+          <p className="text-xs sm:text-sm text-gray-700 mt-2">
             Check your internet connection and try again.
           </p>
         )}
 
         {/* Error Code Display */}
         {error.status > 0 && (
-          <p className="text-xs text-gray-500 mt-2 sm:mt-3 font-mono">
+          <p className="text-xs text-gray-600 mt-2 sm:mt-3 font-mono">
             Error code: {error.status}
           </p>
         )}
 
         {/* Request ID for debugging */}
         {requestId && (
-          <p className="text-xs text-gray-400 mt-1 font-mono break-all">
+          <p className="text-xs text-gray-600 mt-1 font-mono break-all">
             Request ID: {requestId}
           </p>
         )}
@@ -135,7 +135,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
       </div>
 
       {/* Additional help text */}
-      <p className="text-xs text-gray-500 mt-3 sm:mt-4 text-center max-w-sm px-4">
+      <p className="text-xs text-gray-600 mt-3 sm:mt-4 text-center max-w-sm px-4">
         If the problem persists, please report the issue with the details above.
       </p>
     </div>

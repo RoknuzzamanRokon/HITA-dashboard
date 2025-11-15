@@ -65,7 +65,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           </>
         ) : (
           /* Fallback placeholder */
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300">
+          <div
+            className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300"
+            role="img"
+            aria-label={`${hotelName} - No primary photo available`}
+          >
             <div className="text-center p-6">
               <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gray-400 flex items-center justify-center">
                 <svg
@@ -74,6 +78,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -83,7 +88,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   />
                 </svg>
               </div>
-              <p className="text-sm text-gray-600 font-medium">
+              <p
+                className="text-sm text-gray-600 font-medium"
+                aria-hidden="true"
+              >
                 No image available
               </p>
             </div>
