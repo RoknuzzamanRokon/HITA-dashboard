@@ -23,6 +23,7 @@ import { CheckInOutInfo } from "./CheckInOutInfo";
 import { ChildPolicy } from "./ChildPolicy";
 import { PetPolicy } from "./PetPolicy";
 import { SpecialInstructions } from "./SpecialInstructions";
+import { ProvidersTab } from "./ProvidersTab";
 import { HotelService } from "@/lib/api/hotels";
 import { transformFullHotelDetails } from "@/lib/utils/hotel-details-transform";
 import type { FullHotelDetails } from "@/lib/types/full-hotel-details";
@@ -477,12 +478,10 @@ export const HotelDetailsModal: React.FC<HotelDetailsModalProps> = ({
                     )}
 
                     {activeTab === "providers" && (
-                      <div className="text-center py-12 text-gray-500">
-                        <p className="text-lg font-medium">Providers Tab</p>
-                        <p className="text-sm mt-2">
-                          Provider details will be implemented in task 11
-                        </p>
-                      </div>
+                      <ProvidersTab
+                        providers={hotelData.providers}
+                        totalSuppliers={hotelData.totalSuppliers}
+                      />
                     )}
 
                     {activeTab === "photos" && (
