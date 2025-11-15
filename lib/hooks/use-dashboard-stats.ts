@@ -9,6 +9,8 @@ import { useState, useEffect } from "react";
 import { apiClient } from "@/lib/api/client";
 import { apiEndpoints, config } from "@/lib/config";
 import { TokenStorage } from "@/lib/auth/token-storage";
+import { useAuth } from "@/lib/contexts/auth-context";
+import { UserRole } from "@/lib/types/auth";
 
 export interface DashboardStats {
     totalUsers: number;
@@ -48,6 +50,7 @@ export interface UseDashboardStatsReturn {
 }
 
 export const useDashboardStats = (realTimeInterval?: number): UseDashboardStatsReturn => {
+    const { user } = useAuth();
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -60,13 +63,30 @@ export const useDashboardStats = (realTimeInterval?: number): UseDashboardStatsR
             }
             setError(null);
 
+            // Check if user has permission to view dashboard stats (admin or super_user only)
+            if (!user) {
+                console.warn('🚫 No user found');
+                throw new Error('You must be logged in to view dashboard statistics.');
+            }
+
+            if (user.role !== UserRole.ADMIN_USER && user.role !== UserRole.SUPER_USER) {
+                console.warn('🚫 User does not have permission to view dashboard stats', {
+                    username: user.username,
+                    role: user.role,
+                    requiredRoles: [UserRole.ADMIN_USER, UserRole.SUPER_USER]
+                });
+                throw new Error('You do not have permission to view dashboard statistics. This feature is only available for admin and super users.');
+            }
+
             console.log('🔄 Fetching dashboard stats from:', apiEndpoints.users.dashboardStats);
             console.log('🌐 API config:', {
                 baseUrl: config.api.baseUrl,
                 version: config.api.version,
                 fullUrl: config.api.url,
                 endpoint: apiEndpoints.users.dashboardStats,
-                completeUrl: `${config.api.url}${apiEndpoints.users.dashboardStats}`
+                completeUrl: `${config.api.url}${apiEndpoints.users.dashboardStats}`,
+                user: user.username,
+                role: user.role
             });
 
             // Check authentication status
@@ -77,21 +97,6 @@ export const useDashboardStats = (realTimeInterval?: number): UseDashboardStatsR
                 hasRefreshToken: !!refreshToken,
                 tokenLength: token?.length || 0
             });
-
-            if (token) {
-                try {
-                    const payload = JSON.parse(atob(token.split('.')[1]));
-                    const currentTime = Math.floor(Date.now() / 1000);
-                    console.log('🕐 Token info:', {
-                        exp: payload.exp,
-                        current: currentTime,
-                        isExpired: payload.exp < currentTime,
-                        user: payload.sub || payload.username || 'unknown'
-                    });
-                } catch (e) {
-                    console.warn('⚠️ Could not parse token:', e);
-                }
-            }
 
             // Try to fetch real data from the API using the API client
             let response;
@@ -182,13 +187,22 @@ export const useDashboardStats = (realTimeInterval?: number): UseDashboardStatsR
             });
 
             if (!isBackground) {
+                // Check if this is a permission error
+                const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+                if (errorMessage.includes('permission')) {
+                    // Always show permission errors
+                    setError(errorMessage);
+                    setLoading(false);
+                    return; // Don't use mock data for permission errors
+                }
+
                 // Don't show error to user in development when using mock data
                 const isDevelopment = process.env.NODE_ENV === 'development';
                 if (!isDevelopment) {
-                    const errorMessage = err instanceof Error
+                    const fallbackMessage = err instanceof Error
                         ? err.message
                         : "Failed to fetch dashboard stats - please check if the backend server is running";
-                    setError(errorMessage);
+                    setError(fallbackMessage);
                 }
             }
 

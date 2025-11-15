@@ -13,9 +13,9 @@ import {
   RevenueTrendChart,
   UserActivityChart,
   BookingSourcesChart,
-  RealTimeMetrics,
   LiveActivityFeed,
   QuickActions,
+  RecentTransactions,
 } from "@/lib/components/dashboard";
 import { useDashboardStats } from "@/lib/hooks/use-dashboard-stats";
 import {
@@ -445,9 +445,9 @@ export default function DashboardPage() {
         </div>
       </PermissionGuard>
 
-      {/* Real-time System Metrics */}
+      {/* Recent Activity & Transactions */}
       <div className="mb-8">
-        <RealTimeMetrics isEnabled={realTimeEnabled} lastUpdate={lastFetch} />
+        <RecentTransactions isEnabled={realTimeEnabled} limit={8} />
       </div>
 
       {/* Analytics Charts and Live Feed */}
