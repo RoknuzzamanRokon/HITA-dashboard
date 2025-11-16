@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, memo } from "react";
-import Image from "next/image";
 import { Star } from "lucide-react";
 
 export interface HeroSectionProps {
@@ -41,22 +40,20 @@ export const HeroSection: React.FC<HeroSectionProps> = memo(
               )}
 
               {/* Actual image */}
-              <Image
-                src={primaryPhoto}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={primaryPhoto.replace(/^http:\/\//i, "https://")}
                 alt={`${hotelName} - Primary photo`}
-                fill
                 className={`
-                object-cover
+                absolute inset-0 w-full h-full object-cover
                 transition-opacity duration-300
                 ${imageLoaded ? "opacity-100" : "opacity-0"}
               `}
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
-                priority
-                loading="eager"
-                placeholder="blur"
-                blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzAwIiBoZWlnaHQ9IjQ3NSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiLz4="
+                crossOrigin="anonymous"
+                referrerPolicy="no-referrer"
                 onLoad={() => setImageLoaded(true)}
-                onError={() => {
+                onError={(e) => {
+                  // Silently handle error - show placeholder instead
                   setImageError(true);
                   setImageLoaded(false);
                 }}

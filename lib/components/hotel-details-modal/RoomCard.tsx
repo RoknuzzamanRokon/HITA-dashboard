@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, memo, useMemo } from "react";
-import Image from "next/image";
 import { Users, Baby, User, ChevronDown, ChevronUp } from "lucide-react";
 import { RoomDetailsExpanded } from "./RoomDetailsExpanded";
 import type { RoomType } from "@/lib/types/full-hotel-details";
@@ -32,21 +31,23 @@ export const RoomCard: React.FC<RoomCardProps> = memo(({ room }) => {
       {/* Room Photo Thumbnail */}
       <div className="relative w-full h-48 bg-gray-100">
         {room.room_pic ? (
-          <Image
-            src={room.room_pic}
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={room.room_pic.replace(/^http:\/\//i, "https://")}
             alt={`${
               room.title || "Room"
             } - Photo showing room layout and amenities`}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="absolute inset-0 w-full h-full object-cover"
             loading="lazy"
-            placeholder="blur"
-            blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB2ZXJzaW9uPSIxLjEiLz4="
+            crossOrigin="anonymous"
+            referrerPolicy="no-referrer"
             onError={(e) => {
-              // Fallback to placeholder on error
               const target = e.target as HTMLImageElement;
-              target.style.display = "none";
+              if (!target.dataset.errorHandled) {
+                target.dataset.errorHandled = "true";
+                target.src =
+                  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='400'%3E%3Crect width='600' height='400' fill='%23e5e7eb'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='16' fill='%239ca3af'%3ERoom image unavailable%3C/text%3E%3C/svg%3E";
+              }
             }}
           />
         ) : (

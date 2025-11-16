@@ -3,7 +3,6 @@
 import React, { useEffect, useCallback, useRef, useState } from "react";
 import FocusLock from "react-focus-lock";
 import { RemoveScroll } from "react-remove-scroll";
-import Image from "next/image";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import type { HotelPhoto } from "@/lib/types/full-hotel-details";
 
@@ -193,29 +192,25 @@ export const Lightbox: React.FC<LightboxProps> = ({
 
           {/* Main image container */}
           <div className="flex items-center justify-center h-full p-4 md:p-8">
-            <div className="relative w-full h-full max-w-7xl max-h-full">
-              <Image
+            <div className="relative w-full h-full max-w-7xl max-h-full flex items-center justify-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={normalizeImageUrl(currentPhoto.url)}
                 alt={`${
                   currentPhoto.title || "Hotel photo"
                 } - Full size view, image ${activeIndex + 1} of ${
                   photos.length
                 }`}
-                fill
-                sizes="100vw"
-                className="object-contain bg-black"
-                priority
-                unoptimized
+                className="max-w-full max-h-full object-contain bg-black"
+                crossOrigin="anonymous"
+                referrerPolicy="no-referrer"
                 onError={(e) => {
-                  console.error(
-                    "Lightbox image failed to load:",
-                    normalizeImageUrl(currentPhoto.url),
-                    "Original:",
-                    currentPhoto.url
-                  );
                   const target = e.target as HTMLImageElement;
-                  target.src =
-                    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600'%3E%3Crect width='800' height='600' fill='%23000'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%23fff'%3EImage unavailable%3C/text%3E%3C/svg%3E";
+                  if (!target.dataset.errorHandled) {
+                    target.dataset.errorHandled = "true";
+                    target.src =
+                      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600'%3E%3Crect width='800' height='600' fill='%23000'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%23fff'%3EImage unavailable%3C/text%3E%3C/svg%3E";
+                  }
                 }}
               />
             </div>

@@ -2,6 +2,7 @@
 
 import React, { memo } from "react";
 import type { HotelPhoto } from "@/lib/types/full-hotel-details";
+// Fixed: Added crossOrigin and referrerPolicy to handle CORS issues
 
 export interface PhotoGridProps {
   photos: HotelPhoto[];
@@ -10,7 +11,7 @@ export interface PhotoGridProps {
 
 export const PhotoGrid: React.FC<PhotoGridProps> = memo(
   ({ photos, onPhotoClick }) => {
-    console.log("PhotoGrid rendering with photos:", photos?.length);
+    // Rendering photos
 
     if (!photos || photos.length === 0) {
       return (
@@ -50,19 +51,17 @@ export const PhotoGrid: React.FC<PhotoGridProps> = memo(
                 } - Click to view full size`}
                 className="absolute inset-0 w-full h-full object-cover bg-gray-200"
                 loading="lazy"
+                crossOrigin="anonymous"
+                referrerPolicy="no-referrer"
+                data-cors-fixed="true"
                 onError={(e) => {
-                  console.error(
-                    "Image failed to load:",
-                    imageUrl,
-                    "Original:",
-                    photo.url
-                  );
                   const target = e.target as HTMLImageElement;
-                  // Show placeholder instead of hiding
-                  target.src =
-                    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect width='400' height='400' fill='%23e5e7eb'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='16' fill='%239ca3af'%3EImage unavailable%3C/text%3E%3C/svg%3E";
-                  target.src =
-                    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect width='400' height='400' fill='%23e5e7eb'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='16' fill='%239ca3af'%3EImage unavailable%3C/text%3E%3C/svg%3E";
+                  // Prevent infinite error loop
+                  if (!target.dataset.errorHandled) {
+                    target.dataset.errorHandled = "true";
+                    target.src =
+                      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect width='400' height='400' fill='%23e5e7eb'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='16' fill='%239ca3af'%3EImage unavailable%3C/text%3E%3C/svg%3E";
+                  }
                 }}
               />
               {/* Overlay with category on hover/touch */}

@@ -265,6 +265,7 @@ export const HotelDetailsModal: React.FC<HotelDetailsModalProps> = ({
           <ModalContent isOpen={isOpen}>
             <ModalHeader
               hotelName={hotelName || hotelData?.basic?.name}
+              ittid={ittid}
               onClose={handleClose}
               closeButtonRef={closeButtonRef}
             />
