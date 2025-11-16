@@ -442,7 +442,7 @@ export default function HotelsPage() {
         )}
 
         {/* Hotel Autocomplete Search */}
-        <Card className="mb-8">
+        <Card className="mb-8" hover={false}>
           <CardContent className="p-6">
             <HotelAutocompleteSearch />
           </CardContent>

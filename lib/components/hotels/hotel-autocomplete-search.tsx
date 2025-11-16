@@ -178,7 +178,11 @@ export function HotelAutocompleteSearch({
 
   return (
     <div className={className}>
-      <Card padding="lg" hover={false} className="overflow-visible">
+      <Card
+        padding="lg"
+        hover={false}
+        className="overflow-visible !hover:scale-100 !hover:shadow-sm !transition-none"
+      >
         <div className="space-y-6">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
