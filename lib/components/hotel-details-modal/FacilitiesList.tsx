@@ -29,31 +29,18 @@ export const FacilitiesList: React.FC<FacilitiesListProps> = ({
         Facilities
       </h3>
 
-      {/* Facilities Grid - responsive columns */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+      {/* Facilities List */}
+      <ul className="space-y-2">
         {displayedFacilities.map((facility, index) => (
-          <div
+          <li
             key={`${facility.type}-${index}`}
-            className="flex items-center gap-2 px-2 sm:px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+            className="flex items-start gap-2 text-sm text-gray-700"
           >
-            {/* Icon */}
-            {facility.icon && (
-              <span
-                className="text-base sm:text-lg flex-shrink-0"
-                role="img"
-                aria-label={facility.title}
-              >
-                {facility.icon}
-              </span>
-            )}
-
-            {/* Title */}
-            <span className="text-xs sm:text-sm text-gray-700 truncate">
-              {facility.title}
-            </span>
-          </div>
+            <span className="text-blue-600 mt-1">•</span>
+            <span>{facility.title}</span>
+          </li>
         ))}
-      </div>
+      </ul>
 
       {/* Show All / Show Less Button */}
       {hasMore && (

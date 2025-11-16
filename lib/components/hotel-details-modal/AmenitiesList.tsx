@@ -20,16 +20,34 @@ export const AmenitiesList: React.FC<AmenitiesListProps> = ({ amenities }) => {
   let amenitiesList: string[] = [];
 
   if (Array.isArray(amenities)) {
-    amenitiesList = amenities;
+    // If it's an array of objects with title property
+    if (
+      amenities.length > 0 &&
+      typeof amenities[0] === "object" &&
+      amenities[0].title
+    ) {
+      amenitiesList = amenities.map(
+        (item: any) => item.title || item.type || String(item)
+      );
+    } else {
+      amenitiesList = amenities.map((item: any) =>
+        typeof item === "string" ? item : String(item)
+      );
+    }
   } else if (typeof amenities === "object") {
-    // If amenities is an object, extract values or keys
-    amenitiesList = Object.values(amenities).filter(
-      (item) => typeof item === "string"
-    ) as string[];
+    // If amenities is a single object with title
+    if (amenities.title) {
+      amenitiesList = [amenities.title];
+    } else {
+      // If amenities is an object, extract values or keys
+      amenitiesList = Object.values(amenities).filter(
+        (item) => typeof item === "string"
+      ) as string[];
 
-    // If no string values, try keys
-    if (amenitiesList.length === 0) {
-      amenitiesList = Object.keys(amenities);
+      // If no string values, try keys
+      if (amenitiesList.length === 0) {
+        amenitiesList = Object.keys(amenities);
+      }
     }
   } else if (typeof amenities === "string") {
     amenitiesList = [amenities];
@@ -49,33 +67,18 @@ export const AmenitiesList: React.FC<AmenitiesListProps> = ({ amenities }) => {
         Amenities
       </h3>
 
-      {/* Amenities Grid - responsive columns */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+      {/* Amenities List */}
+      <ul className="space-y-2">
         {amenitiesList.map((amenity, index) => (
-          <div
+          <li
             key={`amenity-${index}`}
-            className="flex items-center gap-2 px-2 sm:px-3 py-2 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors"
+            className="flex items-start gap-2 text-sm text-gray-700"
           >
-            {/* Icon - using a generic checkmark */}
-            <span
-              className="text-blue-600 flex-shrink-0"
-              role="img"
-              aria-label="Available"
-            >
-              ✓
-            </span>
-
-            {/* Amenity text */}
-            <span
-              className="text-xs sm:text-sm text-gray-700 truncate"
-              title={amenity}
-              aria-label={`Amenity: ${amenity}`}
-            >
-              {amenity}
-            </span>
-          </div>
+            <span className="text-blue-600 mt-1">•</span>
+            <span>{amenity}</span>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 };
