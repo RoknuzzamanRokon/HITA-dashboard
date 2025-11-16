@@ -6,6 +6,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import {
   Search,
   Building2,
@@ -28,6 +29,7 @@ import { HotelService } from "@/lib/api/hotels";
 import type { Hotel, HotelStats } from "@/lib/types/hotel";
 
 export default function HotelsPage() {
+  const router = useRouter();
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const [isLoading, setIsLoading] = useState<boolean>(false); // Start with false to show mock data immediately
   const [stats, setStats] = useState<HotelStats | null>(null);
@@ -97,12 +99,12 @@ export default function HotelsPage() {
     console.log("📋 ITTID:", hotel.ittid);
     console.log("🏷️ Name:", hotel.name);
 
-    // Store trigger button ref for focus return
-    setSelectedHotelIttid(hotel.ittid);
-    setSelectedHotelName(hotel.name);
-    setIsModalOpen(true);
+    // Navigate to hotel details page in the same window
+    const detailsUrl = `/dashboard/hotels/details/${hotel.ittid}`;
+    console.log("🔗 Navigating to details page:", detailsUrl);
+    router.push(detailsUrl);
 
-    console.log("✅ Modal should open now");
+    console.log("✅ Navigation initiated");
   };
 
   const handleModalClose = () => {
@@ -441,13 +443,6 @@ export default function HotelsPage() {
           </Card>
         )}
 
-        {/* Hotel Autocomplete Search */}
-        <Card className="mb-8" hover={false}>
-          <CardContent className="p-6">
-            <HotelAutocompleteSearch />
-          </CardContent>
-        </Card>
-
         {/* Hotel Info Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
@@ -556,6 +551,14 @@ export default function HotelsPage() {
           </Card>
         </div>
 
+        {/* Hotel Autocomplete Search */}
+        <Card className="mb-8" hover={false}>
+          <CardContent className="p-6">
+            <HotelAutocompleteSearch />
+          </CardContent>
+        </Card>
+
+        
         {/* Hotel Info Details Section */}
         {hotelInfo && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
