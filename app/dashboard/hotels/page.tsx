@@ -21,6 +21,7 @@ import { Button } from "@/lib/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/lib/components/ui/card";
 import { HotelSearchCompact } from "@/lib/components/hotels/hotel-search-compact";
 import { HotelDetailsModal } from "@/lib/components/hotel-details-modal/HotelDetailsModal";
+import { HotelAutocompleteSearch } from "@/lib/components/hotels/hotel-autocomplete-search";
 
 import { useAuth } from "@/lib/contexts/auth-context";
 import { HotelService } from "@/lib/api/hotels";
@@ -439,6 +440,13 @@ export default function HotelsPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Hotel Autocomplete Search */}
+        <Card className="mb-8">
+          <CardContent className="p-6">
+            <HotelAutocompleteSearch />
+          </CardContent>
+        </Card>
 
         {/* Hotel Info Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
