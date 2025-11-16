@@ -15,14 +15,6 @@ export interface ColorTheme {
 
 export const colorThemes: ColorTheme[] = [
   {
-    id: "blue",
-    name: "Blue",
-    primary: "#3b82f6",
-    primaryRgb: "59, 130, 246",
-    hover: "#2563eb",
-    light: "#dbeafe",
-  },
-  {
     id: "red",
     name: "Red",
     primary: "#ef4444",
@@ -77,6 +69,14 @@ export const colorThemes: ColorTheme[] = [
     primaryRgb: "99, 102, 241",
     hover: "#4f46e5",
     light: "#e0e7ff",
+  },
+  {
+    id: "black",
+    name: "Black",
+    primary: "#1f2937",
+    primaryRgb: "31, 41, 55",
+    hover: "#111827",
+    light: "#f3f4f6",
   },
 ];
 

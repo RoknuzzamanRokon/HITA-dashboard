@@ -6,11 +6,39 @@
     --border-radius: 0.5rem;
     --animation-duration: 150ms;
 
-    /* Primary color theme variables */
+    /* Primary color theme variables - Default Blue */
     --primary-color: #3b82f6;
     --primary-rgb: 59, 130, 246;
     --primary-hover: #2563eb;
     --primary-light: #dbeafe;
+    --primary-dark: #1e40af;
+}
+
+/* Black Theme */
+:root[data-theme="black"] {
+    --primary-color: #1f2937;
+    --primary-rgb: 31, 41, 55;
+    --primary-hover: #111827;
+    --primary-light: #f3f4f6;
+    --primary-dark: #030712;
+}
+
+/* Orange Theme */
+:root[data-theme="orange"] {
+    --primary-color: #f97316;
+    --primary-rgb: 249, 115, 22;
+    --primary-hover: #ea580c;
+    --primary-light: #ffedd5;
+    --primary-dark: #c2410c;
+}
+
+/* Teal Theme */
+:root[data-theme="teal"] {
+    --primary-color: #14b8a6;
+    --primary-rgb: 20, 184, 166;
+    --primary-hover: #0d9488;
+    --primary-light: #ccfbf1;
+    --primary-dark: #0f766e;
 }
 
 /* Primary color utility classes */

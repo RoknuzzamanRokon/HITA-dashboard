@@ -22,6 +22,7 @@ function SearchResultsContent() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
+  const [searchTime, setSearchTime] = useState<number>(0);
 
   // Get search parameters
   const hotelName = searchParams.get("hotel");
@@ -39,6 +40,8 @@ function SearchResultsContent() {
 
       setIsLoading(true);
       setError(null);
+
+      const startTime = performance.now();
 
       try {
         const response = await HotelService.searchHotelsByLocation({
@@ -70,6 +73,10 @@ function SearchResultsContent() {
             "tbohotel",
           ],
         });
+
+        const endTime = performance.now();
+        const timeTaken = ((endTime - startTime) / 1000).toFixed(2);
+        setSearchTime(parseFloat(timeTaken));
 
         if (response.success && response.data) {
           setLocationResults(response.data);
@@ -183,12 +190,14 @@ function SearchResultsContent() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header with breadcrumb */}
         <div className="mb-6">
-          <button
+          <Button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+            variant="primary"
+            size="sm"
+            className="mb-4"
           >
             <svg
-              className="h-4 w-4"
+              className="h-4 w-4 mr-2"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -201,17 +210,54 @@ function SearchResultsContent() {
               />
             </svg>
             Back to Search
-          </button>
+          </Button>
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                 {hotelName ? `Hotels near ${hotelName}` : "Search Results"}
               </h1>
-              <p className="text-sm text-gray-600 mt-1">
-                Found {locationResults.totalHotels} hotel
-                {locationResults.totalHotels !== 1 ? "s" : ""} in this area
-              </p>
+              <div className="flex flex-wrap items-center gap-3 mt-2">
+                <p className="text-sm text-gray-600 flex items-center gap-1.5">
+                  <svg
+                    className="h-4 w-4 text-blue-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                    />
+                  </svg>
+                  <span className="font-semibold text-gray-900">
+                    {locationResults.totalHotels}
+                  </span>{" "}
+                  hotel{locationResults.totalHotels !== 1 ? "s" : ""} found
+                </p>
+                <span className="text-gray-300">•</span>
+                <p className="text-sm text-gray-600 flex items-center gap-1.5">
+                  <svg
+                    className="h-4 w-4 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span className="font-semibold text-gray-900">
+                    {searchTime}s
+                  </span>{" "}
+                  response time
+                </p>
+              </div>
             </div>
 
             {/* View toggle */}

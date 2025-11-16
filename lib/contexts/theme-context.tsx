@@ -118,6 +118,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         hover: "#4f46e5",
         light: "#e0e7ff",
       },
+      black: {
+        primary: "#1f2937",
+        primaryRgb: "31, 41, 55",
+        hover: "#111827",
+        light: "#f3f4f6",
+      },
     };
 
     const theme = colorThemes[settings.accentColor] || colorThemes.blue;

@@ -270,34 +270,6 @@ export default function DashboardPage() {
         </div>
       </PermissionGuard>
 
-      {/* Dashboard Stats Error */}
-      {statsError && (
-        <div className="mb-6">
-          <div className="p-4 rounded-md bg-red-50 border border-red-200">
-            <div className="flex items-center">
-              <div className="w-3 h-3 rounded-full mr-3 bg-red-500"></div>
-              <span className="text-sm font-medium text-red-800">
-                Dashboard Stats Error: {statsError}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Dashboard Charts Error */}
-      {chartsError && (
-        <div className="mb-6">
-          <div className="p-4 rounded-md bg-red-50 border border-red-200">
-            <div className="flex items-center">
-              <div className="w-3 h-3 rounded-full mr-3 bg-red-500"></div>
-              <span className="text-sm font-medium text-red-800">
-                Dashboard Charts Error: {chartsError}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* User Statistics Grid - Admin Only */}
       <PermissionGuard
         permissions={[
