@@ -1021,8 +1021,7 @@ export class HotelService {
                     type: string;
                     photo: string;
                     star: number;
-                    vervotech: string;
-                    giata: string;
+                    ittid: string;
                     goglobal?: string[];
                 }>;
             }>('/locations/search-hotel-with-location', payload);
@@ -1040,8 +1039,7 @@ export class HotelService {
                             type: h.type,
                             photo: h.photo,
                             starRating: h.star,
-                            vervotech: h.vervotech,
-                            giata: h.giata,
+                            ittid: h.ittid,
                             suppliers: h.goglobal || []
                         }))
                     }

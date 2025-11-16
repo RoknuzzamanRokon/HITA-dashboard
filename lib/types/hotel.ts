@@ -139,7 +139,6 @@ export interface LocationHotel {
     type: string;
     photo: string;
     starRating: number;
-    vervotech: string;
-    giata: string;
+    ittid: string; // ITT mapping ID for fetching full details
     suppliers: string[];
 }

@@ -1,49 +1,57 @@
 {
-    "total_supplier": 1,
+    "total_supplier": 3,
     "have_provider_list": [
         "itt",
-        "hotelbeds"
+        "hotelbeds",
+        "mgholiday",
+        "tbohotel",
+        "ratehawkhotel",
+        "juniperhotel",
+        "paximumhotel",
+        "hotelston",
+        "letsflyhotel",
+        "innstanttravel"
     ],
     "hotel": {
-        "id": 1119864,
-        "property_type": "Hotel",
-        "name": "Hotel Victoria",
-        "primary_photo": "https://photos.hotelbeds.com/giata/xl/10/1038133/1038133a_hb_a_003.jpeg",
-        "latitude": "42.5712",
-        "created_at": "2025-07-01T03:32:31",
-        "longitude": "1.40379",
-        "updated_at": "2025-07-01T03:32:31",
-        "address_line1": "Carretera General, 29/31",
+        "ittid": "11144441",
+        "rating": "3.0",
+        "id": 1149000,
+        "property_type": "",
+        "name": "Asean HaLong Hotel",
+        "primary_photo": "https://www.tboholidays.com//imageresource.aspx?img=FbrGPTrju5e5v0qrAGTD8pPBsj8/wYA5fyPRj8rAX+Te1BPSMNsGapD+x0urCQ6VE1pK3iGWTsTpkD+x5101TgFuTdxegpeuPmYrq+tfliY=",
+        "latitude": "20.9528",
+        "created_at": "2025-07-01T04:35:25",
+        "longitude": "107.041",
+        "updated_at": "2025-07-01T04:35:25",
+        "address_line1": "Hau Can Road Bai Chay, Bai Chay BeachHạ Long, Halong, 84033, Vietnam",
         "map_status": "pending",
         "address_line2": "",
         "content_update_status": "NewAdd",
-        "postal_code": "AD400",
-        "ittid": "11115304",
-        "rating": "3.0"
+        "postal_code": "84033"
     },
     "provider_mappings": [
         {
-            "id": 4425254,
-            "ittid": "11115304",
+            "id": 4337307,
+            "ittid": "11144441",
             "provider_name": "hotelbeds",
-            "provider_id": "1038133",
-            "updated_at": "2025-10-29T13:14:34",
+            "provider_id": "236548",
+            "updated_at": "2025-10-28T23:35:46",
             "full_details": {
-                "created": "2025-11-15T22:15:57",
-                "timestamp": 1763223357,
-                "hotel_id": 1038133,
-                "name": "Hotel Victoria",
-                "name_local": "Hotel Victoria",
-                "hotel_formerly_name": "Hotel Victoria",
-                "destination_code": "AND",
-                "country_code": "AD",
+                "created": "2025-11-16T18:54:36",
+                "timestamp": 1763297676,
+                "hotel_id": 236548,
+                "name": "Asean Halong Hotel",
+                "name_local": "Asean Halong Hotel",
+                "hotel_formerly_name": "Asean Halong Hotel",
+                "destination_code": "HAN",
+                "country_code": "VN",
                 "brand_text": null,
                 "property_type": "Hotel",
-                "star_rating": "3",
+                "star_rating": "4",
                 "chain": null,
                 "brand": null,
                 "logo": null,
-                "primary_photo": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_a_002.jpeg",
+                "primary_photo": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_050.jpg",
                 "review_rating": {
                     "source": null,
                     "number_of_reviews": null,
@@ -52,7 +60,7 @@
                 },
                 "policies": {
                     "checkin": {
-                        "begin_time": "16:00:00",
+                        "begin_time": "18:00:00",
                         "end_time": "11:00:00",
                         "instructions": null,
                         "min_age": null
@@ -76,29 +84,29 @@
                     "nationality_restrictions": null
                 },
                 "address": {
-                    "latitude": 42.5712244,
-                    "longitude": 1.4037897,
-                    "address_line_1": "Carretera General, 29/31",
+                    "latitude": 20.9542,
+                    "longitude": 107.03605,
+                    "address_line_1": "Hau Can Road, Bai Chay",
                     "address_line_2": null,
-                    "city": "Arinsal",
-                    "state": "ANDORRA LA VELLA",
-                    "country": "Andorra",
-                    "country_code": "AD",
-                    "postal_code": "AD400",
-                    "full_address": "Carretera General, 29/31, Arinsal, Andorra",
-                    "google_map_site_link": "http://maps.google.com/maps?q=Carretera+General,+29/31",
+                    "city": "Ha Long",
+                    "state": "VIETNAM",
+                    "country": "Vietnam",
+                    "country_code": "VN",
+                    "postal_code": "0084",
+                    "full_address": "Hau Can Road, Bai Chay, Ha Long, Vietnam",
+                    "google_map_site_link": "http://maps.google.com/maps?q=Hau+Can+Road,+Bai+Chay",
                     "local_lang": {
-                        "latitude": 42.5712244,
-                        "longitude": 1.4037897,
-                        "address_line_1": "Carretera General, 29/31",
+                        "latitude": 20.9542,
+                        "longitude": 107.03605,
+                        "address_line_1": "Hau Can Road, Bai Chay",
                         "address_line_2": null,
-                        "city": "Arinsal",
-                        "state": "ANDORRA LA VELLA",
-                        "country": "Andorra",
-                        "country_code": "AD",
-                        "postal_code": "AD400",
-                        "full_address": "Carretera General, 29/31, Arinsal, Andorra",
-                        "google_map_site_link": "http://maps.google.com/maps?q=Carretera+General,+29/31"
+                        "city": "Ha Long",
+                        "state": "VIETNAM",
+                        "country": "Vietnam",
+                        "country_code": "VN",
+                        "postal_code": "0084",
+                        "full_address": "Hau Can Road, Bai Chay, Ha Long, Vietnam",
+                        "google_map_site_link": "http://maps.google.com/maps?q=Hau+Can+Road,+Bai+Chay"
                     },
                     "mapping": {
                         "continent_id": null,
@@ -111,242 +119,25 @@
                 },
                 "contacts": {
                     "phone_numbers": [
-                        "+376856661",
-                        "+376372283"
+                        "+0084936441977",
+                        "+00842033640027",
+                        "+0084333640077"
                     ],
                     "fax": null,
                     "email_address": [
-                        "hotelguineu@andorra.ad"
+                        "saleonline@aseanhalonghotel.com"
                     ],
                     "website": [
-                        ""
+                        null
                     ]
                 },
                 "descriptions": [
                     {
                         "title": null,
-                        "text": "The Hotel Victoria Arinsal *** is a family hotel located in Arinsal (Principality of Andorra)just a few metres away from the cable car of the ski resort. The hotel offers 85 spacious and comfortable rooms. All our rooms are equipped with central heating, satellite TV, telephone and a free safe. All our bathrooms are equipped with a hairdryer. The Hotel a restaurant offering breakfast and dinner with a buffet of a wide variety of hot and cold dishes. The reception is open 24 hours a day. Free ski storage is also available. \nThe hotel offers a peaceful environment to relax after a long day on the slopes. All the shops and restaurants of Arinsal are within walking distance. We have a paid car park subject to availability on arrival. It costs 15 euros per day. \nTourist tax is paid directly at the accommodation. \nCheck in is from 16. 00 hs and check out is at 10. 00 hs. "
+                        "text": "With the quite surrounding area beside the beautiful Ha Long Coast Asean Halong Hotel is an international standard 4-star hotel with 101 luxurious and elegantly designed rooms. Its warmth and modern European amenities make you feel at home while at the same time offer you a new experience of Oriental lifestyle in interior designing. Right from the Superior Balcony Seaview guests can enjoy the relaxing moment with the quite panoramic view of Halong Bay – a well known UNESCO World Heritage Site of Vietnam. Each room features a satellite TV well-stocked minibar air conditioning in-room safety box plus business desk. Outside swimming pool are free for all stayed guests. Just 2 minutes walking from the hotel our hotel offers the easy access to the Royal Park Night Market and the entertainment centers on the area.Elegant restaurant serves Asian European dishes and original Vietnamese cuisine with melodious music and beautiful view to Asean Swimming Pool. Guest can select from a la carte menu with a wide range of light appetizers succulent main courses and delicious desserts plus our huge wine selection.  Mystery Bar is a great place to unwind after a long active day. Junk and car rental services are also available.We strongly believe that our professional and hospitality in serving attitude ensures the highest satisfaction and pleasure to the valued guests."
                     }
                 ],
-                "room_type": [
-                    {
-                        "room_id": "DBL.ST",
-                        "title": "DOUBLE STANDARD",
-                        "title_lang": null,
-                        "room_pic": "https://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_001.jpeg",
-                        "description": "DOUBLE STANDARD",
-                        "max_allowed": {
-                            "total": 2,
-                            "adults": 2,
-                            "children": 1,
-                            "infant": null
-                        },
-                        "no_of_room": null,
-                        "room_size": "Double bed 131-150 width",
-                        "bed_type": [
-                            {
-                                "description": "STANDARD",
-                                "configuration": [],
-                                "max_extrabeds": null
-                            }
-                        ],
-                        "shared_bathroom": null,
-                        "amenities": [
-                            "Living room",
-                            "Wheelchair-accessible",
-                            "Wi-fi",
-                            "Smoking rooms",
-                            "Room size (sqm)",
-                            "Number of bedrooms"
-                        ]
-                    },
-                    {
-                        "room_id": "QUA.C4",
-                        "title": "QUADRUPLE CAPACITY 4",
-                        "title_lang": null,
-                        "room_pic": "https://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_012.jpg",
-                        "description": "QUADRUPLE CAPACITY 4",
-                        "max_allowed": {
-                            "total": 4,
-                            "adults": 4,
-                            "children": 0,
-                            "infant": null
-                        },
-                        "no_of_room": null,
-                        "room_size": "Double bed 131-150 width",
-                        "bed_type": [
-                            {
-                                "description": "CAPACITY 4",
-                                "configuration": [],
-                                "max_extrabeds": null
-                            }
-                        ],
-                        "shared_bathroom": null,
-                        "amenities": [
-                            "Living room",
-                            "Wheelchair-accessible",
-                            "Wi-fi",
-                            "Smoking rooms",
-                            "Room size (sqm)",
-                            "Number of bedrooms"
-                        ]
-                    },
-                    {
-                        "room_id": "QUA.C4-1",
-                        "title": "QUADRUPLE CAPACITY 4",
-                        "title_lang": null,
-                        "room_pic": "https://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_011.jpg",
-                        "description": "QUADRUPLE CAPACITY 4",
-                        "max_allowed": {
-                            "total": 4,
-                            "adults": 3,
-                            "children": 1,
-                            "infant": null
-                        },
-                        "no_of_room": null,
-                        "room_size": "Double bed 131-150 width",
-                        "bed_type": [
-                            {
-                                "description": "CAPACITY 4",
-                                "configuration": [],
-                                "max_extrabeds": null
-                            }
-                        ],
-                        "shared_bathroom": null,
-                        "amenities": [
-                            "Living room",
-                            "Wheelchair-accessible",
-                            "Wi-fi",
-                            "Smoking rooms",
-                            "Room size (sqm)",
-                            "Number of bedrooms"
-                        ]
-                    },
-                    {
-                        "room_id": "QUA.ST",
-                        "title": "QUADRUPLE STANDARD",
-                        "title_lang": null,
-                        "room_pic": "https://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_008.jpeg",
-                        "description": "QUADRUPLE STANDARD",
-                        "max_allowed": {
-                            "total": 4,
-                            "adults": 4,
-                            "children": 2,
-                            "infant": null
-                        },
-                        "no_of_room": null,
-                        "room_size": "Single bed 80-130 width",
-                        "bed_type": [
-                            {
-                                "description": "STANDARD",
-                                "configuration": [],
-                                "max_extrabeds": null
-                            }
-                        ],
-                        "shared_bathroom": null,
-                        "amenities": [
-                            "Living room",
-                            "Wheelchair-accessible",
-                            "Wi-fi",
-                            "Smoking rooms",
-                            "Room size (sqm)",
-                            "Number of bedrooms"
-                        ]
-                    },
-                    {
-                        "room_id": "TPL.C3",
-                        "title": "TRIPLE CAPACITY 3",
-                        "title_lang": null,
-                        "room_pic": "https://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_010.jpg",
-                        "description": "TRIPLE CAPACITY 3",
-                        "max_allowed": {
-                            "total": 3,
-                            "adults": 3,
-                            "children": 0,
-                            "infant": null
-                        },
-                        "no_of_room": null,
-                        "room_size": "Single bed 80-130 width",
-                        "bed_type": [
-                            {
-                                "description": "CAPACITY 3",
-                                "configuration": [],
-                                "max_extrabeds": null
-                            }
-                        ],
-                        "shared_bathroom": null,
-                        "amenities": [
-                            "Living room",
-                            "Wheelchair-accessible",
-                            "Wi-fi",
-                            "Smoking rooms",
-                            "Room size (sqm)",
-                            "Number of bedrooms"
-                        ]
-                    },
-                    {
-                        "room_id": "TPL.ST",
-                        "title": "TRIPLE STANDARD",
-                        "title_lang": null,
-                        "room_pic": "https://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_006.jpeg",
-                        "description": "TRIPLE STANDARD",
-                        "max_allowed": {
-                            "total": 3,
-                            "adults": 3,
-                            "children": 1,
-                            "infant": null
-                        },
-                        "no_of_room": null,
-                        "room_size": "Single bed 80-130 width",
-                        "bed_type": [
-                            {
-                                "description": "STANDARD",
-                                "configuration": [],
-                                "max_extrabeds": null
-                            }
-                        ],
-                        "shared_bathroom": null,
-                        "amenities": [
-                            "Living room",
-                            "Wheelchair-accessible",
-                            "Wi-fi",
-                            "Smoking rooms",
-                            "Room size (sqm)",
-                            "Number of bedrooms"
-                        ]
-                    },
-                    {
-                        "room_id": "TWN.ST",
-                        "title": "TWIN STANDARD",
-                        "title_lang": null,
-                        "room_pic": "https://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_005.jpeg",
-                        "description": "TWIN STANDARD",
-                        "max_allowed": {
-                            "total": 2,
-                            "adults": 2,
-                            "children": 1,
-                            "infant": null
-                        },
-                        "no_of_room": null,
-                        "room_size": "Single bed 80-130 width",
-                        "bed_type": [
-                            {
-                                "description": "STANDARD",
-                                "configuration": [],
-                                "max_extrabeds": null
-                            }
-                        ],
-                        "shared_bathroom": null,
-                        "amenities": [
-                            "Living room",
-                            "Wheelchair-accessible",
-                            "Wi-fi",
-                            "Smoking rooms",
-                            "Room size (sqm)",
-                            "Number of bedrooms"
-                        ]
-                    }
-                ],
+                "room_type": [],
                 "spoken_languages": [
                     {
                         "type": "spoken_languages",
@@ -362,8 +153,28 @@
                         "icon": "mdi mdi-translate-variant"
                     },
                     {
+                        "type": "Connecting rooms",
+                        "title": "Connecting rooms",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
                         "type": "hotel",
                         "title": "hotel",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "American Express",
+                        "title": "American Express",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "JCB",
+                        "title": "JCB",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Diners Club",
+                        "title": "Diners Club",
                         "icon": "mdi mdi-translate-variant"
                     },
                     {
@@ -372,13 +183,33 @@
                         "icon": "mdi mdi-translate-variant"
                     },
                     {
-                        "type": "Visa Electrón",
-                        "title": "Visa Electrón",
+                        "type": "Visa",
+                        "title": "Visa",
                         "icon": "mdi mdi-translate-variant"
                     },
                     {
-                        "type": "City centre",
-                        "title": "City centre",
+                        "type": "Disability-friendly bathroom",
+                        "title": "Disability-friendly bathroom",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Wheelchair-accessible",
+                        "title": "Wheelchair-accessible",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Smoking rooms",
+                        "title": "Smoking rooms",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Small pets allowed (under 5 kg)",
+                        "title": "Small pets allowed (under 5 kg)",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Large pets allowed (over 5 kg)",
+                        "title": "Large pets allowed (over 5 kg)",
                         "icon": "mdi mdi-translate-variant"
                     },
                     {
@@ -392,8 +223,8 @@
                         "icon": "mdi mdi-translate-variant"
                     },
                     {
-                        "type": "Key Collection",
-                        "title": "Key Collection",
+                        "type": "Garage",
+                        "title": "Garage",
                         "icon": "mdi mdi-translate-variant"
                     },
                     {
@@ -412,116 +243,281 @@
                         "icon": "mdi mdi-translate-variant"
                     },
                     {
+                        "type": "Wired Internet",
+                        "title": "Wired Internet",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
                         "type": "Wi-fi",
                         "title": "Wi-fi",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Car hire",
+                        "title": "Car hire",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Airport Shuttle",
+                        "title": "Airport Shuttle",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Room service",
+                        "title": "Room service",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Laundry service",
+                        "title": "Laundry service",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Launderette",
+                        "title": "Launderette",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Medical service",
+                        "title": "Medical service",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Babysitting service",
+                        "title": "Babysitting service",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Bellboy service",
+                        "title": "Bellboy service",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Air conditioning in public areas",
+                        "title": "Air conditioning in public areas",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Hotel safe",
+                        "title": "Hotel safe",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Currency exchange facilities",
+                        "title": "Currency exchange facilities",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Lift access",
+                        "title": "Lift access",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Shop",
+                        "title": "Shop",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Gym",
+                        "title": "Gym",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Luggage room",
+                        "title": "Luggage room",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "BBQ facilities",
+                        "title": "BBQ facilities",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Bar",
+                        "title": "Bar",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Restaurant",
+                        "title": "Restaurant",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Smoking area",
+                        "title": "Smoking area",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Conference room",
+                        "title": "Conference room",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Massage",
+                        "title": "Massage",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Spa centre",
+                        "title": "Spa centre",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Breakfast",
+                        "title": "Breakfast",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Fitness",
+                        "title": "Fitness",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Tennis",
+                        "title": "Tennis",
                         "icon": "mdi mdi-translate-variant"
                     }
                 ],
                 "hotel_photo": [
                     {
-                        "picture_id": 1,
-                        "title": "Restaurant",
-                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_r_001.jpg"
+                        "picture_id": 50,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_050.jpg"
                     },
                     {
-                        "picture_id": 8,
-                        "title": "Room",
-                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_008.jpeg"
+                        "picture_id": 51,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_051.jpg"
                     },
                     {
-                        "picture_id": 2,
-                        "title": "Restaurant",
-                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_r_002.jpg"
+                        "picture_id": 30,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_030.jpg"
                     },
                     {
-                        "picture_id": 6,
-                        "title": "Room",
-                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_006.jpeg"
+                        "picture_id": 52,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_052.jpg"
                     },
                     {
-                        "picture_id": 9,
-                        "title": "Room",
-                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_009.jpeg"
+                        "picture_id": 31,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_031.jpg"
                     },
                     {
-                        "picture_id": 10,
-                        "title": "Room",
-                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_010.jpg"
+                        "picture_id": 53,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_053.jpg"
                     },
                     {
-                        "picture_id": 11,
-                        "title": "Room",
-                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_011.jpg"
+                        "picture_id": 32,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_032.jpg"
                     },
                     {
-                        "picture_id": 1,
-                        "title": "Sports and Entertainment",
-                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_f_001.jpeg"
+                        "picture_id": 54,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_054.jpg"
                     },
                     {
-                        "picture_id": 7,
-                        "title": "Room",
-                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_007.jpeg"
+                        "picture_id": 33,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_033.jpg"
                     },
                     {
-                        "picture_id": 1,
-                        "title": "Lobby",
-                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_l_001.jpeg"
+                        "picture_id": 55,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_055.jpg"
                     },
                     {
-                        "picture_id": 5,
-                        "title": "Room",
-                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_005.jpeg"
+                        "picture_id": 34,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_034.jpg"
                     },
                     {
-                        "picture_id": 3,
-                        "title": "Room",
-                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_003.jpeg"
+                        "picture_id": 35,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_035.jpg"
                     },
                     {
-                        "picture_id": 2,
-                        "title": "Lobby",
-                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_l_002.jpeg"
+                        "picture_id": 47,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_047.jpg"
                     },
                     {
-                        "picture_id": 1,
-                        "title": "Room",
-                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_001.jpeg"
+                        "picture_id": 48,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_048.jpg"
                     },
                     {
-                        "picture_id": 2,
-                        "title": "Room",
-                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_002.jpeg"
+                        "picture_id": 49,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_049.jpg"
+                    },
+                    {
+                        "picture_id": 29,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_029.jpg"
                     },
                     {
                         "picture_id": 4,
-                        "title": "Room",
-                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_004.jpeg"
+                        "title": "Lobby",
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_l_004.jpg"
                     },
                     {
-                        "picture_id": 2,
+                        "picture_id": 40,
                         "title": "General view",
-                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_a_002.jpeg"
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_040.jpg"
                     },
                     {
-                        "picture_id": 1,
+                        "picture_id": 41,
                         "title": "General view",
-                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_a_001.jpeg"
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_041.jpg"
                     },
                     {
-                        "picture_id": 4,
+                        "picture_id": 42,
                         "title": "General view",
-                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_a_004.jpg"
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_042.jpg"
                     },
                     {
-                        "picture_id": 3,
+                        "picture_id": 43,
                         "title": "General view",
-                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_a_003.jpeg"
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_043.jpg"
                     },
                     {
-                        "picture_id": 12,
-                        "title": "Room",
-                        "url": "http://photos.hotelbeds.com/giata/original/10/1038133/1038133a_hb_ro_012.jpg"
+                        "picture_id": 44,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_044.jpg"
+                    },
+                    {
+                        "picture_id": 45,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_045.jpg"
+                    },
+                    {
+                        "picture_id": 46,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_046.jpg"
+                    },
+                    {
+                        "picture_id": 36,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_036.jpg"
+                    },
+                    {
+                        "picture_id": 37,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_037.jpg"
+                    },
+                    {
+                        "picture_id": 38,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_038.jpg"
+                    },
+                    {
+                        "picture_id": 39,
+                        "title": "General view",
+                        "url": "http://photos.hotelbeds.com/giata/original/23/236548/236548a_hb_a_039.jpg"
                     }
                 ],
                 "point_of_interests": [],
@@ -530,42 +526,1082 @@
                 "connected_locations": null,
                 "stadiums": null
             }
+        },
+        {
+            "id": 4337310,
+            "ittid": "11144441",
+            "provider_name": "ratehawkhotel",
+            "provider_id": "asean_halong_hotel",
+            "updated_at": "2025-10-28T23:35:47",
+            "full_details": {
+                "created": "2025-11-16T18:54:36",
+                "timestamp": 1763297676,
+                "hotel_id": "asean_halong_hotel",
+                "name": "Asean Halong Hotel",
+                "name_local": "Asean Halong Hotel",
+                "hotel_formerly_name": "Asean Halong Hotel",
+                "destination_code": null,
+                "country_code": "VN",
+                "brand_text": null,
+                "property_type": "Hotel",
+                "star_rating": "4.0",
+                "chain": "No chain",
+                "brand": null,
+                "logo": null,
+                "primary_photo": "https://cdn.worldota.net/t/1024x768/content/8c/23/8c236a8fcaa0a1feec00516ff130fb486292a8d4.jpeg",
+                "review_rating": {
+                    "source": null,
+                    "number_of_reviews": null,
+                    "rating_average": null,
+                    "popularity_score": null
+                },
+                "policies": {
+                    "checkin": {
+                        "begin_time": "14:00:00",
+                        "end_time": "12:00:00",
+                        "instructions": null,
+                        "min_age": null
+                    },
+                    "checkout": {
+                        "time": "12:00:00"
+                    },
+                    "fees": {
+                        "optional": null
+                    },
+                    "know_before_you_go": null,
+                    "pets": [],
+                    "remark": null,
+                    "child_and_extra_bed_policy": {
+                        "infant_age": null,
+                        "children_age_from": null,
+                        "children_age_to": null,
+                        "children_stay_free": null,
+                        "min_guest_age": null
+                    },
+                    "nationality_restrictions": null
+                },
+                "address": {
+                    "latitude": "20.9528",
+                    "longitude": "107.041",
+                    "address_line_1": "Hau Can Road, Bai Chay, Halong",
+                    "address_line_2": null,
+                    "city": "Halong",
+                    "state": null,
+                    "country": null,
+                    "country_code": "VN",
+                    "postal_code": "200000",
+                    "full_address": "Hau Can Road, Bai Chay, Halong",
+                    "google_map_site_link": "http://maps.google.com/maps?q=Hau+Can+Road,+Bai+Chay,+Halong",
+                    "local_lang": {
+                        "latitude": "20.9528",
+                        "longitude": "107.041",
+                        "address_line_1": "Hau Can Road, Bai Chay, Halong",
+                        "address_line_2": null,
+                        "city": "Halong",
+                        "state": null,
+                        "country": null,
+                        "country_code": "VN",
+                        "postal_code": "200000",
+                        "full_address": "Hau Can Road, Bai Chay, Halong",
+                        "google_map_site_link": "http://maps.google.com/maps?q=Hau+Can+Road,+Bai+Chay,+Halong"
+                    },
+                    "mapping": {
+                        "continent_id": null,
+                        "country_id": null,
+                        "province_id": null,
+                        "state_id": null,
+                        "city_id": null,
+                        "area_id": null
+                    }
+                },
+                "contacts": {
+                    "phone_numbers": [
+                        ""
+                    ],
+                    "fax": [
+                        null
+                    ],
+                    "email_address": [
+                        "saleonline@aseanhalonghotel.com"
+                    ],
+                    "website": [
+                        null
+                    ]
+                },
+                "descriptions": [
+                    {
+                        "title": "Location",
+                        "text": "Your vacation should be comfortable! Hotel Â«Asean Halong HotelÂ» is located in Halong. This hotel is located in 4 km from the city center."
+                    },
+                    {
+                        "title": "At the hotel",
+                        "text": "You can stop by the bar. Taste the local cuisine and have a rest in the restaurant. Free Wi-Fi is available on the territory. Ask for more information when checking in. If you travel by car, you can park in a parking zone for free.\n\nAlso, the following services are available for guests at the hotel: a massage room, a sauna and a spa center. Sports fans are going to love a fitness center. Get ready for a fun and exciting vacation! Hereâs what you will find on the premises: a karaoke and a barbeque area. Swimming fans are going to enjoy a pool, an indoor pool and an outdoor pool.\n\nFor business meetings, there is a business center. Want to have an excursion? Consult the tour assistance desk of the hotel. The staff of the hotel will order a transfer for you. Accessible for guests with disabilities: the elevator helps them to go to the highest floors.\n\nThere are other services available for the guests of the hotel. For example, a laundry, dry cleaning, ironing, press, car rental, a safe-deposit box and a concierge. The staff of the hotel speaks English."
+                    },
+                    {
+                        "title": "Room amenities",
+                        "text": "In the room, there is a shower, a mini-bar, a bathrobe and slippers. Please note that the listed services may not be available in all the rooms."
+                    }
+                ],
+                "room_type": [
+                    {
+                        "room_id": null,
+                        "title": null,
+                        "title_lang": null,
+                        "room_pic": null,
+                        "description": null,
+                        "max_allowed": {
+                            "total": null,
+                            "adults": null,
+                            "children": null,
+                            "infant": null
+                        },
+                        "no_of_room": null,
+                        "room_size": null,
+                        "bed_type": [
+                            {
+                                "description": null,
+                                "configuration": [],
+                                "max_extrabeds": null
+                            }
+                        ],
+                        "shared_bathroom": null
+                    }
+                ],
+                "spoken_languages": [
+                    {
+                        "type": "spoken_languages",
+                        "title": "English",
+                        "icon": "mdi mdi-translate-variant"
+                    }
+                ],
+                "amenities": [
+                    {
+                        "type": "Shopping on site",
+                        "title": "Shopping on site",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Air conditioning",
+                        "title": "Air conditioning",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "24-hour reception",
+                        "title": "24-hour reception",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Elevator/lift",
+                        "title": "Elevator/lift",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Smoking areas",
+                        "title": "Smoking areas",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Currency exchange",
+                        "title": "Currency exchange",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Smoke-free property",
+                        "title": "Smoke-free property",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Newspapers",
+                        "title": "Newspapers",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Gift shop",
+                        "title": "Gift shop",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Express check-in/check-out",
+                        "title": "Express check-in/check-out",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Terrace",
+                        "title": "Terrace",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Non-smoking rooms",
+                        "title": "Non-smoking rooms",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Room service",
+                        "title": "Room service",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Fridge",
+                        "title": "Fridge",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Family room",
+                        "title": "Family room",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "VIP room amenities",
+                        "title": "VIP room amenities",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Cable TV",
+                        "title": "Cable TV",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Minibar",
+                        "title": "Minibar",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Hairdryer",
+                        "title": "Hairdryer",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Shower",
+                        "title": "Shower",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Bathrobe",
+                        "title": "Bathrobe",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Slippers",
+                        "title": "Slippers",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Toiletries",
+                        "title": "Toiletries",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Accessibility features",
+                        "title": "Accessibility features",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Ironing",
+                        "title": "Ironing",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Laundry",
+                        "title": "Laundry",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Safe-deposit box",
+                        "title": "Safe-deposit box",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Concierge services",
+                        "title": "Concierge services",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Dry-cleaning",
+                        "title": "Dry-cleaning",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Shoe shine",
+                        "title": "Shoe shine",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Luggage storage",
+                        "title": "Luggage storage",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Telephone",
+                        "title": "Telephone",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Bar",
+                        "title": "Bar",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Coffee/tea for guests",
+                        "title": "Coffee/tea for guests",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Breakfast",
+                        "title": "Breakfast",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Breakfast in the room",
+                        "title": "Breakfast in the room",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Restaurant",
+                        "title": "Restaurant",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Restaurant (buffet style)",
+                        "title": "Restaurant (buffet style)",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Packed Lunches",
+                        "title": "Packed Lunches",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Bottled water",
+                        "title": "Bottled water",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Free Wi-Fi",
+                        "title": "Free Wi-Fi",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Car rental",
+                        "title": "Car rental",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Airport transportation",
+                        "title": "Airport transportation",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Transfer services",
+                        "title": "Transfer services",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "English",
+                        "title": "English",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Tour assistance",
+                        "title": "Tour assistance",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Bike rental",
+                        "title": "Bike rental",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Barbecue grill(s)",
+                        "title": "Barbecue grill(s)",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Karaoke",
+                        "title": "Karaoke",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Free parking",
+                        "title": "Free parking",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Swimming pool",
+                        "title": "Swimming pool",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Indoor Pool",
+                        "title": "Indoor Pool",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Outdoor pool",
+                        "title": "Outdoor pool",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Business center",
+                        "title": "Business center",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Event facilities",
+                        "title": "Event facilities",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Fax machine",
+                        "title": "Fax machine",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Conference Hall",
+                        "title": "Conference Hall",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Fitness facilities",
+                        "title": "Fitness facilities",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Massage",
+                        "title": "Massage",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Sauna",
+                        "title": "Sauna",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Spa",
+                        "title": "Spa",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Babysitting and childcare",
+                        "title": "Babysitting and childcare",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Family/Kid Friendly",
+                        "title": "Family/Kid Friendly",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "Pets Not Allowed",
+                        "title": "Pets Not Allowed",
+                        "icon": "mdi mdi-translate-variant"
+                    }
+                ],
+                "facilities": [
+                    {
+                        "title": "has_internet",
+                        "text": "has_internet",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "title": "has_airport_transfer",
+                        "text": "has_airport_transfer",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "title": "has_parking",
+                        "text": "has_parking",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "title": "has_kids",
+                        "text": "has_kids",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "title": "has_pool",
+                        "text": "has_pool",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "title": "has_fitness",
+                        "text": "has_fitness",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "title": "has_meal",
+                        "text": "has_meal",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "title": "has_disabled_support",
+                        "text": "has_disabled_support",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "title": "has_business",
+                        "text": "has_business",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "title": "has_spa",
+                        "text": "has_spa",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "title": "air_conditioning",
+                        "text": "air_conditioning",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "title": "has_smoking",
+                        "text": "has_smoking",
+                        "icon": "mdi mdi-translate-variant"
+                    }
+                ],
+                "hotel_photo": [
+                    {
+                        "picture_id": null,
+                        "title": "lobby",
+                        "url": "https://cdn.worldota.net/t/1024x768/content/8c/23/8c236a8fcaa0a1feec00516ff130fb486292a8d4.jpeg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": "guest_rooms",
+                        "url": "https://cdn.worldota.net/t/1024x768/content/4e/b3/4eb368fc33801feb001407a27f4444c8058a08ae.jpeg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": "guest_rooms",
+                        "url": "https://cdn.worldota.net/t/1024x768/content/e8/58/e858616f1ebbc21a3cfefe70a80b496981574427.jpeg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": "guest_rooms",
+                        "url": "https://cdn.worldota.net/t/1024x768/content/38/62/386208a00fd1839bff54558cd701e4634f40d4e6.jpeg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": "guest_rooms",
+                        "url": "https://cdn.worldota.net/t/1024x768/content/6b/87/6b875fa51691f880b2d85e088b9ffcb9467aa071.jpeg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": "guest_rooms",
+                        "url": "https://cdn.worldota.net/t/1024x768/content/ce/0c/ce0cf301798d005e12853838689a0cc364e560eb.jpeg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": "bathroom",
+                        "url": "https://cdn.worldota.net/t/1024x768/content/40/a3/40a302e43e938e5fca17f34151b1c053e3830681.jpeg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": "bathroom",
+                        "url": "https://cdn.worldota.net/t/1024x768/content/76/11/7611068654e2318b266c4626943783f06604c4f8.jpeg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": "meal",
+                        "url": "https://cdn.worldota.net/t/1024x768/content/59/48/59480a9dd966eb3026249c4161cbb07004115e68.jpeg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": "meal",
+                        "url": "https://cdn.worldota.net/t/1024x768/content/92/14/92145b83a8a79896060da15e00905cf74b457f97.jpeg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": "meal",
+                        "url": "https://cdn.worldota.net/t/1024x768/content/92/5b/925bdd96dd78ff83bc796f20a00357bf29494135.jpeg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": "meal",
+                        "url": "https://cdn.worldota.net/t/1024x768/content/31/0e/310e562076d5947d84b363318f68e32f9aef547b.jpeg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": "pool",
+                        "url": "https://cdn.worldota.net/t/1024x768/content/e5/d4/e5d400c81ac6642cd610718a02b0473cb2c6d715.jpeg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": "pool",
+                        "url": "https://cdn.worldota.net/t/1024x768/content/4c/c0/4cc043ab4bd6dbefc2ea91c7cdd17f9422a93bc6.jpeg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": "business",
+                        "url": "https://cdn.worldota.net/t/1024x768/content/95/9a/959a3d02d40cca8223196050c233f3d4141ab056.jpeg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": "business",
+                        "url": "https://cdn.worldota.net/t/1024x768/content/3b/2d/3b2dc5b1269ffc4e52635b96336ee359e61a3b4e.jpeg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": "business",
+                        "url": "https://cdn.worldota.net/t/1024x768/content/2c/13/2c13b458bd200d8a358ce9df713e4b1f0f7dc304.jpeg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": "entertainment",
+                        "url": "https://cdn.worldota.net/t/1024x768/content/1f/9e/1f9e58278bd33b6bf903a63594aa8ba44c55eef6.jpeg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": "spa",
+                        "url": "https://cdn.worldota.net/t/1024x768/content/28/54/28543dc824ec2839f813d3be4da0443fe03dad57.jpeg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": "outside",
+                        "url": "https://cdn.worldota.net/t/1024x768/content/98/4e/984ec9c989c577fe9c6094e96d9ffa4c21c0e87b.jpeg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": "outside",
+                        "url": "https://cdn.worldota.net/t/1024x768/content/44/1d/441d06d118169b18aceeeb4d4a806f95d9926659.jpeg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": "unspecified",
+                        "url": "https://cdn.worldota.net/t/1024x768/content/83/18/83183eaf0fb245cef3d6324b790576dac112c188.jpeg"
+                    }
+                ],
+                "point_of_interests": null,
+                "nearest_airports": null,
+                "train_stations": null,
+                "connected_locations": null,
+                "stadiums": null
+            }
+        },
+        {
+            "id": 4337313,
+            "ittid": "11144441",
+            "provider_name": "hotelston",
+            "provider_id": "70478681",
+            "updated_at": "2025-10-28T23:35:48",
+            "full_details": {
+                "created": "2025-11-16T18:54:36",
+                "timestamp": 1763297676,
+                "hotel_id": "70478681",
+                "name": "Asean Halong",
+                "name_local": "Asean Halong",
+                "hotel_formerly_name": "Asean Halong",
+                "destination_code": null,
+                "country_code": "VN",
+                "brand_text": null,
+                "property_type": null,
+                "star_rating": "3.5",
+                "chain": null,
+                "brand": null,
+                "logo": null,
+                "primary_photo": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722676.jpg",
+                "review_rating": {
+                    "source": null,
+                    "number_of_reviews": null,
+                    "rating_average": null,
+                    "popularity_score": null
+                },
+                "policies": {
+                    "checkin": {
+                        "begin_time": null,
+                        "end_time": null,
+                        "instructions": null,
+                        "min_age": null
+                    },
+                    "checkout": {
+                        "time": null
+                    },
+                    "fees": {
+                        "optional": null
+                    },
+                    "know_before_you_go": null,
+                    "pets": null,
+                    "remark": null,
+                    "child_and_extra_bed_policy": {
+                        "infant_age": null,
+                        "children_age_from": null,
+                        "children_age_to": null,
+                        "children_stay_free": null,
+                        "min_guest_age": null
+                    },
+                    "nationality_restrictions": null
+                },
+                "address": {
+                    "latitude": 20.95281982421875,
+                    "longitude": 107.04074096679688,
+                    "address_line_1": "Hau Can Street",
+                    "address_line_2": null,
+                    "city": "Hạ Long",
+                    "state": null,
+                    "country": null,
+                    "country_code": "VN",
+                    "postal_code": null,
+                    "full_address": "Hau Can Street",
+                    "google_map_site_link": "http://maps.google.com/maps?q=Hau+Can+Street",
+                    "local_lang": {
+                        "latitude": 20.95281982421875,
+                        "longitude": 107.04074096679688,
+                        "address_line_1": "Hau Can Street",
+                        "address_line_2": null,
+                        "city": "Hạ Long",
+                        "state": null,
+                        "country": "VN",
+                        "country_code": null,
+                        "postal_code": null,
+                        "full_address": "Hau Can Street",
+                        "google_map_site_link": "http://maps.google.com/maps?q=Hau+Can+Street"
+                    },
+                    "mapping": {
+                        "continent_id": null,
+                        "country_id": null,
+                        "province_id": null,
+                        "state_id": null,
+                        "city_id": null,
+                        "area_id": null
+                    }
+                },
+                "contacts": {
+                    "phone_numbers": [
+                        "+84333640027"
+                    ],
+                    "fax": [
+                        null
+                    ],
+                    "email_address": [
+                        null
+                    ],
+                    "website": [
+                        null
+                    ]
+                },
+                "descriptions": [],
+                "room_type": [
+                    {
+                        "room_id": null,
+                        "title": null,
+                        "title_lang": null,
+                        "room_pic": null,
+                        "description": null,
+                        "max_allowed": {
+                            "total": null,
+                            "adults": null,
+                            "children": null,
+                            "infant": null
+                        },
+                        "no_of_room": null,
+                        "room_size": null,
+                        "bed_type": [
+                            {
+                                "description": null,
+                                "configuration": [],
+                                "max_extrabeds": null
+                            }
+                        ],
+                        "shared_bathroom": null
+                    }
+                ],
+                "spoken_languages": [
+                    {
+                        "type": "spoken_languages",
+                        "title": "English",
+                        "icon": "mdi mdi-translate-variant"
+                    }
+                ],
+                "amenities": [
+                    {
+                        "type": "amenity",
+                        "title": "1605654",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "amenity",
+                        "title": "1605664",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "amenity",
+                        "title": "1605679",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "amenity",
+                        "title": "1605716",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "amenity",
+                        "title": "1605717",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "amenity",
+                        "title": "1605719",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "amenity",
+                        "title": "1605734",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "amenity",
+                        "title": "2326533",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "amenity",
+                        "title": "2326535",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "amenity",
+                        "title": "30122908",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "amenity",
+                        "title": "30122914",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "amenity",
+                        "title": "30309318",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "amenity",
+                        "title": "30309388",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "amenity",
+                        "title": "42105724",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "amenity",
+                        "title": "52790561",
+                        "icon": "mdi mdi-translate-variant"
+                    },
+                    {
+                        "type": "amenity",
+                        "title": "63537583",
+                        "icon": "mdi mdi-translate-variant"
+                    }
+                ],
+                "facilities": null,
+                "hotel_photo": [
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722676.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722678.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722695.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722691.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722690.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722682.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722674.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722673.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722703.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722702.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722694.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722705.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722701.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722704.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722680.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722706.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722675.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722700.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722699.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722698.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722697.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722685.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722684.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722683.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722687.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722696.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722677.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722679.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722693.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722686.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722692.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722681.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722689.jpg"
+                    },
+                    {
+                        "picture_id": null,
+                        "title": null,
+                        "url": "http://api-img.hotelston.com/resources/hotel/images/7/0/4/7/8/6/8/1/963722688.jpg"
+                    }
+                ],
+                "point_of_interests": null,
+                "nearest_airports": null,
+                "train_stations": null,
+                "connected_locations": null,
+                "stadiums": null
+            }
         }
     ],
     "locations": [
         {
-            "ittid": "11115304",
-            "city_name": "Arinsal",
-            "state_code": "AD",
-            "country_code": "AD",
-            "city_code": "ALV",
-            "created_at": "2025-07-01T03:32:31",
+            "id": 1148967,
             "state_name": "",
-            "id": 1119831,
-            "country_name": "Andorra",
-            "master_city_name": "Arinsal",
+            "country_name": "Vietnam",
+            "master_city_name": "Halong",
             "city_location_id": "",
-            "updated_at": "2025-07-01T03:32:31"
+            "updated_at": "2025-07-01T04:35:26",
+            "city_name": "Halong",
+            "ittid": "11144441",
+            "state_code": "",
+            "country_code": "VN",
+            "city_code": "HPH",
+            "created_at": "2025-07-01T04:35:26"
         }
     ],
     "contacts": [
         {
+            "value": "84-203-364 00 27",
+            "id": 1259323,
             "contact_type": "phone",
-            "ittid": "11115304",
-            "value": "+376856661",
-            "id": 1220408
+            "ittid": "11144441"
         },
         {
-            "contact_type": "phone",
-            "ittid": "11115304",
-            "value": "+376372283",
-            "id": 1220410
-        },
-        {
-            "contact_type": "email",
-            "ittid": "11115304",
-            "value": "hotelguineu@andorra.ad",
-            "id": 1220413
+            "value": "84-203-364 00 77",
+            "id": 1259325,
+            "contact_type": "fax",
+            "ittid": "11144441"
         }
     ]
 }

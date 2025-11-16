@@ -1,12 +1,12 @@
 import requests
 import json
 
-url = "http://127.0.0.1:8001/v1.0/content/get-full-hotel-with-itt-mapping-id/11115304"
+url = "http://127.0.0.1:8001/v1.0/content/get-full-hotel-with-itt-mapping-id/11144441"
 
 payload = ""
 headers = {
   'Content-Type': 'application/json',
-  'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyb24xMjMiLCJ1c2VyX2lkIjoiMmYwMTBmZTRjNSIsInJvbGUiOiJhZG1pbl91c2VyIiwiZXhwIjoxNzY1MDIxMDg1LCJ0eXBlIjoiYWNjZXNzIiwiaWF0IjoxNzYzMjIxMDg1fQ.krG-PNFA6v7HsmbNgzZWIecHptK4HsLuJwfksAbCc8w'
+  'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyb24xMjMiLCJ1c2VyX2lkIjoiMmYwMTBmZTRjNSIsInJvbGUiOiJhZG1pbl91c2VyIiwiZXhwIjoxNzY1MDc0MDUxLCJ0eXBlIjoiYWNjZXNzIiwiaWF0IjoxNzYzMjc0MDUxfQ.Nwg4K9gPqzFBfI8Zobuuqr66szghg6AVGkOk6iefUkk'
 }
 
 response = requests.request("GET", url, headers=headers, data=payload)

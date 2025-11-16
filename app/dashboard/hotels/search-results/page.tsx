@@ -227,6 +227,12 @@ function SearchResultsContent() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleViewDetails = (hotelName: string, ittid: string) => {
+    console.log("🔍 View Details clicked for:", { hotelName, ittid });
+    console.log("🔄 Navigating to hotel details with ittid:", ittid);
+    router.push(`/dashboard/hotels/details/${ittid}`);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -542,6 +548,10 @@ function SearchResultsContent() {
                         variant="primary"
                         size="md"
                         className="w-full sm:w-auto"
+                        onClick={() =>
+                          handleViewDetails(hotel.name, hotel.ittid)
+                        }
+                        disabled={!hotel.ittid}
                       >
                         View Details
                         <svg

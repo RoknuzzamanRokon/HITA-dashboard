@@ -509,16 +509,23 @@ export default function DashboardPage() {
                 />
               </div>
 
-              {/* Combined Activity - 3 columns */}
-              <div className="col-span-1 md:col-span-2 lg:col-span-3">
-                <CombinedActivityChart
-                  registrations={chartsData?.registrations || []}
-                  logins={chartsData?.logins || []}
-                  apiRequests={chartsData?.apiRequests || []}
-                  loading={chartsLoading}
-                  isRefreshing={chartsRefreshing}
-                />
-              </div>
+              {/* Combined Activity - 3 columns - Admin/Super User Only */}
+              <PermissionGuard
+                permissions={[
+                  Permission.VIEW_ALL_USERS,
+                  Permission.MANAGE_SYSTEM_SETTINGS,
+                ]}
+              >
+                <div className="col-span-1 md:col-span-2 lg:col-span-3">
+                  <CombinedActivityChart
+                    registrations={chartsData?.registrations || []}
+                    logins={chartsData?.logins || []}
+                    apiRequests={chartsData?.apiRequests || []}
+                    loading={chartsLoading}
+                    isRefreshing={chartsRefreshing}
+                  />
+                </div>
+              </PermissionGuard>
 
               {/* User Registration Trend - 1 column */}
               <div className="col-span-1">
