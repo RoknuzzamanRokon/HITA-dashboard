@@ -13,6 +13,8 @@ export const HeroSection: React.FC<HeroSectionProps> = memo(
   ({ primaryPhoto, hotelName, rating }) => {
     const [imageError, setImageError] = useState(false);
     const [imageLoaded, setImageLoaded] = useState(false);
+    const [useCors, setUseCors] = useState(true);
+    const [retryCount, setRetryCount] = useState(0);
 
     // Parse rating to number
     const numericRating = rating ? parseFloat(rating) : 0;
@@ -42,20 +44,34 @@ export const HeroSection: React.FC<HeroSectionProps> = memo(
               {/* Actual image */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={primaryPhoto.replace(/^http:\/\//i, "https://")}
+                key={`${primaryPhoto}-${retryCount}`}
+                src={primaryPhoto
+                  .replace(/^http:\/\//i, "https://")
+                  .replace(/([^:]\/)\/+/g, "$1")}
                 alt={`${hotelName} - Primary photo`}
                 className={`
                 absolute inset-0 w-full h-full object-cover
                 transition-opacity duration-300
                 ${imageLoaded ? "opacity-100" : "opacity-0"}
               `}
-                crossOrigin="anonymous"
-                referrerPolicy="no-referrer"
-                onLoad={() => setImageLoaded(true)}
+                crossOrigin={useCors ? "anonymous" : undefined}
+                referrerPolicy={useCors ? "no-referrer" : undefined}
+                data-image-type="hero"
+                onLoad={() => {
+                  setImageLoaded(true);
+                  setImageError(false);
+                }}
                 onError={(e) => {
-                  // Silently handle error - show placeholder instead
-                  setImageError(true);
-                  setImageLoaded(false);
+                  // Try without CORS if first attempt with CORS failed
+                  if (useCors && retryCount === 0) {
+                    setUseCors(false);
+                    setRetryCount(1);
+                    setImageLoaded(false);
+                  } else {
+                    // Show placeholder after all attempts
+                    setImageError(true);
+                    setImageLoaded(false);
+                  }
                 }}
               />
             </>
