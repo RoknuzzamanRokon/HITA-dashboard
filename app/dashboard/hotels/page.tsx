@@ -81,6 +81,9 @@ export default function HotelsPage() {
       availabilityStatus: string;
     }>;
   } | null>(null);
+  const [activeSupplierCount, setActiveSupplierCount] = useState<number | null>(
+    null
+  );
 
   // Modal state management
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -249,6 +252,30 @@ export default function HotelsPage() {
           }`
         );
       }
+
+      // Load active supplier count
+      try {
+        console.log("Loading active supplier count...");
+        const activeSupplierCountResponse =
+          await HotelService.checkActiveMySupplier();
+        if (
+          activeSupplierCountResponse.success &&
+          activeSupplierCountResponse.data
+        ) {
+          setActiveSupplierCount(
+            activeSupplierCountResponse.data.active_supplier
+          );
+          console.log(
+            "Loaded active supplier count:",
+            activeSupplierCountResponse.data.active_supplier
+          );
+        }
+      } catch (activeSupplierCountError) {
+        console.log(
+          "Active supplier count not available:",
+          activeSupplierCountError
+        );
+      }
     } finally {
       setIsLoading(false);
     }
@@ -337,16 +364,9 @@ export default function HotelsPage() {
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                   <span className="text-gray-500 font-medium">
                     System Online
+                    {activeSupplierCount !== null && `: ${activeSupplierCount}`}
                   </span>
                 </div>
-                {recentHotels.length > 0 && (
-                  <div className="flex items-center space-x-2 text-sm">
-                    <Database className="h-3 w-3 text-gray-400" />
-                    <span className="text-gray-500">
-                      {recentHotels.length} hotels loaded
-                    </span>
-                  </div>
-                )}
                 {accessibleSuppliers.length > 0 && (
                   <div className="flex items-center space-x-2 text-sm">
                     <Users className="h-3 w-3 text-gray-400" />

@@ -533,6 +533,30 @@ export class HotelService {
     }
 
     /**
+     * Check active my supplier - returns active/inactive supplier counts
+     */
+    static async checkActiveMySupplier(): Promise<ApiResponse<{
+        active_supplier: number;
+        total_on_supplier: number;
+        total_off_supplier: number;
+        off_supplier_list: string[];
+        on_supplier_list: string[];
+    }>> {
+        try {
+            return await apiClient.get('/user/check-active-my-supplier');
+        } catch (error) {
+            return {
+                success: false,
+                error: {
+                    status: 0,
+                    message: 'Failed to fetch active supplier count',
+                    details: error,
+                },
+            };
+        }
+    }
+
+    /**
      * Autocomplete hotel search - suggests hotel names based on query
      */
     static async autocompleteHotel(query: string): Promise<ApiResponse<Array<{

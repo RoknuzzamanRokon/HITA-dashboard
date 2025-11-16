@@ -40,7 +40,7 @@ export const PhotoItem: React.FC<PhotoItemProps> = ({
           <img
             src={imageUrl}
             alt={`${photo.title || "Hotel photo"} - Click to view full size`}
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover z-0"
             loading="lazy"
             crossOrigin="anonymous"
             referrerPolicy="no-referrer"
@@ -53,7 +53,7 @@ export const PhotoItem: React.FC<PhotoItemProps> = ({
             }}
           />
           {/* Overlay with category on hover/touch */}
-          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 group-active:bg-opacity-30 transition-all duration-150 flex items-end">
+          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 group-active:bg-opacity-30 transition-all duration-150 flex items-end z-10">
             <div className="w-full p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity duration-150">
               <p className="text-white text-xs font-medium truncate">
                 {photo.title}
