@@ -33,18 +33,36 @@ function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loginAttempts, setLoginAttempts] = useState(0);
+  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
 
   // Get redirect URL from query params or default to dashboard
   const redirectTo = searchParams.get("redirect") || "/dashboard";
   const returnUrl = searchParams.get("returnUrl");
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated (only once)
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      const targetUrl = returnUrl || redirectTo;
-      router.push(targetUrl);
+    if (!isLoading && !hasCheckedAuth) {
+      setHasCheckedAuth(true);
+
+      if (isAuthenticated) {
+        console.log("✅ User is authenticated, redirecting from login page");
+        const targetUrl = returnUrl || redirectTo;
+        console.log("🔄 Redirecting to:", targetUrl);
+
+        // Use replace instead of push to prevent back button issues
+        router.replace(targetUrl);
+      } else {
+        console.log("❌ User is not authenticated, staying on login page");
+      }
     }
-  }, [isAuthenticated, isLoading, router, redirectTo, returnUrl]);
+  }, [
+    isAuthenticated,
+    isLoading,
+    router,
+    redirectTo,
+    returnUrl,
+    hasCheckedAuth,
+  ]);
 
   // Show loading while checking authentication
   if (isLoading) {

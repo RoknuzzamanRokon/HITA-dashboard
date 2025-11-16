@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Clear Authentication</title>
+  </head>
+  <body>
+    <h1>Clearing Authentication...</h1>
+    <script>
+      // Clear all auth-related storage
+      localStorage.removeItem("admin_auth_token");
+      localStorage.removeItem("admin_refresh_token");
+      sessionStorage.removeItem("admin_auth_token");
+      sessionStorage.removeItem("admin_refresh_token");
+      sessionStorage.removeItem("login_redirect_attempts");
+
+      // Clear all session storage
+      sessionStorage.clear();
+
+      console.log("✅ All authentication data cleared");
+      alert("Authentication cleared! You can now login again.");
+
+      // Redirect to login
+      window.location.href = "/login";
+    </script>
+  </body>
+</html>
