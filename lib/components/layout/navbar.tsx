@@ -14,14 +14,13 @@ import {
   Settings,
   ChevronDown,
   Search,
-  Sun,
-  Moon,
   Palette,
   HelpCircle,
   Shield,
   MessageSquare,
   Home,
 } from "lucide-react";
+import { ColorThemeButton } from "@/lib/components/ui/ColorThemeButton";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { useTheme } from "@/lib/contexts/theme-context";
 import { User as UserType } from "@/lib/types/auth";
@@ -269,26 +268,8 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
               )}
             </div>
 
-            {/* Theme Toggle Button */}
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className={cn(
-                "p-2 rounded-xl transition-all duration-300 relative overflow-hidden",
-                theme === "dark"
-                  ? "text-gray-300 hover:text-white hover:bg-gray-700/40"
-                  : "text-gray-600 hover:text-gray-900 hover:bg-white/40",
-                "hover:backdrop-blur-sm hover:shadow-lg hover:scale-110",
-                "focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-              )}
-              aria-label="Toggle theme"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
-              {theme === "dark" ? (
-                <Sun className="h-5 w-5 relative z-10" />
-              ) : (
-                <Moon className="h-5 w-5 relative z-10" />
-              )}
-            </button>
+            {/* Color Theme Selector */}
+            <ColorThemeButton />
 
             {/* User dropdown */}
             <div className="relative" ref={dropdownRef}>

@@ -143,9 +143,7 @@
     backdrop-filter: blur(4px);
 }
 
-.dark .modal-overlay {
-    background-color: rgba(0, 0, 0, 0.7);
-}
+/* Dark mode modal overlay removed */
 
 .modal-content {
     background-color: rgb(var(--bg-primary));
