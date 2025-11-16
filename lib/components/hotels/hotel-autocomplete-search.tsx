@@ -6,15 +6,12 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { HotelService } from "@/lib/api/hotels";
-import type {
-  AutocompleteResult,
-  LocationSearchResult,
-} from "@/lib/types/hotel";
+import type { AutocompleteResult } from "@/lib/types/hotel";
 import { Input } from "@/lib/components/ui/input";
 import { Card } from "@/lib/components/ui/card";
 import { Button } from "@/lib/components/ui/button";
-import { Badge } from "@/lib/components/ui/badge";
 
 export interface HotelAutocompleteSearchProps {
   className?: string;
@@ -23,16 +20,15 @@ export interface HotelAutocompleteSearchProps {
 export function HotelAutocompleteSearch({
   className,
 }: HotelAutocompleteSearchProps) {
+  const router = useRouter();
+
   // State management
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [autocompleteResults, setAutocompleteResults] = useState<
     AutocompleteResult[]
   >([]);
-  const [locationResults, setLocationResults] =
-    useState<LocationSearchResult | null>(null);
   const [isLoadingAutocomplete, setIsLoadingAutocomplete] =
     useState<boolean>(false);
-  const [isLoadingLocation, setIsLoadingLocation] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
@@ -161,70 +157,31 @@ export function HotelAutocompleteSearch({
   };
 
   // Handle hotel selection from dropdown
-  const handleHotelSelect = async (hotel: AutocompleteResult) => {
-    // Close dropdown and update search query
+  const handleHotelSelect = (hotel: AutocompleteResult) => {
+    // Close dropdown
     setShowDropdown(false);
-    setSearchQuery(hotel.name);
     setError(null);
 
     // Extract location data
-    const { country_code, latitude, longitude } = hotel;
+    const { country_code, latitude, longitude, name } = hotel;
 
-    // Start location search
-    setIsLoadingLocation(true);
-    setLocationResults(null);
+    // Navigate to search results page with query parameters
+    const params = new URLSearchParams({
+      hotel: name,
+      lat: latitude.toString(),
+      lng: longitude.toString(),
+      country: country_code,
+    });
 
-    try {
-      const response = await HotelService.searchHotelsByLocation({
-        latitude,
-        longitude,
-        countryCode: country_code,
-        radius: "10",
-        suppliers: [
-          "goglobal",
-          "hotelbeds",
-          "paximumhotel",
-          "itt",
-          "ean",
-          "juniperhotel",
-          "hyperguestdirect",
-          "letsflyhotel",
-          "hotelston",
-          "kiwihotel",
-          "dotw",
-          "agoda",
-          "stuba",
-          "mgholiday",
-          "ratehawkhotel",
-          "grnconnect",
-          "innstanttravel",
-          "restel",
-          "illusionshotel",
-          "roomerang",
-          "tbohotel",
-        ],
-      });
-
-      if (response.success && response.data) {
-        setLocationResults(response.data);
-      } else {
-        setError(
-          response.error?.message || "Failed to search hotels by location"
-        );
-      }
-    } catch (err) {
-      setError("An error occurred while searching for nearby hotels");
-    } finally {
-      setIsLoadingLocation(false);
-    }
+    router.push(`/dashboard/hotels/search-results?${params.toString()}`);
   };
 
   return (
     <div className={className}>
-      <Card padding="lg">
+      <Card padding="lg" hover={false} className="overflow-visible">
         <div className="space-y-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
               Search Hotels by Location
             </h2>
             <p className="text-sm text-gray-600">
@@ -234,13 +191,14 @@ export function HotelAutocompleteSearch({
 
           {/* Error banner */}
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start justify-between">
-              <div className="flex items-start">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-0">
+              <div className="flex items-start flex-1">
                 <svg
-                  className="h-5 w-5 text-red-400 mt-0.5 mr-3 flex-shrink-0"
+                  className="h-5 w-5 text-red-500 mt-0.5 mr-3 flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -249,23 +207,23 @@ export function HotelAutocompleteSearch({
                     d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                <div>
-                  <h4 className="text-sm font-medium text-red-800">Error</h4>
-                  <p className="text-sm text-red-700 mt-1">{error}</p>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-sm font-semibold text-red-900">Error</h4>
+                  <p className="text-sm text-red-800 mt-1">{error}</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 w-full sm:w-auto">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleRetry}
-                  className="text-red-700 border-red-300 hover:bg-red-100"
+                  className="text-red-700 border-red-300 hover:bg-red-100 focus:ring-red-500 flex-1 sm:flex-none"
                 >
                   Retry
                 </Button>
                 <button
                   onClick={() => setError(null)}
-                  className="text-red-400 hover:text-red-600"
+                  className="text-red-500 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded p-1 transition-colors"
                   aria-label="Dismiss error"
                 >
                   <svg
@@ -342,37 +300,46 @@ export function HotelAutocompleteSearch({
               <div
                 ref={dropdownRef}
                 id="autocomplete-dropdown"
-                className="absolute z-50 w-full mt-2 bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto"
+                className="absolute z-[9999] w-full mt-2 bg-white rounded-lg shadow-xl border border-gray-200 max-h-80 sm:max-h-96 overflow-y-auto"
                 role="listbox"
+                style={{ zIndex: 9999 }}
               >
                 {autocompleteResults.map((hotel, index) => (
                   <div
-                    key={`${hotel.name}-${hotel.latitude}-${hotel.longitude}`}
-                    className={`px-4 py-3 cursor-pointer transition-colors ${
+                    key={`autocomplete-${index}-${hotel.name}-${hotel.latitude}-${hotel.longitude}`}
+                    className={`px-3 sm:px-4 py-3 cursor-pointer transition-all duration-150 ${
                       index === selectedIndex
-                        ? "bg-blue-50 border-l-4 border-blue-500"
-                        : "hover:bg-gray-50 border-l-4 border-transparent"
+                        ? "bg-blue-50 border-l-4 border-blue-600"
+                        : "hover:bg-gray-50 focus:bg-gray-50 border-l-4 border-transparent"
                     }`}
                     onClick={() => handleHotelSelect(hotel)}
                     onMouseEnter={() => setSelectedIndex(index)}
                     role="option"
                     aria-selected={index === selectedIndex}
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleHotelSelect(hotel);
+                      }
+                    }}
                   >
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
+                        <p className="text-sm font-semibold text-gray-900 truncate">
                           {hotel.name}
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-gray-600 mt-1 truncate">
                           {hotel.city && `${hotel.city}, `}
                           {hotel.country}
                         </p>
                       </div>
                       <svg
-                        className="h-5 w-5 text-gray-400 ml-2 flex-shrink-0"
+                        className="h-5 w-5 text-gray-400 flex-shrink-0"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
+                        aria-hidden="true"
                       >
                         <path
                           strokeLinecap="round"
@@ -394,159 +361,169 @@ export function HotelAutocompleteSearch({
             )}
           </div>
 
-          {/* Loading overlay for location search */}
-          {isLoadingLocation && (
-            <div className="mt-8 flex flex-col items-center justify-center py-12">
-              <svg
-                className="animate-spin h-12 w-12 text-blue-600 mb-4"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
+          {/* Footer Section */}
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            {/* Search Tips */}
+            <div className="mb-6">
+              <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <svg
+                  className="h-5 w-5 text-blue-600"
+                  fill="none"
                   stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
-              <p className="text-gray-600 font-medium">
-                Searching for nearby hotels...
-              </p>
-              <p className="text-sm text-gray-500 mt-1">
-                This may take a few moments
-              </p>
-            </div>
-          )}
-
-          {/* Location results */}
-          {!isLoadingLocation && locationResults && (
-            <div className="mt-8">
-              {/* Results header */}
-              <div className="mb-6">
-                <h3 className="text-xl font-semibold text-gray-900">
-                  Nearby Hotels
-                </h3>
-                <p
-                  className="text-sm text-gray-600 mt-1"
-                  role="status"
-                  aria-live="polite"
-                  aria-atomic="true"
+                  viewBox="0 0 24 24"
                 >
-                  Found {locationResults.totalHotels} hotels in this area
-                </p>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                Search Tips
+              </h3>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li className="flex items-start gap-2">
+                  <svg
+                    className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span>Type at least 2 characters to see suggestions</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <svg
+                    className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span>Use arrow keys to navigate through suggestions</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <svg
+                    className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span>
+                    Press Enter to select a hotel and view nearby properties
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <svg
+                    className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span>Search results show hotels within 10km radius</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Statistics */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <svg
+                      className="h-6 w-6 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-blue-900">1.5M+</p>
+                    <p className="text-xs text-blue-700 font-medium">
+                      Hotels Worldwide
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              {/* Hotel cards grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {locationResults.hotels.map((hotel, index) => (
-                  <Card
-                    key={`${hotel.name}-${hotel.latitude}-${hotel.longitude}-${index}`}
-                    padding="none"
-                    className="overflow-hidden hover:shadow-xl transition-shadow"
-                  >
-                    {/* Hotel photo */}
-                    <div className="relative h-48 bg-gray-200">
-                      {hotel.photo ? (
-                        <img
-                          src={hotel.photo}
-                          alt={`${hotel.name} - ${hotel.starRating} star hotel in ${hotel.address}`}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = "none";
-                            const parent = target.parentElement;
-                            if (parent) {
-                              parent.innerHTML = `
-                                <div class="w-full h-full flex items-center justify-center bg-gray-100">
-                                  <svg class="h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                  </svg>
-                                </div>
-                              `;
-                            }
-                          }}
-                        />
-                      ) : (
-                        <div
-                          className="w-full h-full flex items-center justify-center bg-gray-100"
-                          role="img"
-                          aria-label="No image available for this hotel"
-                        >
-                          <svg
-                            className="h-16 w-16 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            aria-hidden="true"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                            />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
+              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <svg
+                      className="h-6 w-6 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-green-900">20+</p>
+                    <p className="text-xs text-green-700 font-medium">
+                      Supplier Networks
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-                    {/* Hotel info */}
-                    <div className="p-4">
-                      <h4 className="font-semibold text-gray-900 text-sm mb-2 line-clamp-2">
-                        {hotel.name}
-                      </h4>
-
-                      {/* Address */}
-                      <p className="text-xs text-gray-600 mb-3 line-clamp-2">
-                        {hotel.address}
-                      </p>
-
-                      {/* Star rating */}
-                      <div className="flex items-center mb-3">
-                        {[...Array(5)].map((_, i) => (
-                          <svg
-                            key={i}
-                            className={`h-4 w-4 ${
-                              i < hotel.starRating
-                                ? "text-yellow-400"
-                                : "text-gray-300"
-                            }`}
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                        ))}
-                        <span className="ml-2 text-xs text-gray-600">
-                          {hotel.starRating} Star
-                        </span>
-                      </div>
-
-                      {/* Hotel type and supplier badges */}
-                      <div className="flex flex-wrap gap-2">
-                        <Badge variant="secondary" size="sm">
-                          {hotel.type}
-                        </Badge>
-                        {hotel.suppliers.length > 0 && (
-                          <Badge variant="info" size="sm">
-                            {hotel.suppliers.length} Supplier
-                            {hotel.suppliers.length !== 1 ? "s" : ""}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </Card>
-                ))}
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <svg
+                      className="h-6 w-6 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-purple-900">200+</p>
+                    <p className="text-xs text-purple-700 font-medium">
+                      Countries Covered
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </Card>
     </div>

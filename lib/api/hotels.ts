@@ -9,7 +9,10 @@ import type {
     HotelDetails,
     HotelSearchParams,
     HotelSearchResult,
-    HotelStats
+    HotelStats,
+    AutocompleteResult,
+    LocationSearchParams,
+    LocationSearchResult
 } from '@/lib/types/hotel';
 
 export class HotelService {
@@ -931,6 +934,127 @@ export class HotelService {
                 error: {
                     status: 0,
                     message: 'Failed to fetch hotel details',
+                    details: error
+                }
+            };
+        }
+    }
+
+    /**
+     * Autocomplete all - returns hotel suggestions based on query
+     */
+    static async autocompleteAll(query: string): Promise<ApiResponse<AutocompleteResult[]>> {
+        try {
+            const response = await apiClient.get<{
+                results: Array<{
+                    name: string;
+                    country_code: string;
+                    longitude: string;
+                    latitude: string;
+                    city: string;
+                    country: string;
+                }>;
+            }>(`/content/autocomplete-all?query=${encodeURIComponent(query)}`);
+
+            if (response.success && response.data) {
+                return {
+                    success: true,
+                    data: response.data.results
+                };
+            }
+
+            return response as any;
+        } catch (error) {
+            return {
+                success: false,
+                error: {
+                    status: 0,
+                    message: 'Failed to fetch autocomplete results',
+                    details: error
+                }
+            };
+        }
+    }
+
+    /**
+     * Search hotels by location - returns nearby hotels based on coordinates
+     */
+    static async searchHotelsByLocation(params: LocationSearchParams): Promise<ApiResponse<LocationSearchResult>> {
+        try {
+            const payload = {
+                lat: params.latitude,
+                lon: params.longitude,
+                radius: params.radius || "10",
+                supplier: params.suppliers || [
+                    "goglobal",
+                    "hotelbeds",
+                    "paximumhotel",
+                    "itt",
+                    "ean",
+                    "juniperhotel",
+                    "hyperguestdirect",
+                    "letsflyhotel",
+                    "hotelston",
+                    "kiwihotel",
+                    "dotw",
+                    "agoda",
+                    "stuba",
+                    "mgholiday",
+                    "ratehawkhotel",
+                    "grnconnect",
+                    "innstanttravel",
+                    "restel",
+                    "illusionshotel",
+                    "roomerang",
+                    "tbohotel"
+                ],
+                country_code: params.countryCode
+            };
+
+            const response = await apiClient.post<{
+                total_hotels: number;
+                hotels: Array<{
+                    a: number;
+                    b: number;
+                    name: string;
+                    addr: string;
+                    type: string;
+                    photo: string;
+                    star: number;
+                    vervotech: string;
+                    giata: string;
+                    goglobal?: string[];
+                }>;
+            }>('/locations/search-hotel-with-location', payload);
+
+            if (response.success && response.data) {
+                return {
+                    success: true,
+                    data: {
+                        totalHotels: response.data.total_hotels,
+                        hotels: response.data.hotels.map(h => ({
+                            latitude: h.a,
+                            longitude: h.b,
+                            name: h.name,
+                            address: h.addr,
+                            type: h.type,
+                            photo: h.photo,
+                            starRating: h.star,
+                            vervotech: h.vervotech,
+                            giata: h.giata,
+                            suppliers: h.goglobal || []
+                        }))
+                    }
+                };
+            }
+
+            return response as any;
+        } catch (error) {
+            return {
+                success: false,
+                error: {
+                    status: 0,
+                    message: 'Failed to search hotels by location',
                     details: error
                 }
             };

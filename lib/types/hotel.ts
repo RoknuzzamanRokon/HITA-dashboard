@@ -108,8 +108,8 @@ export interface HotelSearchResult {
     totalPages: number;
     resumeKey?: string;
 }
-expor
-t interface AutocompleteResult {
+
+export interface AutocompleteResult {
     name: string;
     country_code: string;
     longitude: string;
