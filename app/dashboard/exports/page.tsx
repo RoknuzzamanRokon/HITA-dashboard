@@ -46,6 +46,9 @@ export default function ExportsPage() {
   // Tab state for switching between export types
   const [activeTab, setActiveTab] = useState<ExportTab>("hotel");
 
+  // Loading state for initial jobs load
+  const [isLoadingJobs, setIsLoadingJobs] = useState(true);
+
   // Confirmation dialog state
   const [confirmDialog, setConfirmDialog] = useState<ConfirmationDialogState>({
     isOpen: false,
@@ -361,6 +364,16 @@ export default function ExportsPage() {
     onDownload: handleDownload,
   });
 
+  // Set loading to false after jobs are loaded (on mount)
+  React.useEffect(() => {
+    // Simulate initial load time for jobs from localStorage
+    const timer = setTimeout(() => {
+      setIsLoadingJobs(false);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   // Show loading state while authenticating
   if (authLoading) {
     return (
@@ -466,6 +479,7 @@ export default function ExportsPage() {
           onDeleteJob={handleDeleteJob}
           onClearCompleted={handleClearCompleted}
           isRefreshing={false}
+          isLoading={isLoadingJobs}
         />
 
         {/* Confirmation Dialog */}

@@ -14,6 +14,7 @@
 import React, { useMemo } from "react";
 import { ExportJob } from "@/lib/types/exports";
 import { ExportJobCard } from "./export-job-card";
+import { ExportJobsListSkeleton } from "./export-job-skeleton";
 import { Button } from "@/lib/components/ui/button";
 import { Badge } from "@/lib/components/ui/badge";
 import { cn, formatDateTime, formatNumber, truncate } from "@/lib/utils";
@@ -41,6 +42,7 @@ export interface ExportJobsListProps {
   onDeleteJob: (jobId: string) => void;
   onClearCompleted: () => void;
   isRefreshing?: boolean;
+  isLoading?: boolean;
 }
 
 export function ExportJobsList({
@@ -50,6 +52,7 @@ export function ExportJobsList({
   onDeleteJob,
   onClearCompleted,
   isRefreshing = false,
+  isLoading = false,
 }: ExportJobsListProps) {
   // Sort jobs by created_at descending (newest first)
   const sortedJobs = useMemo(() => {
@@ -67,6 +70,11 @@ export function ExportJobsList({
         job.status === "expired"
     ).length;
   }, [jobs]);
+
+  // Loading state - show skeleton loaders
+  if (isLoading) {
+    return <ExportJobsListSkeleton count={3} />;
+  }
 
   // Empty state
   if (jobs.length === 0) {
