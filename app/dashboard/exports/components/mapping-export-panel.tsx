@@ -234,15 +234,15 @@ export function MappingExportPanel({
 
   return (
     <section
-      className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6"
+      className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-slate-200 dark:border-gray-700 p-6"
       aria-labelledby="mapping-export-filters-heading"
     >
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center" aria-hidden="true">
-            <Filter className="w-5 h-5 text-purple-600" />
+          <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center" aria-hidden="true">
+            <Filter className="w-5 h-5 text-purple-600 dark:text-purple-400" />
           </div>
-          <h2 id="mapping-export-filters-heading" className="text-xl font-bold text-slate-900">
+          <h2 id="mapping-export-filters-heading" className="text-xl font-bold text-slate-900 dark:text-gray-100">
             Mapping Export Filters
           </h2>
         </div>
@@ -260,10 +260,10 @@ export function MappingExportPanel({
         <div
           role="status"
           aria-live="polite"
-          className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 animate-fade-in"
+          className="mb-4 p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg flex items-center gap-2 animate-fade-in"
         >
-          <CheckCircle className="w-5 h-5 text-green-600" aria-hidden="true" />
-          <span className="text-sm font-medium text-green-800">
+          <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" aria-hidden="true" />
+          <span className="text-sm font-medium text-green-800 dark:text-green-200">
             Preset loaded successfully!
           </span>
         </div>
@@ -272,8 +272,8 @@ export function MappingExportPanel({
       <form onSubmit={handleSubmit} className="space-y-6" aria-label="Mapping export filter form">
         {/* Suppliers Multi-Select */}
         <fieldset>
-          <legend className="block text-sm font-medium text-gray-700 mb-2">
-            Suppliers <span className="text-red-500" aria-label="required">*</span>
+          <legend className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Suppliers <span className="text-red-500 dark:text-red-400" aria-label="required">*</span>
           </legend>
           <div
             className="grid grid-cols-2 md:grid-cols-3 gap-2"
@@ -287,25 +287,25 @@ export function MappingExportPanel({
                 className={clsx(
                   "flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all",
                   selectedSupplierValues.has(option.value)
-                    ? "border-purple-500 bg-purple-50"
+                    ? "border-purple-500 bg-purple-50 dark:border-purple-400 dark:bg-purple-900/30"
                     : errors.suppliers
-                    ? "border-red-300 hover:border-red-400"
-                    : "border-gray-200 hover:border-gray-300"
+                    ? "border-red-300 hover:border-red-400 dark:border-red-600 dark:hover:border-red-500"
+                    : "border-gray-200 hover:border-gray-300 dark:border-gray-600 dark:hover:border-gray-500"
                 )}
               >
                 <input
                   type="checkbox"
                   checked={selectedSupplierValues.has(option.value)}
                   onChange={() => handleSupplierToggle(option.value)}
-                  className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                  className="w-4 h-4 text-purple-600 dark:text-purple-400 rounded focus:ring-purple-500 dark:focus:ring-purple-400"
                   aria-label={`Select ${option.label} supplier`}
                 />
-                <span className="text-sm font-medium">{option.label}</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{option.label}</span>
               </label>
             ))}
           </div>
           {errors.suppliers && (
-            <p id="mapping-suppliers-error" className="mt-2 text-sm text-red-600" role="alert">
+            <p id="mapping-suppliers-error" className="mt-2 text-sm text-red-600 dark:text-red-400" role="alert">
               {errors.suppliers}
             </p>
           )}
@@ -364,7 +364,7 @@ export function MappingExportPanel({
             />
           </div>
           {errors.dateRange && (
-            <p className="mt-2 text-sm text-red-600">{errors.dateRange}</p>
+            <p className="mt-2 text-sm text-red-600 dark:text-red-400">{errors.dateRange}</p>
           )}
         </div>
 
@@ -397,7 +397,7 @@ export function MappingExportPanel({
         />
 
         {/* Action Buttons */}
-        <div className="pt-4 border-t border-gray-200 flex gap-3">
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-700 flex gap-3">
           <Button
             type="button"
             variant="outline"

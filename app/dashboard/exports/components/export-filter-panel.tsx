@@ -317,15 +317,15 @@ export function ExportFilterPanel({
 
   return (
     <section
-      className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6"
+      className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-slate-200 dark:border-gray-700 p-6"
       aria-labelledby="hotel-export-filters-heading"
     >
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center" aria-hidden="true">
-            <Filter className="w-5 h-5 text-blue-600" />
+          <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center" aria-hidden="true">
+            <Filter className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           </div>
-          <h2 id="hotel-export-filters-heading" className="text-xl font-bold text-slate-900">Export Filters</h2>
+          <h2 id="hotel-export-filters-heading" className="text-xl font-bold text-slate-900 dark:text-gray-100">Export Filters</h2>
         </div>
 
         {/* Filter Presets Manager */}
@@ -341,10 +341,10 @@ export function ExportFilterPanel({
         <div
           role="status"
           aria-live="polite"
-          className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 animate-fade-in"
+          className="mb-4 p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg flex items-center gap-2 animate-fade-in"
         >
-          <CheckCircle className="w-5 h-5 text-green-600" aria-hidden="true" />
-          <span className="text-sm font-medium text-green-800">
+          <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" aria-hidden="true" />
+          <span className="text-sm font-medium text-green-800 dark:text-green-200">
             Preset loaded successfully!
           </span>
         </div>
@@ -353,8 +353,8 @@ export function ExportFilterPanel({
       <form onSubmit={handleSubmit} className="space-y-6" aria-label="Hotel export filter form">
         {/* Suppliers Multi-Select */}
         <fieldset>
-          <legend className="block text-sm font-medium text-gray-700 mb-2">
-            Suppliers <span className="text-red-500" aria-label="required">*</span>
+          <legend className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Suppliers <span className="text-red-500 dark:text-red-400" aria-label="required">*</span>
           </legend>
           <div
             className="grid grid-cols-2 md:grid-cols-3 gap-2"
@@ -368,25 +368,25 @@ export function ExportFilterPanel({
                 className={clsx(
                   "flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all",
                   selectedSupplierValues.has(option.value.toString())
-                    ? "border-blue-500 bg-blue-50"
+                    ? "border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/30"
                     : errors.suppliers
-                    ? "border-red-300 hover:border-red-400"
-                    : "border-gray-200 hover:border-gray-300"
+                    ? "border-red-300 hover:border-red-400 dark:border-red-600 dark:hover:border-red-500"
+                    : "border-gray-200 hover:border-gray-300 dark:border-gray-600 dark:hover:border-gray-500"
                 )}
               >
                 <input
                   type="checkbox"
                   checked={selectedSupplierValues.has(option.value.toString())}
                   onChange={() => handleSupplierToggle(option.value.toString())}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-blue-600 dark:text-blue-400 rounded focus:ring-blue-500 dark:focus:ring-blue-400"
                   aria-label={`Select ${option.label} supplier`}
                 />
-                <span className="text-sm font-medium">{option.label}</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{option.label}</span>
               </label>
             ))}
           </div>
           {errors.suppliers && (
-            <p id="suppliers-error" className="mt-2 text-sm text-red-600" role="alert">
+            <p id="suppliers-error" className="mt-2 text-sm text-red-600 dark:text-red-400" role="alert">
               {errors.suppliers}
             </p>
           )}
@@ -407,7 +407,7 @@ export function ExportFilterPanel({
           <legend className="sr-only">Star rating range</legend>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="min-rating" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="min-rating" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Min Rating
               </label>
               <div className="flex items-center gap-2">
@@ -431,20 +431,20 @@ export function ExportFilterPanel({
                       }));
                     }
                   }}
-                  className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  className="flex-1 h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer"
                   aria-label={`Minimum star rating: ${minRating} stars`}
                   aria-valuemin={0}
                   aria-valuemax={5}
                   aria-valuenow={minRating}
                 />
                 <div className="flex items-center gap-1 min-w-[60px]" aria-hidden="true">
-                  <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                  <span className="text-sm font-semibold">{minRating}</span>
+                  <Star className="w-4 h-4 text-yellow-500 fill-yellow-500 dark:text-yellow-400 dark:fill-yellow-400" />
+                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{minRating}</span>
                 </div>
               </div>
             </div>
             <div>
-              <label htmlFor="max-rating" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="max-rating" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Max Rating
               </label>
               <div className="flex items-center gap-2">
@@ -468,21 +468,21 @@ export function ExportFilterPanel({
                       }));
                     }
                   }}
-                  className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  className="flex-1 h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer"
                   aria-label={`Maximum star rating: ${maxRating} stars`}
                   aria-valuemin={0}
                   aria-valuemax={5}
                   aria-valuenow={maxRating}
                 />
                 <div className="flex items-center gap-1 min-w-[60px]" aria-hidden="true">
-                  <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                  <span className="text-sm font-semibold">{maxRating}</span>
+                  <Star className="w-4 h-4 text-yellow-500 fill-yellow-500 dark:text-yellow-400 dark:fill-yellow-400" />
+                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{maxRating}</span>
                 </div>
               </div>
             </div>
           </div>
           {errors.ratingRange && (
-            <p id="rating-error" className="mt-2 text-sm text-red-600" role="alert">
+            <p id="rating-error" className="mt-2 text-sm text-red-600 dark:text-red-400" role="alert">
               {errors.ratingRange}
             </p>
           )}
@@ -531,7 +531,7 @@ export function ExportFilterPanel({
             />
           </div>
           {errors.dateRange && (
-            <p className="mt-2 text-sm text-red-600">{errors.dateRange}</p>
+            <p className="mt-2 text-sm text-red-600 dark:text-red-400">{errors.dateRange}</p>
           )}
         </div>
 
@@ -547,7 +547,7 @@ export function ExportFilterPanel({
 
         {/* Property Types */}
         <fieldset>
-          <legend className="block text-sm font-medium text-gray-700 mb-2">
+          <legend className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Property Types
           </legend>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2" role="group" aria-label="Property types">
@@ -557,19 +557,19 @@ export function ExportFilterPanel({
                 className={clsx(
                   "flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all",
                   propertyTypes.includes(option.value)
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-200 hover:border-gray-300"
+                    ? "border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/30"
+                    : "border-gray-200 hover:border-gray-300 dark:border-gray-600 dark:hover:border-gray-500"
                 )}
               >
                 <input
                   type="checkbox"
                   checked={propertyTypes.includes(option.value)}
                   onChange={() => handlePropertyTypeToggle(option.value)}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-blue-600 dark:text-blue-400 rounded focus:ring-blue-500 dark:focus:ring-blue-400"
                   aria-label={`Select ${option.label} property type`}
                 />
-                <Building className="w-4 h-4 text-gray-500" aria-hidden="true" />
-                <span className="text-sm font-medium">{option.label}</span>
+                <Building className="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" />
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{option.label}</span>
               </label>
             ))}
           </div>
@@ -637,45 +637,45 @@ export function ExportFilterPanel({
 
         {/* Include Options */}
         <fieldset>
-          <legend className="block text-sm font-medium text-gray-700 mb-3">
+          <legend className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
             Include Additional Data
           </legend>
           <div className="space-y-2" role="group" aria-label="Additional data options">
-            <label className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
+            <label className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
               <input
                 type="checkbox"
                 checked={includeLocations}
                 onChange={(e) => setIncludeLocations(e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                className="w-4 h-4 text-blue-600 dark:text-blue-400 rounded focus:ring-blue-500 dark:focus:ring-blue-400"
                 aria-label="Include location data in export"
               />
-              <span className="text-sm font-medium">Include Locations</span>
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Include Locations</span>
             </label>
-            <label className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
+            <label className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
               <input
                 type="checkbox"
                 checked={includeContacts}
                 onChange={(e) => setIncludeContacts(e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                className="w-4 h-4 text-blue-600 dark:text-blue-400 rounded focus:ring-blue-500 dark:focus:ring-blue-400"
                 aria-label="Include contact data in export"
               />
-              <span className="text-sm font-medium">Include Contacts</span>
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Include Contacts</span>
             </label>
-            <label className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
+            <label className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
               <input
                 type="checkbox"
                 checked={includeMappings}
                 onChange={(e) => setIncludeMappings(e.target.checked)}
-                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                className="w-4 h-4 text-blue-600 dark:text-blue-400 rounded focus:ring-blue-500 dark:focus:ring-blue-400"
                 aria-label="Include mapping data in export"
               />
-              <span className="text-sm font-medium">Include Mappings</span>
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Include Mappings</span>
             </label>
           </div>
         </fieldset>
 
         {/* Action Buttons */}
-        <div className="pt-4 border-t border-gray-200 flex gap-3">
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-700 flex gap-3">
           <Button
             type="button"
             variant="outline"

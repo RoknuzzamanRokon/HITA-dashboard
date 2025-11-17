@@ -259,7 +259,38 @@ input[type="range"]::-moz-range-thumb {
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
-/* Dark mode removed - Light theme only */
+/* Dark theme - Modern, high contrast design */
+.dark {
+    /* Backgrounds */
+    --bg-primary: 17, 24, 39;
+    --bg-secondary: 31, 41, 55;
+    --bg-tertiary: 55, 65, 81;
+    --bg-hover: 55, 65, 81;
+    --bg-active: 75, 85, 99;
+
+    /* Text colors */
+    --text-primary: 243, 244, 246;
+    --text-secondary: 209, 213, 219;
+    --text-tertiary: 156, 163, 175;
+    --text-inverse: 17, 24, 39;
+
+    /* Border colors */
+    --border-primary: 55, 65, 81;
+    --border-secondary: 75, 85, 99;
+    --border-focus: 96, 165, 250;
+
+    /* Status colors - Brighter for dark mode */
+    --success: 74, 222, 128;
+    --warning: 251, 191, 36;
+    --error: 248, 113, 113;
+    --info: var(--primary-rgb);
+
+    /* Shadows - Darker for dark mode */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+}
 
 body {
     background-color: rgb(var(--bg-primary));
@@ -287,7 +318,19 @@ body {
     background: rgb(var(--text-tertiary));
 }
 
-/* Dark mode scrollbar styles removed */
+/* Dark mode scrollbar styles */
+.dark ::-webkit-scrollbar-track {
+    background: rgb(var(--bg-secondary));
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background: rgb(var(--border-secondary));
+    border: 2px solid rgb(var(--bg-secondary));
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--text-tertiary));
+}
 
 /* Focus styles for accessibility - Enhanced for keyboard navigation */
 .focus-visible:focus {
@@ -1021,7 +1064,12 @@ erformance Optimizations */
         border: 2px solid rgba(0, 0, 0, 0.8);
     }
 
-    /* Dark mode glass effect removed */
+    /* Dark mode glass effect */
+    .dark .glass-effect,
+    .dark .glass-effect-strong {
+        background: rgba(17, 24, 39, 0.9);
+        border: 2px solid rgba(255, 255, 255, 0.8);
+    }
 }
 
 /* Print styles */
@@ -1077,7 +1125,11 @@ erformance Optimizations */
     animation: shimmer 1.5s infinite;
 }
 
-/* Dark mode shimmer removed */
+/* Dark mode shimmer */
+.dark .loading-shimmer {
+    background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+    background-size: 200% 100%;
+}
 
 /* Hide scrollbar utility */
 .scrollbar-hide {
@@ -1118,7 +1170,18 @@ erformance Optimizations */
     background-color: #a0aec0;
 }
 
-/* Dark mode custom scrollbar removed */
+/* Dark mode custom scrollbar */
+.dark .custom-scrollbar {
+    scrollbar-color: #6b7280 transparent;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #6b7280;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #9ca3af;
+}
 
 
 /* Analytics Dashboard Animations */

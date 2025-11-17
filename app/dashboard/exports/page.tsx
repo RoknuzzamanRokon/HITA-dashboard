@@ -604,19 +604,19 @@ export default function ExportsPage() {
       {/* Skip Link for Screen Readers */}
       <SkipLink href="#main-content">Skip to main content</SkipLink>
 
-      <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-slate-100 p-6">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-6">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Page Header */}
-          <header className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+          <header className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-slate-200 dark:border-gray-700 p-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-linear-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
                 <FileDown className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-slate-900">
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-gray-100">
                   Data Exports
                 </h1>
-                <p className="text-sm text-slate-600 mt-1">
+                <p className="text-sm text-slate-600 dark:text-gray-400 mt-1">
                   Create and manage hotel and mapping data exports
                 </p>
               </div>
@@ -625,7 +625,7 @@ export default function ExportsPage() {
 
           {/* Tab Navigation */}
           <nav
-            className="bg-white rounded-2xl shadow-lg border border-slate-200 p-2"
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-slate-200 dark:border-gray-700 p-2"
             role="tablist"
             aria-label="Export type selection"
           >
@@ -639,10 +639,10 @@ export default function ExportsPage() {
                 aria-label="Hotel exports tab"
                 className={clsx(
                   "flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all",
-                  "focus:outline-none focus:ring-4 focus:ring-blue-300",
+                  "focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-500",
                   activeTab === "hotel"
                     ? "bg-blue-600 text-white shadow-md"
-                    : "text-slate-600 hover:bg-slate-100"
+                    : "text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-700"
                 )}
               >
                 <FileDown className="w-5 h-5" aria-hidden="true" />
@@ -657,10 +657,10 @@ export default function ExportsPage() {
                 aria-label="Mapping exports tab"
                 className={clsx(
                   "flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all",
-                  "focus:outline-none focus:ring-4 focus:ring-purple-300",
+                  "focus:outline-none focus:ring-4 focus:ring-purple-300 dark:focus:ring-purple-500",
                   activeTab === "mapping"
                     ? "bg-purple-600 text-white shadow-md"
-                    : "text-slate-600 hover:bg-slate-100"
+                    : "text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-700"
                 )}
               >
                 <Map className="w-5 h-5" aria-hidden="true" />
@@ -703,22 +703,24 @@ export default function ExportsPage() {
             <div
               role="alert"
               aria-live="assertive"
-              className="bg-red-50 border border-red-200 rounded-xl p-4"
+              className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-xl p-4"
             >
               <div className="flex items-start gap-3">
-                <div className="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                <div className="w-5 h-5 bg-red-100 dark:bg-red-800 rounded-full flex items-center justify-center shrink-0 mt-0.5">
                   <span
-                    className="text-red-600 text-sm font-bold"
+                    className="text-red-600 dark:text-red-200 text-sm font-bold"
                     aria-hidden="true"
                   >
                     !
                   </span>
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-red-900 mb-1">
+                  <h3 className="text-sm font-semibold text-red-900 dark:text-red-100 mb-1">
                     Export Creation Failed
                   </h3>
-                  <p className="text-sm text-red-700">{jobsError}</p>
+                  <p className="text-sm text-red-700 dark:text-red-200">
+                    {jobsError}
+                  </p>
                 </div>
               </div>
             </div>

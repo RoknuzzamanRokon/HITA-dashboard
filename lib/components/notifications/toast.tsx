@@ -97,13 +97,13 @@ export function Toast({ notification, onDismiss }: ToastProps) {
   const getColorClasses = () => {
     switch (notification.type) {
       case "success":
-        return "bg-green-50 border-green-200 text-green-800";
+        return "bg-green-50 border-green-200 text-green-800 dark:bg-green-900/30 dark:border-green-700 dark:text-green-100";
       case "error":
-        return "bg-red-50 border-red-200 text-red-800";
+        return "bg-red-50 border-red-200 text-red-800 dark:bg-red-900/30 dark:border-red-700 dark:text-red-100";
       case "warning":
-        return "bg-yellow-50 border-yellow-200 text-yellow-800";
+        return "bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-900/30 dark:border-yellow-700 dark:text-yellow-100";
       case "info":
-        return "bg-blue-50 border-blue-200 text-blue-800";
+        return "bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-100";
     }
   };
 
@@ -111,13 +111,13 @@ export function Toast({ notification, onDismiss }: ToastProps) {
   const getIconColorClasses = () => {
     switch (notification.type) {
       case "success":
-        return "text-green-500";
+        return "text-green-500 dark:text-green-400";
       case "error":
-        return "text-red-500";
+        return "text-red-500 dark:text-red-400";
       case "warning":
-        return "text-yellow-500";
+        return "text-yellow-500 dark:text-yellow-400";
       case "info":
-        return "text-blue-500";
+        return "text-blue-500 dark:text-blue-400";
     }
   };
 
@@ -125,13 +125,13 @@ export function Toast({ notification, onDismiss }: ToastProps) {
   const getActionButtonClasses = () => {
     switch (notification.type) {
       case "success":
-        return "text-green-700 hover:bg-green-100 focus:ring-green-500";
+        return "text-green-700 hover:bg-green-100 focus:ring-green-500 dark:text-green-200 dark:hover:bg-green-800/50 dark:focus:ring-green-400";
       case "error":
-        return "text-red-700 hover:bg-red-100 focus:ring-red-500";
+        return "text-red-700 hover:bg-red-100 focus:ring-red-500 dark:text-red-200 dark:hover:bg-red-800/50 dark:focus:ring-red-400";
       case "warning":
-        return "text-yellow-700 hover:bg-yellow-100 focus:ring-yellow-500";
+        return "text-yellow-700 hover:bg-yellow-100 focus:ring-yellow-500 dark:text-yellow-200 dark:hover:bg-yellow-800/50 dark:focus:ring-yellow-400";
       case "info":
-        return "text-blue-700 hover:bg-blue-100 focus:ring-blue-500";
+        return "text-blue-700 hover:bg-blue-100 focus:ring-blue-500 dark:text-blue-200 dark:hover:bg-blue-800/50 dark:focus:ring-blue-400";
     }
   };
 
@@ -185,11 +185,23 @@ export function Toast({ notification, onDismiss }: ToastProps) {
         className={`
           shrink-0 p-1 rounded-md
           transition-colors duration-150
-          hover:bg-black/5 focus:outline-none focus:ring-2 focus:ring-offset-2
-          ${notification.type === "success" && "focus:ring-green-500"}
-          ${notification.type === "error" && "focus:ring-red-500"}
-          ${notification.type === "warning" && "focus:ring-yellow-500"}
-          ${notification.type === "info" && "focus:ring-blue-500"}
+          hover:bg-black/5 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-offset-2
+          ${
+            notification.type === "success" &&
+            "focus:ring-green-500 dark:focus:ring-green-400"
+          }
+          ${
+            notification.type === "error" &&
+            "focus:ring-red-500 dark:focus:ring-red-400"
+          }
+          ${
+            notification.type === "warning" &&
+            "focus:ring-yellow-500 dark:focus:ring-yellow-400"
+          }
+          ${
+            notification.type === "info" &&
+            "focus:ring-blue-500 dark:focus:ring-blue-400"
+          }
         `}
         aria-label="Dismiss notification"
       >
