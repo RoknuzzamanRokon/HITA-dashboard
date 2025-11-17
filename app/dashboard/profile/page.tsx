@@ -52,6 +52,14 @@ interface UserProfile {
   phone?: string;
 }
 
+interface ActiveSupplierData {
+  active_supplier: number;
+  total_on_supplier: number;
+  total_off_supplier: number;
+  off_supplier_list: string[];
+  on_supplier_list: string[];
+}
+
 interface SupplierInfo {
   supplier_name: string;
   total_hotel: number;
@@ -76,7 +84,8 @@ export default function ProfilePage() {
   const { isAuthenticated, isLoading: authLoading } = useRequireAuth();
   const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Changed to false for instant render
+  const [dataLoading, setDataLoading] = useState(true); // Separate loading for background fetch
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showSupplierModal, setShowSupplierModal] = useState(false);
@@ -85,6 +94,8 @@ export default function ProfilePage() {
   const [supplierLoading, setSupplierLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [activeSupplierData, setActiveSupplierData] =
+    useState<ActiveSupplierData | null>(null);
 
   const [editForm, setEditForm] = useState({
     username: "",
@@ -110,12 +121,37 @@ export default function ProfilePage() {
 
   const fetchProfile = async () => {
     try {
-      setLoading(true);
-      const [meRes, pointsRes, availableSuppliersRes] =
+      setDataLoading(true);
+
+      // Create placeholder profile from user context if available
+      if (user && !profile) {
+        const placeholderProfile: UserProfile = {
+          id: user.id || "...",
+          username: user.username || "Loading...",
+          email: user.email || "loading@example.com",
+          role: user.role || UserRole.GENERAL_USER,
+          isActive: user.isActive ?? true,
+          pointBalance: 0,
+          totalPoints: 0,
+          paidStatus: "Loading...",
+          totalRequests: 0,
+          activityStatus: "Active",
+          createdAt: new Date().toISOString(),
+          activeSuppliers: [],
+          department: "Loading...",
+          position: "Loading...",
+          location: "Loading...",
+          phone: "Loading...",
+        };
+        setProfile(placeholderProfile);
+      }
+
+      const [meRes, pointsRes, availableSuppliersRes, activeSupplierRes] =
         await Promise.allSettled([
           apiClient.get<any>("/user/check-me"),
           apiClient.get<any>("/user/points-check"),
           apiClient.get<any>("/user/check-available-suppliers"),
+          apiClient.get<ActiveSupplierData>("/user/check-active-my-supplier"),
         ]);
 
       const meData =
@@ -131,6 +167,16 @@ export default function ProfilePage() {
         availableSuppliersRes.value.success
           ? availableSuppliersRes.value.data
           : null;
+      const activeSupplierDataRes =
+        activeSupplierRes.status === "fulfilled" &&
+        activeSupplierRes.value.success
+          ? activeSupplierRes.value.data
+          : null;
+
+      // Set active supplier data
+      if (activeSupplierDataRes) {
+        setActiveSupplierData(activeSupplierDataRes);
+      }
 
       if (meData) {
         const roleMap: Record<string, UserRole> = {
@@ -183,7 +229,7 @@ export default function ProfilePage() {
     } catch (error) {
       setErrorMessage("Failed to load profile");
     } finally {
-      setLoading(false);
+      setDataLoading(false);
     }
   };
 
@@ -249,12 +295,12 @@ export default function ProfilePage() {
     }
   };
 
-  if (authLoading || loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-slate-600">Loading your profile...</p>
+          <p className="text-slate-600">Authenticating...</p>
         </div>
       </div>
     );
@@ -295,7 +341,15 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
-      <div className=" mx-auto">
+      <div className="mx-auto">
+        {/* Background Loading Indicator */}
+        {dataLoading && (
+          <div className="fixed top-20 right-6 z-50 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span className="text-sm font-medium">Updating profile...</span>
+          </div>
+        )}
+
         {/* Success/Error Messages */}
         {successMessage && (
           <div className="mb-6 bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3 animate-fade-in">
@@ -714,43 +768,126 @@ export default function ProfilePage() {
                   </div>
                   Available Suppliers
                 </h2>
-                <Badge className="bg-indigo-100 text-indigo-700 border-indigo-200 px-3 py-1">
-                  {profile.activeSuppliers.length} Suppliers
-                </Badge>
+                <div className="flex items-center gap-2">
+                  {activeSupplierData && (
+                    <>
+                      <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 px-3 py-1">
+                        {activeSupplierData.total_on_supplier} Active
+                      </Badge>
+                      {activeSupplierData.total_off_supplier > 0 && (
+                        <Badge className="bg-red-100 text-red-700 border-red-200 px-3 py-1">
+                          {activeSupplierData.total_off_supplier} Inactive
+                        </Badge>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
 
-              {profile.activeSuppliers.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {profile.activeSuppliers.map((supplier, index) => {
-                    // Capitalize supplier name
-                    const displayName = supplier
-                      .split(/(?=[A-Z])/)
-                      .map(
-                        (word) => word.charAt(0).toUpperCase() + word.slice(1)
-                      )
-                      .join(" ");
+              {activeSupplierData &&
+              (activeSupplierData.on_supplier_list.length > 0 ||
+                activeSupplierData.off_supplier_list.length > 0) ? (
+                <div className="space-y-6">
+                  {/* Active Suppliers */}
+                  {activeSupplierData.on_supplier_list.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-emerald-700 mb-3 flex items-center gap-2">
+                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                        Active Suppliers ({activeSupplierData.total_on_supplier}
+                        )
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {activeSupplierData.on_supplier_list.map(
+                          (supplier, index) => {
+                            // Capitalize supplier name
+                            const displayName = supplier
+                              .split(/(?=[A-Z])/)
+                              .map(
+                                (word) =>
+                                  word.charAt(0).toUpperCase() + word.slice(1)
+                              )
+                              .join(" ");
 
-                    return (
-                      <div
-                        key={index}
-                        onClick={() => handleSupplierClick(supplier)}
-                        className="group p-4 bg-gradient-to-br from-white to-slate-50 rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-lg transition-all cursor-pointer"
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="w-10 h-10 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <Building className="w-5 h-5 text-indigo-600" />
-                          </div>
-                          <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                        </div>
-                        <h3 className="font-semibold text-slate-900 mb-1 capitalize">
-                          {displayName}
-                        </h3>
-                        <p className="text-xs text-slate-500 uppercase tracking-wide">
-                          {supplier}
-                        </p>
+                            return (
+                              <div
+                                key={index}
+                                onClick={() => handleSupplierClick(supplier)}
+                                className="group p-4 bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl border border-emerald-200 hover:border-emerald-400 hover:shadow-lg transition-all cursor-pointer"
+                              >
+                                <div className="flex items-center justify-between mb-3">
+                                  <div className="w-10 h-10 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <Building className="w-5 h-5 text-emerald-600" />
+                                  </div>
+                                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                                </div>
+                                <h3 className="font-semibold text-slate-900 mb-1 capitalize">
+                                  {displayName}
+                                </h3>
+                                <p className="text-xs text-emerald-600 uppercase tracking-wide font-medium">
+                                  {supplier}
+                                </p>
+                                <div className="mt-2 pt-2 border-t border-emerald-200">
+                                  <span className="text-xs text-emerald-700 font-semibold">
+                                    ✓ Active
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          }
+                        )}
                       </div>
-                    );
-                  })}
+                    </div>
+                  )}
+
+                  {/* Inactive Suppliers */}
+                  {activeSupplierData.off_supplier_list.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-red-700 mb-3 flex items-center gap-2">
+                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                        Inactive Suppliers (
+                        {activeSupplierData.total_off_supplier})
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {activeSupplierData.off_supplier_list.map(
+                          (supplier, index) => {
+                            // Capitalize supplier name
+                            const displayName = supplier
+                              .split(/(?=[A-Z])/)
+                              .map(
+                                (word) =>
+                                  word.charAt(0).toUpperCase() + word.slice(1)
+                              )
+                              .join(" ");
+
+                            return (
+                              <div
+                                key={index}
+                                className="group p-4 bg-gradient-to-br from-red-50 to-rose-50 rounded-xl border border-red-200 hover:border-red-300 hover:shadow-lg transition-all opacity-75"
+                              >
+                                <div className="flex items-center justify-between mb-3">
+                                  <div className="w-10 h-10 bg-gradient-to-br from-red-100 to-red-200 rounded-lg flex items-center justify-center">
+                                    <Building className="w-5 h-5 text-red-600" />
+                                  </div>
+                                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                </div>
+                                <h3 className="font-semibold text-slate-900 mb-1 capitalize">
+                                  {displayName}
+                                </h3>
+                                <p className="text-xs text-red-600 uppercase tracking-wide font-medium">
+                                  {supplier}
+                                </p>
+                                <div className="mt-2 pt-2 border-t border-red-200">
+                                  <span className="text-xs text-red-700 font-semibold">
+                                    ✗ Inactive
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          }
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-12">
@@ -761,7 +898,9 @@ export default function ProfilePage() {
                     No Available Suppliers
                   </h3>
                   <p className="text-slate-600">
-                    You don't have any available suppliers at the moment.
+                    {dataLoading
+                      ? "Loading supplier information..."
+                      : "You don't have any available suppliers at the moment."}
                   </p>
                 </div>
               )}

@@ -12,6 +12,7 @@ import type { LocationSearchResult } from "@/lib/types/hotel";
 import { Card } from "@/lib/components/ui/card";
 import { Button } from "@/lib/components/ui/button";
 import { Badge } from "@/lib/components/ui/badge";
+import { Copy, Check } from "lucide-react";
 
 function SearchResultsContent() {
   const searchParams = useSearchParams();
@@ -25,6 +26,7 @@ function SearchResultsContent() {
   const [searchTime, setSearchTime] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 100;
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Get search parameters
   const hotelName = searchParams.get("hotel");
@@ -225,6 +227,16 @@ function SearchResultsContent() {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleCopyIttid = async (ittid: string) => {
+    try {
+      await navigator.clipboard.writeText(ittid);
+      setCopiedId(ittid);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.error("Failed to copy ITT ID:", err);
+    }
   };
 
   const handleViewDetails = (hotelName: string, ittid: string) => {
@@ -500,6 +512,36 @@ function SearchResultsContent() {
                           </Badge>
                         )}
                       </div>
+
+                      {/* ITT ID with Copy Button */}
+                      {hotel.ittid && (
+                        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <span className="text-sm font-semibold text-blue-900">
+                                ITT ID:
+                              </span>
+                              <code className="text-sm font-mono text-blue-700 bg-white px-2 py-1 rounded border border-blue-200 truncate">
+                                {hotel.ittid}
+                              </code>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCopyIttid(hotel.ittid);
+                              }}
+                              className="flex-shrink-0 p-2 hover:bg-blue-100 rounded-lg transition-colors group"
+                              title="Copy ITT ID"
+                            >
+                              {copiedId === hotel.ittid ? (
+                                <Check className="w-4 h-4 text-green-600" />
+                              ) : (
+                                <Copy className="w-4 h-4 text-blue-600 group-hover:text-blue-700" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Additional info */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">

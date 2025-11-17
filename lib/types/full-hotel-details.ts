@@ -5,7 +5,9 @@
 // Full hotel details response from API
 export interface FullHotelDetailsResponse {
     total_supplier: number;
-    have_provider_list: string[];
+    have_provider_list: Array<Record<string, string[]>>;
+    give_data_supplier?: number;
+    give_data_supplier_list?: string[];
     hotel: HotelBasicInfo;
     provider_mappings: ProviderMappingDetail[];
     locations: LocationDetail[];

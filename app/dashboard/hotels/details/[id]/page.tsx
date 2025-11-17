@@ -12,6 +12,7 @@ import type { FullHotelDetailsResponse } from "@/lib/types/full-hotel-details";
 import { Card } from "@/lib/components/ui/card";
 import { Button } from "@/lib/components/ui/button";
 import { Badge } from "@/lib/components/ui/badge";
+import { Copy, Check, ChevronDown, ChevronUp } from "lucide-react";
 
 export default function HotelDetailsPage() {
   const params = useParams();
@@ -23,6 +24,8 @@ export default function HotelDetailsPage() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedProvider, setSelectedProvider] = useState<number>(0);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [showAllFacilities, setShowAllFacilities] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchHotelDetails = async () => {
@@ -53,10 +56,20 @@ export default function HotelDetailsPage() {
     fetchHotelDetails();
   }, [ittid]);
 
+  const handleCopyProviderId = async (providerId: string) => {
+    try {
+      await navigator.clipboard.writeText(providerId);
+      setCopiedId(providerId);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.error("Failed to copy provider ID:", err);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col items-center justify-center py-20">
             <svg
               className="animate-spin h-12 w-12 text-blue-600 mb-4"
@@ -89,7 +102,7 @@ export default function HotelDetailsPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Card className="border-red-200 bg-red-50">
             <div className="p-6">
               <div className="flex items-start gap-3">
@@ -137,7 +150,7 @@ export default function HotelDetailsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back button */}
         <Button
           onClick={() => router.back()}
@@ -302,16 +315,201 @@ export default function HotelDetailsPage() {
         {/* Supplier Information */}
         <Card className="mb-6" hover={false}>
           <div className="p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
-              Available Suppliers
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {hotelDetails.have_provider_list.map((provider, index) => (
-                <Badge key={index} variant="info" size="md">
-                  {provider}
-                </Badge>
-              ))}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">
+                Available Suppliers
+              </h2>
+              <Badge variant="secondary" size="md">
+                {hotelDetails.total_supplier} Suppliers
+              </Badge>
             </div>
+            {(() => {
+              // Convert have_provider_list to a usable format and check if supplier has full details
+              const supplierData: Array<{
+                name: string;
+                ids: string[];
+                hasFullDetails: boolean;
+              }> = [];
+
+              hotelDetails.have_provider_list.forEach((providerObj) => {
+                Object.entries(providerObj).forEach(([supplierName, ids]) => {
+                  // Check if this supplier has full details in provider_mappings
+                  const hasFullDetails = hotelDetails.provider_mappings.some(
+                    (mapping) =>
+                      mapping.provider_name.toLowerCase() ===
+                        supplierName.toLowerCase() &&
+                      mapping.full_details !== null
+                  );
+
+                  supplierData.push({
+                    name: supplierName,
+                    ids: ids,
+                    hasFullDetails: hasFullDetails,
+                  });
+                });
+              });
+
+              const first6 = supplierData.slice(0, 6);
+              const remaining = supplierData.slice(6);
+
+              const renderSupplierCard = (
+                supplier: {
+                  name: string;
+                  ids: string[];
+                  hasFullDetails: boolean;
+                },
+                index: number
+              ) => {
+                // Choose colors based on whether supplier has full details
+                const bgGradient = supplier.hasFullDetails
+                  ? "bg-gradient-to-br from-blue-50 to-indigo-50"
+                  : "bg-gradient-to-br from-red-50 to-rose-50";
+                const borderColor = supplier.hasFullDetails
+                  ? "border-blue-200"
+                  : "border-red-200";
+                const badgeVariant = supplier.hasFullDetails ? "info" : "error";
+                const codeBg = supplier.hasFullDetails
+                  ? "bg-white border-blue-200 text-blue-700"
+                  : "bg-white border-red-200 text-red-700";
+                const copyHoverBg = supplier.hasFullDetails
+                  ? "hover:bg-blue-100"
+                  : "hover:bg-red-100";
+                const copyIconColor = supplier.hasFullDetails
+                  ? "text-blue-600"
+                  : "text-red-600";
+                const dividerColor = supplier.hasFullDetails
+                  ? "border-blue-200"
+                  : "border-red-200";
+                const dividerTopColor = supplier.hasFullDetails
+                  ? "border-blue-300"
+                  : "border-red-300";
+
+                return (
+                  <div
+                    key={index}
+                    className={`${bgGradient} border ${borderColor} rounded-lg p-4 hover:shadow-md transition-all`}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <Badge variant={badgeVariant} size="sm">
+                        Supplier {index + 1}
+                      </Badge>
+                      <div className="flex items-center gap-2">
+                        {supplier.ids.length > 1 && (
+                          <Badge variant="secondary" size="sm">
+                            {supplier.ids.length} IDs
+                          </Badge>
+                        )}
+                        {!supplier.hasFullDetails && (
+                          <Badge variant="error" size="sm">
+                            No Full Details
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <h3 className="font-bold text-gray-900 mb-3 capitalize">
+                      {supplier.name}
+                    </h3>
+                    <div className="space-y-3">
+                      {supplier.ids.map((providerId, providerIndex) => (
+                        <div key={providerIndex} className="space-y-2">
+                          {supplier.ids.length > 1 && (
+                            <div className="text-xs font-semibold text-gray-500 mb-1">
+                              Provider ID {providerIndex + 1}
+                            </div>
+                          )}
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs text-gray-600 flex-shrink-0">
+                              {supplier.ids.length === 1
+                                ? "Provider ID:"
+                                : "ID:"}
+                            </span>
+                            <div className="flex items-center gap-1 flex-1 min-w-0">
+                              <code
+                                className={`text-xs font-mono px-2 py-1 rounded border truncate flex-1 ${codeBg}`}
+                              >
+                                {providerId}
+                              </code>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  handleCopyProviderId(providerId);
+                                }}
+                                className={`flex-shrink-0 p-1.5 ${copyHoverBg} rounded transition-colors cursor-pointer`}
+                                title="Copy Provider ID"
+                                type="button"
+                              >
+                                {copiedId === providerId ? (
+                                  <Check className="w-4 h-4 text-green-600" />
+                                ) : (
+                                  <Copy
+                                    className={`w-4 h-4 ${copyIconColor}`}
+                                  />
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                          {providerIndex < supplier.ids.length - 1 && (
+                            <div
+                              className={`border-t ${dividerColor} pt-2`}
+                            ></div>
+                          )}
+                        </div>
+                      ))}
+                      <div className={`mt-2 pt-2 border-t ${dividerTopColor}`}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-600 flex-shrink-0">
+                            ITT ID:
+                          </span>
+                          <code
+                            className={`text-xs font-mono px-2 py-1 rounded border ${codeBg}`}
+                          >
+                            {hotelDetails.hotel.ittid}
+                          </code>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              };
+
+              return (
+                <>
+                  <style jsx>{`
+                    .supplier-scroll::-webkit-scrollbar {
+                      width: 8px;
+                    }
+                    .supplier-scroll::-webkit-scrollbar-track {
+                      background: #e5e7eb;
+                      border-radius: 4px;
+                    }
+                    .supplier-scroll::-webkit-scrollbar-thumb {
+                      background: #3b82f6;
+                      border-radius: 4px;
+                    }
+                    .supplier-scroll::-webkit-scrollbar-thumb:hover {
+                      background: #2563eb;
+                    }
+                  `}</style>
+                  <div
+                    className="supplier-scroll grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[600px] overflow-y-scroll pr-2 pb-2 relative"
+                    style={{
+                      scrollbarWidth: "thin",
+                      scrollbarColor: "#3B82F6 #E5E7EB",
+                    }}
+                  >
+                    {supplierData.map((supplier, index) =>
+                      renderSupplierCard(supplier, index)
+                    )}
+                  </div>
+                  {supplierData.length > 6 && (
+                    <div className="mt-3 text-center text-sm text-gray-500">
+                      ↕ Scroll to see all {supplierData.length} suppliers
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </Card>
 
@@ -490,39 +688,76 @@ export default function HotelDetailsPage() {
                   {currentProvider.full_details.facilities &&
                     currentProvider.full_details.facilities.length > 0 && (
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                          Facilities & Amenities
-                        </h3>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                          {currentProvider.full_details.facilities.map(
-                            (facility, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg"
-                              >
-                                <svg
-                                  className="h-5 w-5 text-blue-600 flex-shrink-0"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M5 13l4 4L19 7"
-                                  />
-                                </svg>
-                                <span className="text-sm text-gray-900">
-                                  {facility.title}
-                                </span>
-                              </div>
-                            )
-                          )}
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            Facilities & Amenities
+                          </h3>
+                          <Badge variant="secondary" size="sm">
+                            {currentProvider.full_details.facilities.length}{" "}
+                            Total
+                          </Badge>
                         </div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                          {(showAllFacilities
+                            ? currentProvider.full_details.facilities
+                            : currentProvider.full_details.facilities.slice(
+                                0,
+                                12
+                              )
+                          ).map((facility, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg hover:bg-gray-100 transition-colors"
+                            >
+                              <svg
+                                className="h-5 w-5 text-blue-600 flex-shrink-0"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                              <span className="text-sm text-gray-900">
+                                {facility.title}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                        {currentProvider.full_details.facilities.length >
+                          12 && (
+                          <div className="mt-4 text-center">
+                            <Button
+                              variant="outline"
+                              size="md"
+                              onClick={() =>
+                                setShowAllFacilities(!showAllFacilities)
+                              }
+                              className="flex items-center gap-2"
+                            >
+                              {showAllFacilities ? (
+                                <>
+                                  <ChevronUp className="w-4 h-4" />
+                                  Show Less
+                                </>
+                              ) : (
+                                <>
+                                  <ChevronDown className="w-4 h-4" />
+                                  See More (
+                                  {currentProvider.full_details.facilities
+                                    .length - 12}{" "}
+                                  more)
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     )}
-
 
                   {/* Hotel Photos with Scrolling */}
                   {currentProvider.full_details.hotel_photo &&
