@@ -159,8 +159,6 @@ export default function ProviderUpdatePage() {
       const response = await apiClient.get<any>(
         "/user/check-active-my-supplier"
       );
-      console.log("🔍 Active suppliers response:", response);
-
       if (response.success && response.data) {
         const suppliers = response.data.on_supplier_list || [];
         setActiveSuppliers(suppliers);
@@ -169,18 +167,11 @@ export default function ProviderUpdatePage() {
         if (suppliers.length > 0 && !suppliers.includes(selectedSupplier)) {
           setSelectedSupplier(suppliers[0]);
         }
-
-        console.log(
-          `✅ Loaded ${suppliers.length} active suppliers:`,
-          suppliers
-        );
       } else {
-        console.warn("⚠️ Failed to fetch active suppliers:", response.error);
         // Fallback to default suppliers if API fails
         setActiveSuppliers(["restel", "booking", "expedia"]);
       }
     } catch (error) {
-      console.error("❌ Error fetching active suppliers:", error);
       // Fallback to default suppliers if API fails
       setActiveSuppliers(["restel", "booking", "expedia"]);
     } finally {
@@ -201,8 +192,6 @@ export default function ProviderUpdatePage() {
       });
 
       if (response.success && response.data) {
-        console.log("🔍 Backend response:", response.data);
-
         // Backend returns AllIttidResponse with ittid_list, convert to HotelMapping format
         const ittidList = response.data.ittid_list || [];
         const totalItems = response.data.total_ittid || ittidList.length;
@@ -269,10 +258,6 @@ export default function ProviderUpdatePage() {
           );
         }
 
-        console.log(
-          `✅ Loaded ${limitedList.length} ITTIDs from ${response.data.total_supplier} suppliers (limited: ${isMemoryLimited})`
-        );
-
         // Memory monitoring is handled by the hook
       } else {
         setError(response.error?.message || "Failed to fetch ITTID data");
@@ -310,8 +295,6 @@ export default function ProviderUpdatePage() {
       });
 
       if (response.success && response.data) {
-        console.log("🔍 Provider updates response:", response.data);
-
         // Handle the actual API response structure
         let updates: UpdatedProvider[] = [];
         if (
@@ -326,17 +309,8 @@ export default function ProviderUpdatePage() {
             details: mapping,
           }));
         } else {
-          console.warn(
-            "⚠️ No provider_mappings found in response:",
-            response.data
-          );
           updates = [];
         }
-
-        console.log(`✅ Setting ${updates.length} provider updates`);
-        console.log(
-          `📊 API Info: Page ${response.data.current_page} of ${response.data.total_page}, showing ${response.data.show_hotels_this_page} of ${response.data.total_hotel} total hotels`
-        );
 
         // Store API response info
         setProviderUpdateInfo({
@@ -358,7 +332,6 @@ export default function ProviderUpdatePage() {
 
         setUpdatedProviders(updates);
       } else {
-        console.error("❌ Provider updates request failed:", response.error);
         setError(
           response.error?.message || "Failed to fetch updated provider data"
         );
@@ -403,8 +376,6 @@ export default function ProviderUpdatePage() {
       });
 
       if (response.success && response.data) {
-        console.log("🔍 Country mapping response:", response.data);
-
         const hotelData = response.data.data || [];
         const totalHotels = response.data.total_hotel || hotelData.length;
 
@@ -491,10 +462,6 @@ export default function ProviderUpdatePage() {
             } hotels • Total: ${totalHotels.toLocaleString()} hotels in ${selectedCountry} from ${selectedSupplier}`
           );
         }
-
-        console.log(
-          `✅ Loaded ${limitedList.length} hotels from ${selectedSupplier} in ${selectedCountry} (limited: ${isMemoryLimited})`
-        );
       } else {
         setError(response.error?.message || "Failed to fetch mapping data");
       }
@@ -560,41 +527,23 @@ export default function ProviderUpdatePage() {
         ],
       };
 
-      console.log("🔍 Sending provider identity request:", request);
-      console.log(
-        `🔍 Provider: ${providerIdentityName}, ID: ${providerIdentityId}`
-      );
-
       const response =
         await ProviderUpdatesApi.getHotelMappingByProviderIdentity(request);
-
-      console.log("📡 Provider identity response:", response);
 
       // Store the raw response for debugging
       setLastApiResponse(response);
 
       if (response.success) {
-        console.log("✅ API call successful, processing data...");
-
         if (response.data) {
           // The backend returns an array directly, so we need to handle it properly
           const responseData = Array.isArray(response.data)
             ? response.data[0]
             : response.data;
-          console.log("✅ Setting provider identity result:", responseData);
           setProviderIdentityResult(responseData);
         } else {
-          console.log("⚠️ API call successful but no data returned");
           setError("API call successful but no data was returned");
         }
       } else {
-        // console.error("❌ Provider identity request failed:", response);
-        // console.error("❌ Error details:", response.error);
-        // console.error(
-        //   "❌ Full response object:",
-        //   JSON.stringify(response, null, 2)
-        // );
-
         // Better error message handling
         let errorMessage = "Failed to fetch provider identity mapping";
 
@@ -617,7 +566,6 @@ export default function ProviderUpdatePage() {
         setError(errorMessage);
       }
     } catch (err) {
-      console.error("❌ Provider identity request error:", err);
       setError(
         err instanceof Error
           ? err.message
@@ -639,32 +587,18 @@ export default function ProviderUpdatePage() {
     setProviderMappingResult(null);
 
     try {
-      console.log(
-        "🔍 Sending provider mapping request for ITTID:",
-        providerMappingIttid
-      );
-
       const response = await ProviderUpdatesApi.getProviderMappingByIttid({
         ittid: providerMappingIttid,
       });
 
-      console.log("📡 Provider mapping response:", response);
-
       if (response.success && response.data) {
-        console.log("✅ Setting provider mapping result:", response.data);
-        console.log("✅ Hotel data:", response.data.hotel);
-        console.log("✅ Provider mappings:", response.data.provider_mappings);
-        console.log("✅ Total suppliers:", response.data.total_supplier);
-        console.log("✅ Provider list:", response.data.provider_list);
         setProviderMappingResult(response.data);
       } else {
-        console.error("❌ Provider mapping request failed:", response.error);
         setError(
           response.error?.message || "Failed to fetch provider mapping data"
         );
       }
     } catch (err) {
-      console.error("❌ Provider mapping request error:", err);
       setError(
         err instanceof Error
           ? err.message
@@ -1889,17 +1823,6 @@ export default function ProviderUpdatePage() {
                             (hotel.property_type &&
                               hotel.property_type.trim()) ||
                             "Hotel";
-
-                          // Debug log
-                          if (index === 0) {
-                            console.log("First row data:", {
-                              hotelName,
-                              countryCode,
-                              propertyType,
-                              hotelObject: hotel,
-                              detailsObject: details,
-                            });
-                          }
 
                           return (
                             <tr key={index} className="hover:bg-gray-50">
