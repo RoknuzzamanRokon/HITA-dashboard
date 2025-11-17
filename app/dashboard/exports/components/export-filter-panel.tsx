@@ -18,6 +18,7 @@ import {
   FileJson,
   FileSpreadsheet,
   CheckCircle,
+  RotateCcw,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -83,6 +84,29 @@ export function ExportFilterPanel({
 
   // Preset loaded feedback state
   const [presetLoaded, setPresetLoaded] = useState(false);
+
+  // Reset filters to default values
+  const resetFilters = () => {
+    setSuppliers([]);
+    setSelectedSupplierValues(new Set());
+    setCountryCodes("All");
+    setMinRating(0);
+    setMaxRating(5);
+    setDateFrom("");
+    setDateTo("");
+    setIttids("All");
+    setPropertyTypes([]);
+    setPage(1);
+    setPageSize(100);
+    setMaxRecords(1000);
+    setFormat("json");
+    setIncludeLocations(true);
+    setIncludeContacts(true);
+    setIncludeMappings(true);
+
+    // Clear any validation errors
+    setErrors({});
+  };
 
   const handleSupplierToggle = (value: string) => {
     const newSet = new Set(selectedSupplierValues);
@@ -618,8 +642,19 @@ export function ExportFilterPanel({
           </div>
         </div>
 
-        {/* Submit Button */}
-        <div className="pt-4 border-t border-gray-200">
+        {/* Action Buttons */}
+        <div className="pt-4 border-t border-gray-200 flex gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            onClick={resetFilters}
+            disabled={isLoading}
+            leftIcon={<RotateCcw className="w-5 h-5" />}
+            className="flex-1"
+          >
+            Reset Filters
+          </Button>
           <Button
             type="submit"
             variant="primary"
@@ -627,7 +662,7 @@ export function ExportFilterPanel({
             loading={isLoading}
             disabled={!isFormValid || isLoading}
             leftIcon={<Download className="w-5 h-5" />}
-            className="w-full"
+            className="flex-[2]"
           >
             {isLoading ? "Creating Export..." : "Create Export"}
           </Button>
