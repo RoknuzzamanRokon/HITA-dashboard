@@ -4,6 +4,8 @@ import { config } from "@/lib/config";
 import { AuthProvider } from "@/lib/contexts/auth-context";
 import { ThemeProvider } from "@/lib/contexts/theme-context";
 import { ToastProvider } from "@/lib/components/ui/toast";
+import { NotificationProvider } from "@/lib/components/notifications/notification-provider";
+import { NotificationContainer } from "@/lib/components/notifications/notification-container";
 
 export const metadata: Metadata = {
   title: config.app.name,
@@ -20,7 +22,10 @@ export default function RootLayout({
       <body className="antialiased" suppressHydrationWarning>
         <ThemeProvider>
           <AuthProvider>
-            <ToastProvider>{children}</ToastProvider>
+            <NotificationProvider>
+              <ToastProvider>{children}</ToastProvider>
+              <NotificationContainer />
+            </NotificationProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

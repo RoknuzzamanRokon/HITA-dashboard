@@ -23,7 +23,7 @@ export function NotificationContainer() {
 
   return (
     <div
-      className="fixed top-4 right-4 z-[9999] flex flex-col gap-3 pointer-events-none
+      className="fixed top-4 right-4 z-9999 flex flex-col gap-3 pointer-events-none
                  max-w-[calc(100vw-2rem)] sm:max-w-md
                  md:top-6 md:right-6"
       role="region"
