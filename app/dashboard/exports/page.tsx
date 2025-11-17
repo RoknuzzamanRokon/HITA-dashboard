@@ -636,6 +636,7 @@ export default function ExportsPage() {
                 aria-controls="hotel-panel"
                 id="hotel-tab"
                 onClick={() => setActiveTab("hotel")}
+                aria-label="Hotel exports tab"
                 className={clsx(
                   "flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all",
                   "focus:outline-none focus:ring-4 focus:ring-blue-300",
@@ -653,6 +654,7 @@ export default function ExportsPage() {
                 aria-controls="mapping-panel"
                 id="mapping-tab"
                 onClick={() => setActiveTab("mapping")}
+                aria-label="Mapping exports tab"
                 className={clsx(
                   "flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all",
                   "focus:outline-none focus:ring-4 focus:ring-purple-300",
@@ -698,10 +700,19 @@ export default function ExportsPage() {
 
           {/* Display error if job creation failed */}
           {jobsError && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+            <div
+              role="alert"
+              aria-live="assertive"
+              className="bg-red-50 border border-red-200 rounded-xl p-4"
+            >
               <div className="flex items-start gap-3">
                 <div className="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-red-600 text-sm font-bold">!</span>
+                  <span
+                    className="text-red-600 text-sm font-bold"
+                    aria-hidden="true"
+                  >
+                    !
+                  </span>
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-red-900 mb-1">

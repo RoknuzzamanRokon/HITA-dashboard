@@ -29,6 +29,7 @@ export function NotificationContainer() {
       role="region"
       aria-label="Notifications"
       aria-live="polite"
+      aria-atomic="false"
     >
       {notifications.map((notification, index) => (
         <div
@@ -37,6 +38,7 @@ export function NotificationContainer() {
           style={{
             zIndex: 9999 - index, // Higher z-index for newer notifications
           }}
+          role="status"
         >
           <Toast
             notification={notification}

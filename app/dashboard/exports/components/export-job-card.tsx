@@ -137,25 +137,28 @@ export function ExportJobCard({
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-md border border-slate-200 p-5 hover:shadow-lg transition-shadow duration-200">
+    <article
+      className="bg-white rounded-xl shadow-md border border-slate-200 p-5 hover:shadow-lg transition-shadow duration-200"
+      aria-label={`${job.exportType} export job ${job.jobId}`}
+    >
       {/* Header: Job ID, Type, Status */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1 min-w-0">
           {/* Job ID with copy button */}
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs font-mono text-gray-500">
+            <span className="text-xs font-mono text-gray-500" aria-label={`Job ID: ${job.jobId}`}>
               {truncate(job.jobId, 20)}
             </span>
             <button
               onClick={handleCopyJobId}
               className="p-2 min-w-[32px] min-h-[32px] hover:bg-gray-100 rounded transition-colors flex items-center justify-center"
               title="Copy Job ID"
-              aria-label="Copy job ID to clipboard"
+              aria-label={copied ? "Job ID copied" : "Copy job ID to clipboard"}
             >
               {copied ? (
-                <Check className="w-3 h-3 text-green-600" />
+                <Check className="w-3 h-3 text-green-600" aria-hidden="true" />
               ) : (
-                <Copy className="w-3 h-3 text-gray-400" />
+                <Copy className="w-3 h-3 text-gray-400" aria-hidden="true" />
               )}
             </button>
           </div>
@@ -182,14 +185,21 @@ export function ExportJobCard({
 
       {/* Progress Bar (for processing jobs) */}
       {job.status === "processing" && (
-        <div className="mb-4">
+        <div className="mb-4" role="status" aria-live="polite">
           <div className="flex items-center justify-between mb-1">
             <span className="text-xs font-medium text-gray-600">Progress</span>
             <span className="text-xs font-semibold text-blue-600">
               {job.progress}%
             </span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+          <div
+            className="w-full bg-gray-200 rounded-full h-2 overflow-hidden"
+            role="progressbar"
+            aria-valuenow={job.progress}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`Export progress: ${job.progress}%`}
+          >
             <div
               className="bg-linear-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
               style={{ width: `${job.progress}%` }}
@@ -262,9 +272,9 @@ export function ExportJobCard({
 
       {/* Error Message (for failed jobs) */}
       {job.status === "failed" && job.errorMessage && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg" role="alert" aria-live="assertive">
           <div className="flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+            <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" aria-hidden="true" />
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-red-900 mb-1">Error</p>
               <p className="text-xs text-red-700 wrap-break-word">
@@ -277,9 +287,9 @@ export function ExportJobCard({
 
       {/* Expiration Warning (for expired jobs) */}
       {job.status === "expired" && (
-        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg" role="alert" aria-live="polite">
           <div className="flex items-start gap-2">
-            <Clock className="w-4 h-4 text-yellow-600 shrink-0 mt-0.5" />
+            <Clock className="w-4 h-4 text-yellow-600 shrink-0 mt-0.5" aria-hidden="true" />
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-yellow-900 mb-1">
                 Download Expired
@@ -295,7 +305,7 @@ export function ExportJobCard({
       )}
 
       {/* Action Buttons */}
-      <div className="flex items-center gap-2 pt-4 border-t border-gray-200">
+      <div className="flex items-center gap-2 pt-4 border-t border-gray-200" role="group" aria-label="Job actions">
         {/* Refresh Button (not shown for expired jobs) */}
         {job.status !== "expired" && (
           <Button
@@ -306,9 +316,11 @@ export function ExportJobCard({
             leftIcon={
               <RefreshCw
                 className={cn("w-4 h-4", isRefreshing && "animate-spin")}
+                aria-hidden="true"
               />
             }
             className="flex-1 min-h-[44px] md:min-h-0"
+            aria-label={isRefreshing ? "Refreshing job status" : "Refresh job status"}
           >
             Refresh
           </Button>
@@ -322,8 +334,9 @@ export function ExportJobCard({
             onClick={handleDownload}
             disabled={isDownloading}
             loading={isDownloading}
-            leftIcon={<Download className="w-4 h-4" />}
+            leftIcon={<Download className="w-4 h-4" aria-hidden="true" />}
             className="flex-1 min-h-[44px] md:min-h-0"
+            aria-label={isDownloading ? "Downloading export file" : "Download export file"}
           >
             Download
           </Button>
@@ -335,8 +348,9 @@ export function ExportJobCard({
             variant="primary"
             size="sm"
             onClick={onCreateNew}
-            leftIcon={<FileJson className="w-4 h-4" />}
+            leftIcon={<FileJson className="w-4 h-4" aria-hidden="true" />}
             className="flex-1 min-h-[44px] md:min-h-0"
+            aria-label="Create new export with same filters"
           >
             Create New Export
           </Button>
@@ -348,9 +362,9 @@ export function ExportJobCard({
           size="sm"
           onClick={onDelete}
           className="text-red-600 hover:text-red-700 hover:bg-red-50 min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0"
-          title="Delete Job"
+          aria-label="Delete job"
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className="w-4 h-4" aria-hidden="true" />
         </Button>
       </div>
     </div>

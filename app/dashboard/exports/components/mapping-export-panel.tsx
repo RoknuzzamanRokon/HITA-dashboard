@@ -233,13 +233,16 @@ export function MappingExportPanel({
   ];
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+    <section
+      className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6"
+      aria-labelledby="mapping-export-filters-heading"
+    >
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center" aria-hidden="true">
             <Filter className="w-5 h-5 text-purple-600" />
           </div>
-          <h2 className="text-xl font-bold text-slate-900">
+          <h2 id="mapping-export-filters-heading" className="text-xl font-bold text-slate-900">
             Mapping Export Filters
           </h2>
         </div>
@@ -254,21 +257,30 @@ export function MappingExportPanel({
 
       {/* Preset Loaded Feedback */}
       {presetLoaded && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 animate-fade-in">
-          <CheckCircle className="w-5 h-5 text-green-600" />
+        <div
+          role="status"
+          aria-live="polite"
+          className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 animate-fade-in"
+        >
+          <CheckCircle className="w-5 h-5 text-green-600" aria-hidden="true" />
           <span className="text-sm font-medium text-green-800">
             Preset loaded successfully!
           </span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6" aria-label="Mapping export filter form">
         {/* Suppliers Multi-Select */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Suppliers <span className="text-red-500">*</span>
-          </label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+        <fieldset>
+          <legend className="block text-sm font-medium text-gray-700 mb-2">
+            Suppliers <span className="text-red-500" aria-label="required">*</span>
+          </legend>
+          <div
+            className="grid grid-cols-2 md:grid-cols-3 gap-2"
+            role="group"
+            aria-labelledby="mapping-suppliers-label"
+            aria-describedby={errors.suppliers ? "mapping-suppliers-error" : undefined}
+          >
             {SUPPLIER_OPTIONS.map((option) => (
               <label
                 key={option.value}
@@ -286,15 +298,18 @@ export function MappingExportPanel({
                   checked={selectedSupplierValues.has(option.value)}
                   onChange={() => handleSupplierToggle(option.value)}
                   className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                  aria-label={`Select ${option.label} supplier`}
                 />
                 <span className="text-sm font-medium">{option.label}</span>
               </label>
             ))}
           </div>
           {errors.suppliers && (
-            <p className="mt-2 text-sm text-red-600">{errors.suppliers}</p>
+            <p id="mapping-suppliers-error" className="mt-2 text-sm text-red-600" role="alert">
+              {errors.suppliers}
+            </p>
           )}
-        </div>
+        </fieldset>
 
         {/* ITT IDs */}
         <Input
@@ -401,7 +416,7 @@ export function MappingExportPanel({
             loading={isLoading}
             disabled={!isFormValid || isLoading}
             leftIcon={<Download className="w-5 h-5" />}
-            className="flex-[2]"
+            className="flex-2"
           >
             {isLoading ? "Creating Mapping Export..." : "Create Mapping Export"}
           </Button>

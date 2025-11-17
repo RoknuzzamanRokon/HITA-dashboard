@@ -107,7 +107,10 @@ export function ExportJobsList({
             Export Jobs ({jobs.length})
           </h2>
           {isRefreshing && (
-            <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+            <Loader2
+              className="w-4 h-4 text-blue-600 animate-spin"
+              aria-label="Refreshing jobs"
+            />
           )}
         </div>
         {completedJobsCount > 0 && (
@@ -116,6 +119,9 @@ export function ExportJobsList({
             size="sm"
             onClick={onClearCompleted}
             leftIcon={<Trash className="w-4 h-4" />}
+            aria-label={`Clear ${completedJobsCount} completed job${
+              completedJobsCount !== 1 ? "s" : ""
+            }`}
           >
             Clear Completed ({completedJobsCount})
           </Button>
@@ -125,28 +131,49 @@ export function ExportJobsList({
       {/* Desktop: Table View */}
       <div className="hidden lg:block bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full" role="table" aria-label="Export jobs table">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
+                >
                   Job ID
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
+                >
                   Type
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
+                >
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
+                >
                   Progress
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
+                >
                   Records
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider"
+                >
                   Created
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider"
+                >
                   Actions
                 </th>
               </tr>
@@ -168,30 +195,40 @@ export function ExportJobsList({
       </div>
 
       {/* Tablet: 2-column Card Grid */}
-      <div className="hidden md:grid lg:hidden grid-cols-2 gap-4">
+      <div
+        className="hidden md:grid lg:hidden grid-cols-2 gap-4"
+        role="list"
+        aria-label="Export jobs cards"
+      >
         {sortedJobs.map((job) => (
-          <ExportJobCard
-            key={job.jobId}
-            job={job}
-            onRefresh={() => onRefreshJob(job.jobId)}
-            onDownload={() => onDownload(job.jobId)}
-            onDelete={() => onDeleteJob(job.jobId)}
-            onCreateNew={onCreateNew ? () => onCreateNew(job) : undefined}
-          />
+          <div key={job.jobId} role="listitem">
+            <ExportJobCard
+              job={job}
+              onRefresh={() => onRefreshJob(job.jobId)}
+              onDownload={() => onDownload(job.jobId)}
+              onDelete={() => onDeleteJob(job.jobId)}
+              onCreateNew={onCreateNew ? () => onCreateNew(job) : undefined}
+            />
+          </div>
         ))}
       </div>
 
       {/* Mobile: Single-column Card Grid */}
-      <div className="grid md:hidden grid-cols-1 gap-4">
+      <div
+        className="grid md:hidden grid-cols-1 gap-4"
+        role="list"
+        aria-label="Export jobs cards"
+      >
         {sortedJobs.map((job) => (
-          <ExportJobCard
-            key={job.jobId}
-            job={job}
-            onRefresh={() => onRefreshJob(job.jobId)}
-            onDownload={() => onDownload(job.jobId)}
-            onDelete={() => onDeleteJob(job.jobId)}
-            onCreateNew={onCreateNew ? () => onCreateNew(job) : undefined}
-          />
+          <div key={job.jobId} role="listitem">
+            <ExportJobCard
+              job={job}
+              onRefresh={() => onRefreshJob(job.jobId)}
+              onDownload={() => onDownload(job.jobId)}
+              onDelete={() => onDeleteJob(job.jobId)}
+              onCreateNew={onCreateNew ? () => onCreateNew(job) : undefined}
+            />
+          </div>
         ))}
       </div>
     </div>

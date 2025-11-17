@@ -316,13 +316,16 @@ export function ExportFilterPanel({
   ];
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+    <section
+      className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6"
+      aria-labelledby="hotel-export-filters-heading"
+    >
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center" aria-hidden="true">
             <Filter className="w-5 h-5 text-blue-600" />
           </div>
-          <h2 className="text-xl font-bold text-slate-900">Export Filters</h2>
+          <h2 id="hotel-export-filters-heading" className="text-xl font-bold text-slate-900">Export Filters</h2>
         </div>
 
         {/* Filter Presets Manager */}
@@ -335,21 +338,30 @@ export function ExportFilterPanel({
 
       {/* Preset Loaded Feedback */}
       {presetLoaded && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 animate-fade-in">
-          <CheckCircle className="w-5 h-5 text-green-600" />
+        <div
+          role="status"
+          aria-live="polite"
+          className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 animate-fade-in"
+        >
+          <CheckCircle className="w-5 h-5 text-green-600" aria-hidden="true" />
           <span className="text-sm font-medium text-green-800">
             Preset loaded successfully!
           </span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6" aria-label="Hotel export filter form">
         {/* Suppliers Multi-Select */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Suppliers <span className="text-red-500">*</span>
-          </label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+        <fieldset>
+          <legend className="block text-sm font-medium text-gray-700 mb-2">
+            Suppliers <span className="text-red-500" aria-label="required">*</span>
+          </legend>
+          <div
+            className="grid grid-cols-2 md:grid-cols-3 gap-2"
+            role="group"
+            aria-labelledby="suppliers-label"
+            aria-describedby={errors.suppliers ? "suppliers-error" : undefined}
+          >
             {SUPPLIER_OPTIONS.map((option) => (
               <label
                 key={option.value}
@@ -367,15 +379,18 @@ export function ExportFilterPanel({
                   checked={selectedSupplierValues.has(option.value.toString())}
                   onChange={() => handleSupplierToggle(option.value.toString())}
                   className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  aria-label={`Select ${option.label} supplier`}
                 />
                 <span className="text-sm font-medium">{option.label}</span>
               </label>
             ))}
           </div>
           {errors.suppliers && (
-            <p className="mt-2 text-sm text-red-600">{errors.suppliers}</p>
+            <p id="suppliers-error" className="mt-2 text-sm text-red-600" role="alert">
+              {errors.suppliers}
+            </p>
           )}
-        </div>
+        </fieldset>
 
         {/* Country Codes */}
         <Input
@@ -388,14 +403,16 @@ export function ExportFilterPanel({
         />
 
         {/* Star Rating Range */}
-        <div>
+        <fieldset aria-describedby={errors.ratingRange ? "rating-error" : undefined}>
+          <legend className="sr-only">Star rating range</legend>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="min-rating" className="block text-sm font-medium text-gray-700 mb-2">
                 Min Rating
               </label>
               <div className="flex items-center gap-2">
                 <input
+                  id="min-rating"
                   type="range"
                   min="0"
                   max="5"
@@ -415,19 +432,24 @@ export function ExportFilterPanel({
                     }
                   }}
                   className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  aria-label={`Minimum star rating: ${minRating} stars`}
+                  aria-valuemin={0}
+                  aria-valuemax={5}
+                  aria-valuenow={minRating}
                 />
-                <div className="flex items-center gap-1 min-w-[60px]">
+                <div className="flex items-center gap-1 min-w-[60px]" aria-hidden="true">
                   <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
                   <span className="text-sm font-semibold">{minRating}</span>
                 </div>
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="max-rating" className="block text-sm font-medium text-gray-700 mb-2">
                 Max Rating
               </label>
               <div className="flex items-center gap-2">
                 <input
+                  id="max-rating"
                   type="range"
                   min="0"
                   max="5"
@@ -447,8 +469,12 @@ export function ExportFilterPanel({
                     }
                   }}
                   className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  aria-label={`Maximum star rating: ${maxRating} stars`}
+                  aria-valuemin={0}
+                  aria-valuemax={5}
+                  aria-valuenow={maxRating}
                 />
-                <div className="flex items-center gap-1 min-w-[60px]">
+                <div className="flex items-center gap-1 min-w-[60px]" aria-hidden="true">
                   <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
                   <span className="text-sm font-semibold">{maxRating}</span>
                 </div>
@@ -456,9 +482,11 @@ export function ExportFilterPanel({
             </div>
           </div>
           {errors.ratingRange && (
-            <p className="mt-2 text-sm text-red-600">{errors.ratingRange}</p>
+            <p id="rating-error" className="mt-2 text-sm text-red-600" role="alert">
+              {errors.ratingRange}
+            </p>
           )}
-        </div>
+        </fieldset>
 
         {/* Date Range */}
         <div>
@@ -518,11 +546,11 @@ export function ExportFilterPanel({
         />
 
         {/* Property Types */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+        <fieldset>
+          <legend className="block text-sm font-medium text-gray-700 mb-2">
             Property Types
-          </label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+          </legend>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2" role="group" aria-label="Property types">
             {PROPERTY_TYPE_OPTIONS.map((option) => (
               <label
                 key={option.value}
@@ -538,13 +566,14 @@ export function ExportFilterPanel({
                   checked={propertyTypes.includes(option.value)}
                   onChange={() => handlePropertyTypeToggle(option.value)}
                   className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  aria-label={`Select ${option.label} property type`}
                 />
-                <Building className="w-4 h-4 text-gray-500" />
+                <Building className="w-4 h-4 text-gray-500" aria-hidden="true" />
                 <span className="text-sm font-medium">{option.label}</span>
               </label>
             ))}
           </div>
-        </div>
+        </fieldset>
 
         {/* Pagination and Limits */}
         <div className="grid grid-cols-3 gap-4">
@@ -607,17 +636,18 @@ export function ExportFilterPanel({
         />
 
         {/* Include Options */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
+        <fieldset>
+          <legend className="block text-sm font-medium text-gray-700 mb-3">
             Include Additional Data
-          </label>
-          <div className="space-y-2">
+          </legend>
+          <div className="space-y-2" role="group" aria-label="Additional data options">
             <label className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
               <input
                 type="checkbox"
                 checked={includeLocations}
                 onChange={(e) => setIncludeLocations(e.target.checked)}
                 className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                aria-label="Include location data in export"
               />
               <span className="text-sm font-medium">Include Locations</span>
             </label>
@@ -627,6 +657,7 @@ export function ExportFilterPanel({
                 checked={includeContacts}
                 onChange={(e) => setIncludeContacts(e.target.checked)}
                 className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                aria-label="Include contact data in export"
               />
               <span className="text-sm font-medium">Include Contacts</span>
             </label>
@@ -636,11 +667,12 @@ export function ExportFilterPanel({
                 checked={includeMappings}
                 onChange={(e) => setIncludeMappings(e.target.checked)}
                 className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                aria-label="Include mapping data in export"
               />
               <span className="text-sm font-medium">Include Mappings</span>
             </label>
           </div>
-        </div>
+        </fieldset>
 
         {/* Action Buttons */}
         <div className="pt-4 border-t border-gray-200 flex gap-3">
@@ -662,7 +694,7 @@ export function ExportFilterPanel({
             loading={isLoading}
             disabled={!isFormValid || isLoading}
             leftIcon={<Download className="w-5 h-5" />}
-            className="flex-[2]"
+            className="flex-2"
           >
             {isLoading ? "Creating Export..." : "Create Export"}
           </Button>
