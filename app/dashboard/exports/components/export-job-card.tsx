@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, memo } from "react";
 import { ExportJob } from "@/lib/types/exports";
 import { Badge } from "@/lib/components/ui/badge";
 import { Button } from "@/lib/components/ui/button";
@@ -29,7 +29,7 @@ export interface ExportJobCardProps {
   onCreateNew?: () => void;
 }
 
-export function ExportJobCard({
+export const ExportJobCard = memo(function ExportJobCard({
   job,
   onRefresh,
   onDownload,
@@ -414,4 +414,4 @@ export function ExportJobCard({
       </div>
     </article>
   );
-}
+});

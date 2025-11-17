@@ -12,7 +12,7 @@
  * - Export jobs list with download capabilities
  */
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useCallback, useMemo } from "react";
 import { useRequireAuth } from "@/lib/hooks/use-auth";
 import { useExportJobs } from "@/lib/hooks/use-export-jobs";
 import { useExportPolling } from "@/lib/hooks/use-export-polling";
@@ -81,370 +81,396 @@ export default function ExportsPage() {
   } = useExportJobs();
 
   // Status update handler for polling
-  const handleStatusUpdate = (jobId: string, status: ExportJobStatus) => {
-    // The status update is handled internally by refreshJobStatus
-    // This callback is used by the polling hook to trigger updates
-    refreshJobStatus(jobId).catch((error) => {
-      console.error(`Failed to update status for job ${jobId}:`, error);
-    });
-  };
+  const handleStatusUpdate = useCallback(
+    (jobId: string, status: ExportJobStatus) => {
+      // The status update is handled internally by refreshJobStatus
+      // This callback is used by the polling hook to trigger updates
+      refreshJobStatus(jobId).catch((error) => {
+        console.error(`Failed to update status for job ${jobId}:`, error);
+      });
+    },
+    [refreshJobStatus]
+  );
 
   /**
    * Handler for downloading completed export files
    * Triggers browser download with appropriate filename based on job type and format
    */
-  const handleDownload = async (jobId: string): Promise<void> => {
-    const operationType = "download";
-    const operationId = jobId;
+  const handleDownload = useCallback(
+    async (jobId: string): Promise<void> => {
+      const operationType = "download";
+      const operationId = jobId;
 
-    try {
-      // Find the job to get its details
-      const job = jobs.find((j) => j.jobId === jobId);
-      if (!job) {
-        throw new Error("Export job not found");
-      }
+      try {
+        // Find the job to get its details
+        const job = jobs.find((j) => j.jobId === jobId);
+        if (!job) {
+          throw new Error("Export job not found");
+        }
 
-      // Check if job is completed
-      if (job.status !== "completed") {
+        // Check if job is completed
+        if (job.status !== "completed") {
+          addNotification({
+            type: "warning",
+            title: "Download Not Available",
+            message: "Export must be completed before downloading",
+            autoDismiss: true,
+            duration: 5000,
+          });
+          return;
+        }
+
+        // Check if download has expired
+        if (
+          job.status === "expired" ||
+          (job.expiresAt && new Date(job.expiresAt) < new Date())
+        ) {
+          addNotification({
+            type: "warning",
+            title: "Download Expired",
+            message: "This export has expired. Please create a new export.",
+            action: {
+              label: "Create New",
+              onClick: () => handleCreateNewFromExpired(job),
+            },
+            autoDismiss: false,
+          });
+          return;
+        }
+
+        // Display info notification that download is starting
         addNotification({
-          type: "warning",
-          title: "Download Not Available",
-          message: "Export must be completed before downloading",
+          type: "info",
+          title: "Download Starting",
+          message: `Preparing ${job.exportType} export file...`,
+          autoDismiss: true,
+          duration: 3000,
+        });
+
+        // Call the API to download the export file
+        const blob = await exportAPI.downloadExport(jobId);
+
+        // Generate appropriate filename based on job type and format
+        const timestamp = new Date()
+          .toISOString()
+          .split("T")[0]
+          .replace(/-/g, "");
+        const format = job.filters.format || "json";
+        const filename = `${job.exportType}_export_${timestamp}.${format}`;
+
+        // Create a temporary URL for the blob
+        const blobUrl = URL.createObjectURL(blob);
+
+        // Create a temporary anchor element to trigger download
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = filename;
+        link.style.display = "none";
+
+        // Append to body, click, and remove
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Clean up the blob URL after a short delay to ensure download starts
+        setTimeout(() => {
+          URL.revokeObjectURL(blobUrl);
+        }, 100);
+
+        // Reset retry count on success
+        retryManager.resetRetry(operationType, operationId);
+
+        // Display success notification
+        addNotification({
+          type: "success",
+          title: "Download Complete",
+          message: `${filename} has been downloaded successfully`,
           autoDismiss: true,
           duration: 5000,
         });
-        return;
-      }
 
-      // Check if download has expired
-      if (
-        job.status === "expired" ||
-        (job.expiresAt && new Date(job.expiresAt) < new Date())
-      ) {
-        addNotification({
-          type: "warning",
-          title: "Download Expired",
-          message: "This export has expired. Please create a new export.",
-          action: {
-            label: "Create New",
-            onClick: () => handleCreateNewFromExpired(job),
-          },
-          autoDismiss: false,
-        });
-        return;
-      }
+        console.log(`✅ Export downloaded successfully: ${filename}`);
+      } catch (error) {
+        // Handle download errors with retry functionality
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Failed to download export file. Please try again.";
 
-      // Display info notification that download is starting
-      addNotification({
-        type: "info",
-        title: "Download Starting",
-        message: `Preparing ${job.exportType} export file...`,
-        autoDismiss: true,
-        duration: 3000,
-      });
+        const retryCount = retryManager.getRetryCount(
+          operationType,
+          operationId
+        );
+        const canRetry = retryManager.canRetry(operationType, operationId);
 
-      // Call the API to download the export file
-      const blob = await exportAPI.downloadExport(jobId);
-
-      // Generate appropriate filename based on job type and format
-      const timestamp = new Date()
-        .toISOString()
-        .split("T")[0]
-        .replace(/-/g, "");
-      const format = job.filters.format || "json";
-      const filename = `${job.exportType}_export_${timestamp}.${format}`;
-
-      // Create a temporary URL for the blob
-      const blobUrl = URL.createObjectURL(blob);
-
-      // Create a temporary anchor element to trigger download
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = filename;
-      link.style.display = "none";
-
-      // Append to body, click, and remove
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      // Clean up the blob URL after a short delay to ensure download starts
-      setTimeout(() => {
-        URL.revokeObjectURL(blobUrl);
-      }, 100);
-
-      // Reset retry count on success
-      retryManager.resetRetry(operationType, operationId);
-
-      // Display success notification
-      addNotification({
-        type: "success",
-        title: "Download Complete",
-        message: `${filename} has been downloaded successfully`,
-        autoDismiss: true,
-        duration: 5000,
-      });
-
-      console.log(`✅ Export downloaded successfully: ${filename}`);
-    } catch (error) {
-      // Handle download errors with retry functionality
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to download export file. Please try again.";
-
-      const retryCount = retryManager.getRetryCount(operationType, operationId);
-      const canRetry = retryManager.canRetry(operationType, operationId);
-
-      if (canRetry) {
-        // Show error with retry button
-        addNotification({
-          type: "error",
-          title: "Download Failed",
-          message: `${errorMessage}${
-            retryCount > 0 ? ` (Attempt ${retryCount + 1}/3)` : ""
-          }`,
-          action: {
-            label: "Retry",
-            onClick: () => {
-              retryManager.incrementRetry(operationType, operationId);
-              handleDownload(jobId);
+        if (canRetry) {
+          // Show error with retry button
+          addNotification({
+            type: "error",
+            title: "Download Failed",
+            message: `${errorMessage}${
+              retryCount > 0 ? ` (Attempt ${retryCount + 1}/3)` : ""
+            }`,
+            action: {
+              label: "Retry",
+              onClick: () => {
+                retryManager.incrementRetry(operationType, operationId);
+                handleDownload(jobId);
+              },
             },
-          },
-          autoDismiss: false,
-        });
-      } else {
-        // Max retries reached
-        addNotification({
-          type: "error",
-          title: "Download Failed",
-          message: `${errorMessage} Maximum retry attempts reached. Please try again later or contact support.`,
-          autoDismiss: false,
-        });
-      }
+            autoDismiss: false,
+          });
+        } else {
+          // Max retries reached
+          addNotification({
+            type: "error",
+            title: "Download Failed",
+            message: `${errorMessage} Maximum retry attempts reached. Please try again later or contact support.`,
+            autoDismiss: false,
+          });
+        }
 
-      console.error("Download error:", error);
-    }
-  };
+        console.error("Download error:", error);
+      }
+    },
+    [jobs, addNotification, retryManager]
+  );
 
   /**
    * Handler for creating hotel export jobs
    * Wraps the createHotelExport function with error handling and notifications
    */
-  const handleCreateHotelExport = async (
-    filters: HotelExportFilters
-  ): Promise<void> => {
-    const operationType = "createHotelExport";
-    const operationId = JSON.stringify(filters); // Use filters as unique ID
+  const handleCreateHotelExport = useCallback(
+    async (filters: HotelExportFilters): Promise<void> => {
+      const operationType = "createHotelExport";
+      const operationId = JSON.stringify(filters); // Use filters as unique ID
 
-    try {
-      await createHotelExport(filters);
-      // Reset retry count on success
-      retryManager.resetRetry(operationType, operationId);
-      // Success notification is handled by useExportNotifications hook
-    } catch (error) {
-      // Display error notification with retry functionality
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to create hotel export. Please try again.";
+      try {
+        await createHotelExport(filters);
+        // Reset retry count on success
+        retryManager.resetRetry(operationType, operationId);
+        // Success notification is handled by useExportNotifications hook
+      } catch (error) {
+        // Display error notification with retry functionality
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Failed to create hotel export. Please try again.";
 
-      const retryCount = retryManager.getRetryCount(operationType, operationId);
-      const canRetry = retryManager.canRetry(operationType, operationId);
+        const retryCount = retryManager.getRetryCount(
+          operationType,
+          operationId
+        );
+        const canRetry = retryManager.canRetry(operationType, operationId);
 
-      if (canRetry) {
-        // Show error with retry button
-        addNotification({
-          type: "error",
-          title: "Export Creation Failed",
-          message: `${errorMessage}${
-            retryCount > 0 ? ` (Attempt ${retryCount + 1}/3)` : ""
-          }`,
-          action: {
-            label: "Retry",
-            onClick: () => {
-              retryManager.incrementRetry(operationType, operationId);
-              handleCreateHotelExport(filters);
+        if (canRetry) {
+          // Show error with retry button
+          addNotification({
+            type: "error",
+            title: "Export Creation Failed",
+            message: `${errorMessage}${
+              retryCount > 0 ? ` (Attempt ${retryCount + 1}/3)` : ""
+            }`,
+            action: {
+              label: "Retry",
+              onClick: () => {
+                retryManager.incrementRetry(operationType, operationId);
+                handleCreateHotelExport(filters);
+              },
             },
-          },
-          autoDismiss: false,
-        });
-      } else {
-        // Max retries reached
-        addNotification({
-          type: "error",
-          title: "Export Creation Failed",
-          message: `${errorMessage} Maximum retry attempts reached. Please check your filters and try again later.`,
-          autoDismiss: false,
-        });
-      }
+            autoDismiss: false,
+          });
+        } else {
+          // Max retries reached
+          addNotification({
+            type: "error",
+            title: "Export Creation Failed",
+            message: `${errorMessage} Maximum retry attempts reached. Please check your filters and try again later.`,
+            autoDismiss: false,
+          });
+        }
 
-      console.error("Hotel export creation error:", error);
-      throw error; // Re-throw to allow filter panel to handle it
-    }
-  };
+        console.error("Hotel export creation error:", error);
+        throw error; // Re-throw to allow filter panel to handle it
+      }
+    },
+    [createHotelExport, addNotification, retryManager]
+  );
 
   /**
    * Handler for creating mapping export jobs
    * Wraps the createMappingExport function with error handling and notifications
    */
-  const handleCreateMappingExport = async (
-    filters: MappingExportFilters
-  ): Promise<void> => {
-    const operationType = "createMappingExport";
-    const operationId = JSON.stringify(filters); // Use filters as unique ID
+  const handleCreateMappingExport = useCallback(
+    async (filters: MappingExportFilters): Promise<void> => {
+      const operationType = "createMappingExport";
+      const operationId = JSON.stringify(filters); // Use filters as unique ID
 
-    try {
-      await createMappingExport(filters);
-      // Reset retry count on success
-      retryManager.resetRetry(operationType, operationId);
-      // Success notification is handled by useExportNotifications hook
-    } catch (error) {
-      // Display error notification with retry functionality
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to create mapping export. Please try again.";
+      try {
+        await createMappingExport(filters);
+        // Reset retry count on success
+        retryManager.resetRetry(operationType, operationId);
+        // Success notification is handled by useExportNotifications hook
+      } catch (error) {
+        // Display error notification with retry functionality
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Failed to create mapping export. Please try again.";
 
-      const retryCount = retryManager.getRetryCount(operationType, operationId);
-      const canRetry = retryManager.canRetry(operationType, operationId);
+        const retryCount = retryManager.getRetryCount(
+          operationType,
+          operationId
+        );
+        const canRetry = retryManager.canRetry(operationType, operationId);
 
-      if (canRetry) {
-        // Show error with retry button
-        addNotification({
-          type: "error",
-          title: "Mapping Export Creation Failed",
-          message: `${errorMessage}${
-            retryCount > 0 ? ` (Attempt ${retryCount + 1}/3)` : ""
-          }`,
-          action: {
-            label: "Retry",
-            onClick: () => {
-              retryManager.incrementRetry(operationType, operationId);
-              handleCreateMappingExport(filters);
+        if (canRetry) {
+          // Show error with retry button
+          addNotification({
+            type: "error",
+            title: "Mapping Export Creation Failed",
+            message: `${errorMessage}${
+              retryCount > 0 ? ` (Attempt ${retryCount + 1}/3)` : ""
+            }`,
+            action: {
+              label: "Retry",
+              onClick: () => {
+                retryManager.incrementRetry(operationType, operationId);
+                handleCreateMappingExport(filters);
+              },
             },
-          },
-          autoDismiss: false,
-        });
-      } else {
-        // Max retries reached
-        addNotification({
-          type: "error",
-          title: "Mapping Export Creation Failed",
-          message: `${errorMessage} Maximum retry attempts reached. Please check your filters and try again later.`,
-          autoDismiss: false,
-        });
-      }
+            autoDismiss: false,
+          });
+        } else {
+          // Max retries reached
+          addNotification({
+            type: "error",
+            title: "Mapping Export Creation Failed",
+            message: `${errorMessage} Maximum retry attempts reached. Please check your filters and try again later.`,
+            autoDismiss: false,
+          });
+        }
 
-      console.error("Mapping export creation error:", error);
-      throw error; // Re-throw to allow filter panel to handle it
-    }
-  };
+        console.error("Mapping export creation error:", error);
+        throw error; // Re-throw to allow filter panel to handle it
+      }
+    },
+    [createMappingExport, addNotification, retryManager]
+  );
 
   /**
    * Handler for refreshing individual job status
    * Manually triggers a status update for a specific job
    */
-  const handleRefreshJob = async (jobId: string): Promise<void> => {
-    const operationType = "refreshJob";
-    const operationId = jobId;
+  const handleRefreshJob = useCallback(
+    async (jobId: string): Promise<void> => {
+      const operationType = "refreshJob";
+      const operationId = jobId;
 
-    try {
-      await refreshJobStatus(jobId);
-      // Reset retry count on success
-      retryManager.resetRetry(operationType, operationId);
-      console.log(`✅ Job status refreshed: ${jobId}`);
-    } catch (error) {
-      // Display error notification with retry functionality
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to refresh job status. Please try again.";
+      try {
+        await refreshJobStatus(jobId);
+        // Reset retry count on success
+        retryManager.resetRetry(operationType, operationId);
+        console.log(`✅ Job status refreshed: ${jobId}`);
+      } catch (error) {
+        // Display error notification with retry functionality
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Failed to refresh job status. Please try again.";
 
-      const retryCount = retryManager.getRetryCount(operationType, operationId);
-      const canRetry = retryManager.canRetry(operationType, operationId);
+        const retryCount = retryManager.getRetryCount(
+          operationType,
+          operationId
+        );
+        const canRetry = retryManager.canRetry(operationType, operationId);
 
-      if (canRetry) {
-        // Show error with retry button
-        addNotification({
-          type: "error",
-          title: "Refresh Failed",
-          message: `${errorMessage}${
-            retryCount > 0 ? ` (Attempt ${retryCount + 1}/3)` : ""
-          }`,
-          action: {
-            label: "Retry",
-            onClick: () => {
-              retryManager.incrementRetry(operationType, operationId);
-              handleRefreshJob(jobId);
+        if (canRetry) {
+          // Show error with retry button
+          addNotification({
+            type: "error",
+            title: "Refresh Failed",
+            message: `${errorMessage}${
+              retryCount > 0 ? ` (Attempt ${retryCount + 1}/3)` : ""
+            }`,
+            action: {
+              label: "Retry",
+              onClick: () => {
+                retryManager.incrementRetry(operationType, operationId);
+                handleRefreshJob(jobId);
+              },
             },
-          },
-          autoDismiss: false,
-        });
-      } else {
-        // Max retries reached
-        addNotification({
-          type: "error",
-          title: "Refresh Failed",
-          message: `${errorMessage} Maximum retry attempts reached. The job status may be temporarily unavailable.`,
-          autoDismiss: false,
-        });
-      }
+            autoDismiss: false,
+          });
+        } else {
+          // Max retries reached
+          addNotification({
+            type: "error",
+            title: "Refresh Failed",
+            message: `${errorMessage} Maximum retry attempts reached. The job status may be temporarily unavailable.`,
+            autoDismiss: false,
+          });
+        }
 
-      console.error("Job refresh error:", error);
-    }
-  };
+        console.error("Job refresh error:", error);
+      }
+    },
+    [refreshJobStatus, addNotification, retryManager]
+  );
 
   /**
    * Handler for deleting a job
    * Shows confirmation dialog before deleting
    */
-  const handleDeleteJob = (jobId: string): void => {
+  const handleDeleteJob = useCallback((jobId: string): void => {
     setConfirmDialog({
       isOpen: true,
       type: "delete",
       jobId,
     });
-  };
+  }, []);
 
   /**
    * Handler for clearing all completed jobs
    * Shows confirmation dialog before clearing
    */
-  const handleClearCompleted = (): void => {
+  const handleClearCompleted = useCallback((): void => {
     setConfirmDialog({
       isOpen: true,
       type: "clearCompleted",
     });
-  };
+  }, []);
 
   /**
    * Handler for creating a new export from an expired job
    * Switches to the appropriate tab and pre-fills filters
    */
-  const handleCreateNewFromExpired = (job: ExportJob): void => {
-    // Switch to the appropriate tab
-    setActiveTab(job.exportType);
+  const handleCreateNewFromExpired = useCallback(
+    (job: ExportJob): void => {
+      // Switch to the appropriate tab
+      setActiveTab(job.exportType);
 
-    // Show notification to guide user
-    addNotification({
-      type: "info",
-      title: "Create New Export",
-      message: `Switched to ${job.exportType} exports tab. The previous filters are ready to use. Click "Create Export" to generate a new export.`,
-      autoDismiss: true,
-      duration: 8000,
-    });
+      // Show notification to guide user
+      addNotification({
+        type: "info",
+        title: "Create New Export",
+        message: `Switched to ${job.exportType} exports tab. The previous filters are ready to use. Click "Create Export" to generate a new export.`,
+        autoDismiss: true,
+        duration: 8000,
+      });
 
-    // Note: The filter panel components maintain their own state with presets
-    // The user can manually load the filters or adjust them as needed
-    console.log(`Creating new export from expired job: ${job.jobId}`);
-  };
+      // Note: The filter panel components maintain their own state with presets
+      // The user can manually load the filters or adjust them as needed
+      console.log(`Creating new export from expired job: ${job.jobId}`);
+    },
+    [addNotification]
+  );
 
   /**
    * Confirmation handler for dialog actions
    * Executes the appropriate action based on dialog type
    */
-  const handleConfirmAction = (): void => {
+  const handleConfirmAction = useCallback((): void => {
     if (confirmDialog.type === "delete" && confirmDialog.jobId) {
       // Delete single job
       deleteJob(confirmDialog.jobId);
@@ -487,17 +513,17 @@ export default function ExportsPage() {
       isOpen: false,
       type: null,
     });
-  };
+  }, [confirmDialog, jobs, deleteJob, clearCompletedJobs, addNotification]);
 
   /**
    * Handler for closing confirmation dialog
    */
-  const handleCloseDialog = (): void => {
+  const handleCloseDialog = useCallback((): void => {
     setConfirmDialog({
       isOpen: false,
       type: null,
     });
-  };
+  }, []);
 
   // Initialize automatic status polling for processing jobs
   useExportPolling({

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, memo, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/lib/components/ui/button";
 import { Input } from "@/lib/components/ui/input";
 import { Select, SelectOption } from "@/lib/components/ui/select";
@@ -46,7 +46,7 @@ const PROPERTY_TYPE_OPTIONS = [
   { value: "guesthouse", label: "Guest House" },
 ];
 
-export function ExportFilterPanel({
+export const ExportFilterPanel = memo(function ExportFilterPanel({
   onExportCreate,
   isLoading,
 }: ExportFilterPanelProps) {
@@ -85,8 +85,44 @@ export function ExportFilterPanel({
   // Preset loaded feedback state
   const [presetLoaded, setPresetLoaded] = useState(false);
 
+  // Debounce timers for text inputs
+  const countryCodesDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const ittidsDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup debounce timers on unmount
+  useEffect(() => {
+    return () => {
+      if (countryCodesDebounceRef.current) {
+        clearTimeout(countryCodesDebounceRef.current);
+      }
+      if (ittidsDebounceRef.current) {
+        clearTimeout(ittidsDebounceRef.current);
+      }
+    };
+  }, []);
+
+  // Debounced handler for country codes input (300ms delay)
+  const handleCountryCodesChange = useCallback((value: string) => {
+    if (countryCodesDebounceRef.current) {
+      clearTimeout(countryCodesDebounceRef.current);
+    }
+    countryCodesDebounceRef.current = setTimeout(() => {
+      setCountryCodes(value);
+    }, 300);
+  }, []);
+
+  // Debounced handler for ITT IDs input (300ms delay)
+  const handleIttidsChange = useCallback((value: string) => {
+    if (ittidsDebounceRef.current) {
+      clearTimeout(ittidsDebounceRef.current);
+    }
+    ittidsDebounceRef.current = setTimeout(() => {
+      setIttids(value);
+    }, 300);
+  }, []);
+
   // Reset filters to default values
-  const resetFilters = () => {
+  const resetFilters = useCallback(() => {
     setSuppliers([]);
     setSelectedSupplierValues(new Set());
     setCountryCodes("All");
@@ -106,33 +142,36 @@ export function ExportFilterPanel({
 
     // Clear any validation errors
     setErrors({});
-  };
+  }, []);
 
-  const handleSupplierToggle = (value: string) => {
-    const newSet = new Set(selectedSupplierValues);
-    if (newSet.has(value)) {
-      newSet.delete(value);
-    } else {
-      newSet.add(value);
-    }
-    setSelectedSupplierValues(newSet);
-    const newSuppliers = Array.from(newSet);
-    setSuppliers(newSuppliers);
+  const handleSupplierToggle = useCallback(
+    (value: string) => {
+      const newSet = new Set(selectedSupplierValues);
+      if (newSet.has(value)) {
+        newSet.delete(value);
+      } else {
+        newSet.add(value);
+      }
+      setSelectedSupplierValues(newSet);
+      const newSuppliers = Array.from(newSet);
+      setSuppliers(newSuppliers);
 
-    // Clear supplier error when at least one is selected
-    if (newSuppliers.length > 0 && errors.suppliers) {
-      setErrors((prev) => ({ ...prev, suppliers: undefined }));
-    }
-  };
+      // Clear supplier error when at least one is selected
+      if (newSuppliers.length > 0 && errors.suppliers) {
+        setErrors((prev) => ({ ...prev, suppliers: undefined }));
+      }
+    },
+    [selectedSupplierValues, errors.suppliers]
+  );
 
-  const handlePropertyTypeToggle = (value: string) => {
+  const handlePropertyTypeToggle = useCallback((value: string) => {
     setPropertyTypes((prev) =>
       prev.includes(value) ? prev.filter((t) => t !== value) : [...prev, value]
     );
-  };
+  }, []);
 
   // Handle loading a preset
-  const handleLoadPreset = (filters: HotelExportFilters) => {
+  const handleLoadPreset = useCallback((filters: HotelExportFilters) => {
     // Update all form fields with preset values
     setSuppliers(filters.filters.suppliers);
     setSelectedSupplierValues(new Set(filters.filters.suppliers));
@@ -166,10 +205,10 @@ export function ExportFilterPanel({
     // Show visual feedback
     setPresetLoaded(true);
     setTimeout(() => setPresetLoaded(false), 3000);
-  };
+  }, []);
 
   // Get current filters for preset saving
-  const getCurrentFilters = (): HotelExportFilters => {
+  const getCurrentFilters = useCallback((): HotelExportFilters => {
     return {
       filters: {
         suppliers,
@@ -189,10 +228,26 @@ export function ExportFilterPanel({
       include_contacts: includeContacts,
       include_mappings: includeMappings,
     };
-  };
+  }, [
+    suppliers,
+    countryCodes,
+    minRating,
+    maxRating,
+    dateFrom,
+    dateTo,
+    ittids,
+    propertyTypes,
+    page,
+    pageSize,
+    maxRecords,
+    format,
+    includeLocations,
+    includeContacts,
+    includeMappings,
+  ]);
 
   // Validation function
-  const validateForm = (): boolean => {
+  const validateForm = useCallback((): boolean => {
     const newErrors: typeof errors = {};
 
     // Validate required fields - at least one supplier
@@ -228,10 +283,19 @@ export function ExportFilterPanel({
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [
+    suppliers,
+    dateFrom,
+    dateTo,
+    minRating,
+    maxRating,
+    page,
+    pageSize,
+    maxRecords,
+  ]);
 
   // Format date to ISO 8601 format (YYYY-MM-DDTHH:mm:ss)
-  const formatDateToISO8601 = (dateString: string): string => {
+  const formatDateToISO8601 = useCallback((dateString: string): string => {
     if (!dateString) return "";
 
     const date = new Date(dateString);
@@ -242,54 +306,76 @@ export function ExportFilterPanel({
     // toISOString() returns YYYY-MM-DDTHH:mm:ss.sssZ, we need to remove milliseconds and Z
     const isoString = date.toISOString();
     return isoString.substring(0, 19); // Returns YYYY-MM-DDTHH:mm:ss
-  };
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
 
-    // Validate form before submission
-    if (!validateForm()) {
-      return;
-    }
+      // Validate form before submission
+      if (!validateForm()) {
+        return;
+      }
 
-    try {
-      // Build HotelExportFilters object matching API schema
-      const filters: HotelExportFilters = {
-        filters: {
-          suppliers,
-          country_codes: countryCodes,
-          min_rating: minRating,
-          max_rating: maxRating,
-          date_from: formatDateToISO8601(dateFrom),
-          date_to: formatDateToISO8601(dateTo),
-          ittids,
-          property_types: propertyTypes,
-          page,
-          page_size: pageSize,
-          max_records: maxRecords,
-        },
-        format,
-        include_locations: includeLocations,
-        include_contacts: includeContacts,
-        include_mappings: includeMappings,
-      };
+      try {
+        // Build HotelExportFilters object matching API schema
+        const filters: HotelExportFilters = {
+          filters: {
+            suppliers,
+            country_codes: countryCodes,
+            min_rating: minRating,
+            max_rating: maxRating,
+            date_from: formatDateToISO8601(dateFrom),
+            date_to: formatDateToISO8601(dateTo),
+            ittids,
+            property_types: propertyTypes,
+            page,
+            page_size: pageSize,
+            max_records: maxRecords,
+          },
+          format,
+          include_locations: includeLocations,
+          include_contacts: includeContacts,
+          include_mappings: includeMappings,
+        };
 
-      // Call onExportCreate prop with formatted filters
-      await onExportCreate(filters);
-    } catch (error) {
-      // Handle submission errors
-      console.error("Export creation failed:", error);
+        // Call onExportCreate prop with formatted filters
+        await onExportCreate(filters);
+      } catch (error) {
+        // Handle submission errors
+        console.error("Export creation failed:", error);
 
-      // Set a general error message
-      setErrors((prev) => ({
-        ...prev,
-        suppliers:
-          error instanceof Error
-            ? error.message
-            : "Failed to create export. Please try again.",
-      }));
-    }
-  };
+        // Set a general error message
+        setErrors((prev) => ({
+          ...prev,
+          suppliers:
+            error instanceof Error
+              ? error.message
+              : "Failed to create export. Please try again.",
+        }));
+      }
+    },
+    [
+      suppliers,
+      countryCodes,
+      minRating,
+      maxRating,
+      dateFrom,
+      dateTo,
+      ittids,
+      propertyTypes,
+      page,
+      pageSize,
+      maxRecords,
+      format,
+      includeLocations,
+      includeContacts,
+      includeMappings,
+      validateForm,
+      formatDateToISO8601,
+      onExportCreate,
+    ]
+  );
 
   // Check if form is valid for disabling submit button
   const isFormValid =
@@ -322,10 +408,18 @@ export function ExportFilterPanel({
     >
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center" aria-hidden="true">
+          <div
+            className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center"
+            aria-hidden="true"
+          >
             <Filter className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           </div>
-          <h2 id="hotel-export-filters-heading" className="text-xl font-bold text-slate-900 dark:text-gray-100">Export Filters</h2>
+          <h2
+            id="hotel-export-filters-heading"
+            className="text-xl font-bold text-slate-900 dark:text-gray-100"
+          >
+            Export Filters
+          </h2>
         </div>
 
         {/* Filter Presets Manager */}
@@ -343,18 +437,31 @@ export function ExportFilterPanel({
           aria-live="polite"
           className="mb-4 p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg flex items-center gap-2 animate-fade-in"
         >
-          <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" aria-hidden="true" />
+          <CheckCircle
+            className="w-5 h-5 text-green-600 dark:text-green-400"
+            aria-hidden="true"
+          />
           <span className="text-sm font-medium text-green-800 dark:text-green-200">
             Preset loaded successfully!
           </span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6" aria-label="Hotel export filter form">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-6"
+        aria-label="Hotel export filter form"
+      >
         {/* Suppliers Multi-Select */}
         <fieldset>
           <legend className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Suppliers <span className="text-red-500 dark:text-red-400" aria-label="required">*</span>
+            Suppliers{" "}
+            <span
+              className="text-red-500 dark:text-red-400"
+              aria-label="required"
+            >
+              *
+            </span>
           </legend>
           <div
             className="grid grid-cols-2 md:grid-cols-3 gap-2"
@@ -381,12 +488,18 @@ export function ExportFilterPanel({
                   className="w-4 h-4 text-blue-600 dark:text-blue-400 rounded focus:ring-blue-500 dark:focus:ring-blue-400"
                   aria-label={`Select ${option.label} supplier`}
                 />
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{option.label}</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  {option.label}
+                </span>
               </label>
             ))}
           </div>
           {errors.suppliers && (
-            <p id="suppliers-error" className="mt-2 text-sm text-red-600 dark:text-red-400" role="alert">
+            <p
+              id="suppliers-error"
+              className="mt-2 text-sm text-red-600 dark:text-red-400"
+              role="alert"
+            >
               {errors.suppliers}
             </p>
           )}
@@ -396,18 +509,23 @@ export function ExportFilterPanel({
         <Input
           label="Country Codes"
           placeholder='Enter country codes (e.g., "US,UK,CA") or "All"'
-          value={countryCodes}
-          onChange={(e) => setCountryCodes(e.target.value)}
+          defaultValue={countryCodes}
+          onChange={(e) => handleCountryCodesChange(e.target.value)}
           leftIcon={<Globe className="w-4 h-4" />}
           helperText='Use "All" for all countries or comma-separated codes'
         />
 
         {/* Star Rating Range */}
-        <fieldset aria-describedby={errors.ratingRange ? "rating-error" : undefined}>
+        <fieldset
+          aria-describedby={errors.ratingRange ? "rating-error" : undefined}
+        >
           <legend className="sr-only">Star rating range</legend>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="min-rating" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label
+                htmlFor="min-rating"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
                 Min Rating
               </label>
               <div className="flex items-center gap-2">
@@ -437,14 +555,22 @@ export function ExportFilterPanel({
                   aria-valuemax={5}
                   aria-valuenow={minRating}
                 />
-                <div className="flex items-center gap-1 min-w-[60px]" aria-hidden="true">
+                <div
+                  className="flex items-center gap-1 min-w-[60px]"
+                  aria-hidden="true"
+                >
                   <Star className="w-4 h-4 text-yellow-500 fill-yellow-500 dark:text-yellow-400 dark:fill-yellow-400" />
-                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{minRating}</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                    {minRating}
+                  </span>
                 </div>
               </div>
             </div>
             <div>
-              <label htmlFor="max-rating" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label
+                htmlFor="max-rating"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
                 Max Rating
               </label>
               <div className="flex items-center gap-2">
@@ -474,15 +600,24 @@ export function ExportFilterPanel({
                   aria-valuemax={5}
                   aria-valuenow={maxRating}
                 />
-                <div className="flex items-center gap-1 min-w-[60px]" aria-hidden="true">
+                <div
+                  className="flex items-center gap-1 min-w-[60px]"
+                  aria-hidden="true"
+                >
                   <Star className="w-4 h-4 text-yellow-500 fill-yellow-500 dark:text-yellow-400 dark:fill-yellow-400" />
-                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{maxRating}</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                    {maxRating}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
           {errors.ratingRange && (
-            <p id="rating-error" className="mt-2 text-sm text-red-600 dark:text-red-400" role="alert">
+            <p
+              id="rating-error"
+              className="mt-2 text-sm text-red-600 dark:text-red-400"
+              role="alert"
+            >
               {errors.ratingRange}
             </p>
           )}
@@ -531,7 +666,9 @@ export function ExportFilterPanel({
             />
           </div>
           {errors.dateRange && (
-            <p className="mt-2 text-sm text-red-600 dark:text-red-400">{errors.dateRange}</p>
+            <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+              {errors.dateRange}
+            </p>
           )}
         </div>
 
@@ -539,8 +676,8 @@ export function ExportFilterPanel({
         <Input
           label="ITT IDs"
           placeholder='Enter ITT IDs (comma-separated) or "All"'
-          value={ittids}
-          onChange={(e) => setIttids(e.target.value)}
+          defaultValue={ittids}
+          onChange={(e) => handleIttidsChange(e.target.value)}
           leftIcon={<Hash className="w-4 h-4" />}
           helperText='Use "All" for all ITT IDs or comma-separated values'
         />
@@ -550,7 +687,11 @@ export function ExportFilterPanel({
           <legend className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Property Types
           </legend>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2" role="group" aria-label="Property types">
+          <div
+            className="grid grid-cols-2 md:grid-cols-3 gap-2"
+            role="group"
+            aria-label="Property types"
+          >
             {PROPERTY_TYPE_OPTIONS.map((option) => (
               <label
                 key={option.value}
@@ -568,8 +709,13 @@ export function ExportFilterPanel({
                   className="w-4 h-4 text-blue-600 dark:text-blue-400 rounded focus:ring-blue-500 dark:focus:ring-blue-400"
                   aria-label={`Select ${option.label} property type`}
                 />
-                <Building className="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" />
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{option.label}</span>
+                <Building
+                  className="w-4 h-4 text-gray-500 dark:text-gray-400"
+                  aria-hidden="true"
+                />
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  {option.label}
+                </span>
               </label>
             ))}
           </div>
@@ -640,7 +786,11 @@ export function ExportFilterPanel({
           <legend className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
             Include Additional Data
           </legend>
-          <div className="space-y-2" role="group" aria-label="Additional data options">
+          <div
+            className="space-y-2"
+            role="group"
+            aria-label="Additional data options"
+          >
             <label className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
               <input
                 type="checkbox"
@@ -649,7 +799,9 @@ export function ExportFilterPanel({
                 className="w-4 h-4 text-blue-600 dark:text-blue-400 rounded focus:ring-blue-500 dark:focus:ring-blue-400"
                 aria-label="Include location data in export"
               />
-              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Include Locations</span>
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                Include Locations
+              </span>
             </label>
             <label className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
               <input
@@ -659,7 +811,9 @@ export function ExportFilterPanel({
                 className="w-4 h-4 text-blue-600 dark:text-blue-400 rounded focus:ring-blue-500 dark:focus:ring-blue-400"
                 aria-label="Include contact data in export"
               />
-              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Include Contacts</span>
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                Include Contacts
+              </span>
             </label>
             <label className="flex items-center gap-2 p-3 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
               <input
@@ -669,7 +823,9 @@ export function ExportFilterPanel({
                 className="w-4 h-4 text-blue-600 dark:text-blue-400 rounded focus:ring-blue-500 dark:focus:ring-blue-400"
                 aria-label="Include mapping data in export"
               />
-              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Include Mappings</span>
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                Include Mappings
+              </span>
             </label>
           </div>
         </fieldset>
@@ -700,6 +856,6 @@ export function ExportFilterPanel({
           </Button>
         </div>
       </form>
-    </div>
+    </section>
   );
-}
+});

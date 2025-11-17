@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, memo, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/lib/components/ui/button";
 import { Input } from "@/lib/components/ui/input";
 import { RadioGroup, RadioOption } from "@/lib/components/ui/radio-group";
@@ -32,7 +32,7 @@ const SUPPLIER_OPTIONS = [
   { value: "airbnb", label: "Airbnb" },
 ];
 
-export function MappingExportPanel({
+export const MappingExportPanel = memo(function MappingExportPanel({
   onExportCreate,
   isLoading,
 }: MappingExportPanelProps) {
@@ -59,8 +59,30 @@ export function MappingExportPanel({
   // Preset loaded feedback state
   const [presetLoaded, setPresetLoaded] = useState(false);
 
+  // Debounce timer for ITT IDs input
+  const ittidsDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (ittidsDebounceRef.current) {
+        clearTimeout(ittidsDebounceRef.current);
+      }
+    };
+  }, []);
+
+  // Debounced handler for ITT IDs input (300ms delay)
+  const handleIttidsChange = useCallback((value: string) => {
+    if (ittidsDebounceRef.current) {
+      clearTimeout(ittidsDebounceRef.current);
+    }
+    ittidsDebounceRef.current = setTimeout(() => {
+      setIttids(value);
+    }, 300);
+  }, []);
+
   // Reset filters to default values
-  const resetFilters = () => {
+  const resetFilters = useCallback(() => {
     setSuppliers([]);
     setSelectedSupplierValues(new Set());
     setIttids("All");
@@ -71,27 +93,30 @@ export function MappingExportPanel({
 
     // Clear any validation errors
     setErrors({});
-  };
+  }, []);
 
-  const handleSupplierToggle = (value: string) => {
-    const newSet = new Set(selectedSupplierValues);
-    if (newSet.has(value)) {
-      newSet.delete(value);
-    } else {
-      newSet.add(value);
-    }
-    setSelectedSupplierValues(newSet);
-    const newSuppliers = Array.from(newSet);
-    setSuppliers(newSuppliers);
+  const handleSupplierToggle = useCallback(
+    (value: string) => {
+      const newSet = new Set(selectedSupplierValues);
+      if (newSet.has(value)) {
+        newSet.delete(value);
+      } else {
+        newSet.add(value);
+      }
+      setSelectedSupplierValues(newSet);
+      const newSuppliers = Array.from(newSet);
+      setSuppliers(newSuppliers);
 
-    // Clear supplier error when at least one is selected
-    if (newSuppliers.length > 0 && errors.suppliers) {
-      setErrors((prev) => ({ ...prev, suppliers: undefined }));
-    }
-  };
+      // Clear supplier error when at least one is selected
+      if (newSuppliers.length > 0 && errors.suppliers) {
+        setErrors((prev) => ({ ...prev, suppliers: undefined }));
+      }
+    },
+    [selectedSupplierValues, errors.suppliers]
+  );
 
   // Handle loading a preset
-  const handleLoadPreset = (filters: MappingExportFilters) => {
+  const handleLoadPreset = useCallback((filters: MappingExportFilters) => {
     // Update all form fields with preset values
     setSuppliers(filters.filters.suppliers);
     setSelectedSupplierValues(new Set(filters.filters.suppliers));
@@ -116,10 +141,10 @@ export function MappingExportPanel({
     // Show visual feedback
     setPresetLoaded(true);
     setTimeout(() => setPresetLoaded(false), 3000);
-  };
+  }, []);
 
   // Get current filters for preset saving
-  const getCurrentFilters = (): MappingExportFilters => {
+  const getCurrentFilters = useCallback((): MappingExportFilters => {
     return {
       filters: {
         suppliers,
@@ -130,10 +155,10 @@ export function MappingExportPanel({
       },
       format,
     };
-  };
+  }, [suppliers, ittids, dateFrom, dateTo, maxRecords, format]);
 
   // Validation function
-  const validateForm = (): boolean => {
+  const validateForm = useCallback((): boolean => {
     const newErrors: typeof errors = {};
 
     // Validate required fields - at least one supplier
@@ -157,10 +182,10 @@ export function MappingExportPanel({
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [suppliers, dateFrom, dateTo, maxRecords]);
 
   // Format date to ISO 8601 format (YYYY-MM-DDTHH:mm:ss)
-  const formatDateToISO8601 = (dateString: string): string => {
+  const formatDateToISO8601 = useCallback((dateString: string): string => {
     if (!dateString) return "";
 
     const date = new Date(dateString);
@@ -171,45 +196,58 @@ export function MappingExportPanel({
     // toISOString() returns YYYY-MM-DDTHH:mm:ss.sssZ, we need to remove milliseconds and Z
     const isoString = date.toISOString();
     return isoString.substring(0, 19); // Returns YYYY-MM-DDTHH:mm:ss
-  };
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
 
-    // Validate form before submission
-    if (!validateForm()) {
-      return;
-    }
+      // Validate form before submission
+      if (!validateForm()) {
+        return;
+      }
 
-    try {
-      // Build MappingExportFilters object matching API schema
-      const filters: MappingExportFilters = {
-        filters: {
-          suppliers,
-          ittids,
-          date_from: formatDateToISO8601(dateFrom),
-          date_to: formatDateToISO8601(dateTo),
-          max_records: maxRecords,
-        },
-        format,
-      };
+      try {
+        // Build MappingExportFilters object matching API schema
+        const filters: MappingExportFilters = {
+          filters: {
+            suppliers,
+            ittids,
+            date_from: formatDateToISO8601(dateFrom),
+            date_to: formatDateToISO8601(dateTo),
+            max_records: maxRecords,
+          },
+          format,
+        };
 
-      // Call onExportCreate prop with formatted filters
-      await onExportCreate(filters);
-    } catch (error) {
-      // Handle submission errors
-      console.error("Mapping export creation failed:", error);
+        // Call onExportCreate prop with formatted filters
+        await onExportCreate(filters);
+      } catch (error) {
+        // Handle submission errors
+        console.error("Mapping export creation failed:", error);
 
-      // Set a general error message
-      setErrors((prev) => ({
-        ...prev,
-        suppliers:
-          error instanceof Error
-            ? error.message
-            : "Failed to create mapping export. Please try again.",
-      }));
-    }
-  };
+        // Set a general error message
+        setErrors((prev) => ({
+          ...prev,
+          suppliers:
+            error instanceof Error
+              ? error.message
+              : "Failed to create mapping export. Please try again.",
+        }));
+      }
+    },
+    [
+      suppliers,
+      ittids,
+      dateFrom,
+      dateTo,
+      maxRecords,
+      format,
+      validateForm,
+      formatDateToISO8601,
+      onExportCreate,
+    ]
+  );
 
   // Check if form is valid for disabling submit button
   const isFormValid =
@@ -239,10 +277,16 @@ export function MappingExportPanel({
     >
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center" aria-hidden="true">
+          <div
+            className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center"
+            aria-hidden="true"
+          >
             <Filter className="w-5 h-5 text-purple-600 dark:text-purple-400" />
           </div>
-          <h2 id="mapping-export-filters-heading" className="text-xl font-bold text-slate-900 dark:text-gray-100">
+          <h2
+            id="mapping-export-filters-heading"
+            className="text-xl font-bold text-slate-900 dark:text-gray-100"
+          >
             Mapping Export Filters
           </h2>
         </div>
@@ -262,24 +306,39 @@ export function MappingExportPanel({
           aria-live="polite"
           className="mb-4 p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg flex items-center gap-2 animate-fade-in"
         >
-          <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" aria-hidden="true" />
+          <CheckCircle
+            className="w-5 h-5 text-green-600 dark:text-green-400"
+            aria-hidden="true"
+          />
           <span className="text-sm font-medium text-green-800 dark:text-green-200">
             Preset loaded successfully!
           </span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6" aria-label="Mapping export filter form">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-6"
+        aria-label="Mapping export filter form"
+      >
         {/* Suppliers Multi-Select */}
         <fieldset>
           <legend className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Suppliers <span className="text-red-500 dark:text-red-400" aria-label="required">*</span>
+            Suppliers{" "}
+            <span
+              className="text-red-500 dark:text-red-400"
+              aria-label="required"
+            >
+              *
+            </span>
           </legend>
           <div
             className="grid grid-cols-2 md:grid-cols-3 gap-2"
             role="group"
             aria-labelledby="mapping-suppliers-label"
-            aria-describedby={errors.suppliers ? "mapping-suppliers-error" : undefined}
+            aria-describedby={
+              errors.suppliers ? "mapping-suppliers-error" : undefined
+            }
           >
             {SUPPLIER_OPTIONS.map((option) => (
               <label
@@ -300,12 +359,18 @@ export function MappingExportPanel({
                   className="w-4 h-4 text-purple-600 dark:text-purple-400 rounded focus:ring-purple-500 dark:focus:ring-purple-400"
                   aria-label={`Select ${option.label} supplier`}
                 />
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{option.label}</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  {option.label}
+                </span>
               </label>
             ))}
           </div>
           {errors.suppliers && (
-            <p id="mapping-suppliers-error" className="mt-2 text-sm text-red-600 dark:text-red-400" role="alert">
+            <p
+              id="mapping-suppliers-error"
+              className="mt-2 text-sm text-red-600 dark:text-red-400"
+              role="alert"
+            >
               {errors.suppliers}
             </p>
           )}
@@ -315,8 +380,8 @@ export function MappingExportPanel({
         <Input
           label="ITT IDs"
           placeholder='Enter ITT IDs (comma-separated) or "All"'
-          value={ittids}
-          onChange={(e) => setIttids(e.target.value)}
+          defaultValue={ittids}
+          onChange={(e) => handleIttidsChange(e.target.value)}
           leftIcon={<Hash className="w-4 h-4" />}
           helperText='Use "All" for all ITT IDs or comma-separated values'
         />
@@ -364,7 +429,9 @@ export function MappingExportPanel({
             />
           </div>
           {errors.dateRange && (
-            <p className="mt-2 text-sm text-red-600 dark:text-red-400">{errors.dateRange}</p>
+            <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+              {errors.dateRange}
+            </p>
           )}
         </div>
 
@@ -422,6 +489,6 @@ export function MappingExportPanel({
           </Button>
         </div>
       </form>
-    </div>
+    </section>
   );
-}
+});
