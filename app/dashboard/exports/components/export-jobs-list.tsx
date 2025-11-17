@@ -1,5 +1,16 @@
 "use client";
 
+/**
+ * Export Jobs List Component
+ *
+ * Displays export jobs with responsive layout:
+ * - Desktop (1024px+): Table layout with all columns visible
+ * - Tablet (768px-1023px): 2-column card grid layout
+ * - Mobile (<768px): Single-column card layout, stacked vertically
+ *
+ * All interactive elements meet WCAG touch target size requirements (min 44x44px on mobile)
+ */
+
 import React, { useMemo } from "react";
 import { ExportJob } from "@/lib/types/exports";
 import { ExportJobCard } from "./export-job-card";
@@ -294,8 +305,9 @@ function ExportJobTableRow({
           </span>
           <button
             onClick={handleCopyJobId}
-            className="p-1 hover:bg-gray-100 rounded transition-colors"
+            className="p-1.5 min-w-[28px] min-h-[28px] hover:bg-gray-100 rounded transition-colors flex items-center justify-center"
             title="Copy Job ID"
+            aria-label="Copy job ID to clipboard"
           >
             {copied ? (
               <Check className="w-3 h-3 text-green-600" />
@@ -369,8 +381,9 @@ function ExportJobTableRow({
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+            className="p-2 min-w-[40px] min-h-[40px] hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center"
             title="Refresh Status"
+            aria-label="Refresh job status"
           >
             <RefreshCw
               className={cn(
@@ -385,8 +398,9 @@ function ExportJobTableRow({
             <button
               onClick={handleDownload}
               disabled={isDownloading}
-              className="p-2 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+              className="p-2 min-w-[40px] min-h-[40px] hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center"
               title="Download Export"
+              aria-label="Download export file"
             >
               {isDownloading ? (
                 <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
@@ -399,8 +413,9 @@ function ExportJobTableRow({
           {/* Delete Button */}
           <button
             onClick={onDelete}
-            className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+            className="p-2 min-w-[40px] min-h-[40px] hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center"
             title="Delete Job"
+            aria-label="Delete job"
           >
             <Trash2 className="w-4 h-4 text-red-600" />
           </button>

@@ -142,8 +142,9 @@ export function ExportJobCard({
             </span>
             <button
               onClick={handleCopyJobId}
-              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              className="p-2 min-w-[32px] min-h-[32px] hover:bg-gray-100 rounded transition-colors flex items-center justify-center"
               title="Copy Job ID"
+              aria-label="Copy job ID to clipboard"
             >
               {copied ? (
                 <Check className="w-3 h-3 text-green-600" />
@@ -276,7 +277,7 @@ export function ExportJobCard({
               className={cn("w-4 h-4", isRefreshing && "animate-spin")}
             />
           }
-          className="flex-1"
+          className="flex-1 min-h-[44px] md:min-h-0"
         >
           Refresh
         </Button>
@@ -290,7 +291,7 @@ export function ExportJobCard({
             disabled={isDownloading}
             loading={isDownloading}
             leftIcon={<Download className="w-4 h-4" />}
-            className="flex-1"
+            className="flex-1 min-h-[44px] md:min-h-0"
           >
             Download
           </Button>
@@ -301,7 +302,7 @@ export function ExportJobCard({
           variant="ghost"
           size="sm"
           onClick={onDelete}
-          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+          className="text-red-600 hover:text-red-700 hover:bg-red-50 min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0"
           title="Delete Job"
         >
           <Trash2 className="w-4 h-4" />
