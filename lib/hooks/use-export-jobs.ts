@@ -3,7 +3,7 @@
  * Handles job creation, status updates, deletion, and persistence
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { exportAPI } from '@/lib/api/exports';
 import type {
     ExportJob,
@@ -11,6 +11,9 @@ import type {
     MappingExportFilters,
     ExportJobStatus,
 } from '@/lib/types/exports';
+
+const STORAGE_KEY = 'export_jobs';
+const EXPIRATION_HOURS = 24;
 
 interface UseExportJobsReturn {
     jobs: ExportJob[];
@@ -24,6 +27,62 @@ interface UseExportJobsReturn {
 }
 
 /**
+ * Save jobs to localStorage
+ */
+const saveJobsToStorage = (jobs: ExportJob[]): void => {
+    try {
+        const serializedJobs = jobs.map((job) => ({
+            ...job,
+            createdAt: job.createdAt.toISOString(),
+            startedAt: job.startedAt?.toISOString() || null,
+            completedAt: job.completedAt?.toISOString() || null,
+            expiresAt: job.expiresAt?.toISOString() || null,
+        }));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(serializedJobs));
+        console.log('Jobs saved to localStorage:', serializedJobs.length);
+    } catch (err) {
+        console.error('Error saving jobs to localStorage:', err);
+    }
+};
+
+/**
+ * Load jobs from localStorage
+ */
+const loadJobsFromStorage = (): ExportJob[] => {
+    try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (!stored) {
+            return [];
+        }
+
+        const parsed = JSON.parse(stored);
+        const now = new Date();
+        const expirationTime = EXPIRATION_HOURS * 60 * 60 * 1000; // 24 hours in milliseconds
+
+        // Deserialize and filter expired jobs
+        const jobs: ExportJob[] = parsed
+            .map((job: any) => ({
+                ...job,
+                createdAt: new Date(job.createdAt),
+                startedAt: job.startedAt ? new Date(job.startedAt) : null,
+                completedAt: job.completedAt ? new Date(job.completedAt) : null,
+                expiresAt: job.expiresAt ? new Date(job.expiresAt) : null,
+            }))
+            .filter((job: ExportJob) => {
+                // Remove jobs older than 24 hours
+                const age = now.getTime() - job.createdAt.getTime();
+                return age < expirationTime;
+            });
+
+        console.log('Jobs loaded from localStorage:', jobs.length);
+        return jobs;
+    } catch (err) {
+        console.error('Error loading jobs from localStorage:', err);
+        return [];
+    }
+};
+
+/**
  * Hook for managing export jobs
  * Provides functions to create, update, and manage export jobs
  */
@@ -31,6 +90,19 @@ export function useExportJobs(): UseExportJobsReturn {
     const [jobs, setJobs] = useState<ExportJob[]>([]);
     const [isCreating, setIsCreating] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // Load jobs from localStorage on mount
+    useEffect(() => {
+        const loadedJobs = loadJobsFromStorage();
+        setJobs(loadedJobs);
+    }, []);
+
+    // Save jobs to localStorage whenever they change
+    useEffect(() => {
+        if (jobs.length > 0) {
+            saveJobsToStorage(jobs);
+        }
+    }, [jobs]);
 
     /**
      * Convert API response to ExportJob format
