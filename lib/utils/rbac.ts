@@ -171,6 +171,7 @@ export function canAccessRoute(user: User | null, route: string): boolean {
         '/dashboard/hotels': [Permission.VIEW_ALL_HOTELS],
         '/dashboard/analytics': [Permission.VIEW_ANALYTICS],
         '/dashboard/providers': [Permission.VIEW_ALL_PROVIDERS],
+        '/dashboard/exports': [Permission.EXPORT_DATA],
         '/dashboard/settings': [Permission.VIEW_SYSTEM_SETTINGS],
     };
 

@@ -20,6 +20,8 @@ import { useExportNotifications } from "@/lib/hooks/use-export-notifications";
 import { useRetryManager } from "@/lib/hooks/use-retry-manager";
 import { useKeyboardShortcuts } from "@/lib/hooks/use-keyboard-shortcuts";
 import { useNotification } from "@/lib/components/notifications/notification-provider";
+import { PermissionGuard } from "@/lib/components/auth/permission-guard";
+import { Permission } from "@/lib/utils/rbac";
 import { SkipLink } from "@/lib/components/ui/skip-link";
 import { ExportFilterPanel } from "./components/export-filter-panel";
 import { MappingExportPanel } from "./components/mapping-export-panel";
@@ -627,7 +629,24 @@ export default function ExportsPage() {
   }
 
   return (
-    <>
+    <PermissionGuard
+      permission={Permission.EXPORT_DATA}
+      fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FileDown className="w-8 h-8 text-red-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Access Denied
+            </h2>
+            <p className="text-gray-600">
+              You don't have permission to access the exports feature.
+            </p>
+          </div>
+        </div>
+      }
+    >
       {/* Skip Link for Screen Readers */}
       <SkipLink href="#main-content">Skip to main content</SkipLink>
 
@@ -790,6 +809,6 @@ export default function ExportsPage() {
           />
         </div>
       </div>
-    </>
+    </PermissionGuard>
   );
 }
