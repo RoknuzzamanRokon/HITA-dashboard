@@ -85,7 +85,7 @@ export const mainMenuItems: MenuItem[] = [
         id: "exports",
         label: "Content Export",
         icon: Download,
-        path: "/exports",
+        path: "/dashboard/exports",
         description: "Download and export content data",
         requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER, UserRole.GENERAL_USER],
     },
@@ -260,7 +260,7 @@ export function getQuickActions(userRole: UserRole): MenuItem[] {
                 id: "quick-export",
                 label: "Export Data",
                 icon: Download,
-                path: "/exports",
+                path: "/dashboard/exports",
                 requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER, UserRole.GENERAL_USER],
             }
         );

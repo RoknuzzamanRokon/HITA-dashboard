@@ -41,7 +41,7 @@ const routeConfigs: RouteConfig[] = [
         requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER, UserRole.GENERAL_USER],
     },
     {
-        path: "/exports",
+        path: "/dashboard/exports",
         requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER, UserRole.GENERAL_USER],
     },
     {
