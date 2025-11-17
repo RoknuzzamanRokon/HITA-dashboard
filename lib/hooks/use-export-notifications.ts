@@ -86,6 +86,20 @@ export function useExportNotifications({
                 notifiedEvents.add('failed');
                 console.log(`Notification sent: Job ${jobId} failed`);
             }
+
+            // Notification for job expiration (Requirement 4.5, 4.6)
+            // Trigger when job status changes to expired
+            if (job.status === 'expired' && !notifiedEvents.has('expired')) {
+                addNotification({
+                    type: 'warning',
+                    title: 'Export Expired',
+                    message: `Export job ${jobId} has expired. The download link is no longer available. Please create a new export if needed.`,
+                    autoDismiss: false, // Warning notifications stay until dismissed
+                });
+
+                notifiedEvents.add('expired');
+                console.log(`Notification sent: Job ${jobId} expired`);
+            }
         });
 
         // Cleanup: Remove tracking for jobs that no longer exist

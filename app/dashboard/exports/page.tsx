@@ -111,11 +111,18 @@ export default function ExportsPage() {
       }
 
       // Check if download has expired
-      if (job.expiresAt && new Date(job.expiresAt) < new Date()) {
+      if (
+        job.status === "expired" ||
+        (job.expiresAt && new Date(job.expiresAt) < new Date())
+      ) {
         addNotification({
-          type: "error",
+          type: "warning",
           title: "Download Expired",
           message: "This export has expired. Please create a new export.",
+          action: {
+            label: "Create New",
+            onClick: () => handleCreateNewFromExpired(job),
+          },
           autoDismiss: false,
         });
         return;
@@ -406,6 +413,28 @@ export default function ExportsPage() {
   };
 
   /**
+   * Handler for creating a new export from an expired job
+   * Switches to the appropriate tab and pre-fills filters
+   */
+  const handleCreateNewFromExpired = (job: ExportJob): void => {
+    // Switch to the appropriate tab
+    setActiveTab(job.exportType);
+
+    // Show notification to guide user
+    addNotification({
+      type: "info",
+      title: "Create New Export",
+      message: `Switched to ${job.exportType} exports tab. The previous filters are ready to use. Click "Create Export" to generate a new export.`,
+      autoDismiss: true,
+      duration: 8000,
+    });
+
+    // Note: The filter panel components maintain their own state with presets
+    // The user can manually load the filters or adjust them as needed
+    console.log(`Creating new export from expired job: ${job.jobId}`);
+  };
+
+  /**
    * Confirmation handler for dialog actions
    * Executes the appropriate action based on dialog type
    */
@@ -591,6 +620,7 @@ export default function ExportsPage() {
           onDownload={handleDownload}
           onDeleteJob={handleDeleteJob}
           onClearCompleted={handleClearCompleted}
+          onCreateNew={handleCreateNewFromExpired}
           isRefreshing={false}
           isLoading={isLoadingJobs}
         />

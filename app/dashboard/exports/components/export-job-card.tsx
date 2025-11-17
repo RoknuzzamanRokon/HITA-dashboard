@@ -26,6 +26,7 @@ export interface ExportJobCardProps {
   onRefresh: () => Promise<void>;
   onDownload: () => Promise<void>;
   onDelete: () => void;
+  onCreateNew?: () => void;
 }
 
 export function ExportJobCard({
@@ -33,6 +34,7 @@ export function ExportJobCard({
   onRefresh,
   onDownload,
   onDelete,
+  onCreateNew,
 }: ExportJobCardProps) {
   const [copied, setCopied] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -122,7 +124,11 @@ export function ExportJobCard({
   const typeConfig = exportTypeConfig[job.exportType];
 
   // Check if download is available
-  const canDownload = job.status === "completed" && !isExpired();
+  // Download is only available for completed jobs that haven't expired
+  const canDownload =
+    job.status === "completed" &&
+    job.expiresAt &&
+    new Date(job.expiresAt) >= new Date();
 
   // Check if job is expired
   function isExpired(): boolean {
@@ -235,18 +241,23 @@ export function ExportJobCard({
           </div>
         )}
 
-        {job.expiresAt && job.status === "completed" && (
-          <div
-            className={cn(
-              "flex items-center gap-2",
-              isExpired() ? "text-red-600" : "text-gray-600"
-            )}
-          >
-            <AlertCircle className="w-3 h-3" />
-            <span>Expires:</span>
-            <span className="font-medium">{formatDateTime(job.expiresAt)}</span>
-          </div>
-        )}
+        {job.expiresAt &&
+          (job.status === "completed" || job.status === "expired") && (
+            <div
+              className={cn(
+                "flex items-center gap-2",
+                job.status === "expired" || isExpired()
+                  ? "text-red-600"
+                  : "text-gray-600"
+              )}
+            >
+              <AlertCircle className="w-3 h-3" />
+              <span>{job.status === "expired" ? "Expired:" : "Expires:"}</span>
+              <span className="font-medium">
+                {formatDateTime(job.expiresAt)}
+              </span>
+            </div>
+          )}
       </div>
 
       {/* Error Message (for failed jobs) */}
@@ -264,25 +275,46 @@ export function ExportJobCard({
         </div>
       )}
 
+      {/* Expiration Warning (for expired jobs) */}
+      {job.status === "expired" && (
+        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div className="flex items-start gap-2">
+            <Clock className="w-4 h-4 text-yellow-600 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-yellow-900 mb-1">
+                Download Expired
+              </p>
+              <p className="text-xs text-yellow-700 wrap-break-word">
+                This export has expired and is no longer available for download.
+                Please create a new export with the same filters if you still
+                need this data.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Action Buttons */}
       <div className="flex items-center gap-2 pt-4 border-t border-gray-200">
-        {/* Refresh Button */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          leftIcon={
-            <RefreshCw
-              className={cn("w-4 h-4", isRefreshing && "animate-spin")}
-            />
-          }
-          className="flex-1 min-h-[44px] md:min-h-0"
-        >
-          Refresh
-        </Button>
+        {/* Refresh Button (not shown for expired jobs) */}
+        {job.status !== "expired" && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            leftIcon={
+              <RefreshCw
+                className={cn("w-4 h-4", isRefreshing && "animate-spin")}
+              />
+            }
+            className="flex-1 min-h-[44px] md:min-h-0"
+          >
+            Refresh
+          </Button>
+        )}
 
-        {/* Download Button (only for completed jobs) */}
+        {/* Download Button (only for completed jobs that haven't expired) */}
         {canDownload && (
           <Button
             variant="primary"
@@ -294,6 +326,19 @@ export function ExportJobCard({
             className="flex-1 min-h-[44px] md:min-h-0"
           >
             Download
+          </Button>
+        )}
+
+        {/* Create New Export Button (only for expired jobs) */}
+        {job.status === "expired" && onCreateNew && (
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={onCreateNew}
+            leftIcon={<FileJson className="w-4 h-4" />}
+            className="flex-1 min-h-[44px] md:min-h-0"
+          >
+            Create New Export
           </Button>
         )}
 

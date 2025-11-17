@@ -104,6 +104,45 @@ export function useExportJobs(): UseExportJobsReturn {
         }
     }, [jobs]);
 
+    // Check for expired jobs and update their status
+    useEffect(() => {
+        const checkExpiration = () => {
+            const now = new Date();
+            let hasExpiredJobs = false;
+
+            setJobs((prevJobs) =>
+                prevJobs.map((job) => {
+                    // Only check completed jobs that haven't been marked as expired
+                    if (
+                        job.status === 'completed' &&
+                        job.expiresAt &&
+                        new Date(job.expiresAt) < now
+                    ) {
+                        hasExpiredJobs = true;
+                        console.log(`Job ${job.jobId} has expired`);
+                        return {
+                            ...job,
+                            status: 'expired' as const,
+                        };
+                    }
+                    return job;
+                })
+            );
+
+            if (hasExpiredJobs) {
+                console.log('Expired jobs detected and updated');
+            }
+        };
+
+        // Check immediately on mount
+        checkExpiration();
+
+        // Check every minute for expired jobs
+        const intervalId = setInterval(checkExpiration, 60000);
+
+        return () => clearInterval(intervalId);
+    }, []);
+
     /**
      * Convert API response to ExportJob format
      */

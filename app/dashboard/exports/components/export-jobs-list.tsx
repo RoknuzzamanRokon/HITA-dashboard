@@ -41,6 +41,7 @@ export interface ExportJobsListProps {
   onDownload: (jobId: string) => Promise<void>;
   onDeleteJob: (jobId: string) => void;
   onClearCompleted: () => void;
+  onCreateNew?: (job: ExportJob) => void;
   isRefreshing?: boolean;
   isLoading?: boolean;
 }
@@ -51,6 +52,7 @@ export function ExportJobsList({
   onDownload,
   onDeleteJob,
   onClearCompleted,
+  onCreateNew,
   isRefreshing = false,
   isLoading = false,
 }: ExportJobsListProps) {
@@ -157,6 +159,7 @@ export function ExportJobsList({
                   onRefresh={() => onRefreshJob(job.jobId)}
                   onDownload={() => onDownload(job.jobId)}
                   onDelete={() => onDeleteJob(job.jobId)}
+                  onCreateNew={onCreateNew ? () => onCreateNew(job) : undefined}
                 />
               ))}
             </tbody>
@@ -173,6 +176,7 @@ export function ExportJobsList({
             onRefresh={() => onRefreshJob(job.jobId)}
             onDownload={() => onDownload(job.jobId)}
             onDelete={() => onDeleteJob(job.jobId)}
+            onCreateNew={onCreateNew ? () => onCreateNew(job) : undefined}
           />
         ))}
       </div>
@@ -186,6 +190,7 @@ export function ExportJobsList({
             onRefresh={() => onRefreshJob(job.jobId)}
             onDownload={() => onDownload(job.jobId)}
             onDelete={() => onDeleteJob(job.jobId)}
+            onCreateNew={onCreateNew ? () => onCreateNew(job) : undefined}
           />
         ))}
       </div>
@@ -199,6 +204,7 @@ interface ExportJobTableRowProps {
   onRefresh: () => Promise<void>;
   onDownload: () => Promise<void>;
   onDelete: () => void;
+  onCreateNew?: () => void;
 }
 
 function ExportJobTableRow({
@@ -206,6 +212,7 @@ function ExportJobTableRow({
   onRefresh,
   onDownload,
   onDelete,
+  onCreateNew,
 }: ExportJobTableRowProps) {
   const [copied, setCopied] = React.useState(false);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
@@ -385,21 +392,23 @@ function ExportJobTableRow({
       {/* Actions */}
       <td className="px-6 py-4 whitespace-nowrap text-right">
         <div className="flex items-center justify-end gap-2">
-          {/* Refresh Button */}
-          <button
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="p-2 min-w-[40px] min-h-[40px] hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center"
-            title="Refresh Status"
-            aria-label="Refresh job status"
-          >
-            <RefreshCw
-              className={cn(
-                "w-4 h-4 text-gray-600",
-                isRefreshing && "animate-spin"
-              )}
-            />
-          </button>
+          {/* Refresh Button (not shown for expired jobs) */}
+          {job.status !== "expired" && (
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="p-2 min-w-[40px] min-h-[40px] hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center"
+              title="Refresh Status"
+              aria-label="Refresh job status"
+            >
+              <RefreshCw
+                className={cn(
+                  "w-4 h-4 text-gray-600",
+                  isRefreshing && "animate-spin"
+                )}
+              />
+            </button>
+          )}
 
           {/* Download Button */}
           {canDownload && (
@@ -415,6 +424,18 @@ function ExportJobTableRow({
               ) : (
                 <Download className="w-4 h-4 text-blue-600" />
               )}
+            </button>
+          )}
+
+          {/* Create New Export Button (only for expired jobs) */}
+          {job.status === "expired" && onCreateNew && (
+            <button
+              onClick={onCreateNew}
+              className="p-2 min-w-[40px] min-h-[40px] hover:bg-blue-50 rounded-lg transition-colors flex items-center justify-center"
+              title="Create New Export"
+              aria-label="Create new export with same filters"
+            >
+              <FileJson className="w-4 h-4 text-blue-600" />
             </button>
           )}
 
