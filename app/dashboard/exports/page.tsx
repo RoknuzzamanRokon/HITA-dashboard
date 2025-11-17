@@ -12,13 +12,15 @@
  * - Export jobs list with download capabilities
  */
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useRequireAuth } from "@/lib/hooks/use-auth";
 import { useExportJobs } from "@/lib/hooks/use-export-jobs";
 import { useExportPolling } from "@/lib/hooks/use-export-polling";
 import { useExportNotifications } from "@/lib/hooks/use-export-notifications";
 import { useRetryManager } from "@/lib/hooks/use-retry-manager";
+import { useKeyboardShortcuts } from "@/lib/hooks/use-keyboard-shortcuts";
 import { useNotification } from "@/lib/components/notifications/notification-provider";
+import { SkipLink } from "@/lib/components/ui/skip-link";
 import { ExportFilterPanel } from "./components/export-filter-panel";
 import { MappingExportPanel } from "./components/mapping-export-panel";
 import { ExportJobsList } from "./components/export-jobs-list";
@@ -55,6 +57,10 @@ export default function ExportsPage() {
     isOpen: false,
     type: null,
   });
+
+  // Refs for keyboard navigation
+  const filterPanelRef = useRef<HTMLDivElement>(null);
+  const jobsListRef = useRef<HTMLDivElement>(null);
 
   // Initialize notification system
   const { addNotification } = useNotification();
@@ -516,6 +522,66 @@ export default function ExportsPage() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Keyboard shortcuts
+  useKeyboardShortcuts([
+    {
+      key: "e",
+      ctrlKey: true,
+      callback: () => {
+        // Focus on the filter panel to create export
+        if (filterPanelRef.current) {
+          const submitButton = filterPanelRef.current.querySelector(
+            'button[type="submit"]'
+          ) as HTMLButtonElement;
+          if (submitButton && !submitButton.disabled) {
+            submitButton.focus();
+            addNotification({
+              type: "info",
+              title: "Keyboard Shortcut",
+              message: "Press Enter to create export",
+              autoDismiss: true,
+              duration: 2000,
+            });
+          }
+        }
+      },
+      description: "Focus on create export button",
+    },
+    {
+      key: "r",
+      ctrlKey: true,
+      callback: () => {
+        // Refresh all processing jobs
+        const processingJobs = jobs.filter(
+          (job) => job.status === "processing"
+        );
+        if (processingJobs.length > 0) {
+          processingJobs.forEach((job) => {
+            handleRefreshJob(job.jobId);
+          });
+          addNotification({
+            type: "info",
+            title: "Refreshing Jobs",
+            message: `Refreshing ${processingJobs.length} processing job${
+              processingJobs.length !== 1 ? "s" : ""
+            }`,
+            autoDismiss: true,
+            duration: 3000,
+          });
+        } else {
+          addNotification({
+            type: "info",
+            title: "No Jobs to Refresh",
+            message: "There are no processing jobs to refresh",
+            autoDismiss: true,
+            duration: 2000,
+          });
+        }
+      },
+      description: "Refresh all processing jobs",
+    },
+  ]);
+
   // Show loading state while authenticating
   if (authLoading) {
     return (
@@ -534,117 +600,156 @@ export default function ExportsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-slate-100 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Page Header */}
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-linear-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-              <FileDown className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">
-                Data Exports
-              </h1>
-              <p className="text-sm text-slate-600 mt-1">
-                Create and manage hotel and mapping data exports
-              </p>
-            </div>
-          </div>
-        </div>
+    <>
+      {/* Skip Link for Screen Readers */}
+      <SkipLink href="#main-content">Skip to main content</SkipLink>
 
-        {/* Tab Navigation */}
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-2">
-          <div className="flex gap-2">
-            <button
-              onClick={() => setActiveTab("hotel")}
-              className={clsx(
-                "flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all",
-                activeTab === "hotel"
-                  ? "bg-blue-600 text-white shadow-md"
-                  : "text-slate-600 hover:bg-slate-100"
-              )}
-            >
-              <FileDown className="w-5 h-5" />
-              Hotel Exports
-            </button>
-            <button
-              onClick={() => setActiveTab("mapping")}
-              className={clsx(
-                "flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all",
-                activeTab === "mapping"
-                  ? "bg-purple-600 text-white shadow-md"
-                  : "text-slate-600 hover:bg-slate-100"
-              )}
-            >
-              <Map className="w-5 h-5" />
-              Mapping Exports
-            </button>
-          </div>
-        </div>
-
-        {/* Filter Panel - Conditionally render based on active tab */}
-        {activeTab === "hotel" ? (
-          <ExportFilterPanel
-            onExportCreate={handleCreateHotelExport}
-            isLoading={isCreating}
-          />
-        ) : (
-          <MappingExportPanel
-            onExportCreate={handleCreateMappingExport}
-            isLoading={isCreating}
-          />
-        )}
-
-        {/* Display error if job creation failed */}
-        {jobsError && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <div className="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-                <span className="text-red-600 text-sm font-bold">!</span>
+      <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-slate-100 p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* Page Header */}
+          <header className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-linear-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                <FileDown className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-red-900 mb-1">
-                  Export Creation Failed
-                </h3>
-                <p className="text-sm text-red-700">{jobsError}</p>
+                <h1 className="text-2xl font-bold text-slate-900">
+                  Data Exports
+                </h1>
+                <p className="text-sm text-slate-600 mt-1">
+                  Create and manage hotel and mapping data exports
+                </p>
               </div>
             </div>
-          </div>
-        )}
+          </header>
 
-        {/* Export Jobs List */}
-        <ExportJobsList
-          jobs={jobs}
-          onRefreshJob={handleRefreshJob}
-          onDownload={handleDownload}
-          onDeleteJob={handleDeleteJob}
-          onClearCompleted={handleClearCompleted}
-          onCreateNew={handleCreateNewFromExpired}
-          isRefreshing={false}
-          isLoading={isLoadingJobs}
-        />
+          {/* Tab Navigation */}
+          <nav
+            className="bg-white rounded-2xl shadow-lg border border-slate-200 p-2"
+            role="tablist"
+            aria-label="Export type selection"
+          >
+            <div className="flex gap-2">
+              <button
+                role="tab"
+                aria-selected={activeTab === "hotel"}
+                aria-controls="hotel-panel"
+                id="hotel-tab"
+                onClick={() => setActiveTab("hotel")}
+                className={clsx(
+                  "flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all",
+                  "focus:outline-none focus:ring-4 focus:ring-blue-300",
+                  activeTab === "hotel"
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "text-slate-600 hover:bg-slate-100"
+                )}
+              >
+                <FileDown className="w-5 h-5" aria-hidden="true" />
+                Hotel Exports
+              </button>
+              <button
+                role="tab"
+                aria-selected={activeTab === "mapping"}
+                aria-controls="mapping-panel"
+                id="mapping-tab"
+                onClick={() => setActiveTab("mapping")}
+                className={clsx(
+                  "flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all",
+                  "focus:outline-none focus:ring-4 focus:ring-purple-300",
+                  activeTab === "mapping"
+                    ? "bg-purple-600 text-white shadow-md"
+                    : "text-slate-600 hover:bg-slate-100"
+                )}
+              >
+                <Map className="w-5 h-5" aria-hidden="true" />
+                Mapping Exports
+              </button>
+            </div>
+          </nav>
 
-        {/* Confirmation Dialog */}
-        <ConfirmationDialog
-          isOpen={confirmDialog.isOpen}
-          onClose={handleCloseDialog}
-          onConfirm={handleConfirmAction}
-          title={
-            confirmDialog.type === "delete"
-              ? "Delete Export Job?"
-              : "Clear Completed Jobs?"
-          }
-          message={
-            confirmDialog.type === "delete"
-              ? "Are you sure you want to delete this export job? This will remove it from your list."
-              : "Are you sure you want to clear all completed, failed, and expired jobs? This will remove them from your list."
-          }
-          confirmText={confirmDialog.type === "delete" ? "Delete" : "Clear All"}
-          cancelText="Cancel"
-          variant="danger"
-        />
+          {/* Filter Panel - Conditionally render based on active tab */}
+          <main id="main-content" ref={filterPanelRef}>
+            {activeTab === "hotel" ? (
+              <div
+                role="tabpanel"
+                id="hotel-panel"
+                aria-labelledby="hotel-tab"
+                tabIndex={0}
+              >
+                <ExportFilterPanel
+                  onExportCreate={handleCreateHotelExport}
+                  isLoading={isCreating}
+                />
+              </div>
+            ) : (
+              <div
+                role="tabpanel"
+                id="mapping-panel"
+                aria-labelledby="mapping-tab"
+                tabIndex={0}
+              >
+                <MappingExportPanel
+                  onExportCreate={handleCreateMappingExport}
+                  isLoading={isCreating}
+                />
+              </div>
+            )}
+          </main>
+
+          {/* Display error if job creation failed */}
+          {jobsError && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-red-600 text-sm font-bold">!</span>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-red-900 mb-1">
+                    Export Creation Failed
+                  </h3>
+                  <p className="text-sm text-red-700">{jobsError}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Export Jobs List */}
+          <section ref={jobsListRef} aria-label="Export jobs">
+            <ExportJobsList
+              jobs={jobs}
+              onRefreshJob={handleRefreshJob}
+              onDownload={handleDownload}
+              onDeleteJob={handleDeleteJob}
+              onClearCompleted={handleClearCompleted}
+              onCreateNew={handleCreateNewFromExpired}
+              isRefreshing={false}
+              isLoading={isLoadingJobs}
+            />
+          </section>
+
+          {/* Confirmation Dialog */}
+          <ConfirmationDialog
+            isOpen={confirmDialog.isOpen}
+            onClose={handleCloseDialog}
+            onConfirm={handleConfirmAction}
+            title={
+              confirmDialog.type === "delete"
+                ? "Delete Export Job?"
+                : "Clear Completed Jobs?"
+            }
+            message={
+              confirmDialog.type === "delete"
+                ? "Are you sure you want to delete this export job? This will remove it from your list."
+                : "Are you sure you want to clear all completed, failed, and expired jobs? This will remove them from your list."
+            }
+            confirmText={
+              confirmDialog.type === "delete" ? "Delete" : "Clear All"
+            }
+            cancelText="Cancel"
+            variant="danger"
+          />
+        </div>
       </div>
-    </div>
+    </>
   );
 }

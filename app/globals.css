@@ -289,10 +289,50 @@ body {
 
 /* Dark mode scrollbar styles removed */
 
-/* Focus styles for accessibility */
+/* Focus styles for accessibility - Enhanced for keyboard navigation */
 .focus-visible:focus {
     outline: 2px solid #3b82f6;
     outline-offset: 2px;
+}
+
+/* Enhanced focus indicators for all interactive elements */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible,
+[role="tab"]:focus-visible,
+[tabindex]:focus-visible {
+    outline: 3px solid #3b82f6;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+    transition: outline 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Focus indicators for primary color theme */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+[role="tab"]:focus-visible {
+    outline-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.2);
+}
+
+/* Focus within for containers */
+.focus-within-ring:focus-within {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Remove default focus outline for mouse users */
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible),
+select:focus:not(:focus-visible) {
+    outline: none;
+    box-shadow: none;
 }
 
 /* Screen reader only utility class for accessibility */
@@ -317,6 +357,19 @@ body {
     overflow: visible;
     clip: auto;
     white-space: normal;
+}
+
+/* Focus-visible variant for skip links */
+.focus\:not-sr-only:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 0.5rem 1rem;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+    border-width: initial;
 }
 
 /* Loading spinner animation */
