@@ -141,6 +141,20 @@ export function ExportFilterPanel({
     return Object.keys(newErrors).length === 0;
   };
 
+  // Format date to ISO 8601 format (YYYY-MM-DDTHH:mm:ss)
+  const formatDateToISO8601 = (dateString: string): string => {
+    if (!dateString) return "";
+
+    const date = new Date(dateString);
+    // Ensure valid date
+    if (isNaN(date.getTime())) return "";
+
+    // Format to ISO 8601 with time: YYYY-MM-DDTHH:mm:ss
+    // toISOString() returns YYYY-MM-DDTHH:mm:ss.sssZ, we need to remove milliseconds and Z
+    const isoString = date.toISOString();
+    return isoString.substring(0, 19); // Returns YYYY-MM-DDTHH:mm:ss
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -149,27 +163,43 @@ export function ExportFilterPanel({
       return;
     }
 
-    const filters: HotelExportFilters = {
-      filters: {
-        suppliers,
-        country_codes: countryCodes,
-        min_rating: minRating,
-        max_rating: maxRating,
-        date_from: dateFrom ? new Date(dateFrom).toISOString() : "",
-        date_to: dateTo ? new Date(dateTo).toISOString() : "",
-        ittids,
-        property_types: propertyTypes,
-        page,
-        page_size: pageSize,
-        max_records: maxRecords,
-      },
-      format,
-      include_locations: includeLocations,
-      include_contacts: includeContacts,
-      include_mappings: includeMappings,
-    };
+    try {
+      // Build HotelExportFilters object matching API schema
+      const filters: HotelExportFilters = {
+        filters: {
+          suppliers,
+          country_codes: countryCodes,
+          min_rating: minRating,
+          max_rating: maxRating,
+          date_from: formatDateToISO8601(dateFrom),
+          date_to: formatDateToISO8601(dateTo),
+          ittids,
+          property_types: propertyTypes,
+          page,
+          page_size: pageSize,
+          max_records: maxRecords,
+        },
+        format,
+        include_locations: includeLocations,
+        include_contacts: includeContacts,
+        include_mappings: includeMappings,
+      };
 
-    await onExportCreate(filters);
+      // Call onExportCreate prop with formatted filters
+      await onExportCreate(filters);
+    } catch (error) {
+      // Handle submission errors
+      console.error("Export creation failed:", error);
+
+      // Set a general error message
+      setErrors((prev) => ({
+        ...prev,
+        suppliers:
+          error instanceof Error
+            ? error.message
+            : "Failed to create export. Please try again.",
+      }));
+    }
   };
 
   // Check if form is valid for disabling submit button
