@@ -14,9 +14,7 @@
  */
 
 import React, { useMemo, useRef, useEffect, useState } from "react";
-import * as ReactWindow from "react-window";
-
-const List = (ReactWindow as any).FixedSizeList;
+import { List as FixedSizeList } from "react-window";
 import { ExportJob } from "@/lib/types/exports";
 import { ExportJobCard } from "./export-job-card";
 import { ExportJobsListSkeleton } from "./export-job-skeleton";
@@ -217,24 +215,24 @@ export function ExportJobsList({
               {useVirtualScrolling ? (
                 <tr>
                   <td colSpan={7} className="p-0">
-                    <List
-                      height={Math.min(
+                    <FixedSizeList
+                      rowCount={sortedJobs.length}
+                      rowHeight={TABLE_ROW_HEIGHT}
+                      defaultHeight={Math.min(
                         600,
                         sortedJobs.length * TABLE_ROW_HEIGHT
                       )}
-                      itemCount={sortedJobs.length}
-                      itemSize={TABLE_ROW_HEIGHT}
-                      width="100%"
-                      itemData={{
-                        jobs: sortedJobs,
-                        onRefreshJob,
-                        onDownload,
-                        onDeleteJob,
-                        onCreateNew,
-                      }}
-                    >
-                      {VirtualTableRow}
-                    </List>
+                      rowComponent={VirtualTableRow as any}
+                      rowProps={
+                        {
+                          jobs: sortedJobs,
+                          onRefreshJob,
+                          onDownload,
+                          onDeleteJob,
+                          onCreateNew,
+                        } as any
+                      }
+                    />
                   </td>
                 </tr>
               ) : (
@@ -263,25 +261,25 @@ export function ExportJobsList({
         aria-label="Export jobs cards"
       >
         {useVirtualScrolling ? (
-          <List
-            height={Math.min(
+          <FixedSizeList
+            rowCount={Math.ceil(sortedJobs.length / 2)}
+            rowHeight={CARD_HEIGHT + CARD_GAP}
+            defaultHeight={Math.min(
               800,
               Math.ceil(sortedJobs.length / 2) * (CARD_HEIGHT + CARD_GAP)
             )}
-            itemCount={Math.ceil(sortedJobs.length / 2)}
-            itemSize={CARD_HEIGHT + CARD_GAP}
-            width="100%"
-            itemData={{
-              jobs: sortedJobs,
-              onRefreshJob,
-              onDownload,
-              onDeleteJob,
-              onCreateNew,
-              columns: 2,
-            }}
-          >
-            {VirtualCardRow}
-          </List>
+            rowComponent={VirtualCardRow as any}
+            rowProps={
+              {
+                jobs: sortedJobs,
+                onRefreshJob,
+                onDownload,
+                onDeleteJob,
+                onCreateNew,
+                columns: 2,
+              } as any
+            }
+          />
         ) : (
           <div className="grid grid-cols-2 gap-4">
             {sortedJobs.map((job) => (
@@ -306,22 +304,25 @@ export function ExportJobsList({
         aria-label="Export jobs cards"
       >
         {useVirtualScrolling ? (
-          <List
-            height={Math.min(800, sortedJobs.length * (CARD_HEIGHT + CARD_GAP))}
-            itemCount={sortedJobs.length}
-            itemSize={CARD_HEIGHT + CARD_GAP}
-            width="100%"
-            itemData={{
-              jobs: sortedJobs,
-              onRefreshJob,
-              onDownload,
-              onDeleteJob,
-              onCreateNew,
-              columns: 1,
-            }}
-          >
-            {VirtualCardRow}
-          </List>
+          <FixedSizeList
+            rowCount={sortedJobs.length}
+            rowHeight={CARD_HEIGHT + CARD_GAP}
+            defaultHeight={Math.min(
+              800,
+              sortedJobs.length * (CARD_HEIGHT + CARD_GAP)
+            )}
+            rowComponent={VirtualCardRow as any}
+            rowProps={
+              {
+                jobs: sortedJobs,
+                onRefreshJob,
+                onDownload,
+                onDeleteJob,
+                onCreateNew,
+                columns: 1,
+              } as any
+            }
+          />
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {sortedJobs.map((job) => (
@@ -352,16 +353,22 @@ interface VirtualTableRowData {
 }
 
 const VirtualTableRow = React.memo(
-  ({
-    index,
-    style,
-    data,
-  }: {
-    index: number;
-    style: React.CSSProperties;
-    data: VirtualTableRowData;
-  }) => {
-    const { jobs, onRefreshJob, onDownload, onDeleteJob, onCreateNew } = data;
+  (
+    props: {
+      index: number;
+      style: React.CSSProperties;
+      ariaAttributes?: any;
+    } & VirtualTableRowData
+  ) => {
+    const {
+      index,
+      style,
+      jobs,
+      onRefreshJob,
+      onDownload,
+      onDeleteJob,
+      onCreateNew,
+    } = props;
     const job = jobs[index];
 
     return (
@@ -390,24 +397,23 @@ interface VirtualCardRowData extends VirtualTableRowData {
 }
 
 const VirtualCardRow = React.memo(
-  ({
-    index,
-    style,
-    data,
-  }: {
-    index: number;
-    style: React.CSSProperties;
-    data: VirtualCardRowData;
-  }) => {
+  (
+    props: {
+      index: number;
+      style: React.CSSProperties;
+      ariaAttributes?: any;
+    } & VirtualCardRowData
+  ) => {
     const {
+      index,
+      style,
       jobs,
       onRefreshJob,
       onDownload,
       onDeleteJob,
       onCreateNew,
       columns,
-    } = data;
-
+    } = props;
     if (columns === 2) {
       // Two-column layout for tablet
       const leftIndex = index * 2;
