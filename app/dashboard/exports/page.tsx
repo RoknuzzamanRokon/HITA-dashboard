@@ -21,6 +21,7 @@ import { useNotification } from "@/lib/components/notifications/notification-pro
 import { ExportFilterPanel } from "./components/export-filter-panel";
 import { MappingExportPanel } from "./components/mapping-export-panel";
 import { ExportJobsList } from "./components/export-jobs-list";
+import { ConfirmationDialog } from "@/lib/components/ui/confirmation-dialog";
 import { exportAPI } from "@/lib/api/exports";
 import type {
   HotelExportFilters,
@@ -32,12 +33,24 @@ import { clsx } from "clsx";
 
 type ExportTab = "hotel" | "mapping";
 
+type ConfirmationDialogState = {
+  isOpen: boolean;
+  type: "delete" | "clearCompleted" | null;
+  jobId?: string;
+};
+
 export default function ExportsPage() {
   // Authentication check
   const { isAuthenticated, isLoading: authLoading } = useRequireAuth();
 
   // Tab state for switching between export types
   const [activeTab, setActiveTab] = useState<ExportTab>("hotel");
+
+  // Confirmation dialog state
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmationDialogState>({
+    isOpen: false,
+    type: null,
+  });
 
   // Initialize notification system
   const { addNotification } = useNotification();
@@ -223,6 +236,118 @@ export default function ExportsPage() {
     }
   };
 
+  /**
+   * Handler for refreshing individual job status
+   * Manually triggers a status update for a specific job
+   */
+  const handleRefreshJob = async (jobId: string): Promise<void> => {
+    try {
+      await refreshJobStatus(jobId);
+      console.log(`✅ Job status refreshed: ${jobId}`);
+    } catch (error) {
+      // Display error notification
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to refresh job status. Please try again.";
+
+      addNotification({
+        type: "error",
+        title: "Refresh Failed",
+        message: errorMessage,
+        action: {
+          label: "Retry",
+          onClick: () => handleRefreshJob(jobId),
+        },
+        autoDismiss: false,
+      });
+
+      console.error("Job refresh error:", error);
+    }
+  };
+
+  /**
+   * Handler for deleting a job
+   * Shows confirmation dialog before deleting
+   */
+  const handleDeleteJob = (jobId: string): void => {
+    setConfirmDialog({
+      isOpen: true,
+      type: "delete",
+      jobId,
+    });
+  };
+
+  /**
+   * Handler for clearing all completed jobs
+   * Shows confirmation dialog before clearing
+   */
+  const handleClearCompleted = (): void => {
+    setConfirmDialog({
+      isOpen: true,
+      type: "clearCompleted",
+    });
+  };
+
+  /**
+   * Confirmation handler for dialog actions
+   * Executes the appropriate action based on dialog type
+   */
+  const handleConfirmAction = (): void => {
+    if (confirmDialog.type === "delete" && confirmDialog.jobId) {
+      // Delete single job
+      deleteJob(confirmDialog.jobId);
+
+      addNotification({
+        type: "success",
+        title: "Job Deleted",
+        message: `Export job has been removed from the list`,
+        autoDismiss: true,
+        duration: 3000,
+      });
+
+      console.log(`✅ Job deleted: ${confirmDialog.jobId}`);
+    } else if (confirmDialog.type === "clearCompleted") {
+      // Clear all completed jobs
+      const completedCount = jobs.filter(
+        (job) =>
+          job.status === "completed" ||
+          job.status === "failed" ||
+          job.status === "expired"
+      ).length;
+
+      clearCompletedJobs();
+
+      addNotification({
+        type: "success",
+        title: "Jobs Cleared",
+        message: `${completedCount} completed job${
+          completedCount !== 1 ? "s" : ""
+        } removed from the list`,
+        autoDismiss: true,
+        duration: 3000,
+      });
+
+      console.log(`✅ Cleared ${completedCount} completed jobs`);
+    }
+
+    // Close dialog
+    setConfirmDialog({
+      isOpen: false,
+      type: null,
+    });
+  };
+
+  /**
+   * Handler for closing confirmation dialog
+   */
+  const handleCloseDialog = (): void => {
+    setConfirmDialog({
+      isOpen: false,
+      type: null,
+    });
+  };
+
   // Initialize automatic status polling for processing jobs
   useExportPolling({
     jobs,
@@ -336,11 +461,31 @@ export default function ExportsPage() {
         {/* Export Jobs List */}
         <ExportJobsList
           jobs={jobs}
-          onRefreshJob={refreshJobStatus}
+          onRefreshJob={handleRefreshJob}
           onDownload={handleDownload}
-          onDeleteJob={deleteJob}
-          onClearCompleted={clearCompletedJobs}
+          onDeleteJob={handleDeleteJob}
+          onClearCompleted={handleClearCompleted}
           isRefreshing={false}
+        />
+
+        {/* Confirmation Dialog */}
+        <ConfirmationDialog
+          isOpen={confirmDialog.isOpen}
+          onClose={handleCloseDialog}
+          onConfirm={handleConfirmAction}
+          title={
+            confirmDialog.type === "delete"
+              ? "Delete Export Job?"
+              : "Clear Completed Jobs?"
+          }
+          message={
+            confirmDialog.type === "delete"
+              ? "Are you sure you want to delete this export job? This will remove it from your list."
+              : "Are you sure you want to clear all completed, failed, and expired jobs? This will remove them from your list."
+          }
+          confirmText={confirmDialog.type === "delete" ? "Delete" : "Clear All"}
+          cancelText="Cancel"
+          variant="danger"
         />
       </div>
     </div>
