@@ -5,6 +5,7 @@ import { Button } from "@/lib/components/ui/button";
 import { Input } from "@/lib/components/ui/input";
 import { RadioGroup, RadioOption } from "@/lib/components/ui/radio-group";
 import { MappingExportFilters } from "@/lib/types/exports";
+import { FilterPresetsManager } from "./filter-presets-manager";
 import {
   Download,
   Filter,
@@ -12,6 +13,7 @@ import {
   Hash,
   FileJson,
   FileSpreadsheet,
+  CheckCircle,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -53,6 +55,9 @@ export function MappingExportPanel({
     maxRecords?: string;
   }>({});
 
+  // Preset loaded feedback state
+  const [presetLoaded, setPresetLoaded] = useState(false);
+
   const handleSupplierToggle = (value: string) => {
     const newSet = new Set(selectedSupplierValues);
     if (newSet.has(value)) {
@@ -68,6 +73,48 @@ export function MappingExportPanel({
     if (newSuppliers.length > 0 && errors.suppliers) {
       setErrors((prev) => ({ ...prev, suppliers: undefined }));
     }
+  };
+
+  // Handle loading a preset
+  const handleLoadPreset = (filters: MappingExportFilters) => {
+    // Update all form fields with preset values
+    setSuppliers(filters.filters.suppliers);
+    setSelectedSupplierValues(new Set(filters.filters.suppliers));
+
+    // Convert ISO 8601 dates back to date input format (YYYY-MM-DD)
+    if (filters.filters.date_from) {
+      const fromDate = filters.filters.date_from.substring(0, 10);
+      setDateFrom(fromDate);
+    }
+    if (filters.filters.date_to) {
+      const toDate = filters.filters.date_to.substring(0, 10);
+      setDateTo(toDate);
+    }
+
+    setIttids(filters.filters.ittids);
+    setMaxRecords(filters.filters.max_records);
+    setFormat(filters.format);
+
+    // Clear any validation errors
+    setErrors({});
+
+    // Show visual feedback
+    setPresetLoaded(true);
+    setTimeout(() => setPresetLoaded(false), 3000);
+  };
+
+  // Get current filters for preset saving
+  const getCurrentFilters = (): MappingExportFilters => {
+    return {
+      filters: {
+        suppliers,
+        ittids,
+        date_from: formatDateToISO8601(dateFrom),
+        date_to: formatDateToISO8601(dateTo),
+        max_records: maxRecords,
+      },
+      format,
+    };
   };
 
   // Validation function
@@ -172,14 +219,33 @@ export function MappingExportPanel({
 
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-          <Filter className="w-5 h-5 text-purple-600" />
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+            <Filter className="w-5 h-5 text-purple-600" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900">
+            Mapping Export Filters
+          </h2>
         </div>
-        <h2 className="text-xl font-bold text-slate-900">
-          Mapping Export Filters
-        </h2>
+
+        {/* Filter Presets Manager */}
+        <FilterPresetsManager
+          exportType="mapping"
+          currentFilters={getCurrentFilters()}
+          onLoadPreset={handleLoadPreset}
+        />
       </div>
+
+      {/* Preset Loaded Feedback */}
+      {presetLoaded && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 animate-fade-in">
+          <CheckCircle className="w-5 h-5 text-green-600" />
+          <span className="text-sm font-medium text-green-800">
+            Preset loaded successfully!
+          </span>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Suppliers Multi-Select */}

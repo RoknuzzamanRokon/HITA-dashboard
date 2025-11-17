@@ -6,6 +6,7 @@ import { Input } from "@/lib/components/ui/input";
 import { Select, SelectOption } from "@/lib/components/ui/select";
 import { RadioGroup, RadioOption } from "@/lib/components/ui/radio-group";
 import { HotelExportFilters } from "@/lib/types/exports";
+import { FilterPresetsManager } from "./filter-presets-manager";
 import {
   Download,
   Filter,
@@ -16,6 +17,7 @@ import {
   Hash,
   FileJson,
   FileSpreadsheet,
+  CheckCircle,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -79,6 +81,9 @@ export function ExportFilterPanel({
     maxRecords?: string;
   }>({});
 
+  // Preset loaded feedback state
+  const [presetLoaded, setPresetLoaded] = useState(false);
+
   const handleSupplierToggle = (value: string) => {
     const newSet = new Set(selectedSupplierValues);
     if (newSet.has(value)) {
@@ -100,6 +105,66 @@ export function ExportFilterPanel({
     setPropertyTypes((prev) =>
       prev.includes(value) ? prev.filter((t) => t !== value) : [...prev, value]
     );
+  };
+
+  // Handle loading a preset
+  const handleLoadPreset = (filters: HotelExportFilters) => {
+    // Update all form fields with preset values
+    setSuppliers(filters.filters.suppliers);
+    setSelectedSupplierValues(new Set(filters.filters.suppliers));
+    setCountryCodes(filters.filters.country_codes);
+    setMinRating(filters.filters.min_rating);
+    setMaxRating(filters.filters.max_rating);
+
+    // Convert ISO 8601 dates back to date input format (YYYY-MM-DD)
+    if (filters.filters.date_from) {
+      const fromDate = filters.filters.date_from.substring(0, 10);
+      setDateFrom(fromDate);
+    }
+    if (filters.filters.date_to) {
+      const toDate = filters.filters.date_to.substring(0, 10);
+      setDateTo(toDate);
+    }
+
+    setIttids(filters.filters.ittids);
+    setPropertyTypes(filters.filters.property_types);
+    setPage(filters.filters.page);
+    setPageSize(filters.filters.page_size);
+    setMaxRecords(filters.filters.max_records);
+    setFormat(filters.format);
+    setIncludeLocations(filters.include_locations);
+    setIncludeContacts(filters.include_contacts);
+    setIncludeMappings(filters.include_mappings);
+
+    // Clear any validation errors
+    setErrors({});
+
+    // Show visual feedback
+    setPresetLoaded(true);
+    setTimeout(() => setPresetLoaded(false), 3000);
+  };
+
+  // Get current filters for preset saving
+  const getCurrentFilters = (): HotelExportFilters => {
+    return {
+      filters: {
+        suppliers,
+        country_codes: countryCodes,
+        min_rating: minRating,
+        max_rating: maxRating,
+        date_from: formatDateToISO8601(dateFrom),
+        date_to: formatDateToISO8601(dateTo),
+        ittids,
+        property_types: propertyTypes,
+        page,
+        page_size: pageSize,
+        max_records: maxRecords,
+      },
+      format,
+      include_locations: includeLocations,
+      include_contacts: includeContacts,
+      include_mappings: includeMappings,
+    };
   };
 
   // Validation function
@@ -228,12 +293,31 @@ export function ExportFilterPanel({
 
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-          <Filter className="w-5 h-5 text-blue-600" />
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+            <Filter className="w-5 h-5 text-blue-600" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900">Export Filters</h2>
         </div>
-        <h2 className="text-xl font-bold text-slate-900">Export Filters</h2>
+
+        {/* Filter Presets Manager */}
+        <FilterPresetsManager
+          exportType="hotel"
+          currentFilters={getCurrentFilters()}
+          onLoadPreset={handleLoadPreset}
+        />
       </div>
+
+      {/* Preset Loaded Feedback */}
+      {presetLoaded && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 animate-fade-in">
+          <CheckCircle className="w-5 h-5 text-green-600" />
+          <span className="text-sm font-medium text-green-800">
+            Preset loaded successfully!
+          </span>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Suppliers Multi-Select */}
