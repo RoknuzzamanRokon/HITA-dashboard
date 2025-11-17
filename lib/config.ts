@@ -93,6 +93,14 @@ export const apiEndpoints = {
         generateApiKey: (userId: string) => `/auth/generate_api_key/${userId}`,
     },
 
+    // Export Management
+    exports: {
+        hotels: '/export/hotels',
+        mappings: '/export/mappings',
+        status: (jobId: string) => `/export/status/${jobId}`,
+        download: (jobId: string) => `/export/download/${jobId}`,
+    },
+
     // Additional endpoints
     mapping: '/mapping',
     delete: '/delete',
