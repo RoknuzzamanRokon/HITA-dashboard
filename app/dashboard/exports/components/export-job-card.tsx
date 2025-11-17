@@ -185,10 +185,10 @@ export function ExportJobCard({
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
             <div
-              className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
+              className="bg-linear-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
               style={{ width: `${job.progress}%` }}
             >
-              <div className="h-full w-full bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse" />
+              <div className="h-full w-full bg-linear-to-r from-transparent via-white/30 to-transparent animate-pulse" />
             </div>
           </div>
         </div>
@@ -253,10 +253,10 @@ export function ExportJobCard({
       {job.status === "failed" && job.errorMessage && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
           <div className="flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+            <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-red-900 mb-1">Error</p>
-              <p className="text-xs text-red-700 break-words">
+              <p className="text-xs text-red-700 wrap-break-word">
                 {job.errorMessage}
               </p>
             </div>
