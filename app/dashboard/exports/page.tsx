@@ -17,6 +17,7 @@ import { useRequireAuth } from "@/lib/hooks/use-auth";
 import { useExportJobs } from "@/lib/hooks/use-export-jobs";
 import { useExportPolling } from "@/lib/hooks/use-export-polling";
 import { useExportNotifications } from "@/lib/hooks/use-export-notifications";
+import { useRetryManager } from "@/lib/hooks/use-retry-manager";
 import { useNotification } from "@/lib/components/notifications/notification-provider";
 import { ExportFilterPanel } from "./components/export-filter-panel";
 import { MappingExportPanel } from "./components/mapping-export-panel";
@@ -58,6 +59,9 @@ export default function ExportsPage() {
   // Initialize notification system
   const { addNotification } = useNotification();
 
+  // Initialize retry manager for failed operations
+  const retryManager = useRetryManager();
+
   // Initialize export jobs state management
   const {
     jobs,
@@ -84,6 +88,9 @@ export default function ExportsPage() {
    * Triggers browser download with appropriate filename based on job type and format
    */
   const handleDownload = async (jobId: string): Promise<void> => {
+    const operationType = "download";
+    const operationId = jobId;
+
     try {
       // Find the job to get its details
       const job = jobs.find((j) => j.jobId === jobId);
@@ -153,6 +160,9 @@ export default function ExportsPage() {
         URL.revokeObjectURL(blobUrl);
       }, 100);
 
+      // Reset retry count on success
+      retryManager.resetRetry(operationType, operationId);
+
       // Display success notification
       addNotification({
         type: "success",
@@ -164,18 +174,41 @@ export default function ExportsPage() {
 
       console.log(`✅ Export downloaded successfully: ${filename}`);
     } catch (error) {
-      // Handle download errors
+      // Handle download errors with retry functionality
       const errorMessage =
         error instanceof Error
           ? error.message
           : "Failed to download export file. Please try again.";
 
-      addNotification({
-        type: "error",
-        title: "Download Failed",
-        message: errorMessage,
-        autoDismiss: false,
-      });
+      const retryCount = retryManager.getRetryCount(operationType, operationId);
+      const canRetry = retryManager.canRetry(operationType, operationId);
+
+      if (canRetry) {
+        // Show error with retry button
+        addNotification({
+          type: "error",
+          title: "Download Failed",
+          message: `${errorMessage}${
+            retryCount > 0 ? ` (Attempt ${retryCount + 1}/3)` : ""
+          }`,
+          action: {
+            label: "Retry",
+            onClick: () => {
+              retryManager.incrementRetry(operationType, operationId);
+              handleDownload(jobId);
+            },
+          },
+          autoDismiss: false,
+        });
+      } else {
+        // Max retries reached
+        addNotification({
+          type: "error",
+          title: "Download Failed",
+          message: `${errorMessage} Maximum retry attempts reached. Please try again later or contact support.`,
+          autoDismiss: false,
+        });
+      }
 
       console.error("Download error:", error);
     }
@@ -188,22 +221,50 @@ export default function ExportsPage() {
   const handleCreateHotelExport = async (
     filters: HotelExportFilters
   ): Promise<void> => {
+    const operationType = "createHotelExport";
+    const operationId = JSON.stringify(filters); // Use filters as unique ID
+
     try {
       await createHotelExport(filters);
+      // Reset retry count on success
+      retryManager.resetRetry(operationType, operationId);
       // Success notification is handled by useExportNotifications hook
     } catch (error) {
-      // Display error notification
+      // Display error notification with retry functionality
       const errorMessage =
         error instanceof Error
           ? error.message
           : "Failed to create hotel export. Please try again.";
 
-      addNotification({
-        type: "error",
-        title: "Export Creation Failed",
-        message: errorMessage,
-        autoDismiss: false, // Error notifications require manual dismiss
-      });
+      const retryCount = retryManager.getRetryCount(operationType, operationId);
+      const canRetry = retryManager.canRetry(operationType, operationId);
+
+      if (canRetry) {
+        // Show error with retry button
+        addNotification({
+          type: "error",
+          title: "Export Creation Failed",
+          message: `${errorMessage}${
+            retryCount > 0 ? ` (Attempt ${retryCount + 1}/3)` : ""
+          }`,
+          action: {
+            label: "Retry",
+            onClick: () => {
+              retryManager.incrementRetry(operationType, operationId);
+              handleCreateHotelExport(filters);
+            },
+          },
+          autoDismiss: false,
+        });
+      } else {
+        // Max retries reached
+        addNotification({
+          type: "error",
+          title: "Export Creation Failed",
+          message: `${errorMessage} Maximum retry attempts reached. Please check your filters and try again later.`,
+          autoDismiss: false,
+        });
+      }
 
       console.error("Hotel export creation error:", error);
       throw error; // Re-throw to allow filter panel to handle it
@@ -217,22 +278,50 @@ export default function ExportsPage() {
   const handleCreateMappingExport = async (
     filters: MappingExportFilters
   ): Promise<void> => {
+    const operationType = "createMappingExport";
+    const operationId = JSON.stringify(filters); // Use filters as unique ID
+
     try {
       await createMappingExport(filters);
+      // Reset retry count on success
+      retryManager.resetRetry(operationType, operationId);
       // Success notification is handled by useExportNotifications hook
     } catch (error) {
-      // Display error notification
+      // Display error notification with retry functionality
       const errorMessage =
         error instanceof Error
           ? error.message
           : "Failed to create mapping export. Please try again.";
 
-      addNotification({
-        type: "error",
-        title: "Mapping Export Creation Failed",
-        message: errorMessage,
-        autoDismiss: false, // Error notifications require manual dismiss
-      });
+      const retryCount = retryManager.getRetryCount(operationType, operationId);
+      const canRetry = retryManager.canRetry(operationType, operationId);
+
+      if (canRetry) {
+        // Show error with retry button
+        addNotification({
+          type: "error",
+          title: "Mapping Export Creation Failed",
+          message: `${errorMessage}${
+            retryCount > 0 ? ` (Attempt ${retryCount + 1}/3)` : ""
+          }`,
+          action: {
+            label: "Retry",
+            onClick: () => {
+              retryManager.incrementRetry(operationType, operationId);
+              handleCreateMappingExport(filters);
+            },
+          },
+          autoDismiss: false,
+        });
+      } else {
+        // Max retries reached
+        addNotification({
+          type: "error",
+          title: "Mapping Export Creation Failed",
+          message: `${errorMessage} Maximum retry attempts reached. Please check your filters and try again later.`,
+          autoDismiss: false,
+        });
+      }
 
       console.error("Mapping export creation error:", error);
       throw error; // Re-throw to allow filter panel to handle it
@@ -244,26 +333,50 @@ export default function ExportsPage() {
    * Manually triggers a status update for a specific job
    */
   const handleRefreshJob = async (jobId: string): Promise<void> => {
+    const operationType = "refreshJob";
+    const operationId = jobId;
+
     try {
       await refreshJobStatus(jobId);
+      // Reset retry count on success
+      retryManager.resetRetry(operationType, operationId);
       console.log(`✅ Job status refreshed: ${jobId}`);
     } catch (error) {
-      // Display error notification
+      // Display error notification with retry functionality
       const errorMessage =
         error instanceof Error
           ? error.message
           : "Failed to refresh job status. Please try again.";
 
-      addNotification({
-        type: "error",
-        title: "Refresh Failed",
-        message: errorMessage,
-        action: {
-          label: "Retry",
-          onClick: () => handleRefreshJob(jobId),
-        },
-        autoDismiss: false,
-      });
+      const retryCount = retryManager.getRetryCount(operationType, operationId);
+      const canRetry = retryManager.canRetry(operationType, operationId);
+
+      if (canRetry) {
+        // Show error with retry button
+        addNotification({
+          type: "error",
+          title: "Refresh Failed",
+          message: `${errorMessage}${
+            retryCount > 0 ? ` (Attempt ${retryCount + 1}/3)` : ""
+          }`,
+          action: {
+            label: "Retry",
+            onClick: () => {
+              retryManager.incrementRetry(operationType, operationId);
+              handleRefreshJob(jobId);
+            },
+          },
+          autoDismiss: false,
+        });
+      } else {
+        // Max retries reached
+        addNotification({
+          type: "error",
+          title: "Refresh Failed",
+          message: `${errorMessage} Maximum retry attempts reached. The job status may be temporarily unavailable.`,
+          autoDismiss: false,
+        });
+      }
 
       console.error("Job refresh error:", error);
     }

@@ -103,6 +103,11 @@ export interface Notification {
     };
     autoDismiss: boolean;
     duration?: number;
+    retryMetadata?: {
+        operationType: string;
+        operationId: string;
+        retryCount: number;
+    };
 }
 
 // Filter preset
