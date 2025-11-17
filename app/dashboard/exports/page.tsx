@@ -21,6 +21,7 @@ import { useNotification } from "@/lib/components/notifications/notification-pro
 import { ExportFilterPanel } from "./components/export-filter-panel";
 import { MappingExportPanel } from "./components/mapping-export-panel";
 import { ExportJobsList } from "./components/export-jobs-list";
+import { exportAPI } from "@/lib/api/exports";
 import type {
   HotelExportFilters,
   MappingExportFilters,
@@ -62,10 +63,106 @@ export default function ExportsPage() {
     });
   };
 
-  // Download handler for notifications
-  const handleDownload = (jobId: string) => {
-    // This will be implemented in task 21
-    console.log(`Download requested for job: ${jobId}`);
+  /**
+   * Handler for downloading completed export files
+   * Triggers browser download with appropriate filename based on job type and format
+   */
+  const handleDownload = async (jobId: string): Promise<void> => {
+    try {
+      // Find the job to get its details
+      const job = jobs.find((j) => j.jobId === jobId);
+      if (!job) {
+        throw new Error("Export job not found");
+      }
+
+      // Check if job is completed
+      if (job.status !== "completed") {
+        addNotification({
+          type: "warning",
+          title: "Download Not Available",
+          message: "Export must be completed before downloading",
+          autoDismiss: true,
+          duration: 5000,
+        });
+        return;
+      }
+
+      // Check if download has expired
+      if (job.expiresAt && new Date(job.expiresAt) < new Date()) {
+        addNotification({
+          type: "error",
+          title: "Download Expired",
+          message: "This export has expired. Please create a new export.",
+          autoDismiss: false,
+        });
+        return;
+      }
+
+      // Display info notification that download is starting
+      addNotification({
+        type: "info",
+        title: "Download Starting",
+        message: `Preparing ${job.exportType} export file...`,
+        autoDismiss: true,
+        duration: 3000,
+      });
+
+      // Call the API to download the export file
+      const blob = await exportAPI.downloadExport(jobId);
+
+      // Generate appropriate filename based on job type and format
+      const timestamp = new Date()
+        .toISOString()
+        .split("T")[0]
+        .replace(/-/g, "");
+      const format = job.filters.format || "json";
+      const filename = `${job.exportType}_export_${timestamp}.${format}`;
+
+      // Create a temporary URL for the blob
+      const blobUrl = URL.createObjectURL(blob);
+
+      // Create a temporary anchor element to trigger download
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename;
+      link.style.display = "none";
+
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up the blob URL after a short delay to ensure download starts
+      setTimeout(() => {
+        URL.revokeObjectURL(blobUrl);
+      }, 100);
+
+      // Display success notification
+      addNotification({
+        type: "success",
+        title: "Download Complete",
+        message: `${filename} has been downloaded successfully`,
+        autoDismiss: true,
+        duration: 5000,
+      });
+
+      console.log(`✅ Export downloaded successfully: ${filename}`);
+    } catch (error) {
+      // Handle download errors
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to download export file. Please try again.";
+
+      addNotification({
+        type: "error",
+        title: "Download Failed",
+        message: errorMessage,
+        autoDismiss: false,
+      });
+
+      console.error("Download error:", error);
+    }
   };
 
   /**
