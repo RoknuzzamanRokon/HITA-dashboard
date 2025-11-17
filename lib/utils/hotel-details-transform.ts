@@ -38,9 +38,35 @@ export function transformFullHotelDetails(
         locations: response.locations || [],
         contacts: response.contacts || [],
         totalSuppliers: response.total_supplier || 0,
-        availableProviders: response.have_provider_list || [],
+        availableProviders: extractProviderNames(response.have_provider_list || []),
         primaryProvider,
     };
+}
+
+/**
+ * Extract provider names from have_provider_list structure
+ * Converts Array<Record<string, string[]>> to string[]
+ * 
+ * @param providerList - Array of provider records
+ * @returns Array of provider names
+ */
+export function extractProviderNames(
+    providerList: Array<Record<string, string[]>>
+): string[] {
+    if (!providerList || !Array.isArray(providerList) || providerList.length === 0) {
+        return [];
+    }
+
+    // Extract all keys from all records and flatten into a single array
+    const providerNames = providerList.flatMap((record) => {
+        if (!record || typeof record !== 'object') {
+            return [];
+        }
+        return Object.keys(record);
+    });
+
+    // Remove duplicates and return
+    return Array.from(new Set(providerNames));
 }
 
 /**
