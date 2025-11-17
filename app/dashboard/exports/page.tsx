@@ -17,6 +17,7 @@ import { useRequireAuth } from "@/lib/hooks/use-auth";
 import { useExportJobs } from "@/lib/hooks/use-export-jobs";
 import { useExportPolling } from "@/lib/hooks/use-export-polling";
 import { useExportNotifications } from "@/lib/hooks/use-export-notifications";
+import { useNotification } from "@/lib/components/notifications/notification-provider";
 import { ExportFilterPanel } from "./components/export-filter-panel";
 import { MappingExportPanel } from "./components/mapping-export-panel";
 import { ExportJobsList } from "./components/export-jobs-list";
@@ -36,6 +37,9 @@ export default function ExportsPage() {
 
   // Tab state for switching between export types
   const [activeTab, setActiveTab] = useState<ExportTab>("hotel");
+
+  // Initialize notification system
+  const { addNotification } = useNotification();
 
   // Initialize export jobs state management
   const {
@@ -62,6 +66,64 @@ export default function ExportsPage() {
   const handleDownload = (jobId: string) => {
     // This will be implemented in task 21
     console.log(`Download requested for job: ${jobId}`);
+  };
+
+  /**
+   * Handler for creating hotel export jobs
+   * Wraps the createHotelExport function with error handling and notifications
+   */
+  const handleCreateHotelExport = async (
+    filters: HotelExportFilters
+  ): Promise<void> => {
+    try {
+      await createHotelExport(filters);
+      // Success notification is handled by useExportNotifications hook
+    } catch (error) {
+      // Display error notification
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to create hotel export. Please try again.";
+
+      addNotification({
+        type: "error",
+        title: "Export Creation Failed",
+        message: errorMessage,
+        autoDismiss: false, // Error notifications require manual dismiss
+      });
+
+      console.error("Hotel export creation error:", error);
+      throw error; // Re-throw to allow filter panel to handle it
+    }
+  };
+
+  /**
+   * Handler for creating mapping export jobs
+   * Wraps the createMappingExport function with error handling and notifications
+   */
+  const handleCreateMappingExport = async (
+    filters: MappingExportFilters
+  ): Promise<void> => {
+    try {
+      await createMappingExport(filters);
+      // Success notification is handled by useExportNotifications hook
+    } catch (error) {
+      // Display error notification
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to create mapping export. Please try again.";
+
+      addNotification({
+        type: "error",
+        title: "Mapping Export Creation Failed",
+        message: errorMessage,
+        autoDismiss: false, // Error notifications require manual dismiss
+      });
+
+      console.error("Mapping export creation error:", error);
+      throw error; // Re-throw to allow filter panel to handle it
+    }
   };
 
   // Initialize automatic status polling for processing jobs
@@ -147,12 +209,12 @@ export default function ExportsPage() {
         {/* Filter Panel - Conditionally render based on active tab */}
         {activeTab === "hotel" ? (
           <ExportFilterPanel
-            onExportCreate={createHotelExport}
+            onExportCreate={handleCreateHotelExport}
             isLoading={isCreating}
           />
         ) : (
           <MappingExportPanel
-            onExportCreate={createMappingExport}
+            onExportCreate={handleCreateMappingExport}
             isLoading={isCreating}
           />
         )}
