@@ -9,17 +9,19 @@ import { clsx } from "clsx";
 
 const STORAGE_KEY = "export_filter_presets";
 
-export interface FilterPresetsManagerProps {
+export interface FilterPresetsManagerProps<
+  T extends ExportFilters = ExportFilters
+> {
   exportType: ExportType;
-  currentFilters: ExportFilters;
-  onLoadPreset: (filters: ExportFilters) => void;
+  currentFilters: T;
+  onLoadPreset: (filters: T) => void;
 }
 
-export function FilterPresetsManager({
+export function FilterPresetsManager<T extends ExportFilters = ExportFilters>({
   exportType,
   currentFilters,
   onLoadPreset,
-}: FilterPresetsManagerProps) {
+}: FilterPresetsManagerProps<T>) {
   const [presets, setPresets] = useState<FilterPreset[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -100,7 +102,7 @@ export function FilterPresetsManager({
 
   // Load a preset and populate filter panel
   const loadPreset = (preset: FilterPreset) => {
-    onLoadPreset(preset.filters);
+    onLoadPreset(preset.filters as T);
     setIsDropdownOpen(false);
   };
 

@@ -30,6 +30,7 @@ import type {
   HotelExportFilters,
   MappingExportFilters,
   ExportJobStatus,
+  ExportJob,
 } from "@/lib/types/exports";
 import { FileDown, Map } from "lucide-react";
 import { clsx } from "clsx";
@@ -109,7 +110,7 @@ export default function ExportsPage() {
         }
 
         // Check if job is completed
-        if (job.status !== "completed") {
+        if (job.status !== "completed" && job.status !== "expired") {
           addNotification({
             type: "warning",
             title: "Download Not Available",

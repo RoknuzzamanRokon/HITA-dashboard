@@ -14,7 +14,9 @@
  */
 
 import React, { useMemo, useRef, useEffect, useState } from "react";
-import { FixedSizeList as List } from "react-window";
+import * as ReactWindow from "react-window";
+
+const List = (ReactWindow as any).FixedSizeList;
 import { ExportJob } from "@/lib/types/exports";
 import { ExportJobCard } from "./export-job-card";
 import { ExportJobsListSkeleton } from "./export-job-skeleton";

@@ -5,7 +5,7 @@ import { AuthProvider } from "@/lib/contexts/auth-context";
 import { ThemeProvider } from "@/lib/contexts/theme-context";
 import { ToastProvider } from "@/lib/components/ui/toast";
 import { NotificationProvider } from "@/lib/components/notifications/notification-provider";
-import { NotificationContainer } from "@/lib/components/notifications/notification-container";
+import { NotificationContainerLazy } from "@/lib/components/notifications/notification-container-lazy";
 
 export const metadata: Metadata = {
   title: config.app.name,
@@ -24,7 +24,7 @@ export default function RootLayout({
           <AuthProvider>
             <NotificationProvider>
               <ToastProvider>{children}</ToastProvider>
-              <NotificationContainer />
+              <NotificationContainerLazy />
             </NotificationProvider>
           </AuthProvider>
         </ThemeProvider>

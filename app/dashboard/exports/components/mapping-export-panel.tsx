@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState, memo, useCallback, useRef, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/lib/components/ui/button";
 import { Input } from "@/lib/components/ui/input";
 import { RadioGroup, RadioOption } from "@/lib/components/ui/radio-group";
-import { MappingExportFilters } from "@/lib/types/exports";
-import { FilterPresetsManager } from "./filter-presets-manager";
+import { MappingExportFilters, ExportFilters } from "@/lib/types/exports";
 import {
   Download,
   Filter,
@@ -17,6 +17,23 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { clsx } from "clsx";
+
+// Lazy load FilterPresetsManager for better code splitting
+const FilterPresetsManager = dynamic(
+  () =>
+    import("./filter-presets-manager").then((mod) => ({
+      default: mod.FilterPresetsManager,
+    })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex gap-2">
+        <div className="h-10 w-32 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-lg" />
+        <div className="h-10 w-32 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-lg" />
+      </div>
+    ),
+  }
+);
 
 export interface MappingExportPanelProps {
   onExportCreate: (filters: MappingExportFilters) => Promise<void>;
@@ -295,7 +312,7 @@ export const MappingExportPanel = memo(function MappingExportPanel({
         <FilterPresetsManager
           exportType="mapping"
           currentFilters={getCurrentFilters()}
-          onLoadPreset={handleLoadPreset}
+          onLoadPreset={handleLoadPreset as (filters: ExportFilters) => void}
         />
       </div>
 
