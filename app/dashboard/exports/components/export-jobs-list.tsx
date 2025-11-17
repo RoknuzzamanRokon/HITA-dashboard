@@ -4,14 +4,17 @@
  * Export Jobs List Component
  *
  * Displays export jobs with responsive layout:
- * - Desktop (1024px+): Table layout with all columns visible
- * - Tablet (768px-1023px): 2-column card grid layout
- * - Mobile (<768px): Single-column card layout, stacked vertically
+ * - Desktop (1024px+): Table layout with all columns visible (virtualized for 100+ jobs)
+ * - Tablet (768px-1023px): 2-column card grid layout (virtualized for 100+ jobs)
+ * - Mobile (<768px): Single-column card layout, stacked vertically (virtualized for 100+ jobs)
  *
  * All interactive elements meet WCAG touch target size requirements (min 44x44px on mobile)
+ *
+ * Virtual scrolling is enabled when there are 100+ jobs to improve performance.
  */
 
-import React, { useMemo } from "react";
+import React, { useMemo, useRef, useEffect, useState } from "react";
+import { FixedSizeList as List } from "react-window";
 import { ExportJob } from "@/lib/types/exports";
 import { ExportJobCard } from "./export-job-card";
 import { ExportJobsListSkeleton } from "./export-job-skeleton";
@@ -35,6 +38,12 @@ import {
   Trash,
 } from "lucide-react";
 
+// Virtual scrolling configuration
+const VIRTUAL_SCROLL_THRESHOLD = 100; // Enable virtual scrolling for 100+ jobs
+const TABLE_ROW_HEIGHT = 73; // Height of each table row in pixels
+const CARD_HEIGHT = 280; // Height of each card in pixels (approximate)
+const CARD_GAP = 16; // Gap between cards in pixels
+
 export interface ExportJobsListProps {
   jobs: ExportJob[];
   onRefreshJob: (jobId: string) => Promise<void>;
@@ -56,6 +65,9 @@ export function ExportJobsList({
   isRefreshing = false,
   isLoading = false,
 }: ExportJobsListProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
   // Sort jobs by created_at descending (newest first)
   const sortedJobs = useMemo(() => {
     return [...jobs].sort((a, b) => {
@@ -72,6 +84,24 @@ export function ExportJobsList({
         job.status === "expired"
     ).length;
   }, [jobs]);
+
+  // Determine if virtual scrolling should be enabled
+  const useVirtualScrolling = sortedJobs.length >= VIRTUAL_SCROLL_THRESHOLD;
+
+  // Track container width for responsive virtual scrolling
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const updateWidth = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.offsetWidth);
+      }
+    };
+
+    updateWidth();
+    window.addEventListener("resize", updateWidth);
+    return () => window.removeEventListener("resize", updateWidth);
+  }, []);
 
   // Loading state - show skeleton loaders
   if (isLoading) {
@@ -129,7 +159,10 @@ export function ExportJobsList({
       </div>
 
       {/* Desktop: Table View */}
-      <div className="hidden lg:block bg-white dark:bg-gray-800 rounded-xl shadow-md border border-slate-200 dark:border-gray-700 overflow-hidden">
+      <div
+        ref={containerRef}
+        className="hidden lg:block bg-white dark:bg-gray-800 rounded-xl shadow-md border border-slate-200 dark:border-gray-700 overflow-hidden"
+      >
         <div className="overflow-x-auto">
           <table className="w-full" role="table" aria-label="Export jobs table">
             <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
@@ -179,16 +212,43 @@ export function ExportJobsList({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {sortedJobs.map((job) => (
-                <ExportJobTableRow
-                  key={job.jobId}
-                  job={job}
-                  onRefresh={() => onRefreshJob(job.jobId)}
-                  onDownload={() => onDownload(job.jobId)}
-                  onDelete={() => onDeleteJob(job.jobId)}
-                  onCreateNew={onCreateNew ? () => onCreateNew(job) : undefined}
-                />
-              ))}
+              {useVirtualScrolling ? (
+                <tr>
+                  <td colSpan={7} className="p-0">
+                    <List
+                      height={Math.min(
+                        600,
+                        sortedJobs.length * TABLE_ROW_HEIGHT
+                      )}
+                      itemCount={sortedJobs.length}
+                      itemSize={TABLE_ROW_HEIGHT}
+                      width="100%"
+                      itemData={{
+                        jobs: sortedJobs,
+                        onRefreshJob,
+                        onDownload,
+                        onDeleteJob,
+                        onCreateNew,
+                      }}
+                    >
+                      {VirtualTableRow}
+                    </List>
+                  </td>
+                </tr>
+              ) : (
+                sortedJobs.map((job) => (
+                  <ExportJobTableRow
+                    key={job.jobId}
+                    job={job}
+                    onRefresh={() => onRefreshJob(job.jobId)}
+                    onDownload={() => onDownload(job.jobId)}
+                    onDelete={() => onDeleteJob(job.jobId)}
+                    onCreateNew={
+                      onCreateNew ? () => onCreateNew(job) : undefined
+                    }
+                  />
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -196,44 +256,206 @@ export function ExportJobsList({
 
       {/* Tablet: 2-column Card Grid */}
       <div
-        className="hidden md:grid lg:hidden grid-cols-2 gap-4"
+        className="hidden md:block lg:hidden"
         role="list"
         aria-label="Export jobs cards"
       >
-        {sortedJobs.map((job) => (
-          <div key={job.jobId} role="listitem">
-            <ExportJobCard
-              job={job}
-              onRefresh={() => onRefreshJob(job.jobId)}
-              onDownload={() => onDownload(job.jobId)}
-              onDelete={() => onDeleteJob(job.jobId)}
-              onCreateNew={onCreateNew ? () => onCreateNew(job) : undefined}
-            />
+        {useVirtualScrolling ? (
+          <List
+            height={Math.min(
+              800,
+              Math.ceil(sortedJobs.length / 2) * (CARD_HEIGHT + CARD_GAP)
+            )}
+            itemCount={Math.ceil(sortedJobs.length / 2)}
+            itemSize={CARD_HEIGHT + CARD_GAP}
+            width="100%"
+            itemData={{
+              jobs: sortedJobs,
+              onRefreshJob,
+              onDownload,
+              onDeleteJob,
+              onCreateNew,
+              columns: 2,
+            }}
+          >
+            {VirtualCardRow}
+          </List>
+        ) : (
+          <div className="grid grid-cols-2 gap-4">
+            {sortedJobs.map((job) => (
+              <div key={job.jobId} role="listitem">
+                <ExportJobCard
+                  job={job}
+                  onRefresh={() => onRefreshJob(job.jobId)}
+                  onDownload={() => onDownload(job.jobId)}
+                  onDelete={() => onDeleteJob(job.jobId)}
+                  onCreateNew={onCreateNew ? () => onCreateNew(job) : undefined}
+                />
+              </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
 
       {/* Mobile: Single-column Card Grid */}
       <div
-        className="grid md:hidden grid-cols-1 gap-4"
+        className="block md:hidden"
         role="list"
         aria-label="Export jobs cards"
       >
-        {sortedJobs.map((job) => (
-          <div key={job.jobId} role="listitem">
-            <ExportJobCard
+        {useVirtualScrolling ? (
+          <List
+            height={Math.min(800, sortedJobs.length * (CARD_HEIGHT + CARD_GAP))}
+            itemCount={sortedJobs.length}
+            itemSize={CARD_HEIGHT + CARD_GAP}
+            width="100%"
+            itemData={{
+              jobs: sortedJobs,
+              onRefreshJob,
+              onDownload,
+              onDeleteJob,
+              onCreateNew,
+              columns: 1,
+            }}
+          >
+            {VirtualCardRow}
+          </List>
+        ) : (
+          <div className="grid grid-cols-1 gap-4">
+            {sortedJobs.map((job) => (
+              <div key={job.jobId} role="listitem">
+                <ExportJobCard
+                  job={job}
+                  onRefresh={() => onRefreshJob(job.jobId)}
+                  onDownload={() => onDownload(job.jobId)}
+                  onDelete={() => onDeleteJob(job.jobId)}
+                  onCreateNew={onCreateNew ? () => onCreateNew(job) : undefined}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Virtual Table Row Component for react-window
+interface VirtualTableRowData {
+  jobs: ExportJob[];
+  onRefreshJob: (jobId: string) => Promise<void>;
+  onDownload: (jobId: string) => Promise<void>;
+  onDeleteJob: (jobId: string) => void;
+  onCreateNew?: (job: ExportJob) => void;
+}
+
+const VirtualTableRow = React.memo(
+  ({
+    index,
+    style,
+    data,
+  }: {
+    index: number;
+    style: React.CSSProperties;
+    data: VirtualTableRowData;
+  }) => {
+    const { jobs, onRefreshJob, onDownload, onDeleteJob, onCreateNew } = data;
+    const job = jobs[index];
+
+    return (
+      <div style={style}>
+        <table className="w-full">
+          <tbody>
+            <ExportJobTableRow
               job={job}
               onRefresh={() => onRefreshJob(job.jobId)}
               onDownload={() => onDownload(job.jobId)}
               onDelete={() => onDeleteJob(job.jobId)}
               onCreateNew={onCreateNew ? () => onCreateNew(job) : undefined}
             />
-          </div>
-        ))}
+          </tbody>
+        </table>
       </div>
-    </div>
-  );
+    );
+  }
+);
+
+VirtualTableRow.displayName = "VirtualTableRow";
+
+// Virtual Card Row Component for react-window (supports 1 or 2 columns)
+interface VirtualCardRowData extends VirtualTableRowData {
+  columns: 1 | 2;
 }
+
+const VirtualCardRow = React.memo(
+  ({
+    index,
+    style,
+    data,
+  }: {
+    index: number;
+    style: React.CSSProperties;
+    data: VirtualCardRowData;
+  }) => {
+    const {
+      jobs,
+      onRefreshJob,
+      onDownload,
+      onDeleteJob,
+      onCreateNew,
+      columns,
+    } = data;
+
+    if (columns === 2) {
+      // Two-column layout for tablet
+      const leftIndex = index * 2;
+      const rightIndex = leftIndex + 1;
+      const leftJob = jobs[leftIndex];
+      const rightJob = jobs[rightIndex];
+
+      return (
+        <div style={style} className="grid grid-cols-2 gap-4 px-1">
+          {leftJob && (
+            <ExportJobCard
+              job={leftJob}
+              onRefresh={() => onRefreshJob(leftJob.jobId)}
+              onDownload={() => onDownload(leftJob.jobId)}
+              onDelete={() => onDeleteJob(leftJob.jobId)}
+              onCreateNew={onCreateNew ? () => onCreateNew(leftJob) : undefined}
+            />
+          )}
+          {rightJob && (
+            <ExportJobCard
+              job={rightJob}
+              onRefresh={() => onRefreshJob(rightJob.jobId)}
+              onDownload={() => onDownload(rightJob.jobId)}
+              onDelete={() => onDeleteJob(rightJob.jobId)}
+              onCreateNew={
+                onCreateNew ? () => onCreateNew(rightJob) : undefined
+              }
+            />
+          )}
+        </div>
+      );
+    } else {
+      // Single-column layout for mobile
+      const job = jobs[index];
+      return (
+        <div style={style} className="px-1">
+          <ExportJobCard
+            job={job}
+            onRefresh={() => onRefreshJob(job.jobId)}
+            onDownload={() => onDownload(job.jobId)}
+            onDelete={() => onDeleteJob(job.jobId)}
+            onCreateNew={onCreateNew ? () => onCreateNew(job) : undefined}
+          />
+        </div>
+      );
+    }
+  }
+);
+
+VirtualCardRow.displayName = "VirtualCardRow";
 
 // Table Row Component for Desktop View
 interface ExportJobTableRowProps {
@@ -401,7 +623,7 @@ function ExportJobTableRow({
             </div>
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
               <div
-                className="bg-gradient-to-r from-blue-500 to-blue-600 h-1.5 rounded-full transition-all duration-500"
+                className="bg-linear-to-r from-blue-500 to-blue-600 h-1.5 rounded-full transition-all duration-500"
                 style={{ width: `${job.progress}%` }}
               />
             </div>

@@ -20,6 +20,7 @@
     "react-dom": "19.1.0",
     "react-focus-lock": "^2.13.6",
     "react-remove-scroll": "^2.7.1",
+    "react-window": "^2.2.3",
     "recharts": "^3.2.1",
     "tailwind-merge": "^3.3.1"
   },
@@ -31,6 +32,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/react-window": "^1.8.8",
     "autoprefixer": "^10.4.22",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
