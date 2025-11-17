@@ -69,6 +69,16 @@ export function ExportFilterPanel({
     Set<string>
   >(new Set());
 
+  // Validation errors state
+  const [errors, setErrors] = useState<{
+    suppliers?: string;
+    dateRange?: string;
+    ratingRange?: string;
+    page?: string;
+    pageSize?: string;
+    maxRecords?: string;
+  }>({});
+
   const handleSupplierToggle = (value: string) => {
     const newSet = new Set(selectedSupplierValues);
     if (newSet.has(value)) {
@@ -77,7 +87,13 @@ export function ExportFilterPanel({
       newSet.add(value);
     }
     setSelectedSupplierValues(newSet);
-    setSuppliers(Array.from(newSet));
+    const newSuppliers = Array.from(newSet);
+    setSuppliers(newSuppliers);
+
+    // Clear supplier error when at least one is selected
+    if (newSuppliers.length > 0 && errors.suppliers) {
+      setErrors((prev) => ({ ...prev, suppliers: undefined }));
+    }
   };
 
   const handlePropertyTypeToggle = (value: string) => {
@@ -86,8 +102,52 @@ export function ExportFilterPanel({
     );
   };
 
+  // Validation function
+  const validateForm = (): boolean => {
+    const newErrors: typeof errors = {};
+
+    // Validate required fields - at least one supplier
+    if (suppliers.length === 0) {
+      newErrors.suppliers = "At least one supplier must be selected";
+    }
+
+    // Validate date range (from < to)
+    if (dateFrom && dateTo) {
+      const fromDate = new Date(dateFrom);
+      const toDate = new Date(dateTo);
+      if (fromDate >= toDate) {
+        newErrors.dateRange = "Date From must be before Date To";
+      }
+    }
+
+    // Validate star rating range (min <= max)
+    if (minRating > maxRating) {
+      newErrors.ratingRange =
+        "Min Rating must be less than or equal to Max Rating";
+    }
+
+    // Validate positive integers
+    if (page < 1) {
+      newErrors.page = "Page must be a positive integer";
+    }
+    if (pageSize < 1) {
+      newErrors.pageSize = "Page Size must be a positive integer";
+    }
+    if (maxRecords < 1) {
+      newErrors.maxRecords = "Max Records must be a positive integer";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate form before submission
+    if (!validateForm()) {
+      return;
+    }
 
     const filters: HotelExportFilters = {
       filters: {
@@ -111,6 +171,15 @@ export function ExportFilterPanel({
 
     await onExportCreate(filters);
   };
+
+  // Check if form is valid for disabling submit button
+  const isFormValid =
+    suppliers.length > 0 &&
+    (dateFrom && dateTo ? new Date(dateFrom) < new Date(dateTo) : true) &&
+    minRating <= maxRating &&
+    page >= 1 &&
+    pageSize >= 1 &&
+    maxRecords >= 1;
 
   const formatOptions: RadioOption[] = [
     {
@@ -150,6 +219,8 @@ export function ExportFilterPanel({
                   "flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all",
                   selectedSupplierValues.has(option.value.toString())
                     ? "border-blue-500 bg-blue-50"
+                    : errors.suppliers
+                    ? "border-red-300 hover:border-red-400"
                     : "border-gray-200 hover:border-gray-300"
                 )}
               >
@@ -163,6 +234,9 @@ export function ExportFilterPanel({
               </label>
             ))}
           </div>
+          {errors.suppliers && (
+            <p className="mt-2 text-sm text-red-600">{errors.suppliers}</p>
+          )}
         </div>
 
         {/* Country Codes */}
@@ -176,65 +250,123 @@ export function ExportFilterPanel({
         />
 
         {/* Star Rating Range */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Min Rating
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="range"
-                min="0"
-                max="5"
-                step="0.5"
-                value={minRating}
-                onChange={(e) => setMinRating(parseFloat(e.target.value))}
-                className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-              />
-              <div className="flex items-center gap-1 min-w-[60px]">
-                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                <span className="text-sm font-semibold">{minRating}</span>
+        <div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Min Rating
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="range"
+                  min="0"
+                  max="5"
+                  step="0.5"
+                  value={minRating}
+                  onChange={(e) => {
+                    setMinRating(parseFloat(e.target.value));
+                    // Clear rating error when valid
+                    if (
+                      parseFloat(e.target.value) <= maxRating &&
+                      errors.ratingRange
+                    ) {
+                      setErrors((prev) => ({
+                        ...prev,
+                        ratingRange: undefined,
+                      }));
+                    }
+                  }}
+                  className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                />
+                <div className="flex items-center gap-1 min-w-[60px]">
+                  <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                  <span className="text-sm font-semibold">{minRating}</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Max Rating
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="range"
+                  min="0"
+                  max="5"
+                  step="0.5"
+                  value={maxRating}
+                  onChange={(e) => {
+                    setMaxRating(parseFloat(e.target.value));
+                    // Clear rating error when valid
+                    if (
+                      minRating <= parseFloat(e.target.value) &&
+                      errors.ratingRange
+                    ) {
+                      setErrors((prev) => ({
+                        ...prev,
+                        ratingRange: undefined,
+                      }));
+                    }
+                  }}
+                  className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                />
+                <div className="flex items-center gap-1 min-w-[60px]">
+                  <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                  <span className="text-sm font-semibold">{maxRating}</span>
+                </div>
               </div>
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Max Rating
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="range"
-                min="0"
-                max="5"
-                step="0.5"
-                value={maxRating}
-                onChange={(e) => setMaxRating(parseFloat(e.target.value))}
-                className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-              />
-              <div className="flex items-center gap-1 min-w-[60px]">
-                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                <span className="text-sm font-semibold">{maxRating}</span>
-              </div>
-            </div>
-          </div>
+          {errors.ratingRange && (
+            <p className="mt-2 text-sm text-red-600">{errors.ratingRange}</p>
+          )}
         </div>
 
         {/* Date Range */}
-        <div className="grid grid-cols-2 gap-4">
-          <Input
-            type="date"
-            label="Date From"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            leftIcon={<Calendar className="w-4 h-4" />}
-          />
-          <Input
-            type="date"
-            label="Date To"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            leftIcon={<Calendar className="w-4 h-4" />}
-          />
+        <div>
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              type="date"
+              label="Date From"
+              value={dateFrom}
+              onChange={(e) => {
+                setDateFrom(e.target.value);
+                // Clear date error when valid
+                if (
+                  e.target.value &&
+                  dateTo &&
+                  new Date(e.target.value) < new Date(dateTo) &&
+                  errors.dateRange
+                ) {
+                  setErrors((prev) => ({ ...prev, dateRange: undefined }));
+                }
+              }}
+              leftIcon={<Calendar className="w-4 h-4" />}
+              error={errors.dateRange}
+            />
+            <Input
+              type="date"
+              label="Date To"
+              value={dateTo}
+              onChange={(e) => {
+                setDateTo(e.target.value);
+                // Clear date error when valid
+                if (
+                  dateFrom &&
+                  e.target.value &&
+                  new Date(dateFrom) < new Date(e.target.value) &&
+                  errors.dateRange
+                ) {
+                  setErrors((prev) => ({ ...prev, dateRange: undefined }));
+                }
+              }}
+              leftIcon={<Calendar className="w-4 h-4" />}
+              error={errors.dateRange}
+            />
+          </div>
+          {errors.dateRange && (
+            <p className="mt-2 text-sm text-red-600">{errors.dateRange}</p>
+          )}
         </div>
 
         {/* ITT IDs */}
@@ -282,23 +414,47 @@ export function ExportFilterPanel({
             type="number"
             label="Page"
             value={page}
-            onChange={(e) => setPage(parseInt(e.target.value) || 1)}
+            onChange={(e) => {
+              const val = parseInt(e.target.value) || 1;
+              setPage(val);
+              // Clear page error when valid
+              if (val >= 1 && errors.page) {
+                setErrors((prev) => ({ ...prev, page: undefined }));
+              }
+            }}
             min="1"
+            error={errors.page}
           />
           <Input
             type="number"
             label="Page Size"
             value={pageSize}
-            onChange={(e) => setPageSize(parseInt(e.target.value) || 100)}
+            onChange={(e) => {
+              const val = parseInt(e.target.value) || 100;
+              setPageSize(val);
+              // Clear pageSize error when valid
+              if (val >= 1 && errors.pageSize) {
+                setErrors((prev) => ({ ...prev, pageSize: undefined }));
+              }
+            }}
             min="1"
             max="1000"
+            error={errors.pageSize}
           />
           <Input
             type="number"
             label="Max Records"
             value={maxRecords}
-            onChange={(e) => setMaxRecords(parseInt(e.target.value) || 1000)}
+            onChange={(e) => {
+              const val = parseInt(e.target.value) || 1000;
+              setMaxRecords(val);
+              // Clear maxRecords error when valid
+              if (val >= 1 && errors.maxRecords) {
+                setErrors((prev) => ({ ...prev, maxRecords: undefined }));
+              }
+            }}
             min="1"
+            error={errors.maxRecords}
           />
         </div>
 
@@ -355,7 +511,7 @@ export function ExportFilterPanel({
             variant="primary"
             size="lg"
             loading={isLoading}
-            disabled={suppliers.length === 0 || isLoading}
+            disabled={!isFormValid || isLoading}
             leftIcon={<Download className="w-5 h-5" />}
             className="w-full"
           >
