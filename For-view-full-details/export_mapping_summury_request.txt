@@ -1,0 +1,26 @@
+import requests
+import json
+
+url = "http://127.0.0.1:8001/v1.0/export/mappings"
+
+payload = json.dumps({
+  "filters": {
+    "suppliers": [
+      "Agoda"
+    ],
+    "ittids": "All",
+    "date_from": "2025-01-01T00:00:00",
+    "date_to": "2025-11-15T23:59:59",
+    "max_records": 1000
+  },
+  "format": "json"
+})
+headers = {
+  'Content-Type': 'application/json',
+  'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyb21hbiIsInVzZXJfaWQiOiI1Nzc5MzU2MDgxIiwicm9sZSI6ImdlbmVyYWxfdXNlciIsImV4cCI6MTc2NTE3NDAwOCwidHlwZSI6ImFjY2VzcyIsImlhdCI6MTc2MzM3NDAwOH0.CVwB6hQWEU2jDL19tf8Vhoku-PsSOXUVMzGGoe57GbQ',
+  '': ''
+}
+
+response = requests.request("POST", url, headers=headers, data=payload)
+
+print(response.text)
