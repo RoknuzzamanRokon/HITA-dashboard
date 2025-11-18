@@ -108,6 +108,10 @@ export default function UsersPage() {
     dateTo: "",
   });
 
+  // User detail modal state
+  const [showUserDetailModal, setShowUserDetailModal] = useState(false);
+  const [selectedUserDetail, setSelectedUserDetail] = useState<any>(null);
+
   /**
    * Fetch users with current parameters
    */
@@ -1401,37 +1405,39 @@ export default function UsersPage() {
           </div>
 
           {/* Users Table */}
-          <DataTable
-            data={users}
-            columns={columns}
-            loading={loading}
-            pagination={{
-              page: pagination.page,
-              pageSize: pagination.pageSize,
-              total: pagination.total,
-            }}
-            onPageChange={handlePageChange}
-            onPageSizeChange={handlePageSizeChange}
-            searchable
-            onSearch={handleSearch}
-            searchPlaceholder="Search users by username or email..."
-            emptyMessage="No users found"
-            actions={
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  leftIcon={<Filter className="h-4 w-4" />}
-                  onClick={() => {
-                    // TODO: Implement filter modal
-                    console.log("Open filters");
-                  }}
-                >
-                  Filters
-                </Button>
-              </div>
-            }
-          />
+          <div className="mb-12">
+            <DataTable
+              data={users}
+              columns={columns}
+              loading={loading}
+              pagination={{
+                page: pagination.page,
+                pageSize: pagination.pageSize,
+                total: pagination.total,
+              }}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+              searchable
+              onSearch={handleSearch}
+              searchPlaceholder="Search users by username or email..."
+              emptyMessage="No users found"
+              actions={
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    leftIcon={<Filter className="h-4 w-4" />}
+                    onClick={() => {
+                      // TODO: Implement filter modal
+                      console.log("Open filters");
+                    }}
+                  >
+                    Filters
+                  </Button>
+                </div>
+              }
+            />
+          </div>
 
           {/* User Details Modal */}
           <Modal
@@ -1874,20 +1880,26 @@ export default function UsersPage() {
             <UserEditModal
               isOpen={showUserEditModal}
               onClose={() => {
+                console.log("UserEditModal onClose called");
                 setShowUserEditModal(false);
                 setSelectedUserId(null);
               }}
               userId={selectedUserId}
               onUserUpdated={() => {
+                console.log("UserEditModal onUserUpdated called");
                 // Refresh both the users list and analytics data
                 fetchUsers();
                 fetchAllUsersCheck();
               }}
             />
           )}
+          {console.log("UserEditModal state:", {
+            selectedUserId,
+            showUserEditModal,
+          })}
 
           {/* General Users Analytics Section */}
-          <div className="mt-8">
+          <div className="mt-12 pt-8 border-t-4 border-gray-200">
             <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-xl shadow-lg overflow-hidden">
               {/* Header */}
               <div className="px-8 py-6 bg-white/10 backdrop-blur-sm">
@@ -2237,253 +2249,236 @@ export default function UsersPage() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-h-[600px] overflow-y-auto pr-2">
-                          {(() => {
-                            let filtered = [...allUsersData.users];
+                        {/* User List Table */}
+                        <div className="bg-gray-50 rounded-lg p-6 border-2 border-gray-200">
+                          <div className="mb-4">
+                            <h3 className="text-lg font-bold text-gray-900 flex items-center">
+                              <Users className="h-5 w-5 mr-2 text-indigo-600" />
+                              User List Cards
+                            </h3>
+                            <p className="text-sm text-gray-600 mt-1">
+                              Click on any row to view detailed information
+                            </p>
+                          </div>
+                          <div className="max-h-[600px] overflow-y-auto">
+                            {(() => {
+                              let filtered = [...allUsersData.users];
 
-                            // Apply search filter
-                            if (analyticsSearchQuery) {
-                              filtered = filtered.filter(
-                                (u: any) =>
-                                  u.username
-                                    ?.toLowerCase()
-                                    .includes(
-                                      analyticsSearchQuery.toLowerCase()
-                                    ) ||
-                                  u.email
-                                    ?.toLowerCase()
-                                    .includes(
-                                      analyticsSearchQuery.toLowerCase()
-                                    )
-                              );
-                            }
-
-                            // Apply date filters
-                            if (analyticsFilters.dateFrom) {
-                              filtered = filtered.filter(
-                                (u: any) =>
-                                  new Date(u.created_at) >=
-                                  new Date(analyticsFilters.dateFrom)
-                              );
-                            }
-                            if (analyticsFilters.dateTo) {
-                              filtered = filtered.filter(
-                                (u: any) =>
-                                  new Date(u.created_at) <=
-                                  new Date(analyticsFilters.dateTo)
-                              );
-                            }
-
-                            // Apply sorting
-                            filtered.sort((a: any, b: any) => {
-                              let comparison = 0;
-
-                              if (analyticsFilters.sortBy === "name") {
-                                comparison = (a.username || "").localeCompare(
-                                  b.username || ""
+                              // Apply search filter
+                              if (analyticsSearchQuery) {
+                                filtered = filtered.filter(
+                                  (u: any) =>
+                                    u.username
+                                      ?.toLowerCase()
+                                      .includes(
+                                        analyticsSearchQuery.toLowerCase()
+                                      ) ||
+                                    u.email
+                                      ?.toLowerCase()
+                                      .includes(
+                                        analyticsSearchQuery.toLowerCase()
+                                      )
                                 );
-                              } else if (analyticsFilters.sortBy === "date") {
-                                comparison =
-                                  new Date(a.created_at).getTime() -
-                                  new Date(b.created_at).getTime();
-                              } else if (analyticsFilters.sortBy === "points") {
-                                comparison =
-                                  (a.points?.current_points || 0) -
-                                  (b.points?.current_points || 0);
                               }
 
-                              return analyticsFilters.sortOrder === "asc"
-                                ? comparison
-                                : -comparison;
-                            });
+                              // Apply date filters
+                              if (analyticsFilters.dateFrom) {
+                                filtered = filtered.filter(
+                                  (u: any) =>
+                                    new Date(u.created_at) >=
+                                    new Date(analyticsFilters.dateFrom)
+                                );
+                              }
+                              if (analyticsFilters.dateTo) {
+                                filtered = filtered.filter(
+                                  (u: any) =>
+                                    new Date(u.created_at) <=
+                                    new Date(analyticsFilters.dateTo)
+                                );
+                              }
 
-                            return filtered.map((user: any, index: number) => (
-                              <div
-                                key={user.id || index}
-                                onClick={() => {
-                                  setSelectedUserId(user.id);
-                                  setShowUserEditModal(true);
-                                }}
-                                className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-xl p-6 hover:shadow-xl transition-all duration-300 hover:border-indigo-300 cursor-pointer"
-                              >
-                                {/* User Header */}
-                                <div className="flex items-start justify-between mb-4">
-                                  <div className="flex items-center space-x-3">
-                                    <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                      {user.username?.charAt(0).toUpperCase()}
-                                    </div>
-                                    <div>
-                                      <h4 className="font-bold text-gray-900 text-lg">
-                                        {user.username}
-                                      </h4>
-                                      <p className="text-sm text-gray-600">
-                                        {user.email}
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <div className="flex flex-col items-end space-y-1">
-                                    <Badge
-                                      className={
-                                        user.is_active
-                                          ? "bg-green-100 text-green-800 border-green-200"
-                                          : "bg-gray-100 text-gray-800 border-gray-200"
-                                      }
+                              // Apply sorting
+                              filtered.sort((a: any, b: any) => {
+                                let comparison = 0;
+
+                                if (analyticsFilters.sortBy === "name") {
+                                  comparison = (a.username || "").localeCompare(
+                                    b.username || ""
+                                  );
+                                } else if (analyticsFilters.sortBy === "date") {
+                                  comparison =
+                                    new Date(a.created_at).getTime() -
+                                    new Date(b.created_at).getTime();
+                                } else if (
+                                  analyticsFilters.sortBy === "points"
+                                ) {
+                                  comparison =
+                                    (a.points?.current_points || 0) -
+                                    (b.points?.current_points || 0);
+                                }
+
+                                return analyticsFilters.sortOrder === "asc"
+                                  ? comparison
+                                  : -comparison;
+                              });
+
+                              // Show no results message if filtered list is empty
+                              if (filtered.length === 0) {
+                                return (
+                                  <div className="text-center py-12">
+                                    <svg
+                                      className="mx-auto h-12 w-12 text-gray-400"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
                                     >
-                                      {user.is_active
-                                        ? "● Active"
-                                        : "○ Inactive"}
-                                    </Badge>
-                                    <Badge
-                                      className={
-                                        user.points?.paid_status === "Paid"
-                                          ? "bg-emerald-100 text-emerald-800 border-emerald-200"
-                                          : "bg-red-100 text-red-800 border-red-200"
-                                      }
-                                    >
-                                      {user.points?.paid_status || "Unknown"}
-                                    </Badge>
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                      />
+                                    </svg>
+                                    <h3 className="mt-2 text-sm font-medium text-gray-900">
+                                      No users found
+                                    </h3>
+                                    <p className="mt-1 text-sm text-gray-500">
+                                      Try adjusting your search or filter
+                                      criteria
+                                    </p>
                                   </div>
-                                </div>
+                                );
+                              }
 
-                                {/* User Stats */}
-                                <div className="grid grid-cols-2 gap-4 mb-4">
-                                  <div className="bg-white rounded-lg p-3 border border-gray-200">
-                                    <p className="text-xs text-gray-500 font-medium uppercase">
-                                      Current Points
-                                    </p>
-                                    <p className="text-2xl font-bold text-indigo-600 mt-1">
-                                      {user.points?.current_points?.toLocaleString() ||
-                                        0}
-                                    </p>
-                                  </div>
-                                  <div className="bg-white rounded-lg p-3 border border-gray-200">
-                                    <p className="text-xs text-gray-500 font-medium uppercase">
-                                      Total Points
-                                    </p>
-                                    <p className="text-2xl font-bold text-purple-600 mt-1">
-                                      {user.points?.total_points?.toLocaleString() ||
-                                        0}
-                                    </p>
-                                  </div>
-                                  <div className="bg-white rounded-lg p-3 border border-gray-200">
-                                    <p className="text-xs text-gray-500 font-medium uppercase">
-                                      Requests
-                                    </p>
-                                    <p className="text-2xl font-bold text-blue-600 mt-1">
-                                      {user.total_requests || 0}
-                                    </p>
-                                  </div>
-                                  <div className="bg-white rounded-lg p-3 border border-gray-200">
-                                    <p className="text-xs text-gray-500 font-medium uppercase">
-                                      Activity
-                                    </p>
-                                    <p className="text-sm font-semibold text-gray-900 mt-2">
-                                      {user.activity_status || "Unknown"}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                {/* Suppliers */}
-                                {user.active_suppliers &&
-                                  user.active_suppliers.length > 0 && (
-                                    <div className="mb-4">
-                                      <p className="text-xs text-gray-500 font-medium uppercase mb-2">
-                                        Active Suppliers ({user.total_suppliers}
-                                        )
-                                      </p>
-                                      <div className="flex flex-wrap gap-2">
-                                        {user.active_suppliers.map(
-                                          (supplier: string, idx: number) => (
+                              return (
+                                <table className="w-full border-collapse bg-white rounded-lg overflow-hidden">
+                                  <thead>
+                                    <tr className="bg-gray-100 border-b-2 border-gray-300">
+                                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                                        User
+                                      </th>
+                                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                                        Status
+                                      </th>
+                                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                                        Current Points
+                                      </th>
+                                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                                        Total Points
+                                      </th>
+                                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                                        Requests
+                                      </th>
+                                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                                        Payment
+                                      </th>
+                                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                                        Created
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-gray-200">
+                                    {filtered.map(
+                                      (user: any, index: number) => (
+                                        <tr
+                                          key={user.id || index}
+                                          onClick={() => {
+                                            setSelectedUserDetail(user);
+                                            setShowUserDetailModal(true);
+                                          }}
+                                          className="hover:bg-gray-50 transition-colors cursor-pointer"
+                                        >
+                                          <td className="py-3 px-4">
+                                            <div className="flex items-center space-x-3">
+                                              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                                {user.username
+                                                  ?.charAt(0)
+                                                  .toUpperCase()}
+                                              </div>
+                                              <div>
+                                                <p className="font-semibold text-gray-900 text-sm">
+                                                  {user.username}
+                                                </p>
+                                                <p className="text-xs text-gray-600">
+                                                  {user.email}
+                                                </p>
+                                              </div>
+                                            </div>
+                                          </td>
+                                          <td className="py-3 px-4">
                                             <span
-                                              key={idx}
-                                              className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium"
+                                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border-2 ${
+                                                user.is_active
+                                                  ? "border-green-600 text-green-600 bg-transparent"
+                                                  : "border-gray-600 text-gray-600 bg-transparent"
+                                              }`}
                                             >
-                                              {supplier}
+                                              {user.is_active
+                                                ? "Active"
+                                                : "Inactive"}
                                             </span>
-                                          )
-                                        )}
-                                      </div>
-                                    </div>
-                                  )}
+                                          </td>
+                                          <td className="py-3 px-4 text-sm text-indigo-600 font-bold">
+                                            {user.points?.current_points?.toLocaleString() ||
+                                              "0"}
+                                          </td>
+                                          <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
+                                            {user.points?.total_points?.toLocaleString() ||
+                                              "0"}
+                                          </td>
+                                          <td className="py-3 px-4 text-sm text-gray-900 font-semibold">
+                                            {user.total_requests || "0"}
+                                          </td>
+                                          <td className="py-3 px-4">
+                                            <span
+                                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border-2 ${
+                                                user.points?.paid_status ===
+                                                "Paid"
+                                                  ? "border-cyan-600 text-cyan-600 bg-transparent"
+                                                  : "border-amber-600 text-amber-600 bg-transparent"
+                                              }`}
+                                            >
+                                              {user.points?.paid_status ||
+                                                "Pending"}
+                                            </span>
+                                          </td>
+                                          <td className="py-3 px-4 text-sm text-gray-900">
+                                            {new Date(
+                                              user.created_at
+                                            ).toLocaleDateString()}
+                                          </td>
+                                        </tr>
+                                      )
+                                    )}
+                                  </tbody>
+                                </table>
+                              );
+                            })()}
+                          </div>
 
-                                {/* Footer */}
-                                <div className="pt-4 border-t border-gray-200 flex items-center justify-between text-xs text-gray-500">
-                                  <span>
-                                    Created:{" "}
-                                    {new Date(
-                                      user.created_at
-                                    ).toLocaleDateString()}
-                                  </span>
-                                  <span
-                                    className="truncate max-w-[150px]"
-                                    title={user.created_by}
-                                  >
-                                    By: {user.created_by}
-                                  </span>
-                                </div>
+                          {/* Footer Info */}
+                          <div className="flex items-center justify-between pt-6 border-t border-gray-200">
+                            <div className="flex items-center space-x-6 text-sm text-gray-600">
+                              <div>
+                                <span className="font-medium">Page:</span>{" "}
+                                {allUsersData.pagination?.page || 1} of{" "}
+                                {allUsersData.pagination?.total_pages || 1}
                               </div>
-                            ));
-                          })()}
+                              <div>
+                                <span className="font-medium">Limit:</span>{" "}
+                                {allUsersData.pagination?.limit || 25} per page
+                              </div>
+                            </div>
+                            {allUsersData.timestamp && (
+                              <div className="text-xs text-gray-500">
+                                Last updated:{" "}
+                                {new Date(
+                                  allUsersData.timestamp
+                                ).toLocaleString()}
+                              </div>
+                            )}
+                          </div>
                         </div>
-
-                        {/* No Results Message */}
-                        {(() => {
-                          let filtered = allUsersData.users;
-                          if (analyticsSearchQuery) {
-                            filtered = filtered.filter(
-                              (u: any) =>
-                                u.username
-                                  ?.toLowerCase()
-                                  .includes(
-                                    analyticsSearchQuery.toLowerCase()
-                                  ) ||
-                                u.email
-                                  ?.toLowerCase()
-                                  .includes(analyticsSearchQuery.toLowerCase())
-                            );
-                          }
-                          if (analyticsFilters.dateFrom) {
-                            filtered = filtered.filter(
-                              (u: any) =>
-                                new Date(u.created_at) >=
-                                new Date(analyticsFilters.dateFrom)
-                            );
-                          }
-                          if (analyticsFilters.dateTo) {
-                            filtered = filtered.filter(
-                              (u: any) =>
-                                new Date(u.created_at) <=
-                                new Date(analyticsFilters.dateTo)
-                            );
-                          }
-
-                          if (filtered.length === 0) {
-                            return (
-                              <div className="text-center py-12">
-                                <svg
-                                  className="mx-auto h-12 w-12 text-gray-400"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                  />
-                                </svg>
-                                <h3 className="mt-2 text-sm font-medium text-gray-900">
-                                  No users found
-                                </h3>
-                                <p className="mt-1 text-sm text-gray-500">
-                                  Try adjusting your search or filter criteria
-                                </p>
-                              </div>
-                            );
-                          }
-                          return null;
-                        })()}
                       </div>
                     )}
 
@@ -2491,21 +2486,11 @@ export default function UsersPage() {
                     <div className="flex items-center justify-between pt-6 border-t border-gray-200">
                       <div className="flex items-center space-x-6 text-sm text-gray-600">
                         <div>
-                          <span className="font-medium">Page:</span>{" "}
-                          {allUsersData.pagination?.page || 1} of{" "}
-                          {allUsersData.pagination?.total_pages || 1}
-                        </div>
-                        <div>
-                          <span className="font-medium">Limit:</span>{" "}
-                          {allUsersData.pagination?.limit || 25} per page
+                          <span className="font-medium">Total Users:</span>{" "}
+                          {allUsersData?.statistics?.total_users ||
+                            users.length}
                         </div>
                       </div>
-                      {allUsersData.timestamp && (
-                        <div className="text-xs text-gray-500">
-                          Last updated:{" "}
-                          {new Date(allUsersData.timestamp).toLocaleString()}
-                        </div>
-                      )}
                     </div>
                   </div>
                 )}
@@ -2539,6 +2524,251 @@ export default function UsersPage() {
             </div>
           </div>
         )}
+
+        {/* User Detail Modal with Table */}
+        <Modal
+          isOpen={showUserDetailModal}
+          onClose={() => {
+            setShowUserDetailModal(false);
+            setSelectedUserDetail(null);
+          }}
+          title="User Details"
+          size="md"
+        >
+          {selectedUserDetail && (
+            <div className="space-y-4">
+              {/* User Header */}
+              <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-lg p-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg">
+                    {selectedUserDetail.username?.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-gray-900">
+                      {selectedUserDetail.username}
+                    </h3>
+                    <p className="text-gray-600 text-sm mt-0.5">
+                      {selectedUserDetail.email}
+                    </p>
+                    <div className="flex items-center space-x-2 mt-1.5">
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-xs font-medium border-2 ${
+                          selectedUserDetail.is_active
+                            ? "bg-green-50 text-green-700 border-green-300"
+                            : "bg-gray-50 text-gray-700 border-gray-300"
+                        }`}
+                      >
+                        {selectedUserDetail.is_active ? "ACTIVE" : "INACTIVE"}
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-xs font-medium border-2 ${
+                          selectedUserDetail.points?.paid_status === "Paid"
+                            ? "bg-cyan-50 text-cyan-700 border-cyan-300"
+                            : "bg-amber-50 text-amber-700 border-amber-300"
+                        }`}
+                      >
+                        {selectedUserDetail.points?.paid_status === "Paid"
+                          ? "PAID"
+                          : "PENDING"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Detailed Information Table */}
+              <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+                <table className="w-full border-collapse">
+                  <thead className="sticky top-0 bg-[rgb(var(--bg-secondary))]">
+                    <tr className="border-b border-[rgb(var(--border-primary))]">
+                      <th className="text-left py-2 px-3 text-xs font-semibold text-[rgb(var(--text-primary))]">
+                        Field
+                      </th>
+                      <th className="text-left py-2 px-3 text-xs font-semibold text-[rgb(var(--text-primary))]">
+                        Value
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[rgb(var(--border-primary))]">
+                    <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                      <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                        User ID
+                      </td>
+                      <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))] font-mono">
+                        {selectedUserDetail.id}
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                      <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                        Username
+                      </td>
+                      <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))] font-semibold">
+                        {selectedUserDetail.username}
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                      <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                        Email
+                      </td>
+                      <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))]">
+                        {selectedUserDetail.email}
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                      <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                        Status
+                      </td>
+                      <td className="py-2 px-3 text-xs">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${
+                            selectedUserDetail.is_active
+                              ? "border-green-600 dark:border-green-400 text-green-600 dark:text-green-400 bg-transparent"
+                              : "border-gray-600 dark:border-gray-400 text-gray-600 dark:text-gray-400 bg-transparent"
+                          }`}
+                        >
+                          {selectedUserDetail.is_active ? "Active" : "Inactive"}
+                        </span>
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                      <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                        Current Points
+                      </td>
+                      <td className="py-2 px-3 text-sm text-primary-color font-bold">
+                        {selectedUserDetail.points?.current_points?.toLocaleString() ||
+                          "0"}
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                      <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                        Total Points
+                      </td>
+                      <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))] font-semibold">
+                        {selectedUserDetail.points?.total_points?.toLocaleString() ||
+                          "0"}
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                      <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                        Payment Status
+                      </td>
+                      <td className="py-2 px-3 text-xs">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${
+                            selectedUserDetail.points?.paid_status === "Paid"
+                              ? "border-cyan-600 dark:border-cyan-400 text-cyan-600 dark:text-cyan-400 bg-transparent"
+                              : "border-amber-600 dark:border-amber-400 text-amber-600 dark:text-amber-400 bg-transparent"
+                          }`}
+                        >
+                          {selectedUserDetail.points?.paid_status || "Pending"}
+                        </span>
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                      <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                        Total Requests
+                      </td>
+                      <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))] font-semibold">
+                        {selectedUserDetail.total_requests || "0"}
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                      <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                        Activity Status
+                      </td>
+                      <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))]">
+                        {selectedUserDetail.activity_status || "Unknown"}
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                      <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                        Total Suppliers
+                      </td>
+                      <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))] font-semibold">
+                        {selectedUserDetail.total_suppliers || "0"}
+                      </td>
+                    </tr>
+                    {selectedUserDetail.active_suppliers &&
+                      selectedUserDetail.active_suppliers.length > 0 && (
+                        <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                          <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))] align-top">
+                            Active Suppliers
+                          </td>
+                          <td className="py-2 px-3">
+                            <div className="flex flex-wrap gap-1.5">
+                              {selectedUserDetail.active_suppliers.map(
+                                (supplier: string, idx: number) => (
+                                  <span
+                                    key={idx}
+                                    className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border border-primary-color text-primary-color bg-transparent"
+                                  >
+                                    {supplier}
+                                  </span>
+                                )
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                      <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                        Created At
+                      </td>
+                      <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))]">
+                        {new Date(
+                          selectedUserDetail.created_at
+                        ).toLocaleString()}
+                      </td>
+                    </tr>
+                    <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                      <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                        Created By
+                      </td>
+                      <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))]">
+                        {selectedUserDetail.created_by || "Unknown"}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-2 pt-3 border-t border-[rgb(var(--border-primary))]">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setShowUserDetailModal(false);
+                    setSelectedUserDetail(null);
+                  }}
+                >
+                  Close
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log(
+                      "Edit User clicked, navigating to billing page for userId:",
+                      selectedUserDetail.id
+                    );
+
+                    // Close the detail modal
+                    setShowUserDetailModal(false);
+
+                    // Navigate to billing page
+                    router.push("/dashboard/billing");
+                  }}
+                  leftIcon={<Edit className="h-3 w-3" />}
+                >
+                  Edit User
+                </Button>
+              </div>
+            </div>
+          )}
+        </Modal>
       </div>
     </PermissionGuard>
   );

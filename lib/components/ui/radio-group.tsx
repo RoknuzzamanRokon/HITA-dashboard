@@ -34,7 +34,7 @@ export function RadioGroup({
   return (
     <div className={clsx("space-y-3", className)}>
       {label && (
-        <label className="text-sm font-medium text-gray-900 dark:text-gray-100">
+        <label className="text-sm font-medium text-[rgb(var(--text-primary))]">
           {label}
         </label>
       )}
@@ -50,11 +50,11 @@ export function RadioGroup({
             className={clsx(
               "relative flex items-start cursor-pointer group",
               "p-3 rounded-xl border-2 transition-all duration-300 ease-out",
-              "hover:shadow-md focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2",
+              "hover:shadow-md focus-within:ring-2 focus-within:ring-primary-color focus-within:ring-offset-2",
               {
-                "border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-md":
+                "border-primary-color bg-primary-color/10 shadow-md":
                   value === option.value,
-                "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600":
+                "border-[rgb(var(--border-primary))] hover:border-[rgb(var(--border-secondary))]":
                   value !== option.value,
               }
             )}
@@ -80,8 +80,9 @@ export function RadioGroup({
                     "w-6 h-6": size === "lg",
                   },
                   {
-                    "border-blue-500 bg-blue-500": value === option.value,
-                    "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800":
+                    "border-primary-color bg-primary-color":
+                      value === option.value,
+                    "border-[rgb(var(--border-primary))] bg-[rgb(var(--bg-primary))]":
                       value !== option.value,
                   }
                 )}
@@ -103,7 +104,7 @@ export function RadioGroup({
 
                 {/* Glow effect */}
                 {value === option.value && (
-                  <div className="absolute inset-0 rounded-full bg-blue-500 opacity-20 animate-pulse" />
+                  <div className="absolute inset-0 rounded-full bg-primary-color opacity-20 animate-pulse" />
                 )}
               </div>
             </div>
@@ -113,9 +114,8 @@ export function RadioGroup({
                 {option.icon && (
                   <span
                     className={clsx("transition-colors duration-300", {
-                      "text-blue-600 dark:text-blue-400":
-                        value === option.value,
-                      "text-gray-500 dark:text-gray-400":
+                      "text-primary-color": value === option.value,
+                      "text-[rgb(var(--text-tertiary))]":
                         value !== option.value,
                     })}
                   >
@@ -126,10 +126,8 @@ export function RadioGroup({
                   className={clsx(
                     "text-sm font-medium transition-colors duration-300",
                     {
-                      "text-blue-900 dark:text-blue-100":
-                        value === option.value,
-                      "text-gray-900 dark:text-gray-100":
-                        value !== option.value,
+                      "text-primary-color": value === option.value,
+                      "text-[rgb(var(--text-primary))]": value !== option.value,
                     }
                   )}
                 >
@@ -142,9 +140,8 @@ export function RadioGroup({
                   className={clsx(
                     "text-xs mt-1 transition-colors duration-300",
                     {
-                      "text-blue-700 dark:text-blue-300":
-                        value === option.value,
-                      "text-gray-500 dark:text-gray-400":
+                      "text-primary-color": value === option.value,
+                      "text-[rgb(var(--text-secondary))]":
                         value !== option.value,
                     }
                   )}
@@ -156,7 +153,7 @@ export function RadioGroup({
 
             {/* Ripple effect */}
             <span className="absolute inset-0 rounded-xl overflow-hidden">
-              <span className="absolute inset-0 bg-blue-500/10 transform scale-0 group-active:scale-100 transition-transform duration-200 rounded-xl" />
+              <span className="absolute inset-0 bg-primary-color/10 transform scale-0 group-active:scale-100 transition-transform duration-200 rounded-xl" />
             </span>
           </label>
         ))}

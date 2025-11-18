@@ -111,15 +111,15 @@ export function ExportJobsList({
   // Empty state
   if (jobs.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-slate-200 dark:border-gray-700 p-12">
+      <div className="bg-[rgb(var(--bg-primary))] rounded-lg shadow-md border border-[rgb(var(--border-primary))] p-12">
         <div className="flex flex-col items-center justify-center text-center">
-          <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
-            <Inbox className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+          <div className="w-16 h-16 bg-[rgb(var(--bg-secondary))] rounded-full flex items-center justify-center mb-4">
+            <Inbox className="w-8 h-8 text-[rgb(var(--text-secondary))]" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+          <h3 className="text-lg font-semibold text-[rgb(var(--text-primary))] mb-2">
             No export jobs yet
           </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md">
+          <p className="text-sm text-[rgb(var(--text-secondary))] max-w-md">
             Create your first export job using the filter panel above. Your
             export jobs will appear here.
           </p>
@@ -133,12 +133,12 @@ export function ExportJobsList({
       {/* Header with Clear Completed button */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <h2 className="text-lg font-semibold text-[rgb(var(--text-primary))]">
             Export Jobs ({jobs.length})
           </h2>
           {isRefreshing && (
             <Loader2
-              className="w-4 h-4 text-blue-600 dark:text-blue-400 animate-spin"
+              className="w-4 h-4 text-primary-color animate-spin"
               aria-label="Refreshing jobs"
             />
           )}
@@ -161,57 +161,57 @@ export function ExportJobsList({
       {/* Desktop: Table View */}
       <div
         ref={containerRef}
-        className="hidden lg:block bg-white dark:bg-gray-800 rounded-xl shadow-md border border-slate-200 dark:border-gray-700 overflow-hidden"
+        className="hidden lg:block bg-[rgb(var(--bg-primary))] rounded-lg shadow-md border border-[rgb(var(--border-primary))] overflow-hidden"
       >
         <div className="overflow-x-auto">
           <table className="w-full" role="table" aria-label="Export jobs table">
-            <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+            <thead className="bg-[rgb(var(--bg-secondary))] border-b border-[rgb(var(--border-primary))]">
               <tr>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-semibold text-[rgb(var(--text-secondary))] uppercase tracking-wider"
                 >
                   Job ID
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-semibold text-[rgb(var(--text-secondary))] uppercase tracking-wider"
                 >
                   Type
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-semibold text-[rgb(var(--text-secondary))] uppercase tracking-wider"
                 >
                   Status
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-semibold text-[rgb(var(--text-secondary))] uppercase tracking-wider"
                 >
                   Progress
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-semibold text-[rgb(var(--text-secondary))] uppercase tracking-wider"
                 >
                   Records
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-semibold text-[rgb(var(--text-secondary))] uppercase tracking-wider"
                 >
                   Created
                 </th>
                 <th
                   scope="col"
-                  className="px-6 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider"
+                  className="px-6 py-3 text-right text-xs font-semibold text-[rgb(var(--text-secondary))] uppercase tracking-wider"
                 >
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="divide-y divide-gray-200">
               {useVirtualScrolling ? (
                 <tr>
                   <td colSpan={7} className="p-0">
@@ -578,23 +578,23 @@ function ExportJobTableRow({
   }
 
   return (
-    <tr className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+    <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
       {/* Job ID */}
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-mono text-gray-600 dark:text-gray-400">
+          <span className="text-xs font-mono text-[rgb(var(--text-secondary))]">
             {truncate(job.jobId, 16)}
           </span>
           <button
             onClick={handleCopyJobId}
-            className="p-1.5 min-w-[28px] min-h-[28px] hover:bg-gray-100 dark:hover:bg-gray-600 rounded transition-colors flex items-center justify-center"
+            className="p-1.5 min-w-[28px] min-h-[28px] hover:bg-[rgb(var(--bg-secondary))] rounded transition-colors flex items-center justify-center"
             title="Copy Job ID"
             aria-label="Copy job ID to clipboard"
           >
             {copied ? (
-              <Check className="w-3 h-3 text-green-600 dark:text-green-400" />
+              <Check className="w-3 h-3 text-green-600" />
             ) : (
-              <Copy className="w-3 h-3 text-gray-400 dark:text-gray-500" />
+              <Copy className="w-3 h-3 text-[rgb(var(--text-tertiary))]" />
             )}
           </button>
         </div>
@@ -625,11 +625,11 @@ function ExportJobTableRow({
         {job.status === "processing" ? (
           <div className="w-32">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">
+              <span className="text-xs font-semibold text-blue-600">
                 {job.progress}%
               </span>
             </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
+            <div className="w-full bg-[rgb(var(--bg-secondary))] rounded-full h-1.5 overflow-hidden">
               <div
                 className="bg-linear-to-r from-blue-500 to-blue-600 h-1.5 rounded-full transition-all duration-500"
                 style={{ width: `${job.progress}%` }}
@@ -637,13 +637,13 @@ function ExportJobTableRow({
             </div>
           </div>
         ) : (
-          <span className="text-xs text-gray-500 dark:text-gray-400">—</span>
+          <span className="text-xs text-[rgb(var(--text-tertiary))]">—</span>
         )}
       </td>
 
       {/* Records */}
       <td className="px-6 py-4 whitespace-nowrap">
-        <div className="text-sm text-gray-900 dark:text-gray-100">
+        <div className="text-sm text-[rgb(var(--text-primary))]">
           {formatNumber(job.processedRecords)} /{" "}
           {formatNumber(job.totalRecords)}
         </div>
@@ -651,7 +651,7 @@ function ExportJobTableRow({
 
       {/* Created */}
       <td className="px-6 py-4 whitespace-nowrap">
-        <div className="text-sm text-gray-600 dark:text-gray-400">
+        <div className="text-sm text-[rgb(var(--text-secondary))]">
           {formatDateTime(job.createdAt)}
         </div>
       </td>
@@ -664,13 +664,13 @@ function ExportJobTableRow({
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="p-2 min-w-[40px] min-h-[40px] hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center"
+              className="p-2 min-w-[40px] min-h-[40px] hover:bg-[rgb(var(--bg-secondary))] rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center"
               title="Refresh Status"
               aria-label="Refresh job status"
             >
               <RefreshCw
                 className={cn(
-                  "w-4 h-4 text-gray-600 dark:text-gray-400",
+                  "w-4 h-4 text-[rgb(var(--text-secondary))]",
                   isRefreshing && "animate-spin"
                 )}
               />
@@ -682,14 +682,14 @@ function ExportJobTableRow({
             <button
               onClick={handleDownload}
               disabled={isDownloading}
-              className="p-2 min-w-[40px] min-h-[40px] hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center"
+              className="p-2 min-w-[40px] min-h-[40px] hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center"
               title="Download Export"
               aria-label="Download export file"
             >
               {isDownloading ? (
-                <Loader2 className="w-4 h-4 text-blue-600 dark:text-blue-400 animate-spin" />
+                <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
               ) : (
-                <Download className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <Download className="w-4 h-4 text-blue-600" />
               )}
             </button>
           )}
@@ -698,22 +698,22 @@ function ExportJobTableRow({
           {job.status === "expired" && onCreateNew && (
             <button
               onClick={onCreateNew}
-              className="p-2 min-w-[40px] min-h-[40px] hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors flex items-center justify-center"
+              className="p-2 min-w-[40px] min-h-[40px] hover:bg-blue-50 rounded-lg transition-colors flex items-center justify-center"
               title="Create New Export"
               aria-label="Create new export with same filters"
             >
-              <FileJson className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <FileJson className="w-4 h-4 text-blue-600" />
             </button>
           )}
 
           {/* Delete Button */}
           <button
             onClick={onDelete}
-            className="p-2 min-w-[40px] min-h-[40px] hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors flex items-center justify-center"
+            className="p-2 min-w-[40px] min-h-[40px] hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center"
             title="Delete Job"
             aria-label="Delete job"
           >
-            <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
+            <Trash2 className="w-4 h-4 text-red-600" />
           </button>
         </div>
       </td>

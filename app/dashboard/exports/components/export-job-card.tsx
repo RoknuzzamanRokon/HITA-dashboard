@@ -138,7 +138,7 @@ export const ExportJobCard = memo(function ExportJobCard({
 
   return (
     <article
-      className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-slate-200 dark:border-gray-700 p-5 hover:shadow-lg transition-shadow duration-200"
+      className="bg-[rgb(var(--bg-primary))] rounded-xl shadow-md border border-[rgb(var(--border-primary))] p-5 hover:shadow-lg transition-shadow duration-200"
       aria-label={`${job.exportType} export job ${job.jobId}`}
     >
       {/* Header: Job ID, Type, Status */}
@@ -147,25 +147,25 @@ export const ExportJobCard = memo(function ExportJobCard({
           {/* Job ID with copy button */}
           <div className="flex items-center gap-2 mb-2">
             <span
-              className="text-xs font-mono text-gray-500 dark:text-gray-400"
+              className="text-xs font-mono text-[rgb(var(--text-tertiary))]"
               aria-label={`Job ID: ${job.jobId}`}
             >
               {truncate(job.jobId, 20)}
             </span>
             <button
               onClick={handleCopyJobId}
-              className="p-2 min-w-[32px] min-h-[32px] hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors flex items-center justify-center"
+              className="p-2 min-w-[32px] min-h-[32px] hover:bg-[rgb(var(--bg-secondary))] rounded transition-colors flex items-center justify-center"
               title="Copy Job ID"
               aria-label={copied ? "Job ID copied" : "Copy job ID to clipboard"}
             >
               {copied ? (
                 <Check
-                  className="w-3 h-3 text-green-600 dark:text-green-400"
+                  className="w-3 h-3 text-green-600"
                   aria-hidden="true"
                 />
               ) : (
                 <Copy
-                  className="w-3 h-3 text-gray-400 dark:text-gray-500"
+                  className="w-3 h-3 text-[rgb(var(--text-tertiary))]"
                   aria-hidden="true"
                 />
               )}
@@ -196,15 +196,15 @@ export const ExportJobCard = memo(function ExportJobCard({
       {job.status === "processing" && (
         <div className="mb-4" role="status" aria-live="polite">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            <span className="text-xs font-medium text-[rgb(var(--text-secondary))]">
               Progress
             </span>
-            <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">
+            <span className="text-xs font-semibold text-blue-600">
               {job.progress}%
             </span>
           </div>
           <div
-            className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden"
+            className="w-full bg-[rgb(var(--bg-secondary))] rounded-full h-2 overflow-hidden"
             role="progressbar"
             aria-valuenow={job.progress}
             aria-valuemin={0}
@@ -224,8 +224,8 @@ export const ExportJobCard = memo(function ExportJobCard({
       {/* Records Count */}
       <div className="mb-4">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600 dark:text-gray-400">Records:</span>
-          <span className="font-semibold text-gray-900 dark:text-gray-100">
+          <span className="text-[rgb(var(--text-secondary))]">Records:</span>
+          <span className="font-semibold text-[rgb(var(--text-primary))]">
             {formatNumber(job.processedRecords)} /{" "}
             {formatNumber(job.totalRecords)}
           </span>
@@ -234,29 +234,29 @@ export const ExportJobCard = memo(function ExportJobCard({
 
       {/* Timestamps */}
       <div className="space-y-2 mb-4 text-xs">
-        <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+        <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))]">
           <Calendar className="w-3 h-3" />
           <span>Created:</span>
-          <span className="font-medium text-gray-900 dark:text-gray-100">
+          <span className="font-medium text-[rgb(var(--text-primary))]">
             {formatDateTime(job.createdAt)}
           </span>
         </div>
 
         {job.startedAt && (
-          <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+          <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))]">
             <Clock className="w-3 h-3" />
             <span>Started:</span>
-            <span className="font-medium text-gray-900 dark:text-gray-100">
+            <span className="font-medium text-[rgb(var(--text-primary))]">
               {formatDateTime(job.startedAt)}
             </span>
           </div>
         )}
 
         {job.completedAt && (
-          <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+          <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))]">
             <CheckCircle className="w-3 h-3" />
             <span>Completed:</span>
-            <span className="font-medium text-gray-900 dark:text-gray-100">
+            <span className="font-medium text-[rgb(var(--text-primary))]">
               {formatDateTime(job.completedAt)}
             </span>
           </div>
@@ -268,8 +268,8 @@ export const ExportJobCard = memo(function ExportJobCard({
               className={cn(
                 "flex items-center gap-2",
                 job.status === "expired" || isExpired()
-                  ? "text-red-600 dark:text-red-400"
-                  : "text-gray-600 dark:text-gray-400"
+                  ? "text-red-600"
+                  : "text-[rgb(var(--text-secondary))]"
               )}
             >
               <AlertCircle className="w-3 h-3" />
@@ -284,24 +284,24 @@ export const ExportJobCard = memo(function ExportJobCard({
       {/* Error Message (for failed jobs) - WCAG AA compliant */}
       {job.status === "failed" && job.errorMessage && (
         <div
-          className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg"
+          className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg"
           role="alert"
           aria-live="assertive"
         >
           <div className="flex items-start gap-2">
             <AlertCircle
-              className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0 mt-0.5"
+              className="w-4 h-4 text-red-600 shrink-0 mt-0.5"
               aria-hidden="true"
             />
             <div className="flex-1 min-w-0">
               {/* Light: red-900 on red-50 (9.5:1 contrast) ✓ */}
               {/* Dark: red-200 on red-900/30 (7.5:1 contrast) ✓ */}
-              <p className="text-xs font-medium text-red-900 dark:text-red-200 mb-1">
+              <p className="text-xs font-medium text-red-900 mb-1">
                 Error
               </p>
               {/* Light: red-800 on red-50 (8.8:1 contrast) ✓ */}
               {/* Dark: red-200 on red-900/30 (7.5:1 contrast) ✓ */}
-              <p className="text-xs text-red-800 dark:text-red-200 wrap-break-word">
+              <p className="text-xs text-red-800 wrap-break-word">
                 {job.errorMessage}
               </p>
             </div>
@@ -312,7 +312,7 @@ export const ExportJobCard = memo(function ExportJobCard({
       {/* Expiration Warning (for expired jobs) - WCAG AA compliant */}
       {job.status === "expired" && (
         <div
-          className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg"
+          className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg"
           role="alert"
           aria-live="polite"
         >
@@ -320,18 +320,18 @@ export const ExportJobCard = memo(function ExportJobCard({
             {/* Light: yellow-700 on yellow-50 (5.8:1 contrast) ✓ */}
             {/* Dark: yellow-400 on yellow-900/30 (7.2:1 contrast) ✓ */}
             <Clock
-              className="w-4 h-4 text-yellow-700 dark:text-yellow-400 shrink-0 mt-0.5"
+              className="w-4 h-4 text-yellow-700 shrink-0 mt-0.5"
               aria-hidden="true"
             />
             <div className="flex-1 min-w-0">
               {/* Light: yellow-900 on yellow-50 (9.2:1 contrast) ✓ */}
               {/* Dark: yellow-200 on yellow-900/30 (8.1:1 contrast) ✓ */}
-              <p className="text-xs font-medium text-yellow-900 dark:text-yellow-200 mb-1">
+              <p className="text-xs font-medium text-yellow-900 mb-1">
                 Download Expired
               </p>
               {/* Light: yellow-900 on yellow-50 (9.2:1 contrast) ✓ */}
               {/* Dark: yellow-200 on yellow-900/30 (8.1:1 contrast) ✓ */}
-              <p className="text-xs text-yellow-900 dark:text-yellow-200 wrap-break-word">
+              <p className="text-xs text-yellow-900 wrap-break-word">
                 This export has expired and is no longer available for download.
                 Please create a new export with the same filters if you still
                 need this data.
@@ -343,7 +343,7 @@ export const ExportJobCard = memo(function ExportJobCard({
 
       {/* Action Buttons */}
       <div
-        className="flex items-center gap-2 pt-4 border-t border-gray-200 dark:border-gray-700"
+        className="flex items-center gap-2 pt-4 border-t border-[rgb(var(--border-primary))]"
         role="group"
         aria-label="Job actions"
       >
@@ -406,7 +406,7 @@ export const ExportJobCard = memo(function ExportJobCard({
           variant="ghost"
           size="sm"
           onClick={onDelete}
-          className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0"
+          className="text-red-600 hover:text-red-700 hover:bg-red-50 min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0"
           aria-label="Delete job"
         >
           <Trash2 className="w-4 h-4" aria-hidden="true" />

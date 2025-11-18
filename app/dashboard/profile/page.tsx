@@ -18,6 +18,11 @@ import {
   X,
   MapPin,
   Clock,
+  Key,
+  Eye,
+  EyeOff,
+  Copy,
+  Check,
 } from "lucide-react";
 
 interface UserProfile {
@@ -61,6 +66,13 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // API Key state
+  const [apiKey, setApiKey] = useState<string | null>(null);
+  const [apiKeyInfo, setApiKeyInfo] = useState<any>(null);
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [loadingApiKey, setLoadingApiKey] = useState(false);
+  const [apiKeyCopied, setApiKeyCopied] = useState(false);
   const [showSupplierModal, setShowSupplierModal] = useState(false);
   const [supplierInfo, setSupplierInfo] = useState<SupplierInfo | null>(null);
   const [supplierLoading, setSupplierLoading] = useState(false);
@@ -105,6 +117,55 @@ export default function ProfilePage() {
       setError(err instanceof Error ? err.message : "Failed to load profile");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchApiKey = async () => {
+    setLoadingApiKey(true);
+
+    try {
+      const token = TokenStorage.getToken();
+
+      if (!token) {
+        throw new Error("Authentication token not found. Please login again.");
+      }
+
+      const response = await fetch(
+        "http://127.0.0.1:8001/v1.0/auth/check-api-key",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch API key");
+      }
+
+      const data = await response.json();
+      console.log("API Key data:", data);
+
+      if (data.security?.apiKey) {
+        setApiKey(data.security.apiKey);
+        setApiKeyInfo(data.apiKeyInfo);
+        setShowApiKey(false); // Start hidden for security
+      }
+    } catch (err) {
+      console.error("Error fetching API key:", err);
+      setError(err instanceof Error ? err.message : "Failed to load API key");
+    } finally {
+      setLoadingApiKey(false);
+    }
+  };
+
+  const handleCopyApiKey = () => {
+    if (apiKey) {
+      navigator.clipboard.writeText(apiKey);
+      setApiKeyCopied(true);
+      setTimeout(() => setApiKeyCopied(false), 2000);
     }
   };
 
@@ -421,6 +482,150 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {/* API Key Section */}
+      <div className="bg-[rgb(var(--bg-primary))] rounded-lg shadow-md border border-[rgb(var(--border-primary))] p-6">
+        <h2 className="text-xl font-semibold text-[rgb(var(--text-primary))] mb-6 flex items-center">
+          <Key className="w-5 h-5 mr-2 text-primary-color" />
+          API Key
+        </h2>
+
+        <div className="space-y-4">
+          <p className="text-sm text-[rgb(var(--text-secondary))]">
+            Your API key is used to authenticate requests to export endpoints.
+            Keep it secure and don't share it publicly.
+          </p>
+
+          {!apiKey ? (
+            <button
+              onClick={fetchApiKey}
+              disabled={loadingApiKey}
+              className="px-6 py-3 bg-primary-color text-white rounded-md hover:bg-primary-hover disabled:opacity-50 flex items-center gap-2 transition-all duration-200 font-medium hover:shadow-lg hover:scale-105 active:scale-95"
+            >
+              {loadingApiKey ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <Eye className="w-5 h-5" />
+                  Show API Key
+                </>
+              )}
+            </button>
+          ) : (
+            <div className="space-y-4">
+              {/* API Key Display */}
+              <div className="flex items-center gap-2">
+                <div className="flex-1 p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))] font-mono text-sm">
+                  {showApiKey ? (
+                    <span className="text-[rgb(var(--text-primary))] break-all">
+                      {apiKey}
+                    </span>
+                  ) : (
+                    <span className="text-[rgb(var(--text-tertiary))]">
+                      ••••••••••••••••••••••••••••••••
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setShowApiKey(!showApiKey)}
+                  className="p-3 hover:bg-[rgb(var(--bg-secondary))] rounded-lg transition-colors border border-[rgb(var(--border-primary))]"
+                  title={showApiKey ? "Hide API Key" : "Show API Key"}
+                >
+                  {showApiKey ? (
+                    <EyeOff className="w-5 h-5 text-[rgb(var(--text-secondary))]" />
+                  ) : (
+                    <Eye className="w-5 h-5 text-[rgb(var(--text-secondary))]" />
+                  )}
+                </button>
+                <button
+                  onClick={handleCopyApiKey}
+                  className="p-3 hover:bg-[rgb(var(--bg-secondary))] rounded-lg transition-colors border border-[rgb(var(--border-primary))]"
+                  title="Copy API Key"
+                >
+                  {apiKeyCopied ? (
+                    <Check className="w-5 h-5 text-green-600" />
+                  ) : (
+                    <Copy className="w-5 h-5 text-[rgb(var(--text-secondary))]" />
+                  )}
+                </button>
+              </div>
+
+              {apiKeyCopied && (
+                <p className="text-sm text-green-600 flex items-center gap-2">
+                  <Check className="w-4 h-4" />
+                  API Key copied to clipboard!
+                </p>
+              )}
+
+              {/* API Key Information */}
+              {apiKeyInfo && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+                    <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
+                      <CheckCircle className="w-4 h-4" />
+                      <span className="text-sm font-medium">Status</span>
+                    </div>
+                    <p className="text-base font-semibold text-[rgb(var(--text-primary))]">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border-2 ${
+                          apiKeyInfo.status === "active"
+                            ? "border-green-600 dark:border-green-400 text-green-600 dark:text-green-400 bg-transparent"
+                            : "border-red-600 dark:border-red-400 text-red-600 dark:text-red-400 bg-transparent"
+                        }`}
+                      >
+                        {apiKeyInfo.status?.toUpperCase()}
+                      </span>
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+                    <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
+                      <Calendar className="w-4 h-4" />
+                      <span className="text-sm font-medium">Generated At</span>
+                    </div>
+                    <p className="text-sm text-[rgb(var(--text-primary))]">
+                      {new Date(apiKeyInfo.generatedAt).toLocaleString()}
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+                    <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
+                      <Clock className="w-4 h-4" />
+                      <span className="text-sm font-medium">Expires At</span>
+                    </div>
+                    <p className="text-sm text-[rgb(var(--text-primary))]">
+                      {new Date(apiKeyInfo.expiresAt).toLocaleString()}
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+                    <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
+                      <AlertCircle className="w-4 h-4" />
+                      <span className="text-sm font-medium">
+                        Days Until Expiration
+                      </span>
+                    </div>
+                    <p className="text-2xl font-bold text-primary-color">
+                      {apiKeyInfo.daysUntilExpiration}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Warning */}
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
+                <p className="text-xs text-amber-800">
+                  <strong>Warning:</strong> Keep your API key secure. Anyone
+                  with this key can access your export endpoints.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Account Timeline */}
       <div className="bg-[rgb(var(--bg-primary))] rounded-lg shadow-md border border-[rgb(var(--border-primary))] p-6">
         <h2 className="text-xl font-semibold text-[rgb(var(--text-primary))] mb-6 flex items-center">
@@ -578,20 +783,6 @@ export default function ProfilePage() {
                         <p className="text-sm text-[rgb(var(--text-primary))]">
                           {new Date(
                             supplierInfo.supplier_info.last_updated
-                          ).toLocaleString()}
-                        </p>
-                      </div>
-
-                      <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
-                        <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
-                          <Calendar className="w-4 h-4" />
-                          <span className="text-sm font-medium">
-                            Summary Generated At
-                          </span>
-                        </div>
-                        <p className="text-sm text-[rgb(var(--text-primary))]">
-                          {new Date(
-                            supplierInfo.supplier_info.summary_generated_at
                           ).toLocaleString()}
                         </p>
                       </div>

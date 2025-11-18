@@ -1296,3 +1296,8 @@ erformance Optimizations */
 .futuristic-scrollbar::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(to bottom, #00f5ff, #7b2cbf);
 }
+
+
+svg{
+display: inline
+}

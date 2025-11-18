@@ -14,6 +14,7 @@
 
 import React, { useState, useRef, useCallback, useMemo } from "react";
 import { useRequireAuth } from "@/lib/hooks/use-auth";
+import { useAuth } from "@/lib/contexts/auth-context";
 import { useExportJobs } from "@/lib/hooks/use-export-jobs";
 import { useExportPolling } from "@/lib/hooks/use-export-polling";
 import { useExportNotifications } from "@/lib/hooks/use-export-notifications";
@@ -23,11 +24,13 @@ import { useNotification } from "@/lib/components/notifications/notification-pro
 import { PermissionGuard } from "@/lib/components/auth/permission-guard";
 import { Permission } from "@/lib/utils/rbac";
 import { SkipLink } from "@/lib/components/ui/skip-link";
+import { TokenStorage } from "@/lib/auth/token-storage";
 import { ExportFilterPanel } from "./components/export-filter-panel";
 import { MappingExportPanel } from "./components/mapping-export-panel";
 import { ExportJobsList } from "./components/export-jobs-list";
 import { ConfirmationDialog } from "@/lib/components/ui/confirmation-dialog";
 import { exportAPI } from "@/lib/api/exports";
+import { UserRole } from "@/lib/types/auth";
 import type {
   HotelExportFilters,
   MappingExportFilters,
@@ -48,6 +51,19 @@ type ConfirmationDialogState = {
 export default function ExportsPage() {
   // Authentication check
   const { isAuthenticated, isLoading: authLoading } = useRequireAuth();
+  const { user } = useAuth();
+
+  // Check if user is general user (needs API key validation)
+  const isGeneralUser =
+    user?.role === UserRole.GENERAL_USER || user?.role === UserRole.USER;
+
+  // API Key validation state
+  const [showApiKeyModal, setShowApiKeyModal] = useState(isGeneralUser);
+  const [apiKey, setApiKey] = useState("");
+  const [apiKeyError, setApiKeyError] = useState<string | null>(null);
+  const [isValidatingApiKey, setIsValidatingApiKey] = useState(false);
+  const [isApiKeyValid, setIsApiKeyValid] = useState(!isGeneralUser); // Auto-valid for admin/super admin
+  const [apiKeyUserInfo, setApiKeyUserInfo] = useState<any>(null);
 
   // Tab state for switching between export types
   const [activeTab, setActiveTab] = useState<ExportTab>("hotel");
@@ -519,6 +535,83 @@ export default function ExportsPage() {
   }, [confirmDialog, jobs, deleteJob, clearCompletedJobs, addNotification]);
 
   /**
+   * Handler for validating API key
+   */
+  const handleValidateApiKey = async () => {
+    if (!apiKey.trim()) {
+      setApiKeyError("Please enter an API key");
+      return;
+    }
+
+    setIsValidatingApiKey(true);
+    setApiKeyError(null);
+
+    try {
+      const token = TokenStorage.getToken();
+      if (!token) {
+        throw new Error("Authentication token not found");
+      }
+
+      const response = await fetch(
+        "http://127.0.0.1:8001/v1.0/export/my-validation",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            "X-API-Key": apiKey.trim(),
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Invalid API key");
+      }
+
+      const data = await response.json();
+
+      if (data.valid && data.access?.export_endpoints) {
+        setIsApiKeyValid(true);
+        setApiKeyUserInfo(data.user);
+        setShowApiKeyModal(false);
+
+        addNotification({
+          type: "success",
+          title: "API Key Validated",
+          message: `Welcome ${data.user?.username}! You have access to export endpoints.`,
+          autoDismiss: true,
+          duration: 5000,
+        });
+      } else {
+        throw new Error(
+          data.message || "API key is not valid for export endpoints"
+        );
+      }
+    } catch (error) {
+      console.error("API key validation error:", error);
+      setApiKeyError(
+        error instanceof Error
+          ? error.message
+          : "Failed to validate API key. Please try again."
+      );
+    } finally {
+      setIsValidatingApiKey(false);
+    }
+  };
+
+  /**
+   * Check user role on mount (only for admin and super admin bypass)
+   */
+  React.useEffect(() => {
+    // Skip API key validation for admin and super admin
+    if (!isGeneralUser && isAuthenticated) {
+      setIsApiKeyValid(true);
+      setShowApiKeyModal(false);
+    }
+  }, [isAuthenticated, isGeneralUser]);
+
+  /**
    * Handler for closing confirmation dialog
    */
   const handleCloseDialog = useCallback((): void => {
@@ -628,187 +721,358 @@ export default function ExportsPage() {
     return null;
   }
 
+  // Check if user has access (either has permission OR is general user with valid API key)
+  const hasAccess = !isGeneralUser || isApiKeyValid;
+
   return (
-    <PermissionGuard
-      permission={Permission.EXPORT_DATA}
-      fallback={
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FileDown className="w-8 h-8 text-red-600" />
-            </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Access Denied
-            </h2>
-            <p className="text-gray-600">
-              You don't have permission to access the exports feature.
-            </p>
-          </div>
-        </div>
-      }
-    >
+    <>
       {/* Skip Link for Screen Readers */}
       <SkipLink href="#main-content">Skip to main content</SkipLink>
 
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
-          {/* Page Header */}
-          <header className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-slate-200 dark:border-gray-700 p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                <FileDown className="w-6 h-6 text-white" />
+      {/* API Key Validation Modal - Only for General Users */}
+      {isGeneralUser && showApiKeyModal && !isApiKeyValid && (
+        <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+          <div className="bg-[rgb(var(--bg-primary))] rounded-lg shadow-2xl max-w-md w-full border border-[rgb(var(--border-primary))]">
+            {/* Modal Header */}
+            <div className="border-b border-[rgb(var(--border-primary))] p-6">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-primary-color rounded-lg flex items-center justify-center">
+                    <FileDown className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-[rgb(var(--text-primary))]">
+                      API Key Required
+                    </h2>
+                    <p className="text-sm text-[rgb(var(--text-secondary))] mt-1">
+                      Enter your API key to access export features
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowApiKeyModal(false);
+                    window.history.back();
+                  }}
+                  className="text-[rgb(var(--text-tertiary))] hover:text-[rgb(var(--text-primary))] transition-colors p-2 hover:bg-[rgb(var(--bg-secondary))] rounded-lg"
+                  title="Close and go back"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
               </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-4">
               <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-gray-100">
-                  Data Exports
-                </h1>
-                <p className="text-sm text-slate-600 dark:text-gray-400 mt-1">
-                  Create and manage hotel and mapping data exports
+                <label
+                  htmlFor="api-key-input"
+                  className="block text-sm font-medium text-[rgb(var(--text-secondary))] mb-2"
+                >
+                  API Key
+                </label>
+                <input
+                  id="api-key-input"
+                  type="text"
+                  value={apiKey}
+                  onChange={(e) => {
+                    setApiKey(e.target.value);
+                    setApiKeyError(null);
+                  }}
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter") {
+                      handleValidateApiKey();
+                    }
+                  }}
+                  placeholder="Enter your API key (e.g., ak_...)"
+                  className="w-full px-4 py-2 border border-[rgb(var(--border-primary))] rounded-md bg-[rgb(var(--bg-secondary))] text-[rgb(var(--text-primary))] focus:ring-2 focus:ring-primary-color focus:border-transparent"
+                  disabled={isValidatingApiKey}
+                />
+              </div>
+
+              {apiKeyError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-start gap-2">
+                  <svg
+                    className="w-5 h-5 text-red-600 shrink-0 mt-0.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <p className="text-sm text-red-700">{apiKeyError}</p>
+                </div>
+              )}
+
+              <div className="p-3 bg-[rgb(var(--bg-secondary))] border border-[rgb(var(--border-primary))] rounded-md">
+                <p className="text-xs text-[rgb(var(--text-secondary))]">
+                  <strong className="text-[rgb(var(--text-primary))]">
+                    Note:
+                  </strong>{" "}
+                  Your API key is required to validate access to export
+                  endpoints. It will be stored securely for this session only.
                 </p>
               </div>
             </div>
-          </header>
 
-          {/* Tab Navigation */}
-          <nav
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-slate-200 dark:border-gray-700 p-2"
-            role="tablist"
-            aria-label="Export type selection"
-          >
-            <div className="flex gap-2">
+            {/* Modal Footer */}
+            <div className="border-t border-[rgb(var(--border-primary))] p-6 flex justify-end gap-3">
               <button
-                role="tab"
-                aria-selected={activeTab === "hotel"}
-                aria-controls="hotel-panel"
-                id="hotel-tab"
-                onClick={() => setActiveTab("hotel")}
-                aria-label="Hotel exports tab"
-                className={clsx(
-                  "flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all",
-                  "focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-500",
-                  activeTab === "hotel"
-                    ? "bg-blue-600 text-white shadow-md"
-                    : "text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-700"
-                )}
+                onClick={() => {
+                  setShowApiKeyModal(false);
+                  window.history.back();
+                }}
+                disabled={isValidatingApiKey}
+                className="px-6 py-2 border border-[rgb(var(--border-primary))] text-[rgb(var(--text-primary))] rounded-md hover:bg-[rgb(var(--bg-secondary))] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
               >
-                <FileDown className="w-5 h-5" aria-hidden="true" />
-                Hotel Exports
+                Cancel
               </button>
               <button
-                role="tab"
-                aria-selected={activeTab === "mapping"}
-                aria-controls="mapping-panel"
-                id="mapping-tab"
-                onClick={() => setActiveTab("mapping")}
-                aria-label="Mapping exports tab"
-                className={clsx(
-                  "flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all",
-                  "focus:outline-none focus:ring-4 focus:ring-purple-300 dark:focus:ring-purple-500",
-                  activeTab === "mapping"
-                    ? "bg-purple-600 text-white shadow-md"
-                    : "text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-700"
-                )}
+                onClick={handleValidateApiKey}
+                disabled={isValidatingApiKey || !apiKey.trim()}
+                className="px-6 py-2 bg-primary-color text-white rounded-md hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-200 font-medium hover:shadow-lg hover:scale-105 active:scale-95 active:brightness-110"
               >
-                <Map className="w-5 h-5" aria-hidden="true" />
-                Mapping Exports
+                {isValidatingApiKey ? (
+                  <>
+                    <svg
+                      className="animate-spin h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Validating...
+                  </>
+                ) : (
+                  <>
+                    <FileDown className="w-5 h-5" />
+                    Validate & Continue
+                  </>
+                )}
               </button>
             </div>
-          </nav>
+          </div>
+        </div>
+      )}
 
-          {/* Filter Panel - Conditionally render based on active tab */}
-          <main id="main-content" ref={filterPanelRef}>
-            {activeTab === "hotel" ? (
-              <div
-                role="tabpanel"
-                id="hotel-panel"
-                aria-labelledby="hotel-tab"
-                tabIndex={0}
-              >
-                <ExportFilterPanel
-                  onExportCreate={handleCreateHotelExport}
-                  isLoading={isCreating}
-                />
-              </div>
-            ) : (
-              <div
-                role="tabpanel"
-                id="mapping-panel"
-                aria-labelledby="mapping-tab"
-                tabIndex={0}
-              >
-                <MappingExportPanel
-                  onExportCreate={handleCreateMappingExport}
-                  isLoading={isCreating}
-                />
-              </div>
-            )}
-          </main>
-
-          {/* Display error if job creation failed */}
-          {jobsError && (
-            <div
-              role="alert"
-              aria-live="assertive"
-              className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-xl p-4"
-            >
-              <div className="flex items-start gap-3">
-                <div className="w-5 h-5 bg-red-100 dark:bg-red-800 rounded-full flex items-center justify-center shrink-0 mt-0.5">
-                  <span
-                    className="text-red-600 dark:text-red-200 text-sm font-bold"
-                    aria-hidden="true"
-                  >
-                    !
-                  </span>
+      <div className="mx-auto relative">
+        {isApiKeyValid ? (
+          <div className="space-y-6">
+            {/* Page Header */}
+            <header className="bg-[rgb(var(--bg-primary))] rounded-lg shadow-md border border-[rgb(var(--border-primary))] p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-primary-color rounded-xl flex items-center justify-center shadow-lg">
+                  <FileDown className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-red-900 dark:text-red-100 mb-1">
-                    Export Creation Failed
-                  </h3>
-                  <p className="text-sm text-red-700 dark:text-red-200">
-                    {jobsError}
+                  <h1 className="text-2xl font-bold text-[rgb(var(--text-primary))]">
+                    Data Exports
+                  </h1>
+                  <p className="text-sm text-[rgb(var(--text-secondary))] mt-1">
+                    Create and manage hotel and mapping data exports
                   </p>
                 </div>
               </div>
-            </div>
-          )}
+            </header>
 
-          {/* Export Jobs List */}
-          <section ref={jobsListRef} aria-label="Export jobs">
-            <ExportJobsList
-              jobs={jobs}
-              onRefreshJob={handleRefreshJob}
-              onDownload={handleDownload}
-              onDeleteJob={handleDeleteJob}
-              onClearCompleted={handleClearCompleted}
-              onCreateNew={handleCreateNewFromExpired}
-              isRefreshing={false}
-              isLoading={isLoadingJobs}
+            {/* Tab Navigation */}
+            <nav
+              className="bg-[rgb(var(--bg-primary))] rounded-lg shadow-md border border-[rgb(var(--border-primary))] p-2"
+              role="tablist"
+              aria-label="Export type selection"
+            >
+              <div className="flex gap-2">
+                <button
+                  role="tab"
+                  aria-selected={activeTab === "hotel"}
+                  aria-controls="hotel-panel"
+                  id="hotel-tab"
+                  onClick={() => setActiveTab("hotel")}
+                  aria-label="Hotel exports tab"
+                  style={
+                    activeTab === "hotel"
+                      ? { color: "white !important" }
+                      : undefined
+                  }
+                  className={clsx(
+                    "flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all relative",
+                    "focus:outline-none focus:ring-2 focus:ring-primary-color",
+                    "active:scale-95 active:opacity-90",
+                    activeTab === "hotel"
+                      ? "bg-primary-color !text-white shadow-md"
+                      : "text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--bg-secondary))] active:bg-[rgb(var(--bg-secondary))]"
+                  )}
+                >
+                  <FileDown
+                    className="w-5 h-5 relative z-10"
+                    aria-hidden="true"
+                  />
+                  <span className="relative z-10">Hotel Exports</span>
+                </button>
+                <button
+                  role="tab"
+                  aria-selected={activeTab === "mapping"}
+                  aria-controls="mapping-panel"
+                  id="mapping-tab"
+                  onClick={() => setActiveTab("mapping")}
+                  aria-label="Mapping exports tab"
+                  style={
+                    activeTab === "mapping"
+                      ? { color: "white !important" }
+                      : undefined
+                  }
+                  className={clsx(
+                    "flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all relative",
+                    "focus:outline-none focus:ring-2 focus:ring-primary-color",
+                    "active:scale-95 active:opacity-90",
+                    activeTab === "mapping"
+                      ? "bg-primary-color !text-white shadow-md"
+                      : "text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--bg-secondary))] active:bg-[rgb(var(--bg-secondary))]"
+                  )}
+                >
+                  <Map className="w-5 h-5 relative z-10" aria-hidden="true" />
+                  <span className="relative z-10">Mapping Exports</span>
+                </button>
+              </div>
+            </nav>
+
+            {/* Filter Panel - Conditionally render based on active tab */}
+            <main id="main-content" ref={filterPanelRef}>
+              {activeTab === "hotel" ? (
+                <div
+                  role="tabpanel"
+                  id="hotel-panel"
+                  aria-labelledby="hotel-tab"
+                  tabIndex={0}
+                >
+                  <ExportFilterPanel
+                    onExportCreate={handleCreateHotelExport}
+                    isLoading={isCreating}
+                  />
+                </div>
+              ) : (
+                <div
+                  role="tabpanel"
+                  id="mapping-panel"
+                  aria-labelledby="mapping-tab"
+                  tabIndex={0}
+                >
+                  <MappingExportPanel
+                    onExportCreate={handleCreateMappingExport}
+                    isLoading={isCreating}
+                  />
+                </div>
+              )}
+            </main>
+
+            {/* Display error if job creation failed */}
+            {jobsError && (
+              <div
+                role="alert"
+                aria-live="assertive"
+                className="bg-red-50 border border-red-200 rounded-lg p-4"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                    <span
+                      className="text-red-600 text-sm font-bold"
+                      aria-hidden="true"
+                    >
+                      !
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-red-900 mb-1">
+                      Export Creation Failed
+                    </h3>
+                    <p className="text-sm text-red-700">{jobsError}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Export Jobs List */}
+            <section ref={jobsListRef} aria-label="Export jobs">
+              <ExportJobsList
+                jobs={jobs}
+                onRefreshJob={handleRefreshJob}
+                onDownload={handleDownload}
+                onDeleteJob={handleDeleteJob}
+                onClearCompleted={handleClearCompleted}
+                onCreateNew={handleCreateNewFromExpired}
+                isRefreshing={false}
+                isLoading={isLoadingJobs}
+              />
+            </section>
+
+            {/* Confirmation Dialog */}
+            <ConfirmationDialog
+              isOpen={confirmDialog.isOpen}
+              onClose={handleCloseDialog}
+              onConfirm={handleConfirmAction}
+              title={
+                confirmDialog.type === "delete"
+                  ? "Delete Export Job?"
+                  : "Clear Completed Jobs?"
+              }
+              message={
+                confirmDialog.type === "delete"
+                  ? "Are you sure you want to delete this export job? This will remove it from your list."
+                  : "Are you sure you want to clear all completed, failed, and expired jobs? This will remove them from your list."
+              }
+              confirmText={
+                confirmDialog.type === "delete" ? "Delete" : "Clear All"
+              }
+              cancelText="Cancel"
+              variant="danger"
             />
-          </section>
-
-          {/* Confirmation Dialog */}
-          <ConfirmationDialog
-            isOpen={confirmDialog.isOpen}
-            onClose={handleCloseDialog}
-            onConfirm={handleConfirmAction}
-            title={
-              confirmDialog.type === "delete"
-                ? "Delete Export Job?"
-                : "Clear Completed Jobs?"
-            }
-            message={
-              confirmDialog.type === "delete"
-                ? "Are you sure you want to delete this export job? This will remove it from your list."
-                : "Are you sure you want to clear all completed, failed, and expired jobs? This will remove them from your list."
-            }
-            confirmText={
-              confirmDialog.type === "delete" ? "Delete" : "Clear All"
-            }
-            cancelText="Cancel"
-            variant="danger"
-          />
-        </div>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-primary-color/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FileDown className="w-8 h-8 text-primary-color" />
+              </div>
+              <h2 className="text-xl font-semibold text-[rgb(var(--text-primary))] mb-2">
+                API Key Required
+              </h2>
+              <p className="text-[rgb(var(--text-secondary))]">
+                Please enter your API key to access export features.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
-    </PermissionGuard>
+    </>
   );
 }

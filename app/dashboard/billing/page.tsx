@@ -60,7 +60,7 @@ export default function BillingPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-[rgb(var(--text-primary))]">
-                Billing & User Management
+                User Management
               </h1>
               <p className="text-sm text-[rgb(var(--text-secondary))] mt-1">
                 Manage user points, API keys, supplier permissions, and IP

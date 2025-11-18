@@ -140,22 +140,22 @@ export function FilterPresetsManager<T extends ExportFilters = ExportFilters>({
             />
 
             {/* Dropdown menu */}
-            <div className="absolute left-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 z-20 max-h-96 overflow-y-auto">
+            <div className="absolute left-0 mt-2 w-80 bg-[rgb(var(--bg-primary))] rounded-xl shadow-xl border border-[rgb(var(--border-primary))] z-20 max-h-96 overflow-y-auto">
               <div className="p-2">
                 {filteredPresets.map((preset) => (
                   <div
                     key={preset.id}
-                    className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 group"
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-[rgb(var(--bg-secondary))] group"
                   >
                     <button
                       type="button"
                       onClick={() => loadPreset(preset)}
                       className="flex-1 text-left"
                     >
-                      <div className="font-medium text-gray-900">
+                      <div className="font-medium text-[rgb(var(--text-primary))]">
                         {preset.name}
                       </div>
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="text-xs text-[rgb(var(--text-tertiary))] mt-1">
                         Created {preset.createdAt.toLocaleDateString()}
                       </div>
                     </button>
@@ -165,7 +165,7 @@ export function FilterPresetsManager<T extends ExportFilters = ExportFilters>({
                         e.stopPropagation();
                         deletePreset(preset.id);
                       }}
-                      className="p-2 text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="p-2 text-[rgb(var(--text-tertiary))] hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
                       title="Delete preset"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -203,12 +203,12 @@ export function FilterPresetsManager<T extends ExportFilters = ExportFilters>({
           >
             {/* Modal content */}
             <div
-              className="bg-white rounded-2xl shadow-2xl max-w-md w-full z-50"
+              className="bg-[rgb(var(--bg-primary))] rounded-2xl shadow-2xl max-w-md w-full z-50"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Modal header */}
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                <h3 className="text-xl font-bold text-gray-900">
+              <div className="flex items-center justify-between p-6 border-b border-[rgb(var(--border-primary))]">
+                <h3 className="text-xl font-bold text-[rgb(var(--text-primary))]">
                   Save Filter Preset
                 </h3>
                 <button
@@ -218,7 +218,7 @@ export function FilterPresetsManager<T extends ExportFilters = ExportFilters>({
                     setPresetName("");
                     setNameError("");
                   }}
-                  className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="p-2 text-[rgb(var(--text-tertiary))] hover:text-[rgb(var(--text-secondary))] rounded-lg hover:bg-[rgb(var(--bg-secondary))] transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -243,14 +243,14 @@ export function FilterPresetsManager<T extends ExportFilters = ExportFilters>({
                     }
                   }}
                 />
-                <p className="mt-3 text-sm text-gray-500">
+                <p className="mt-3 text-sm text-[rgb(var(--text-tertiary))]">
                   Save your current filter configuration to quickly reuse it
                   later.
                 </p>
               </div>
 
               {/* Modal footer */}
-              <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
+              <div className="flex items-center justify-end gap-3 p-6 border-t border-[rgb(var(--border-primary))] bg-[rgb(var(--bg-secondary))] rounded-b-2xl">
                 <Button
                   type="button"
                   variant="outline"

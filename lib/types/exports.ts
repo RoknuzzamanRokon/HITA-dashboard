@@ -37,12 +37,12 @@ export interface HotelExportFilters {
         date_from: string; // ISO 8601 format
         date_to: string;
         ittids: string | 'All';
-        property_types: string[];
+        property_types: string[] | 'All';
         page: number;
         page_size: number;
         max_records: number;
     };
-    format: 'json' | 'csv';
+    format: 'json' | 'csv' | 'excel';
     include_locations: boolean;
     include_contacts: boolean;
     include_mappings: boolean;
@@ -57,7 +57,7 @@ export interface MappingExportFilters {
         date_to: string;
         max_records: number;
     };
-    format: 'json' | 'csv';
+    format: 'json' | 'csv' | 'excel';
 }
 
 // Union type for all export filters
@@ -70,7 +70,7 @@ export type ExportType = 'hotel' | 'mapping';
 export type ExportStatus = 'processing' | 'completed' | 'failed' | 'expired';
 
 // Export format types
-export type ExportFormat = 'json' | 'csv';
+export type ExportFormat = 'json' | 'csv' | 'excel';
 
 // Client-side export job state
 export interface ExportJob {

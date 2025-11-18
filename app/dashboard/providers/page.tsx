@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   Search,
   Calendar,
@@ -1593,6 +1594,9 @@ export default function ProviderUpdatePage() {
                               Provider ID
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Actions
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Created At
                             </th>
                           </tr>
@@ -1612,6 +1616,18 @@ export default function ProviderUpdatePage() {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                   {mapping.provider_id || providerIdentityId}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                  {mapping.ittid && mapping.ittid !== "N/A" ? (
+                                    <Link
+                                      href={`/dashboard/provider/details/${mapping.ittid}`}
+                                      className="inline-flex items-center px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                    >
+                                      See
+                                    </Link>
+                                  ) : (
+                                    <span className="text-gray-400">-</span>
+                                  )}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                   {mapping.created_at

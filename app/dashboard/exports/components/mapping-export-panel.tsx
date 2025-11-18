@@ -17,6 +17,8 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { clsx } from "clsx";
+import { TokenStorage } from "@/lib/auth/token-storage";
+import { SelectOption } from "@/lib/components/ui/select";
 
 // Lazy load FilterPresetsManager for better code splitting
 const FilterPresetsManager = dynamic(
@@ -28,8 +30,8 @@ const FilterPresetsManager = dynamic(
     ssr: false,
     loading: () => (
       <div className="flex gap-2">
-        <div className="h-10 w-32 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-lg" />
-        <div className="h-10 w-32 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-lg" />
+        <div className="h-10 w-32 bg-[rgb(var(--bg-secondary))] animate-pulse rounded-lg" />
+        <div className="h-10 w-32 bg-[rgb(var(--bg-secondary))] animate-pulse rounded-lg" />
       </div>
     ),
   }
@@ -40,26 +42,21 @@ export interface MappingExportPanelProps {
   isLoading: boolean;
 }
 
-// Common supplier options (can be fetched from API in real implementation)
-const SUPPLIER_OPTIONS = [
-  { value: "expedia", label: "Expedia" },
-  { value: "booking", label: "Booking.com" },
-  { value: "agoda", label: "Agoda" },
-  { value: "hotels", label: "Hotels.com" },
-  { value: "airbnb", label: "Airbnb" },
-];
-
 export const MappingExportPanel = memo(function MappingExportPanel({
   onExportCreate,
   isLoading,
 }: MappingExportPanelProps) {
+  // Supplier options state (fetched from API)
+  const [supplierOptions, setSupplierOptions] = useState<SelectOption[]>([]);
+  const [loadingSuppliers, setLoadingSuppliers] = useState(true);
+
   // Form state
   const [suppliers, setSuppliers] = useState<string[]>([]);
   const [ittids, setIttids] = useState<string>("All");
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   const [maxRecords, setMaxRecords] = useState<number>(1000);
-  const [format, setFormat] = useState<"json" | "csv">("json");
+  const [format, setFormat] = useState<"json" | "csv" | "excel">("json");
 
   // Multi-select state for suppliers
   const [selectedSupplierValues, setSelectedSupplierValues] = useState<
@@ -78,6 +75,55 @@ export const MappingExportPanel = memo(function MappingExportPanel({
 
   // Debounce timer for ITT IDs input
   const ittidsDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Fetch active suppliers on mount
+  useEffect(() => {
+    const fetchActiveSuppliers = async () => {
+      setLoadingSuppliers(true);
+      try {
+        const token = TokenStorage.getToken();
+        if (!token) {
+          console.error("No authentication token found");
+          setLoadingSuppliers(false);
+          return;
+        }
+
+        const response = await fetch(
+          "http://127.0.0.1:8001/v1.0/user/check-active-my-supplier",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+
+          // Convert on_supplier_list to SelectOption format
+          if (data.on_supplier_list && Array.isArray(data.on_supplier_list)) {
+            const options: SelectOption[] = data.on_supplier_list.map(
+              (supplier: string) => ({
+                value: supplier,
+                label: supplier.charAt(0).toUpperCase() + supplier.slice(1),
+              })
+            );
+            setSupplierOptions(options);
+          }
+        } else {
+          console.error("Failed to fetch suppliers:", response.status);
+        }
+      } catch (error) {
+        console.error("Error fetching active suppliers:", error);
+      } finally {
+        setLoadingSuppliers(false);
+      }
+    };
+
+    fetchActiveSuppliers();
+  }, []);
 
   // Cleanup debounce timer on unmount
   useEffect(() => {
@@ -285,24 +331,30 @@ export const MappingExportPanel = memo(function MappingExportPanel({
       description: "Comma-Separated Values",
       icon: <FileSpreadsheet className="w-4 h-4" />,
     },
+    {
+      value: "excel",
+      label: "Excel",
+      description: "Microsoft Excel Format",
+      icon: <FileSpreadsheet className="w-4 h-4" />,
+    },
   ];
 
   return (
     <section
-      className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-slate-200 dark:border-gray-700 p-6"
+      className="bg-[rgb(var(--bg-primary))] rounded-lg shadow-md border border-[rgb(var(--border-primary))] p-6"
       aria-labelledby="mapping-export-filters-heading"
     >
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div
-            className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center"
+            className="w-10 h-10 bg-primary-color/10 rounded-xl flex items-center justify-center active:brightness-110"
             aria-hidden="true"
           >
-            <Filter className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <Filter className="w-5 h-5 text-primary-color" />
           </div>
           <h2
             id="mapping-export-filters-heading"
-            className="text-xl font-bold text-slate-900 dark:text-gray-100"
+            className="text-xl font-bold text-[rgb(var(--text-primary))]"
           >
             Mapping Export Filters
           </h2>
@@ -321,13 +373,10 @@ export const MappingExportPanel = memo(function MappingExportPanel({
         <div
           role="status"
           aria-live="polite"
-          className="mb-4 p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg flex items-center gap-2 animate-fade-in"
+          className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 animate-fade-in"
         >
-          <CheckCircle
-            className="w-5 h-5 text-green-600 dark:text-green-400"
-            aria-hidden="true"
-          />
-          <span className="text-sm font-medium text-green-800 dark:text-green-200">
+          <CheckCircle className="w-5 h-5 text-green-600" aria-hidden="true" />
+          <span className="text-sm font-medium text-green-800">
             Preset loaded successfully!
           </span>
         </div>
@@ -340,12 +389,9 @@ export const MappingExportPanel = memo(function MappingExportPanel({
       >
         {/* Suppliers Multi-Select */}
         <fieldset>
-          <legend className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <legend className="block text-sm font-medium text-[rgb(var(--text-secondary))] mb-2">
             Suppliers{" "}
-            <span
-              className="text-red-500 dark:text-red-400"
-              aria-label="required"
-            >
+            <span className="text-red-500" aria-label="required">
               *
             </span>
           </legend>
@@ -357,35 +403,98 @@ export const MappingExportPanel = memo(function MappingExportPanel({
               errors.suppliers ? "mapping-suppliers-error" : undefined
             }
           >
-            {SUPPLIER_OPTIONS.map((option) => (
-              <label
-                key={option.value}
-                className={clsx(
-                  "flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all",
-                  selectedSupplierValues.has(option.value)
-                    ? "border-purple-500 bg-purple-50 dark:border-purple-400 dark:bg-purple-900/30"
-                    : errors.suppliers
-                    ? "border-red-300 hover:border-red-400 dark:border-red-600 dark:hover:border-red-500"
-                    : "border-gray-200 hover:border-gray-300 dark:border-gray-600 dark:hover:border-gray-500"
-                )}
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedSupplierValues.has(option.value)}
-                  onChange={() => handleSupplierToggle(option.value)}
-                  className="w-4 h-4 text-purple-600 dark:text-purple-400 rounded focus:ring-purple-500 dark:focus:ring-purple-400"
-                  aria-label={`Select ${option.label} supplier`}
-                />
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {option.label}
+            {loadingSuppliers ? (
+              <div className="col-span-full flex items-center justify-center py-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-color"></div>
+                <span className="ml-2 text-[rgb(var(--text-secondary))]">
+                  Loading suppliers...
                 </span>
-              </label>
-            ))}
+              </div>
+            ) : supplierOptions.length === 0 ? (
+              <div className="col-span-full text-center py-4 text-[rgb(var(--text-secondary))]">
+                No active suppliers found
+              </div>
+            ) : (
+              <>
+                {/* All Option */}
+                <label
+                  className={clsx(
+                    "flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all",
+                    selectedSupplierValues.size === supplierOptions.length
+                      ? "border-green-500 bg-green-50"
+                      : "border-[rgb(var(--border-primary))] hover:border-green-400"
+                  )}
+                >
+                  <input
+                    type="checkbox"
+                    checked={
+                      selectedSupplierValues.size === supplierOptions.length
+                    }
+                    onChange={() => {
+                      if (
+                        selectedSupplierValues.size === supplierOptions.length
+                      ) {
+                        // Deselect all
+                        setSelectedSupplierValues(new Set());
+                        setSuppliers([]);
+                      } else {
+                        // Select all
+                        const allValues = new Set(
+                          supplierOptions.map((opt) => opt.value.toString())
+                        );
+                        setSelectedSupplierValues(allValues);
+                        setSuppliers(Array.from(allValues));
+                        // Clear supplier error when all selected
+                        if (errors.suppliers) {
+                          setErrors((prev) => ({
+                            ...prev,
+                            suppliers: undefined,
+                          }));
+                        }
+                      }
+                    }}
+                    className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
+                    aria-label="Select all suppliers"
+                  />
+                  <span className="text-sm font-bold text-green-600">All</span>
+                </label>
+
+                {/* Individual Suppliers */}
+                {supplierOptions.map((option) => (
+                  <label
+                    key={option.value}
+                    className={clsx(
+                      "flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all",
+                      selectedSupplierValues.has(option.value.toString())
+                        ? "border-purple-500 bg-purple-50"
+                        : errors.suppliers
+                        ? "border-red-300 hover:border-red-400"
+                        : "border-[rgb(var(--border-primary))] hover:border-[rgb(var(--border-primary))]"
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedSupplierValues.has(
+                        option.value.toString()
+                      )}
+                      onChange={() =>
+                        handleSupplierToggle(option.value.toString())
+                      }
+                      className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                      aria-label={`Select ${option.label} supplier`}
+                    />
+                    <span className="text-sm font-medium text-[rgb(var(--text-primary))]">
+                      {option.label}
+                    </span>
+                  </label>
+                ))}
+              </>
+            )}
           </div>
           {errors.suppliers && (
             <p
               id="mapping-suppliers-error"
-              className="mt-2 text-sm text-red-600 dark:text-red-400"
+              className="mt-2 text-sm text-red-600"
               role="alert"
             >
               {errors.suppliers}
@@ -446,9 +555,7 @@ export const MappingExportPanel = memo(function MappingExportPanel({
             />
           </div>
           {errors.dateRange && (
-            <p className="mt-2 text-sm text-red-600 dark:text-red-400">
-              {errors.dateRange}
-            </p>
+            <p className="mt-2 text-sm text-red-600">{errors.dateRange}</p>
           )}
         </div>
 
@@ -475,13 +582,13 @@ export const MappingExportPanel = memo(function MappingExportPanel({
           label="Export Format"
           name="format"
           value={format}
-          onChange={(value) => setFormat(value as "json" | "csv")}
+          onChange={(value) => setFormat(value as "json" | "csv" | "excel")}
           options={formatOptions}
           orientation="horizontal"
         />
 
         {/* Action Buttons */}
-        <div className="pt-4 border-t border-gray-200 dark:border-gray-700 flex gap-3">
+        <div className="pt-4 border-t border-[rgb(var(--border-primary))] flex gap-3">
           <Button
             type="button"
             variant="outline"

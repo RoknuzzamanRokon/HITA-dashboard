@@ -163,7 +163,7 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
                 <Shield className="h-4 w-4 text-white" />
               </div>
               <h1 className="text-xl font-bold text-[rgb(var(--text-primary))] tracking-tight">
-                Admin Panel
+                {user.role === "general_user" ? "User Panel" : "Admin Panel"}
               </h1>
             </div>
           </div>
