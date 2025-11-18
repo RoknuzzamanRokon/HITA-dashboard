@@ -2,76 +2,52 @@
 
 import React, { useState, useEffect } from "react";
 import { useRequireAuth } from "@/lib/hooks/use-auth";
-import { useAuth } from "@/lib/contexts/auth-context";
-import { apiClient } from "@/lib/api/client";
-import { Button } from "@/lib/components/ui/button";
-import { Badge } from "@/lib/components/ui/badge";
-import { Modal } from "@/lib/components/ui/modal";
+import { TokenStorage } from "@/lib/auth/token-storage";
 import {
   User,
   Mail,
   Shield,
   Calendar,
-  Activity,
   Coins,
   TrendingUp,
-  Clock,
   CheckCircle,
-  Edit,
-  Save,
-  X,
-  Key,
   AlertCircle,
   Loader2,
   Crown,
   Building,
+  X,
   MapPin,
-  BarChart3,
-  Zap,
+  Clock,
 } from "lucide-react";
-import { UserRole } from "@/lib/types/auth";
 
 interface UserProfile {
   id: string;
   username: string;
   email: string;
-  role: UserRole;
-  isActive: boolean;
-  pointBalance: number;
-  totalPoints: number;
-  paidStatus: string;
-  totalRequests: number;
-  activityStatus: string;
-  createdAt: string;
-  updatedAt?: string;
-  lastLogin?: string;
-  activeSuppliers: string[];
-  department?: string;
-  position?: string;
-  location?: string;
-  phone?: string;
-}
-
-interface ActiveSupplierData {
-  active_supplier: number;
-  total_on_supplier: number;
-  total_off_supplier: number;
-  off_supplier_list: string[];
-  on_supplier_list: string[];
+  user_status: string;
+  available_points: number;
+  total_points: number;
+  supplier_info: {
+    total_active: number;
+    active_list: string[];
+    temporary_off: number;
+    temporary_off_supplier: string[];
+  };
+  created_at: string;
+  updated_at: string;
+  need_to_next_upgrade: string;
 }
 
 interface SupplierInfo {
-  supplier_name: string;
-  total_hotel: number;
-  has_hotels: boolean;
-  last_checked: string;
-  total_mappings: number;
-  last_updated: string;
-  summary_generated_at: string;
-}
-
-interface SupplierModalData {
-  supplier_info: SupplierInfo;
+  supplier_info: {
+    supplier_name: string;
+    total_hotel: number;
+    has_hotels: boolean;
+    last_checked: string;
+    total_mappings: number;
+    last_updated: string;
+    summary_generated_at: string;
+  };
   user_info: {
     user_id: string;
     username: string;
@@ -82,37 +58,13 @@ interface SupplierModalData {
 
 export default function ProfilePage() {
   const { isAuthenticated, isLoading: authLoading } = useRequireAuth();
-  const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(false); // Changed to false for instant render
-  const [dataLoading, setDataLoading] = useState(true); // Separate loading for background fetch
-  const [isEditing, setIsEditing] = useState(false);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [showSupplierModal, setShowSupplierModal] = useState(false);
-  const [selectedSupplier, setSelectedSupplier] =
-    useState<SupplierModalData | null>(null);
+  const [supplierInfo, setSupplierInfo] = useState<SupplierInfo | null>(null);
   const [supplierLoading, setSupplierLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [activeSupplierData, setActiveSupplierData] =
-    useState<ActiveSupplierData | null>(null);
 
-  const [editForm, setEditForm] = useState({
-    username: "",
-    email: "",
-    department: "",
-    position: "",
-    location: "",
-    phone: "",
-  });
-
-  const [passwordForm, setPasswordForm] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
-
-  // Fetch profile data
   useEffect(() => {
     if (isAuthenticated) {
       fetchProfile();
@@ -120,187 +72,50 @@ export default function ProfilePage() {
   }, [isAuthenticated]);
 
   const fetchProfile = async () => {
+    setLoading(true);
+    setError(null);
+
     try {
-      setDataLoading(true);
+      const token = TokenStorage.getToken();
 
-      // Create placeholder profile from user context if available
-      if (user && !profile) {
-        const placeholderProfile: UserProfile = {
-          id: user.id || "...",
-          username: user.username || "Loading...",
-          email: user.email || "loading@example.com",
-          role: user.role || UserRole.GENERAL_USER,
-          isActive: user.isActive ?? true,
-          pointBalance: 0,
-          totalPoints: 0,
-          paidStatus: "Loading...",
-          totalRequests: 0,
-          activityStatus: "Active",
-          createdAt: new Date().toISOString(),
-          activeSuppliers: [],
-          department: "Loading...",
-          position: "Loading...",
-          location: "Loading...",
-          phone: "Loading...",
-        };
-        setProfile(placeholderProfile);
+      if (!token) {
+        throw new Error("Authentication token not found. Please login again.");
       }
 
-      const [meRes, pointsRes, availableSuppliersRes, activeSupplierRes] =
-        await Promise.allSettled([
-          apiClient.get<any>("/user/check-me"),
-          apiClient.get<any>("/user/points-check"),
-          apiClient.get<any>("/user/check-available-suppliers"),
-          apiClient.get<ActiveSupplierData>("/user/check-active-my-supplier"),
-        ]);
+      const response = await fetch("http://127.0.0.1:8001/v1.0/user/check-me", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
-      const meData =
-        meRes.status === "fulfilled" && meRes.value.success
-          ? meRes.value.data
-          : null;
-      const pointsData =
-        pointsRes.status === "fulfilled" && pointsRes.value.success
-          ? pointsRes.value.data
-          : null;
-      const availableSuppliersData =
-        availableSuppliersRes.status === "fulfilled" &&
-        availableSuppliersRes.value.success
-          ? availableSuppliersRes.value.data
-          : null;
-      const activeSupplierDataRes =
-        activeSupplierRes.status === "fulfilled" &&
-        activeSupplierRes.value.success
-          ? activeSupplierRes.value.data
-          : null;
-
-      // Set active supplier data
-      if (activeSupplierDataRes) {
-        setActiveSupplierData(activeSupplierDataRes);
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("Unauthorized. Please login again.");
+        }
+        throw new Error(`Failed to fetch profile: ${response.statusText}`);
       }
 
-      if (meData) {
-        const roleMap: Record<string, UserRole> = {
-          super_user: UserRole.SUPER_USER,
-          admin_user: UserRole.ADMIN_USER,
-          general_user: UserRole.GENERAL_USER,
-        };
-
-        const resolvedRole =
-          roleMap[meData.user_status] ?? UserRole.GENERAL_USER;
-
-        const profileData: UserProfile = {
-          id: meData.id,
-          username: meData.username,
-          email: meData.email,
-          role: resolvedRole,
-          isActive: meData.is_active !== false,
-          pointBalance:
-            pointsData?.available_points ?? meData.available_points ?? 0,
-          totalPoints: pointsData?.total_points ?? meData.total_points ?? 0,
-          paidStatus:
-            resolvedRole === UserRole.SUPER_USER
-              ? "Unlimited Access"
-              : meData.paid_status || "Standard",
-          totalRequests: meData.total_rq ?? 0,
-          activityStatus: meData.using_rq_status || "Active",
-          createdAt: meData.created_at,
-          updatedAt: meData.updated_at,
-          lastLogin: meData.last_login,
-          activeSuppliers:
-            availableSuppliersData?.supplier_list ||
-            meData.active_supplier ||
-            [],
-          department: meData.department || "Operations",
-          position: meData.position || "Team Member",
-          location: meData.location || "Not specified",
-          phone: meData.phone || "Not specified",
-        };
-
-        setProfile(profileData);
-        setEditForm({
-          username: profileData.username,
-          email: profileData.email,
-          department: profileData.department || "",
-          position: profileData.position || "",
-          location: profileData.location || "",
-          phone: profileData.phone || "",
-        });
-      }
-    } catch (error) {
-      setErrorMessage("Failed to load profile");
-    } finally {
-      setDataLoading(false);
-    }
-  };
-
-  const handleSupplierClick = async (supplierName: string) => {
-    try {
-      setSupplierLoading(true);
-      setShowSupplierModal(true);
-
-      const response = await apiClient.get<SupplierModalData>(
-        `/hotels/get-supplier-info?supplier=${supplierName}`
-      );
-
-      if (response.success && response.data) {
-        setSelectedSupplier(response.data);
-      } else {
-        setErrorMessage("Failed to load supplier information");
-        setShowSupplierModal(false);
-      }
-    } catch (error) {
-      setErrorMessage("Failed to load supplier information");
-      setShowSupplierModal(false);
-    } finally {
-      setSupplierLoading(false);
-    }
-  };
-
-  const handleSaveProfile = async () => {
-    try {
-      setLoading(true);
-      // API call would go here
-      setProfile((prev) =>
-        prev
-          ? { ...prev, ...editForm, updatedAt: new Date().toISOString() }
-          : null
-      );
-      setIsEditing(false);
-      setSuccessMessage("Profile updated successfully!");
-      setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (error) {
-      setErrorMessage("Failed to update profile");
+      const data = await response.json();
+      console.log("Profile data:", data);
+      setProfile(data);
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+      setError(err instanceof Error ? err.message : "Failed to load profile");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChangePassword = async () => {
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setErrorMessage("Passwords do not match");
-      return;
-    }
-    try {
-      // API call would go here
-      setShowPasswordModal(false);
-      setPasswordForm({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
-      setSuccessMessage("Password changed successfully!");
-      setTimeout(() => setSuccessMessage(""), 3000);
-    } catch (error) {
-      setErrorMessage("Failed to change password");
-    }
-  };
-
-  if (authLoading) {
+  if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="min-h-screen flex items-center justify-center bg-[rgb(var(--bg-primary))]">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-slate-600">Authenticating...</p>
+          <Loader2 className="w-12 h-12 animate-spin text-primary-color mx-auto mb-4" />
+          <p className="text-[rgb(var(--text-secondary))]">
+            Loading profile...
+          </p>
         </div>
       </div>
     );
@@ -308,821 +123,546 @@ export default function ProfilePage() {
 
   if (!isAuthenticated || !profile) return null;
 
-  const getRoleBadge = (role: UserRole) => {
-    const config: Record<
-      UserRole,
-      { style: string; label: string; icon: React.ReactElement }
-    > = {
-      [UserRole.SUPER_USER]: {
-        style: "bg-purple-100 text-purple-700 border-purple-200",
-        label: "Executive Admin",
+  const getRoleInfo = (status: string) => {
+    const roles: Record<string, { label: string; icon: React.ReactElement }> = {
+      super_user: {
+        label: "Super User",
         icon: <Crown className="w-4 h-4" />,
       },
-      [UserRole.ADMIN_USER]: {
-        style: "bg-blue-100 text-blue-700 border-blue-200",
-        label: "Administrator",
+      admin_user: {
+        label: "Admin User",
         icon: <Shield className="w-4 h-4" />,
       },
-      [UserRole.GENERAL_USER]: {
-        style: "bg-green-100 text-green-700 border-green-200",
-        label: "Team Member",
-        icon: <User className="w-4 h-4" />,
-      },
-      [UserRole.USER]: {
-        style: "bg-green-100 text-green-700 border-green-200",
-        label: "User",
+      general_user: {
+        label: "General User",
         icon: <User className="w-4 h-4" />,
       },
     };
-    return config[role];
+    return roles[status] || roles.general_user;
   };
 
-  const roleBadge = getRoleBadge(profile.role);
+  const roleInfo = getRoleInfo(profile.user_status);
+
+  const handleSupplierClick = async (supplierName: string) => {
+    setShowSupplierModal(true);
+    setSupplierLoading(true);
+    setSupplierInfo(null);
+
+    try {
+      const token = TokenStorage.getToken();
+
+      if (!token) {
+        throw new Error("Authentication token not found. Please login again.");
+      }
+
+      console.log("Fetching supplier info for:", supplierName);
+
+      const response = await fetch(
+        `http://127.0.0.1:8001/v1.0/hotels/get-supplier-info?supplier=${supplierName}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("Unauthorized. Please login again.");
+        }
+        throw new Error(
+          `Failed to fetch supplier info: ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+      console.log("Supplier info:", data);
+      setSupplierInfo(data);
+    } catch (err) {
+      console.error("Error fetching supplier info:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to load supplier info"
+      );
+      setShowSupplierModal(false);
+    } finally {
+      setSupplierLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-6">
-      <div className="mx-auto">
-        {/* Background Loading Indicator */}
-        {dataLoading && (
-          <div className="fixed top-20 right-6 z-50 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span className="text-sm font-medium">Updating profile...</span>
-          </div>
-        )}
+    <div className="mx-auto">
+      {/* Error Message */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md flex items-start space-x-3">
+          <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        </div>
+      )}
 
-        {/* Success/Error Messages */}
-        {successMessage && (
-          <div className="mb-6 bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3 animate-fade-in">
-            <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-            <span className="text-emerald-800 font-medium">
-              {successMessage}
-            </span>
-            <button onClick={() => setSuccessMessage("")} className="ml-auto">
-              <X className="w-4 h-4 text-emerald-600" />
-            </button>
-          </div>
-        )}
-        {errorMessage && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-            <span className="text-red-800 font-medium">{errorMessage}</span>
-            <button onClick={() => setErrorMessage("")} className="ml-auto">
-              <X className="w-4 h-4 text-red-600" />
-            </button>
-          </div>
-        )}
-
-        {/* Header Card */}
-        <div className="bg-white rounded-3xl shadow-xl overflow-hidden mb-6">
-          <div className="relative h-48 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
-            <div className="absolute inset-0 bg-black/10"></div>
-            <div className="absolute -bottom-16 left-8">
-              <div className="w-32 h-32 rounded-2xl bg-white shadow-2xl flex items-center justify-center border-4 border-white">
-                <span className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-blue-600 to-purple-600">
-                  {profile.username.charAt(0).toUpperCase()}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-20 px-8 pb-8">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <h1 className="text-3xl font-bold text-slate-900 mb-2">
-                  {profile.username}
-                </h1>
-                <div className="flex flex-wrap items-center gap-3">
-                  <Badge
-                    className={`px-3 py-1 rounded-full text-sm font-semibold border flex items-center gap-1 ${roleBadge.style}`}
-                  >
-                    {roleBadge.icon}
-                    {roleBadge.label}
-                  </Badge>
-                  <Badge
-                    className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                      profile.isActive
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-gray-100 text-gray-700"
-                    }`}
-                  >
-                    {profile.isActive ? "● Active" : "● Inactive"}
-                  </Badge>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowPasswordModal(true)}
-                  className="flex items-center gap-2"
-                >
-                  <Key className="w-4 h-4" />
-                  Change Password
-                </Button>
-                <Button
-                  onClick={() =>
-                    isEditing ? handleSaveProfile() : setIsEditing(true)
-                  }
-                  className="flex items-center gap-2"
-                >
-                  {isEditing ? (
-                    <>
-                      <Save className="w-4 h-4" /> Save
-                    </>
-                  ) : (
-                    <>
-                      <Edit className="w-4 h-4" /> Edit Profile
-                    </>
-                  )}
-                </Button>
-                {isEditing && (
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setIsEditing(false);
-                      setEditForm({
-                        username: profile.username,
-                        email: profile.email,
-                        department: profile.department || "",
-                        position: profile.position || "",
-                        location: profile.location || "",
-                        phone: profile.phone || "",
-                      });
-                    }}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
+      {/* Header Card */}
+      <div className="bg-[rgb(var(--bg-primary))] rounded-lg shadow-md overflow-hidden mb-6 border border-[rgb(var(--border-primary))]">
+        <div
+          className="relative h-32 bg-primary-color"
+          style={{
+            background: `linear-gradient(135deg, var(--primary-color) 0%, rgba(var(--primary-rgb), 0.8) 50%, var(--primary-hover) 100%)`,
+          }}
+        >
+          <div
+            className="absolute inset-0 opacity-20"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle at 20% 50%, rgba(255,255,255,0.3) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(255,255,255,0.2) 0%, transparent 50%)",
+            }}
+          ></div>
+          <div className="absolute -bottom-12 left-8">
+            <div className="w-24 h-24 rounded-lg bg-[rgb(var(--bg-primary))] shadow-lg flex items-center justify-center border-4 border-[rgb(var(--bg-primary))]">
+              <span className="text-4xl font-bold text-primary-color">
+                {profile.username.charAt(0).toUpperCase()}
+              </span>
             </div>
           </div>
         </div>
 
-        <div className="rounded-3xl shadow-xl overflow-hidden mb-6">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-12">
-            {/* Personal Information */}
-            <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
-              <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <User className="w-5 h-5 text-blue-600" />
-                </div>
-                Personal Information
-              </h2>
-
-              {isEditing ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      Username
-                    </label>
-                    <input
-                      type="text"
-                      value={editForm.username}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, username: e.target.value })
-                      }
-                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      value={editForm.email}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, email: e.target.value })
-                      }
-                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      Department
-                    </label>
-                    <input
-                      type="text"
-                      value={editForm.department}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, department: e.target.value })
-                      }
-                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      Position
-                    </label>
-                    <input
-                      type="text"
-                      value={editForm.position}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, position: e.target.value })
-                      }
-                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      Location
-                    </label>
-                    <input
-                      type="text"
-                      value={editForm.location}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, location: e.target.value })
-                      }
-                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      Phone
-                    </label>
-                    <input
-                      type="tel"
-                      value={editForm.phone}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, phone: e.target.value })
-                      }
-                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 bg-slate-50 rounded-xl">
-                    <div className="flex items-center gap-2 text-slate-600 mb-1">
-                      <User className="w-4 h-4" />
-                      <span className="text-sm font-medium">Username</span>
-                    </div>
-                    <p className="text-lg font-semibold text-slate-900">
-                      {profile.username}
-                    </p>
-                  </div>
-                  <div className="p-4 bg-slate-50 rounded-xl">
-                    <div className="flex items-center gap-2 text-slate-600 mb-1">
-                      <Mail className="w-4 h-4" />
-                      <span className="text-sm font-medium">Email</span>
-                    </div>
-                    <p className="text-lg font-semibold text-slate-900">
-                      {profile.email}
-                    </p>
-                  </div>
-                  <div className="p-4 bg-slate-50 rounded-xl">
-                    <div className="flex items-center gap-2 text-slate-600 mb-1">
-                      <Building className="w-4 h-4" />
-                      <span className="text-sm font-medium">Department</span>
-                    </div>
-                    <p className="text-lg font-semibold text-slate-900">
-                      {profile.department}
-                    </p>
-                  </div>
-                  <div className="p-4 bg-slate-50 rounded-xl">
-                    <div className="flex items-center gap-2 text-slate-600 mb-1">
-                      <Shield className="w-4 h-4" />
-                      <span className="text-sm font-medium">Position</span>
-                    </div>
-                    <p className="text-lg font-semibold text-slate-900">
-                      {profile.position}
-                    </p>
-                  </div>
-                  <div className="p-4 bg-slate-50 rounded-xl">
-                    <div className="flex items-center gap-2 text-slate-600 mb-1">
-                      <MapPin className="w-4 h-4" />
-                      <span className="text-sm font-medium">Location</span>
-                    </div>
-                    <p className="text-lg font-semibold text-slate-900">
-                      {profile.location}
-                    </p>
-                  </div>
-                  <div className="p-4 bg-slate-50 rounded-xl">
-                    <div className="flex items-center gap-2 text-slate-600 mb-1">
-                      <Activity className="w-4 h-4" />
-                      <span className="text-sm font-medium">Status</span>
-                    </div>
-                    <p className="text-lg font-semibold text-slate-900">
-                      {profile.activityStatus}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Quick Card - Stats Grid */}
-            <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
-              <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
-                <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-                  <BarChart3 className="w-5 h-5 text-indigo-600" />
-                </div>
-                Quick Card
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* Points Card */}
-                <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl shadow-lg p-6 text-white">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                      <Coins className="w-6 h-6" />
-                    </div>
-                    <TrendingUp className="w-5 h-5 opacity-80" />
-                  </div>
-                  <h3 className="text-sm font-medium opacity-90 mb-1">
-                    Points Balance
-                  </h3>
-                  <p className="text-4xl font-bold mb-2">
-                    {profile.pointBalance.toLocaleString()}
-                  </p>
-                  <div className="flex items-center justify-between text-sm opacity-90">
-                    <span>
-                      Total Earned: {profile.totalPoints.toLocaleString()}
-                    </span>
-                    <span className="px-2 py-1 bg-white/20 rounded-lg">
-                      {profile.paidStatus}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Activity Card */}
-                <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl shadow-lg p-6 text-white">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                      <Activity className="w-6 h-6" />
-                    </div>
-                    <CheckCircle className="w-5 h-5 opacity-80" />
-                  </div>
-                  <h3 className="text-sm font-medium opacity-90 mb-1">
-                    Total Requests
-                  </h3>
-                  <p className="text-4xl font-bold mb-2">
-                    {profile.totalRequests}
-                  </p>
-                  <div className="text-sm opacity-90">
-                    Active Suppliers: {profile.activeSuppliers.length}
-                  </div>
-                </div>
-
-                {/* Quick Stats Card */}
-                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg p-6 text-white">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                      <BarChart3 className="w-6 h-6" />
-                    </div>
-                    <Zap className="w-5 h-5 opacity-80" />
-                  </div>
-                  <h3 className="text-sm font-medium opacity-90 mb-1">
-                    Quick Stats
-                  </h3>
-                  <div className="space-y-2 mt-3">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="opacity-90">User ID</span>
-                      <code className="bg-white/20 px-2 py-1 rounded text-xs font-mono">
-                        {profile.id.substring(0, 8)}...
-                      </code>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="opacity-90">Account Age</span>
-                      <span className="font-semibold">
-                        {Math.floor(
-                          (Date.now() - new Date(profile.createdAt).getTime()) /
-                            (1000 * 60 * 60 * 24)
-                        )}{" "}
-                        days
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="opacity-90">Status</span>
-                      <span className="font-semibold">
-                        {profile.isActive ? "✓ Active" : "✗ Inactive"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Account Timeline Card */}
-                <div className="bg-gradient-to-br from-slate-700 to-slate-900 rounded-2xl shadow-lg p-6 text-white">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                      <Calendar className="w-6 h-6" />
-                    </div>
-                    <Clock className="w-5 h-5 opacity-80" />
-                  </div>
-                  <h3 className="text-sm font-medium opacity-90 mb-1">
-                    Account Timeline
-                  </h3>
-                  <div className="space-y-2 mt-3">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="opacity-90">Created</span>
-                      <span className="font-semibold text-xs">
-                        {new Date(profile.createdAt).toLocaleDateString(
-                          "en-US",
-                          {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          }
-                        )}
-                      </span>
-                    </div>
-                    {profile.lastLogin && (
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="opacity-90">Last Login</span>
-                        <span className="font-semibold text-xs">
-                          {new Date(profile.lastLogin).toLocaleDateString(
-                            "en-US",
-                            {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            }
-                          )}
-                        </span>
-                      </div>
-                    )}
-                    {profile.updatedAt && (
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="opacity-90">Updated</span>
-                        <span className="font-semibold text-xs">
-                          {new Date(profile.updatedAt).toLocaleDateString(
-                            "en-US",
-                            {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            }
-                          )}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
+        <div className="pt-16 px-8 pb-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-[rgb(var(--text-primary))] mb-2">
+                {profile.username}
+              </h1>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border-2 border-primary-color text-primary-color bg-transparent">
+                  {roleInfo.icon}
+                  <span className="ml-1">{roleInfo.label}</span>
+                </span>
               </div>
-            </div>
-
-            {/* Available Suppliers Section */}
-            <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-3">
-                  <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-                    <Building className="w-5 h-5 text-indigo-600" />
-                  </div>
-                  Available Suppliers
-                </h2>
-                <div className="flex items-center gap-2">
-                  {activeSupplierData && (
-                    <>
-                      <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 px-3 py-1">
-                        {activeSupplierData.total_on_supplier} Active
-                      </Badge>
-                      {activeSupplierData.total_off_supplier > 0 && (
-                        <Badge className="bg-red-100 text-red-700 border-red-200 px-3 py-1">
-                          {activeSupplierData.total_off_supplier} Inactive
-                        </Badge>
-                      )}
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {activeSupplierData &&
-              (activeSupplierData.on_supplier_list.length > 0 ||
-                activeSupplierData.off_supplier_list.length > 0) ? (
-                <div className="space-y-6">
-                  {/* Active Suppliers */}
-                  {activeSupplierData.on_supplier_list.length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-semibold text-emerald-700 mb-3 flex items-center gap-2">
-                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                        Active Suppliers ({activeSupplierData.total_on_supplier}
-                        )
-                      </h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {activeSupplierData.on_supplier_list.map(
-                          (supplier, index) => {
-                            // Capitalize supplier name
-                            const displayName = supplier
-                              .split(/(?=[A-Z])/)
-                              .map(
-                                (word) =>
-                                  word.charAt(0).toUpperCase() + word.slice(1)
-                              )
-                              .join(" ");
-
-                            return (
-                              <div
-                                key={index}
-                                onClick={() => handleSupplierClick(supplier)}
-                                className="group p-4 bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl border border-emerald-200 hover:border-emerald-400 hover:shadow-lg transition-all cursor-pointer"
-                              >
-                                <div className="flex items-center justify-between mb-3">
-                                  <div className="w-10 h-10 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <Building className="w-5 h-5 text-emerald-600" />
-                                  </div>
-                                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                                </div>
-                                <h3 className="font-semibold text-slate-900 mb-1 capitalize">
-                                  {displayName}
-                                </h3>
-                                <p className="text-xs text-emerald-600 uppercase tracking-wide font-medium">
-                                  {supplier}
-                                </p>
-                                <div className="mt-2 pt-2 border-t border-emerald-200">
-                                  <span className="text-xs text-emerald-700 font-semibold">
-                                    ✓ Active
-                                  </span>
-                                </div>
-                              </div>
-                            );
-                          }
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Inactive Suppliers */}
-                  {activeSupplierData.off_supplier_list.length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-semibold text-red-700 mb-3 flex items-center gap-2">
-                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                        Inactive Suppliers (
-                        {activeSupplierData.total_off_supplier})
-                      </h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {activeSupplierData.off_supplier_list.map(
-                          (supplier, index) => {
-                            // Capitalize supplier name
-                            const displayName = supplier
-                              .split(/(?=[A-Z])/)
-                              .map(
-                                (word) =>
-                                  word.charAt(0).toUpperCase() + word.slice(1)
-                              )
-                              .join(" ");
-
-                            return (
-                              <div
-                                key={index}
-                                className="group p-4 bg-gradient-to-br from-red-50 to-rose-50 rounded-xl border border-red-200 hover:border-red-300 hover:shadow-lg transition-all opacity-75"
-                              >
-                                <div className="flex items-center justify-between mb-3">
-                                  <div className="w-10 h-10 bg-gradient-to-br from-red-100 to-red-200 rounded-lg flex items-center justify-center">
-                                    <Building className="w-5 h-5 text-red-600" />
-                                  </div>
-                                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                                </div>
-                                <h3 className="font-semibold text-slate-900 mb-1 capitalize">
-                                  {displayName}
-                                </h3>
-                                <p className="text-xs text-red-600 uppercase tracking-wide font-medium">
-                                  {supplier}
-                                </p>
-                                <div className="mt-2 pt-2 border-t border-red-200">
-                                  <span className="text-xs text-red-700 font-semibold">
-                                    ✗ Inactive
-                                  </span>
-                                </div>
-                              </div>
-                            );
-                          }
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Building className="w-8 h-8 text-slate-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                    No Available Suppliers
-                  </h3>
-                  <p className="text-slate-600">
-                    {dataLoading
-                      ? "Loading supplier information..."
-                      : "You don't have any available suppliers at the moment."}
-                  </p>
-                </div>
-              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Password Change Modal */}
-      {showPasswordModal && (
-        <Modal
-          isOpen={showPasswordModal}
-          onClose={() => setShowPasswordModal(false)}
-          title="Change Password"
-        >
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Current Password
-              </label>
-              <input
-                type="password"
-                value={passwordForm.currentPassword}
-                onChange={(e) =>
-                  setPasswordForm({
-                    ...passwordForm,
-                    currentPassword: e.target.value,
-                  })
-                }
-                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+      {/* Personal Information */}
+      <div className="bg-[rgb(var(--bg-primary))] rounded-lg shadow-md border border-[rgb(var(--border-primary))] p-6 mb-6">
+        <h2 className="text-xl font-semibold text-[rgb(var(--text-primary))] mb-6 flex items-center">
+          <User className="w-5 h-5 mr-2 text-primary-color" />
+          Personal Information
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+            <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
+              <User className="w-4 h-4" />
+              <span className="text-sm font-medium">Username</span>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                New Password
-              </label>
-              <input
-                type="password"
-                value={passwordForm.newPassword}
-                onChange={(e) =>
-                  setPasswordForm({
-                    ...passwordForm,
-                    newPassword: e.target.value,
-                  })
-                }
-                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+            <p className="text-lg font-semibold text-[rgb(var(--text-primary))]">
+              {profile.username}
+            </p>
+          </div>
+
+          <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+            <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
+              <Mail className="w-4 h-4" />
+              <span className="text-sm font-medium">Email</span>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Confirm Password
-              </label>
-              <input
-                type="password"
-                value={passwordForm.confirmPassword}
-                onChange={(e) =>
-                  setPasswordForm({
-                    ...passwordForm,
-                    confirmPassword: e.target.value,
-                  })
-                }
-                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+            <p className="text-lg font-semibold text-[rgb(var(--text-primary))]">
+              {profile.email}
+            </p>
+          </div>
+
+          <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+            <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
+              <Shield className="w-4 h-4" />
+              <span className="text-sm font-medium">User ID</span>
             </div>
-            <div className="flex gap-3 mt-6">
-              <Button onClick={handleChangePassword} className="flex-1">
-                Change Password
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setShowPasswordModal(false)}
+            <p className="text-sm font-mono text-[rgb(var(--text-primary))]">
+              {profile.id}
+            </p>
+          </div>
+
+          <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+            <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
+              <Building className="w-4 h-4" />
+              <span className="text-sm font-medium">Status</span>
+            </div>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border-2 border-primary-color text-primary-color bg-transparent">
+              {roleInfo.label}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Points Information */}
+      <div className="bg-[rgb(var(--bg-primary))] rounded-lg shadow-md border border-[rgb(var(--border-primary))] p-6 mb-6">
+        <h2 className="text-xl font-semibold text-[rgb(var(--text-primary))] mb-6 flex items-center">
+          <Coins className="w-5 h-5 mr-2 text-yellow-600 dark:text-yellow-400" />
+          Points Information
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+            <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
+              <Coins className="w-4 h-4" />
+              <span className="text-sm font-medium">Available Points</span>
+            </div>
+            <p className="text-2xl font-bold text-primary-color">
+              {profile.available_points.toLocaleString()}
+            </p>
+          </div>
+
+          <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+            <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
+              <TrendingUp className="w-4 h-4" />
+              <span className="text-sm font-medium">Total Points</span>
+            </div>
+            <p className="text-2xl font-bold text-[rgb(var(--text-primary))]">
+              {profile.total_points.toLocaleString()}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Supplier Information */}
+      <div className="bg-[rgb(var(--bg-primary))] rounded-lg shadow-md border border-[rgb(var(--border-primary))] p-6 mb-6">
+        <h2 className="text-xl font-semibold text-[rgb(var(--text-primary))] mb-6 flex items-center">
+          <Building className="w-5 h-5 mr-2 text-primary-color" />
+          Supplier Information
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+            <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
+              <CheckCircle className="w-4 h-4" />
+              <span className="text-sm font-medium">Total Active</span>
+            </div>
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+              {profile.supplier_info.total_active}
+            </p>
+          </div>
+
+          <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+            <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
+              <AlertCircle className="w-4 h-4" />
+              <span className="text-sm font-medium">Temporary Off</span>
+            </div>
+            <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+              {profile.supplier_info.temporary_off}
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-medium text-[rgb(var(--text-secondary))] mb-3">
+            Active Suppliers ({profile.supplier_info.active_list.length})
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {profile.supplier_info.active_list.map((supplier) => (
+              <button
+                key={supplier}
+                onClick={() => handleSupplierClick(supplier)}
+                className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border-2 border-primary-color text-primary-color bg-transparent hover:bg-primary-light transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
               >
-                Cancel
-              </Button>
+                {supplier}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {profile.supplier_info.temporary_off_supplier.length > 0 && (
+          <div className="mt-4">
+            <h3 className="text-sm font-medium text-[rgb(var(--text-secondary))] mb-3">
+              Temporary Off Suppliers (
+              {profile.supplier_info.temporary_off_supplier.length})
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {profile.supplier_info.temporary_off_supplier.map((supplier) => (
+                <span
+                  key={supplier}
+                  className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border-2 border-orange-600 dark:border-orange-400 text-orange-600 dark:text-orange-400 bg-transparent"
+                >
+                  {supplier}
+                </span>
+              ))}
             </div>
           </div>
-        </Modal>
-      )}
+        )}
+      </div>
+
+      {/* Supplier Permissions & IP Address Permissions - Side by Side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {/* Supplier Permissions */}
+        <div className="bg-[rgb(var(--bg-primary))] rounded-lg shadow-md border border-[rgb(var(--border-primary))] p-6">
+          <h2 className="text-xl font-semibold text-[rgb(var(--text-primary))] mb-6 flex items-center">
+            <Shield className="w-5 h-5 mr-2 text-primary-color" />
+            Supplier Permissions
+          </h2>
+          <div className="space-y-3">
+            <div className="p-3 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+              <p className="text-sm text-[rgb(var(--text-secondary))]">
+                Manage supplier access and permissions
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* IP Address Permissions */}
+        <div className="bg-[rgb(var(--bg-primary))] rounded-lg shadow-md border border-[rgb(var(--border-primary))] p-6">
+          <h2 className="text-xl font-semibold text-[rgb(var(--text-primary))] mb-6 flex items-center">
+            <Shield className="w-5 h-5 mr-2 text-primary-color" />
+            IP Address Permissions
+          </h2>
+          <div className="space-y-3">
+            <div className="p-3 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+              <p className="text-sm text-[rgb(var(--text-secondary))]">
+                Manage IP address access control
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Account Timeline */}
+      <div className="bg-[rgb(var(--bg-primary))] rounded-lg shadow-md border border-[rgb(var(--border-primary))] p-6">
+        <h2 className="text-xl font-semibold text-[rgb(var(--text-primary))] mb-6 flex items-center">
+          <Calendar className="w-5 h-5 mr-2 text-primary-color" />
+          Account Timeline
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+            <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
+              <Calendar className="w-4 h-4" />
+              <span className="text-sm font-medium">Created At</span>
+            </div>
+            <p className="text-base font-semibold text-[rgb(var(--text-primary))]">
+              {new Date(profile.created_at).toLocaleString()}
+            </p>
+          </div>
+
+          <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+            <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
+              <Calendar className="w-4 h-4" />
+              <span className="text-sm font-medium">Updated At</span>
+            </div>
+            <p className="text-base font-semibold text-[rgb(var(--text-primary))]">
+              {new Date(profile.updated_at).toLocaleString()}
+            </p>
+          </div>
+        </div>
+
+        {profile.need_to_next_upgrade && (
+          <div className="mt-4 p-4 bg-[rgb(var(--bg-secondary))] border border-[rgb(var(--border-primary))] rounded-md">
+            <p className="text-sm text-[rgb(var(--text-secondary))]">
+              <strong className="text-[rgb(var(--text-primary))]">
+                Next Upgrade:
+              </strong>{" "}
+              {profile.need_to_next_upgrade}
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* Supplier Info Modal */}
       {showSupplierModal && (
-        <Modal
-          isOpen={showSupplierModal}
-          onClose={() => {
-            setShowSupplierModal(false);
-            setSelectedSupplier(null);
-          }}
-          title="Supplier Information"
-          size="lg"
-        >
-          {supplierLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[rgb(var(--bg-primary))] rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[rgb(var(--border-primary))]">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-[rgb(var(--bg-primary))] border-b border-[rgb(var(--border-primary))] p-6 flex items-center justify-between">
+              <h3 className="text-xl font-semibold text-[rgb(var(--text-primary))] flex items-center">
+                <Building className="w-5 h-5 mr-2 text-primary-color" />
+                Supplier Information
+              </h3>
+              <button
+                onClick={() => setShowSupplierModal(false)}
+                className="text-[rgb(var(--text-tertiary))] hover:text-[rgb(var(--text-primary))] transition-all duration-200 hover:scale-110 active:scale-95"
+              >
+                <X className="w-6 h-6" />
+              </button>
             </div>
-          ) : selectedSupplier ? (
-            <div className="space-y-6">
-              {/* Supplier Info */}
-              <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl p-6 border border-indigo-100">
-                <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                  <Building className="w-5 h-5 text-indigo-600" />
-                  {selectedSupplier.supplier_info.supplier_name.toUpperCase()}
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white rounded-lg p-4">
-                    <p className="text-sm text-slate-600 mb-1">Total Hotels</p>
-                    <p className="text-2xl font-bold text-slate-900">
-                      {selectedSupplier.supplier_info.total_hotel.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="bg-white rounded-lg p-4">
-                    <p className="text-sm text-slate-600 mb-1">
-                      Total Mappings
-                    </p>
-                    <p className="text-2xl font-bold text-slate-900">
-                      {selectedSupplier.supplier_info.total_mappings.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="bg-white rounded-lg p-4">
-                    <p className="text-sm text-slate-600 mb-1">Has Hotels</p>
-                    <p className="text-lg font-semibold">
-                      {selectedSupplier.supplier_info.has_hotels ? (
-                        <span className="text-green-600 flex items-center gap-1">
-                          <CheckCircle className="w-4 h-4" /> Yes
+
+            {/* Modal Content */}
+            <div className="p-6">
+              {supplierLoading ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <Loader2 className="w-12 h-12 animate-spin text-primary-color mb-4" />
+                  <p className="text-[rgb(var(--text-secondary))]">
+                    Loading supplier information...
+                  </p>
+                </div>
+              ) : supplierInfo ? (
+                <div className="space-y-6">
+                  {/* Supplier Info Section */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-[rgb(var(--text-primary))] mb-4 flex items-center">
+                      <Building className="w-5 h-5 mr-2 text-primary-color" />
+                      Supplier Details
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+                        <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
+                          <Building className="w-4 h-4" />
+                          <span className="text-sm font-medium">
+                            Supplier Name
+                          </span>
+                        </div>
+                        <p className="text-lg font-semibold text-primary-color">
+                          {supplierInfo.supplier_info.supplier_name}
+                        </p>
+                      </div>
+
+                      <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+                        <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
+                          <MapPin className="w-4 h-4" />
+                          <span className="text-sm font-medium">
+                            Total Hotels
+                          </span>
+                        </div>
+                        <p className="text-2xl font-bold text-[rgb(var(--text-primary))]">
+                          {supplierInfo.supplier_info.total_hotel.toLocaleString()}
+                        </p>
+                      </div>
+
+                      <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+                        <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
+                          <CheckCircle className="w-4 h-4" />
+                          <span className="text-sm font-medium">
+                            Total Mappings
+                          </span>
+                        </div>
+                        <p className="text-2xl font-bold text-[rgb(var(--text-primary))]">
+                          {supplierInfo.supplier_info.total_mappings.toLocaleString()}
+                        </p>
+                      </div>
+
+                      <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+                        <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
+                          <CheckCircle className="w-4 h-4" />
+                          <span className="text-sm font-medium">
+                            Has Hotels
+                          </span>
+                        </div>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border-2 bg-transparent ${
+                            supplierInfo.supplier_info.has_hotels
+                              ? "border-green-600 dark:border-green-400 text-green-600 dark:text-green-400"
+                              : "border-red-600 dark:border-red-400 text-red-600 dark:text-red-400"
+                          }`}
+                        >
+                          {supplierInfo.supplier_info.has_hotels ? "Yes" : "No"}
                         </span>
-                      ) : (
-                        <span className="text-red-600">No</span>
-                      )}
-                    </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-1 gap-4">
+                      <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+                        <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
+                          <Clock className="w-4 h-4" />
+                          <span className="text-sm font-medium">
+                            Last Checked
+                          </span>
+                        </div>
+                        <p className="text-sm text-[rgb(var(--text-primary))]">
+                          {new Date(
+                            supplierInfo.supplier_info.last_checked
+                          ).toLocaleString()}
+                        </p>
+                      </div>
+
+                      <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+                        <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
+                          <Clock className="w-4 h-4" />
+                          <span className="text-sm font-medium">
+                            Last Updated
+                          </span>
+                        </div>
+                        <p className="text-sm text-[rgb(var(--text-primary))]">
+                          {new Date(
+                            supplierInfo.supplier_info.last_updated
+                          ).toLocaleString()}
+                        </p>
+                      </div>
+
+                      <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+                        <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
+                          <Calendar className="w-4 h-4" />
+                          <span className="text-sm font-medium">
+                            Summary Generated At
+                          </span>
+                        </div>
+                        <p className="text-sm text-[rgb(var(--text-primary))]">
+                          {new Date(
+                            supplierInfo.supplier_info.summary_generated_at
+                          ).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="bg-white rounded-lg p-4">
-                    <p className="text-sm text-slate-600 mb-1">Status</p>
-                    <Badge className="bg-green-100 text-green-700">
-                      Active
-                    </Badge>
+
+                  {/* User Info Section */}
+                  <div className="border-t border-[rgb(var(--border-primary))] pt-6">
+                    <h4 className="text-lg font-semibold text-[rgb(var(--text-primary))] mb-4 flex items-center">
+                      <User className="w-5 h-5 mr-2 text-primary-color" />
+                      Access Information
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+                        <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
+                          <User className="w-4 h-4" />
+                          <span className="text-sm font-medium">Username</span>
+                        </div>
+                        <p className="text-base font-semibold text-[rgb(var(--text-primary))]">
+                          {supplierInfo.user_info.username}
+                        </p>
+                      </div>
+
+                      <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+                        <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
+                          <Shield className="w-4 h-4" />
+                          <span className="text-sm font-medium">User Role</span>
+                        </div>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border-2 border-primary-color text-primary-color bg-transparent">
+                          {supplierInfo.user_info.user_role}
+                        </span>
+                      </div>
+
+                      <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+                        <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
+                          <Shield className="w-4 h-4" />
+                          <span className="text-sm font-medium">User ID</span>
+                        </div>
+                        <p className="text-sm font-mono text-[rgb(var(--text-primary))]">
+                          {supplierInfo.user_info.user_id}
+                        </p>
+                      </div>
+
+                      <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
+                        <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))] mb-1">
+                          <CheckCircle className="w-4 h-4" />
+                          <span className="text-sm font-medium">
+                            Access Level
+                          </span>
+                        </div>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border-2 border-green-600 dark:border-green-400 text-green-600 dark:text-green-400 bg-transparent">
+                          {supplierInfo.user_info.access_level}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              {/* Timeline */}
-              <div className="space-y-3">
-                <h4 className="font-semibold text-slate-900 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-slate-600" />
-                  Timeline
-                </h4>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                    <span className="text-sm text-slate-600">Last Checked</span>
-                    <span className="text-sm font-medium text-slate-900">
-                      {new Date(
-                        selectedSupplier.supplier_info.last_checked
-                      ).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                    <span className="text-sm text-slate-600">Last Updated</span>
-                    <span className="text-sm font-medium text-slate-900">
-                      {new Date(
-                        selectedSupplier.supplier_info.last_updated
-                      ).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                    <span className="text-sm text-slate-600">
-                      Summary Generated
-                    </span>
-                    <span className="text-sm font-medium text-slate-900">
-                      {new Date(
-                        selectedSupplier.supplier_info.summary_generated_at
-                      ).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* User Info */}
-              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                <h4 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                  <User className="w-4 h-4 text-slate-600" />
-                  Your Access
-                </h4>
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <span className="text-slate-600">User ID:</span>
-                    <p className="font-medium text-slate-900">
-                      {selectedSupplier.user_info.user_id}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-slate-600">Username:</span>
-                    <p className="font-medium text-slate-900">
-                      {selectedSupplier.user_info.username}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-slate-600">Role:</span>
-                    <p className="font-medium text-slate-900">
-                      {selectedSupplier.user_info.user_role}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-slate-600">Access Level:</span>
-                    <Badge className="bg-blue-100 text-blue-700">
-                      {selectedSupplier.user_info.access_level}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowSupplierModal(false);
-                    setSelectedSupplier(null);
-                  }}
-                >
-                  Close
-                </Button>
-              </div>
+              ) : null}
             </div>
-          ) : null}
-        </Modal>
+
+            {/* Modal Footer */}
+            <div className="sticky bottom-0 bg-[rgb(var(--bg-primary))] border-t border-[rgb(var(--border-primary))] p-6">
+              <button
+                onClick={() => setShowSupplierModal(false)}
+                className="w-full px-6 py-3 bg-primary-color text-white rounded-md hover:bg-primary-hover transition-all duration-200 font-medium hover:shadow-lg hover:scale-105 active:scale-95"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

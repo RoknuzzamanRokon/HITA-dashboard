@@ -97,7 +97,7 @@ export const adminMenuItems: MenuItem[] = [
         id: "billing",
         label: "Billing & Points",
         icon: CreditCard,
-        path: "/billing",
+        path: "/dashboard/billing",
         description: "Manage user points and billing",
         requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER],
     },
