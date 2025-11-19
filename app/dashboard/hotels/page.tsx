@@ -558,7 +558,6 @@ export default function HotelsPage() {
           </CardContent>
         </Card>
 
-        
         {/* Hotel Info Details Section */}
         {hotelInfo && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -787,7 +786,7 @@ export default function HotelsPage() {
                           className={`px-2 py-1 rounded-full text-xs ${
                             supplier.accessType === "fullAccess" ||
                             supplier.accessType === "full_access"
-                              ? "bg-green-100 text-green-800"
+                              ? "bg-green-100 text-gray-900"
                               : "bg-blue-100 text-blue-800"
                           }`}
                         >

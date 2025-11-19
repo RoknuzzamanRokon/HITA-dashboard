@@ -193,16 +193,26 @@ export default function ProvidersPage() {
               <h1 className="text-3xl font-bold text-white mb-2">
                 Provider Content Management
               </h1>
-              <p className="text-blue-100 mb-3">Manage provider content and mappings</p>
+              <p className="text-blue-100 mb-3">
+                Manage provider content and mappings
+              </p>
               <div className="flex items-center space-x-3">
                 <div className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 border border-blue-200">
                   Total Providers: {providers.length}
                 </div>
-                <div className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 border border-green-200">
-                  Total Hotels: {providerStats.reduce((s, st) => s + st.totalHotels, 0).toLocaleString()}
+                <div className="px-2 py-1 rounded-full text-xs bg-green-100 text-gray-900 border border-green-200">
+                  Total Hotels:{" "}
+                  {providerStats
+                    .reduce((s, st) => s + st.totalHotels, 0)
+                    .toLocaleString()}
                 </div>
                 <div className="px-2 py-1 rounded-full text-xs bg-indigo-100 text-indigo-800 border border-indigo-200">
-                  Active Syncs: {providerStats.filter((st) => st.syncStatus === 'in_progress').length}
+                  Active Syncs:{" "}
+                  {
+                    providerStats.filter(
+                      (st) => st.syncStatus === "in_progress"
+                    ).length
+                  }
                 </div>
               </div>
             </div>
@@ -224,7 +234,9 @@ export default function ProvidersPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {providers.map((provider) => {
-                const stats = providerStats.find((stat) => stat.name === provider.name);
+                const stats = providerStats.find(
+                  (stat) => stat.name === provider.name
+                );
                 const isRefreshing = refreshing === provider.name;
 
                 return (
@@ -236,9 +248,11 @@ export default function ProvidersPage() {
                     <div className="p-5">
                       <div className="flex items-start justify-between mb-4">
                         <div>
-                          <h3 className="text-lg font-semibold text-gray-900">{provider.name}</h3>
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            {provider.name}
+                          </h3>
                           <p className="text-sm text-gray-600">
-                            {provider.description || 'Content Provider'}
+                            {provider.description || "Content Provider"}
                           </p>
                         </div>
                         <ChevronRight className="h-5 w-5 text-gray-400" />
@@ -248,7 +262,9 @@ export default function ProvidersPage() {
                         <>
                           <div className="grid grid-cols-2 gap-3">
                             <div className="bg-gray-50 rounded-lg p-3">
-                              <p className="text-xs text-gray-500">Total Hotels</p>
+                              <p className="text-xs text-gray-500">
+                                Total Hotels
+                              </p>
                               <p className="text-base font-semibold text-gray-900">
                                 {stats.totalHotels.toLocaleString()}
                               </p>
@@ -268,34 +284,46 @@ export default function ProvidersPage() {
                             <div className="bg-gray-50 rounded-lg p-3">
                               <p className="text-xs text-gray-500">Last Sync</p>
                               <p className="text-base font-semibold text-gray-900">
-                                {stats.lastSyncDate ? formatDate(stats.lastSyncDate) : 'N/A'}
+                                {stats.lastSyncDate
+                                  ? formatDate(stats.lastSyncDate)
+                                  : "N/A"}
                               </p>
                             </div>
                           </div>
 
                           <div className="mt-4">
-                            <p className="text-xs text-gray-500 mb-1">Mapping Progress</p>
+                            <p className="text-xs text-gray-500 mb-1">
+                              Mapping Progress
+                            </p>
                             <div className="w-full bg-gray-200 rounded-full h-2">
                               <div
                                 className="bg-green-500 h-2 rounded-full transition-all"
                                 style={{
-                                  width: `${Math.min((stats.mappedHotels / stats.totalHotels) * 100, 100)}%`,
+                                  width: `${Math.min(
+                                    (stats.mappedHotels / stats.totalHotels) *
+                                      100,
+                                    100
+                                  )}%`,
                                 }}
                               ></div>
                             </div>
                           </div>
 
                           <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                            <div className={`flex items-center px-3 py-1 rounded-full text-sm ${getStatusColor(stats.syncStatus)}`}>
+                            <div
+                              className={`flex items-center px-3 py-1 rounded-full text-sm ${getStatusColor(
+                                stats.syncStatus
+                              )}`}
+                            >
                               {getStatusIcon(stats.syncStatus)}
                               <span className="ml-1 font-medium">
-                                {stats.syncStatus === 'success'
-                                  ? 'Synced'
-                                  : stats.syncStatus === 'error'
-                                  ? 'Failed'
-                                  : stats.syncStatus === 'in_progress'
-                                  ? 'Syncing'
-                                  : 'Pending'}
+                                {stats.syncStatus === "success"
+                                  ? "Synced"
+                                  : stats.syncStatus === "error"
+                                  ? "Failed"
+                                  : stats.syncStatus === "in_progress"
+                                  ? "Syncing"
+                                  : "Pending"}
                               </span>
                             </div>
                             <button
@@ -303,10 +331,19 @@ export default function ProvidersPage() {
                                 e.stopPropagation();
                                 handleRefreshProvider(provider.name);
                               }}
-                              disabled={isRefreshing || stats.syncStatus === 'in_progress'}
+                              disabled={
+                                isRefreshing ||
+                                stats.syncStatus === "in_progress"
+                              }
                               className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
                             >
-                              <RefreshCw className={`h-4 w-4 text-gray-500 ${isRefreshing ? 'animate-spin text-blue-500' : ''}`} />
+                              <RefreshCw
+                                className={`h-4 w-4 text-gray-500 ${
+                                  isRefreshing
+                                    ? "animate-spin text-blue-500"
+                                    : ""
+                                }`}
+                              />
                             </button>
                           </div>
 
@@ -333,8 +370,12 @@ export default function ProvidersPage() {
             {providers.length === 0 && (
               <div className="text-center py-12">
                 <Database className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Providers Available</h3>
-                <p className="text-gray-600">No content providers are currently configured or accessible.</p>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No Providers Available
+                </h3>
+                <p className="text-gray-600">
+                  No content providers are currently configured or accessible.
+                </p>
               </div>
             )}
           </div>
@@ -350,19 +391,28 @@ export default function ProvidersPage() {
             <div className="space-y-4">
               <div className="text-center p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
                 <p className="text-sm text-gray-600 mb-1">Total Providers</p>
-                <p className="text-3xl font-bold text-blue-600">{providers.length}</p>
+                <p className="text-3xl font-bold text-blue-600">
+                  {providers.length}
+                </p>
               </div>
 
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-600 mb-1">Total Hotels</p>
                 <p className="text-xl font-semibold text-gray-700">
-                  {providerStats.reduce((sum, stat) => sum + stat.totalHotels, 0).toLocaleString()}
+                  {providerStats
+                    .reduce((sum, stat) => sum + stat.totalHotels, 0)
+                    .toLocaleString()}
                 </p>
               </div>
 
               <div className="text-center">
                 <div className="inline-flex px-2 py-1 rounded-full text-xs bg-indigo-100 text-indigo-800">
-                  Active Syncs: {providerStats.filter((st) => st.syncStatus === 'in_progress').length}
+                  Active Syncs:{" "}
+                  {
+                    providerStats.filter(
+                      (st) => st.syncStatus === "in_progress"
+                    ).length
+                  }
                 </div>
               </div>
             </div>

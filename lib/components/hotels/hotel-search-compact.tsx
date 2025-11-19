@@ -258,7 +258,7 @@ export function HotelSearchCompact({
                 Hotel Found!
               </h3>
             </div>
-            <Badge className="bg-green-100 text-green-800 border-green-300">
+            <Badge className="bg-green-100 text-gray-900 border-green-300">
               {hotels.length} result{hotels.length !== 1 ? "s" : ""}
             </Badge>
           </div>

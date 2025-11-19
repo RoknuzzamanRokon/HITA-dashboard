@@ -168,6 +168,11 @@ export default function ProviderUpdatePage() {
         if (suppliers.length > 0 && !suppliers.includes(selectedSupplier)) {
           setSelectedSupplier(suppliers[0]);
         }
+
+        // Also update providerIdentityName if it's not in the active suppliers list
+        if (suppliers.length > 0 && !suppliers.includes(providerIdentityName)) {
+          setProviderIdentityName(suppliers[0]);
+        }
       } else {
         // Fallback to default suppliers if API fails
         setActiveSuppliers(["restel", "booking", "expedia"]);
@@ -626,7 +631,7 @@ export default function ProviderUpdatePage() {
   const getChangeTypeColor = (type: string) => {
     switch (type) {
       case "new":
-        return "bg-green-100 text-green-800";
+        return "bg-green-100 text-gray-900";
       case "updated":
         return "bg-blue-100 text-blue-800";
       case "deleted":

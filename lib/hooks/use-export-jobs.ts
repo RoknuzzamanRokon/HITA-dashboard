@@ -5,6 +5,8 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { exportAPI } from '@/lib/api/exports';
+import { useRetryManager } from './use-retry-manager';
+import { useNotification } from '@/lib/components/notifications/notification-provider';
 import type {
     ExportJob,
     HotelExportFilters,
@@ -20,8 +22,8 @@ interface UseExportJobsReturn {
     createHotelExport: (filters: HotelExportFilters) => Promise<void>;
     createMappingExport: (filters: MappingExportFilters) => Promise<void>;
     refreshJobStatus: (jobId: string) => Promise<void>;
-    deleteJob: (jobId: string) => void;
-    clearCompletedJobs: () => void;
+    deleteJob: (jobId: string) => Promise<void>;
+    clearCompletedJobs: () => Promise<void>;
     isCreating: boolean;
     error: string | null;
 }
@@ -37,6 +39,7 @@ const saveJobsToStorage = (jobs: ExportJob[]): void => {
             startedAt: job.startedAt?.toISOString() || null,
             completedAt: job.completedAt?.toISOString() || null,
             expiresAt: job.expiresAt?.toISOString() || null,
+            estimatedCompletionTime: job.estimatedCompletionTime?.toISOString() || null,
         }));
         localStorage.setItem(STORAGE_KEY, JSON.stringify(serializedJobs));
         console.log('Jobs saved to localStorage:', serializedJobs.length);
@@ -67,6 +70,7 @@ const loadJobsFromStorage = (): ExportJob[] => {
                 startedAt: job.startedAt ? new Date(job.startedAt) : null,
                 completedAt: job.completedAt ? new Date(job.completedAt) : null,
                 expiresAt: job.expiresAt ? new Date(job.expiresAt) : null,
+                estimatedCompletionTime: job.estimatedCompletionTime ? new Date(job.estimatedCompletionTime) : null,
             }))
             .filter((job: ExportJob) => {
                 // Remove jobs older than 24 hours
@@ -90,11 +94,71 @@ export function useExportJobs(): UseExportJobsReturn {
     const [jobs, setJobs] = useState<ExportJob[]>([]);
     const [isCreating, setIsCreating] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const retryManager = useRetryManager();
+    const { addNotification } = useNotification();
 
-    // Load jobs from localStorage on mount
+    // Load jobs from API on mount, with localStorage as fallback
     useEffect(() => {
-        const loadedJobs = loadJobsFromStorage();
-        setJobs(loadedJobs);
+        const loadJobs = async () => {
+            try {
+                console.log('🔄 Loading export jobs from API...');
+
+                // Try to fetch from API first
+                const response = await exportAPI.getExportJobs();
+
+                if (response.success && response.data) {
+                    console.log(`✅ Loaded ${response.data.jobs.length} jobs from API`);
+
+                    // Convert API response to ExportJob format
+                    const apiJobs: ExportJob[] = response.data.jobs.map((job: any) => {
+                        // Normalize export type (API returns plural, frontend uses singular)
+                        let exportType: 'hotel' | 'mapping' = 'mapping';
+                        if (job.export_type === 'mappings') {
+                            exportType = 'mapping';
+                        } else if (job.export_type === 'hotels' || job.export_type === 'hotel') {
+                            exportType = 'hotel';
+                        }
+
+                        return {
+                            jobId: job.job_id,
+                            exportType,
+                            status: job.status,
+                            progress: job.progress_percentage || 0,
+                            processedRecords: job.processed_records || 0,
+                            totalRecords: job.total_records || 0,
+                            createdAt: new Date(job.created_at),
+                            startedAt: job.started_at ? new Date(job.started_at) : null,
+                            completedAt: job.completed_at ? new Date(job.completed_at) : null,
+                            expiresAt: job.expires_at ? new Date(job.expires_at) : null,
+                            estimatedCompletionTime: null,
+                            errorMessage: job.error_message || null,
+                            downloadUrl: job.download_url || null,
+                            filters: {
+                                ...(job.filters || {}),
+                                format: job.format || job.filters?.format || 'json', // Ensure format is always present
+                            },
+                        };
+                    });
+
+                    setJobs(apiJobs);
+
+                    // Also save to localStorage as cache
+                    saveJobsToStorage(apiJobs);
+                } else {
+                    // API failed, fallback to localStorage
+                    console.warn('⚠️ API failed, loading from localStorage');
+                    const loadedJobs = loadJobsFromStorage();
+                    setJobs(loadedJobs);
+                }
+            } catch (error) {
+                console.error('❌ Error loading jobs from API:', error);
+                // Fallback to localStorage on error
+                const loadedJobs = loadJobsFromStorage();
+                setJobs(loadedJobs);
+            }
+        };
+
+        loadJobs();
     }, []);
 
     // Save jobs to localStorage whenever they change
@@ -177,6 +241,7 @@ export function useExportJobs(): UseExportJobsReturn {
      */
     const createHotelExport = useCallback(
         async (filters: HotelExportFilters): Promise<void> => {
+            const operationId = `create-hotel-${Date.now()}`;
             setIsCreating(true);
             setError(null);
 
@@ -188,17 +253,63 @@ export function useExportJobs(): UseExportJobsReturn {
                 if (!response.success || !response.data) {
                     const errorMessage =
                         response.error?.message || 'Failed to create hotel export';
+                    const errorStatus = response.error?.status || 0;
                     setError(errorMessage);
+
+                    // Determine if retry is allowed based on error type
+                    const canRetryOperation = retryManager.canRetry(operationId) &&
+                        errorStatus !== 403 && // Don't retry permission errors
+                        errorStatus !== 400; // Don't retry validation errors
+
+                    // Show error notification with retry button if applicable (Requirement 6.1, 6.2)
+                    if (canRetryOperation) {
+                        const retryCount = retryManager.getRetryCount(operationId);
+                        addNotification({
+                            type: 'error',
+                            title: 'Export Creation Failed',
+                            message: errorMessage,
+                            action: {
+                                label: 'Retry',
+                                onClick: () => {
+                                    retryManager.incrementRetry(operationId);
+                                    createHotelExport(filters);
+                                },
+                            },
+                            autoDismiss: false,
+                            retryMetadata: {
+                                operationType: 'create-hotel-export',
+                                operationId,
+                                retryCount,
+                            },
+                        });
+                    } else {
+                        // Show final error message without retry button (Requirement 6.4)
+                        const retryCount = retryManager.getRetryCount(operationId);
+                        const finalMessage = retryCount >= 3
+                            ? `${errorMessage} Maximum retry attempts reached.`
+                            : errorMessage;
+
+                        addNotification({
+                            type: 'error',
+                            title: 'Export Creation Failed',
+                            message: finalMessage,
+                            autoDismiss: false,
+                        });
+                    }
+
                     throw new Error(errorMessage);
                 }
 
-                const { job_id, created_at } = response.data;
+                const { job_id, created_at, estimated_completion_time } = response.data;
 
-                // Create initial job object
+                // Reset retry count on success
+                retryManager.resetRetry(operationId);
+
+                // Create initial job object with "pending" status (Requirement 1.5)
                 const newJob: ExportJob = {
                     jobId: job_id,
                     exportType: 'hotel',
-                    status: 'processing',
+                    status: 'pending',
                     progress: 0,
                     processedRecords: 0,
                     totalRecords: response.data.estimated_records || 0,
@@ -206,6 +317,7 @@ export function useExportJobs(): UseExportJobsReturn {
                     startedAt: null,
                     completedAt: null,
                     expiresAt: null,
+                    estimatedCompletionTime: estimated_completion_time ? new Date(estimated_completion_time) : null,
                     errorMessage: null,
                     downloadUrl: null,
                     filters,
@@ -225,7 +337,7 @@ export function useExportJobs(): UseExportJobsReturn {
                 setIsCreating(false);
             }
         },
-        []
+        [retryManager, addNotification]
     );
 
     /**
@@ -233,6 +345,7 @@ export function useExportJobs(): UseExportJobsReturn {
      */
     const createMappingExport = useCallback(
         async (filters: MappingExportFilters): Promise<void> => {
+            const operationId = `create-mapping-${Date.now()}`;
             setIsCreating(true);
             setError(null);
 
@@ -244,17 +357,63 @@ export function useExportJobs(): UseExportJobsReturn {
                 if (!response.success || !response.data) {
                     const errorMessage =
                         response.error?.message || 'Failed to create mapping export';
+                    const errorStatus = response.error?.status || 0;
                     setError(errorMessage);
+
+                    // Determine if retry is allowed based on error type
+                    const canRetryOperation = retryManager.canRetry(operationId) &&
+                        errorStatus !== 403 && // Don't retry permission errors
+                        errorStatus !== 400; // Don't retry validation errors
+
+                    // Show error notification with retry button if applicable (Requirement 6.1, 6.2)
+                    if (canRetryOperation) {
+                        const retryCount = retryManager.getRetryCount(operationId);
+                        addNotification({
+                            type: 'error',
+                            title: 'Export Creation Failed',
+                            message: errorMessage,
+                            action: {
+                                label: 'Retry',
+                                onClick: () => {
+                                    retryManager.incrementRetry(operationId);
+                                    createMappingExport(filters);
+                                },
+                            },
+                            autoDismiss: false,
+                            retryMetadata: {
+                                operationType: 'create-mapping-export',
+                                operationId,
+                                retryCount,
+                            },
+                        });
+                    } else {
+                        // Show final error message without retry button (Requirement 6.4)
+                        const retryCount = retryManager.getRetryCount(operationId);
+                        const finalMessage = retryCount >= 3
+                            ? `${errorMessage} Maximum retry attempts reached.`
+                            : errorMessage;
+
+                        addNotification({
+                            type: 'error',
+                            title: 'Export Creation Failed',
+                            message: finalMessage,
+                            autoDismiss: false,
+                        });
+                    }
+
                     throw new Error(errorMessage);
                 }
 
-                const { job_id, created_at } = response.data;
+                const { job_id, created_at, estimated_completion_time } = response.data;
 
-                // Create initial job object
+                // Reset retry count on success
+                retryManager.resetRetry(operationId);
+
+                // Create initial job object with "pending" status (Requirement 1.5)
                 const newJob: ExportJob = {
                     jobId: job_id,
                     exportType: 'mapping',
-                    status: 'processing',
+                    status: 'pending',
                     progress: 0,
                     processedRecords: 0,
                     totalRecords: response.data.estimated_records || 0,
@@ -262,6 +421,7 @@ export function useExportJobs(): UseExportJobsReturn {
                     startedAt: null,
                     completedAt: null,
                     expiresAt: null,
+                    estimatedCompletionTime: estimated_completion_time ? new Date(estimated_completion_time) : null,
                     errorMessage: null,
                     downloadUrl: null,
                     filters,
@@ -281,7 +441,7 @@ export function useExportJobs(): UseExportJobsReturn {
                 setIsCreating(false);
             }
         },
-        []
+        [retryManager, addNotification]
     );
 
     /**
@@ -342,21 +502,53 @@ export function useExportJobs(): UseExportJobsReturn {
     }, []);
 
     /**
-     * Delete a job from the list
+     * Delete a job from the list (API + local state)
      */
-    const deleteJob = useCallback((jobId: string): void => {
+    const deleteJob = useCallback(async (jobId: string): Promise<void> => {
         console.log('Deleting job:', jobId);
+
+        try {
+            // Call API to delete job
+            const response = await exportAPI.deleteExportJob(jobId);
+
+            if (response.success) {
+                console.log(`✅ Job deleted from API: ${jobId}`);
+            } else {
+                console.warn(`⚠️ API delete failed, removing from local state only`);
+            }
+        } catch (error) {
+            console.error('Error deleting job from API:', error);
+            // Continue to remove from local state even if API fails
+        }
+
+        // Remove from local state regardless of API result
         setJobs((prevJobs) => prevJobs.filter((job) => job.jobId !== jobId));
     }, []);
 
     /**
-     * Clear all completed and failed jobs from the list
+     * Clear all completed and failed jobs from the list (API + local state)
      */
-    const clearCompletedJobs = useCallback((): void => {
+    const clearCompletedJobs = useCallback(async (): Promise<void> => {
         console.log('Clearing completed and failed jobs');
+
+        try {
+            // Call API to clear completed jobs
+            const response = await exportAPI.clearCompletedJobs();
+
+            if (response.success) {
+                console.log(`✅ Cleared ${response.data?.deleted_count || 0} jobs from API`);
+            } else {
+                console.warn(`⚠️ API clear failed, removing from local state only`);
+            }
+        } catch (error) {
+            console.error('Error clearing jobs from API:', error);
+            // Continue to remove from local state even if API fails
+        }
+
+        // Remove from local state regardless of API result
         setJobs((prevJobs) =>
             prevJobs.filter(
-                (job) => job.status !== 'completed' && job.status !== 'failed'
+                (job) => job.status !== 'completed' && job.status !== 'failed' && job.status !== 'expired'
             )
         );
     }, []);

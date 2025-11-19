@@ -1,10 +1,17 @@
 "use client";
 
-import React, { useState, memo } from "react";
+import React, { useState, memo, useEffect } from "react";
 import { ExportJob } from "@/lib/types/exports";
 import { Badge } from "@/lib/components/ui/badge";
 import { Button } from "@/lib/components/ui/button";
-import { cn, formatDateTime, formatNumber, truncate } from "@/lib/utils";
+import {
+  cn,
+  formatDateTime,
+  formatNumber,
+  truncate,
+  formatTimeRemaining,
+  formatEstimatedTime,
+} from "@/lib/utils";
 import {
   Download,
   RefreshCw,
@@ -39,6 +46,18 @@ export const ExportJobCard = memo(function ExportJobCard({
   const [copied, setCopied] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [, setTimerTick] = useState(0); // Force re-render for countdown timer
+
+  // Update timer every minute for expiration countdown (Requirement 5.5)
+  useEffect(() => {
+    if (job.status === "completed" && job.expiresAt) {
+      const interval = setInterval(() => {
+        setTimerTick((tick) => tick + 1);
+      }, 60000); // Update every minute
+
+      return () => clearInterval(interval);
+    }
+  }, [job.status, job.expiresAt]);
 
   // Copy job ID to clipboard
   const handleCopyJobId = async () => {
@@ -74,6 +93,12 @@ export const ExportJobCard = memo(function ExportJobCard({
   // Get status badge variant and icon
   const getStatusConfig = () => {
     switch (job.status) {
+      case "pending":
+        return {
+          variant: "default" as const,
+          icon: <Clock className="w-3 h-3" />,
+          label: "Waiting to start",
+        };
       case "processing":
         return {
           variant: "info" as const,
@@ -159,10 +184,7 @@ export const ExportJobCard = memo(function ExportJobCard({
               aria-label={copied ? "Job ID copied" : "Copy job ID to clipboard"}
             >
               {copied ? (
-                <Check
-                  className="w-3 h-3 text-green-600"
-                  aria-hidden="true"
-                />
+                <Check className="w-3 h-3 text-green-600" aria-hidden="true" />
               ) : (
                 <Copy
                   className="w-3 h-3 text-[rgb(var(--text-tertiary))]"
@@ -212,12 +234,19 @@ export const ExportJobCard = memo(function ExportJobCard({
             aria-label={`Export progress: ${job.progress}%`}
           >
             <div
-              className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
+              className="bg-linear-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
               style={{ width: `${job.progress}%` }}
             >
-              <div className="h-full w-full bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse" />
+              <div className="h-full w-full bg-linear-to-r from-transparent via-white/30 to-transparent animate-pulse" />
             </div>
           </div>
+          {/* Estimated completion time (Requirement 7.4) */}
+          {job.estimatedCompletionTime && (
+            <div className="text-xs text-[rgb(var(--text-tertiary))] mt-1">
+              Estimated completion:{" "}
+              {formatEstimatedTime(job.estimatedCompletionTime)}
+            </div>
+          )}
         </div>
       )}
 
@@ -277,6 +306,12 @@ export const ExportJobCard = memo(function ExportJobCard({
               <span className="font-medium">
                 {formatDateTime(job.expiresAt)}
               </span>
+              {/* Countdown timer for completed jobs (Requirement 5.5) */}
+              {job.status === "completed" && !isExpired() && (
+                <span className="text-xs font-semibold text-blue-600 ml-1">
+                  ({formatTimeRemaining(job.expiresAt)} left)
+                </span>
+              )}
             </div>
           )}
       </div>
@@ -296,9 +331,7 @@ export const ExportJobCard = memo(function ExportJobCard({
             <div className="flex-1 min-w-0">
               {/* Light: red-900 on red-50 (9.5:1 contrast) ✓ */}
               {/* Dark: red-200 on red-900/30 (7.5:1 contrast) ✓ */}
-              <p className="text-xs font-medium text-red-900 mb-1">
-                Error
-              </p>
+              <p className="text-xs font-medium text-red-900 mb-1">Error</p>
               {/* Light: red-800 on red-50 (8.8:1 contrast) ✓ */}
               {/* Dark: red-200 on red-900/30 (7.5:1 contrast) ✓ */}
               <p className="text-xs text-red-800 wrap-break-word">
