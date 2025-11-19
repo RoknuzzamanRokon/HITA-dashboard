@@ -94,9 +94,9 @@ export function formatTimeRemaining(expiresAt: Date | string | null): string {
 
 /**
  * Format estimated completion time (Requirement 7.4)
- * Returns a human-readable string like "~5m" or "~2h 30m"
+ * Returns a human-readable string like "~5m" or "~2h 30m", or null if no time provided
  */
-export function formatEstimatedTime(estimatedTime: Date | string | null): string {
+export function formatEstimatedTime(estimatedTime: Date | string | null): string | null {
     if (!estimatedTime) return null;
 
     const estimatedDate = typeof estimatedTime === 'string' ? new Date(estimatedTime) : estimatedTime;

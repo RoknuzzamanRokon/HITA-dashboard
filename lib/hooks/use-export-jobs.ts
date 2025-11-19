@@ -228,6 +228,7 @@ export function useExportJobs(): UseExportJobsReturn {
                 startedAt: status.started_at ? new Date(status.started_at) : null,
                 completedAt: status.completed_at ? new Date(status.completed_at) : null,
                 expiresAt: status.expires_at ? new Date(status.expires_at) : null,
+                estimatedCompletionTime: null, // Not provided in status response
                 errorMessage: status.error_message,
                 downloadUrl: status.download_url,
                 filters,
@@ -257,13 +258,13 @@ export function useExportJobs(): UseExportJobsReturn {
                     setError(errorMessage);
 
                     // Determine if retry is allowed based on error type
-                    const canRetryOperation = retryManager.canRetry(operationId) &&
+                    const canRetryOperation = retryManager.canRetry('create-hotel-export', operationId) &&
                         errorStatus !== 403 && // Don't retry permission errors
                         errorStatus !== 400; // Don't retry validation errors
 
                     // Show error notification with retry button if applicable (Requirement 6.1, 6.2)
                     if (canRetryOperation) {
-                        const retryCount = retryManager.getRetryCount(operationId);
+                        const retryCount = retryManager.getRetryCount('create-hotel-export', operationId);
                         addNotification({
                             type: 'error',
                             title: 'Export Creation Failed',
@@ -271,7 +272,7 @@ export function useExportJobs(): UseExportJobsReturn {
                             action: {
                                 label: 'Retry',
                                 onClick: () => {
-                                    retryManager.incrementRetry(operationId);
+                                    retryManager.incrementRetry('create-hotel-export', operationId);
                                     createHotelExport(filters);
                                 },
                             },
@@ -284,7 +285,7 @@ export function useExportJobs(): UseExportJobsReturn {
                         });
                     } else {
                         // Show final error message without retry button (Requirement 6.4)
-                        const retryCount = retryManager.getRetryCount(operationId);
+                        const retryCount = retryManager.getRetryCount('create-hotel-export', operationId);
                         const finalMessage = retryCount >= 3
                             ? `${errorMessage} Maximum retry attempts reached.`
                             : errorMessage;
@@ -303,7 +304,7 @@ export function useExportJobs(): UseExportJobsReturn {
                 const { job_id, created_at, estimated_completion_time } = response.data;
 
                 // Reset retry count on success
-                retryManager.resetRetry(operationId);
+                retryManager.resetRetry('create-hotel-export', operationId);
 
                 // Create initial job object with "pending" status (Requirement 1.5)
                 const newJob: ExportJob = {
@@ -361,13 +362,13 @@ export function useExportJobs(): UseExportJobsReturn {
                     setError(errorMessage);
 
                     // Determine if retry is allowed based on error type
-                    const canRetryOperation = retryManager.canRetry(operationId) &&
+                    const canRetryOperation = retryManager.canRetry('create-mapping-export', operationId) &&
                         errorStatus !== 403 && // Don't retry permission errors
                         errorStatus !== 400; // Don't retry validation errors
 
                     // Show error notification with retry button if applicable (Requirement 6.1, 6.2)
                     if (canRetryOperation) {
-                        const retryCount = retryManager.getRetryCount(operationId);
+                        const retryCount = retryManager.getRetryCount('create-mapping-export', operationId);
                         addNotification({
                             type: 'error',
                             title: 'Export Creation Failed',
@@ -375,7 +376,7 @@ export function useExportJobs(): UseExportJobsReturn {
                             action: {
                                 label: 'Retry',
                                 onClick: () => {
-                                    retryManager.incrementRetry(operationId);
+                                    retryManager.incrementRetry('create-mapping-export', operationId);
                                     createMappingExport(filters);
                                 },
                             },
@@ -388,7 +389,7 @@ export function useExportJobs(): UseExportJobsReturn {
                         });
                     } else {
                         // Show final error message without retry button (Requirement 6.4)
-                        const retryCount = retryManager.getRetryCount(operationId);
+                        const retryCount = retryManager.getRetryCount('create-mapping-export', operationId);
                         const finalMessage = retryCount >= 3
                             ? `${errorMessage} Maximum retry attempts reached.`
                             : errorMessage;
@@ -407,7 +408,7 @@ export function useExportJobs(): UseExportJobsReturn {
                 const { job_id, created_at, estimated_completion_time } = response.data;
 
                 // Reset retry count on success
-                retryManager.resetRetry(operationId);
+                retryManager.resetRetry('create-mapping-export', operationId);
 
                 // Create initial job object with "pending" status (Requirement 1.5)
                 const newJob: ExportJob = {
