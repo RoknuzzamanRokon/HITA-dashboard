@@ -37,6 +37,7 @@ export type {
 export { LiveActivityFeed } from "./live-activity-feed";
 export { QuickActions } from "./quick-actions";
 export { RecentTransactions } from "./recent-transactions";
+export { UserAnalyticsSection } from "./user-analytics-section";
 
 export { default as ChartSkeleton } from "./chart-skeleton";
 export type { ChartSkeletonProps } from "./chart-skeleton";

@@ -23,6 +23,7 @@ import {
   ApiRequestTimelineChart,
   PackagePointComparisonChart,
   CombinedActivityChart,
+  UserAnalyticsSection,
 } from "@/lib/components/dashboard";
 import { ChartErrorBoundary } from "@/lib/components/dashboard/chart-error-boundary";
 import { useDashboardStats } from "@/lib/hooks/use-dashboard-stats";
@@ -566,6 +567,11 @@ export default function DashboardPage() {
           </div>
         </ChartErrorBoundary>
       </PermissionGuard>
+
+      {/* User Analytics Section - Available for ALL users */}
+      <div className="mb-8">
+        <UserAnalyticsSection />
+      </div>
 
       {/* Role-Based Navigation */}
       <div className="mb-8">
