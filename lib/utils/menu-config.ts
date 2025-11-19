@@ -89,6 +89,14 @@ export const mainMenuItems: MenuItem[] = [
         description: "Download and export content data",
         requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER, UserRole.GENERAL_USER],
     },
+    {
+        id: "documentation",
+        label: "Documentation",
+        icon: FileText,
+        path: "/dashboard/documentation",
+        description: "Platform guides and documentation",
+        requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER, UserRole.GENERAL_USER],
+    },
 ];
 
 // Administrative menu items
@@ -113,7 +121,7 @@ export const adminMenuItems: MenuItem[] = [
         id: "issues",
         label: "Report Issues",
         icon: MessageSquare,
-        path: "/issues",
+        path: "/dashboard/issues",
         description: "Report and track system issues",
         requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER, UserRole.GENERAL_USER],
     },

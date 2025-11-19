@@ -41,7 +41,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
         ref={ref}
         className={cn(
           // Base styles
-          "rounded-xl transition-all duration-300 ease-out relative overflow-hidden",
+          "rounded-xl transition-all duration-300 ease-out relative overflow-hidden select-text",
           "before:absolute before:inset-0 before:rounded-xl before:transition-opacity before:duration-300",
 
           // Variant styles
@@ -86,6 +86,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
 
           className
         )}
+        style={{ userSelect: 'text', WebkitUserSelect: 'text', MozUserSelect: 'text', msUserSelect: 'text' }}
         onClick={handleClick}
         role={onClick ? "button" : undefined}
         tabIndex={onClick ? 0 : undefined}
