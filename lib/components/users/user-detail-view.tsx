@@ -105,7 +105,7 @@ export function UserDetailView({
    */
   const getStatusBadge = (isActive: boolean) => {
     return isActive ? (
-      <Badge className="bg-green-100 text-green-800 border-green-200">
+      <Badge className="bg-green-100 text-gray-900 border-green-200">
         <CheckCircle className="h-3 w-3 mr-1" />
         Active
       </Badge>
@@ -368,7 +368,7 @@ export function UserDetailView({
                     <Badge
                       className={cn(
                         user.paidStatus === "Paid"
-                          ? "bg-green-100 text-green-800 border-green-200"
+                          ? "bg-green-100 text-gray-900 border-green-200"
                           : "bg-yellow-100 text-yellow-800 border-yellow-200"
                       )}
                     >
@@ -383,7 +383,7 @@ export function UserDetailView({
                     <Badge
                       className={cn(
                         user.usingRqStatus === "Active"
-                          ? "bg-green-100 text-green-800 border-green-200"
+                          ? "bg-green-100 text-gray-900 border-green-200"
                           : "bg-gray-100 text-gray-800 border-gray-200"
                       )}
                     >

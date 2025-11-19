@@ -966,8 +966,8 @@ export default function UsersPage() {
         const roleColors: Record<string, string> = {
           [UserRole.SUPER_USER]: "bg-purple-100 text-purple-800",
           [UserRole.ADMIN_USER]: "bg-blue-100 text-blue-800",
-          [UserRole.USER]: "bg-green-100 text-green-800",
-          [UserRole.GENERAL_USER]: "bg-green-100 text-green-800",
+          [UserRole.USER]: "bg-green-100 text-gray-900",
+          [UserRole.GENERAL_USER]: "bg-green-100 text-gray-900",
         };
 
         const roleLabels: Record<string, string> = {
@@ -1009,7 +1009,7 @@ export default function UsersPage() {
       sortable: true,
       render: (value) => {
         const statusColors = {
-          Paid: "bg-green-100 text-green-800",
+          Paid: "bg-green-100 text-gray-900",
           Unpaid: "bg-red-100 text-red-800",
           "I am super user, I have unlimited points.":
             "bg-purple-100 text-purple-800",
@@ -1236,7 +1236,7 @@ export default function UsersPage() {
                             ? "bg-purple-100 text-purple-800"
                             : currentUserDetails.user_status === "admin_user"
                             ? "bg-blue-100 text-blue-800"
-                            : "bg-green-100 text-green-800"
+                            : "text-gray-900 text-green-800"
                         }
                       >
                         {currentUserDetails.user_status === "super_user"

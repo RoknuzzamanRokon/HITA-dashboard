@@ -55,7 +55,7 @@ export const MappingExportPanel = memo(function MappingExportPanel({
   const [ittids, setIttids] = useState<string>("All");
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
-  const [maxRecords, setMaxRecords] = useState<number>(1000);
+  const [maxRecords, setMaxRecords] = useState<number | "All">(1000);
   const [format, setFormat] = useState<"json" | "csv" | "excel">("json");
 
   // Multi-select state for suppliers
@@ -229,18 +229,29 @@ export const MappingExportPanel = memo(function MappingExportPanel({
       newErrors.suppliers = "At least one supplier must be selected";
     }
 
-    // Validate date range (from < to)
-    if (dateFrom && dateTo) {
-      const fromDate = new Date(dateFrom);
-      const toDate = new Date(dateTo);
-      if (fromDate >= toDate) {
-        newErrors.dateRange = "Date From must be before Date To";
+    // Validate date range - both dates must be provided together or both empty
+    if (dateFrom || dateTo) {
+      // If one date is provided, both must be provided
+      if (!dateFrom || !dateTo) {
+        newErrors.dateRange = "Both Date From and Date To must be provided";
+      } else {
+        // Validate that from < to
+        const fromDate = new Date(dateFrom);
+        const toDate = new Date(dateTo);
+        if (fromDate >= toDate) {
+          newErrors.dateRange = "Date From must be before Date To";
+        }
       }
     }
 
-    // Validate positive integers
-    if (maxRecords < 1) {
-      newErrors.maxRecords = "Max Records must be a positive integer";
+    // Validate positive integers (only if not "All")
+    if (maxRecords !== "All") {
+      const numValue =
+        typeof maxRecords === "string" ? parseInt(maxRecords) : maxRecords;
+      if (isNaN(numValue) || numValue < 1) {
+        newErrors.maxRecords =
+          "Max Records must be a positive integer or 'All'";
+      }
     }
 
     setErrors(newErrors);
@@ -265,12 +276,39 @@ export const MappingExportPanel = memo(function MappingExportPanel({
     async (e: React.FormEvent) => {
       e.preventDefault();
 
+      console.log("📝 Form submitted");
+      console.log("📝 Form data:", {
+        suppliers,
+        ittids,
+        dateFrom,
+        dateTo,
+        maxRecords,
+        format,
+      });
+
       // Validate form before submission
       if (!validateForm()) {
+        console.error("❌ Form validation failed");
         return;
       }
 
+      console.log("✅ Form validation passed");
+
       try {
+        // Normalize maxRecords value
+        let normalizedMaxRecords: number | "All";
+        if (
+          typeof maxRecords === "string" &&
+          maxRecords.toLowerCase() === "all"
+        ) {
+          normalizedMaxRecords = "All";
+        } else if (typeof maxRecords === "number") {
+          normalizedMaxRecords = maxRecords;
+        } else {
+          const parsed = parseInt(maxRecords.toString());
+          normalizedMaxRecords = !isNaN(parsed) ? parsed : 1000;
+        }
+
         // Build MappingExportFilters object matching API schema
         const filters: MappingExportFilters = {
           filters: {
@@ -278,10 +316,15 @@ export const MappingExportPanel = memo(function MappingExportPanel({
             ittids,
             date_from: formatDateToISO8601(dateFrom),
             date_to: formatDateToISO8601(dateTo),
-            max_records: maxRecords,
+            max_records: normalizedMaxRecords,
           },
           format,
         };
+
+        console.log(
+          "📤 Sending export request with filters:",
+          JSON.stringify(filters, null, 2)
+        );
 
         // Call onExportCreate prop with formatted filters
         await onExportCreate(filters);
@@ -315,8 +358,13 @@ export const MappingExportPanel = memo(function MappingExportPanel({
   // Check if form is valid for disabling submit button
   const isFormValid =
     suppliers.length > 0 &&
-    (dateFrom && dateTo ? new Date(dateFrom) < new Date(dateTo) : true) &&
-    maxRecords >= 1;
+    // Date validation: both provided and valid, or both empty
+    ((dateFrom && dateTo && new Date(dateFrom) < new Date(dateTo)) ||
+      (!dateFrom && !dateTo)) &&
+    (maxRecords === "All" ||
+      (typeof maxRecords === "number" && maxRecords >= 1) ||
+      (!isNaN(parseInt(maxRecords.toString())) &&
+        parseInt(maxRecords.toString()) >= 1));
 
   const formatOptions: RadioOption[] = [
     {
@@ -514,6 +562,9 @@ export const MappingExportPanel = memo(function MappingExportPanel({
 
         {/* Date Range */}
         <div>
+          <label className="block text-sm font-medium text-[rgb(var(--text-secondary))] mb-2">
+            Date Range (Optional)
+          </label>
           <div className="grid grid-cols-2 gap-4">
             <Input
               type="date"
@@ -554,27 +605,58 @@ export const MappingExportPanel = memo(function MappingExportPanel({
               error={errors.dateRange}
             />
           </div>
-          {errors.dateRange && (
+          {errors.dateRange ? (
             <p className="mt-2 text-sm text-red-600">{errors.dateRange}</p>
+          ) : (
+            <p className="mt-2 text-sm text-[rgb(var(--text-tertiary))]">
+              Leave empty to export all records, or specify a date range to
+              filter
+            </p>
           )}
         </div>
 
         {/* Max Records */}
         <Input
-          type="number"
+          type="text"
           label="Max Records"
-          value={maxRecords}
+          value={maxRecords.toString()}
           onChange={(e) => {
-            const val = parseInt(e.target.value) || 1000;
-            setMaxRecords(val);
-            // Clear maxRecords error when valid
-            if (val >= 1 && errors.maxRecords) {
-              setErrors((prev) => ({ ...prev, maxRecords: undefined }));
+            const inputValue = e.target.value;
+
+            // Allow any input while typing
+            setMaxRecords(inputValue as any);
+
+            // Clear errors if input becomes valid
+            if (
+              inputValue.toLowerCase() === "all" ||
+              (!isNaN(parseInt(inputValue)) && parseInt(inputValue) >= 1)
+            ) {
+              if (errors.maxRecords) {
+                setErrors((prev) => ({ ...prev, maxRecords: undefined }));
+              }
             }
           }}
-          min="1"
+          onBlur={(e) => {
+            const inputValue = e.target.value.trim();
+
+            // Normalize "All" on blur (case-insensitive)
+            if (inputValue.toLowerCase() === "all") {
+              setMaxRecords("All");
+            } else if (inputValue === "") {
+              setMaxRecords(1000);
+            } else {
+              const val = parseInt(inputValue);
+              if (!isNaN(val) && val >= 1) {
+                setMaxRecords(val);
+              } else {
+                // Invalid input, reset to default
+                setMaxRecords(1000);
+              }
+            }
+          }}
           error={errors.maxRecords}
-          helperText="Maximum number of mapping records to export"
+          helperText='Enter a number or "All" to export all records'
+          placeholder='e.g., 1000 or "All"'
         />
 
         {/* Export Format */}

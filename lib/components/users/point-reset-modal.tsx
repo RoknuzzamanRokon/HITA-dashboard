@@ -131,8 +131,8 @@ export function PointResetModal({
         {success && (
           <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 animate-fade-in">
             <div className="flex items-center space-x-3">
-              <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
-              <p className="text-sm font-medium text-green-800 dark:text-green-300">
+              <CheckCircle className="w-5 h-5 text-gray-700 dark:text-green-400" />
+              <p className="text-sm font-medium text-gray-900 dark:text-green-300">
                 Points reset successfully!
               </p>
             </div>

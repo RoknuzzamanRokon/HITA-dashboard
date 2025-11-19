@@ -61,6 +61,8 @@ export class ApiClient {
       retryDelay = 1000
     } = options;
 
+    console.log('🚀 API Request:', method, endpoint);
+
     // In development, return realistic mock responses for known endpoints when explicitly enabled
     if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_MOCKS === 'true') {
       console.log(`[DEV] Mocking API call to ${endpoint}`);
@@ -101,6 +103,18 @@ export class ApiClient {
       const token = typeof localStorage !== 'undefined' ? localStorage.getItem('admin_auth_token') : null;
       if (token) {
         requestHeaders['Authorization'] = `Bearer ${token}`;
+        console.log('✅ Token added to headers');
+      } else {
+        console.warn('⚠️ No auth token found in localStorage');
+      }
+
+      // Add X-API-Key header if available (required for export endpoints)
+      const apiKey = typeof localStorage !== 'undefined' ? localStorage.getItem('user_api_key') : null;
+      if (apiKey) {
+        requestHeaders['X-API-Key'] = apiKey;
+        console.log('✅ API Key added to headers:', apiKey.substring(0, 10) + '...');
+      } else {
+        console.warn('⚠️ No API key found in localStorage');
       }
     }
 
@@ -115,12 +129,15 @@ export class ApiClient {
       if (body instanceof FormData) {
         delete requestHeaders['Content-Type'];
         requestConfig.body = body;
+        console.log('📦 Request body: FormData');
       } else if (typeof body === 'string') {
         // If body is already a string (like URL-encoded form data), use it directly
         requestConfig.body = body;
+        console.log('📦 Request body (string):', body);
       } else {
         // Otherwise, JSON stringify it
         requestConfig.body = JSON.stringify(body);
+        console.log('📦 Request body (JSON):', JSON.stringify(body, null, 2));
       }
     }
 
@@ -137,23 +154,31 @@ export class ApiClient {
       const result = await this.handleResponse<T>(response);
 
       // Handle authentication errors (401)
+      // Requirement 6.3: Detect 401 errors, clear auth token, redirect to login, show "Session expired" message
       if (!result.success && result.error?.status === 401) {
         console.warn('🔒 Authentication error detected - redirecting to login');
         if (typeof window !== 'undefined') {
+          // Clear auth token from localStorage (Requirement 6.3)
           localStorage.removeItem('admin_auth_token');
+
+          // Store session expired message to show on login page (Requirement 6.3)
+          sessionStorage.setItem('auth_error_message', 'Your session has expired. Please log in again.');
+
+          // Redirect to login page (Requirement 6.3)
           window.location.href = '/login';
         }
         return result;
       }
 
       // Handle permission errors (403)
+      // Requirement 6.4: Detect 403 errors, show "Permission denied" notification, suggest contacting administrator
       if (!result.success && result.error?.status === 403) {
         console.warn('🚫 Permission denied');
         return {
           success: false,
           error: {
             status: 403,
-            message: "You don't have permission to perform this action",
+            message: "You don't have permission to perform this action. Please contact your administrator for access.",
             details: result.error?.details
           }
         };
@@ -250,13 +275,27 @@ export class ApiClient {
     }
 
     if (!response.ok) {
-      console.log(`📡 Error response - Status: ${response.status}, Data:`, data);
+      console.error(`❌ Error response - Status: ${response.status}`);
+      console.error(`❌ Error data:`, JSON.stringify(data, null, 2));
+
+      // For 422 validation errors, show detailed field errors
+      if (response.status === 422 && data && data.detail) {
+        console.error('❌ Validation errors:');
+        if (Array.isArray(data.detail)) {
+          data.detail.forEach((err: any) => {
+            console.error(`  - Field: ${err.loc?.join('.')} | Error: ${err.msg} | Type: ${err.type}`);
+          });
+        } else {
+          console.error('  -', data.detail);
+        }
+      }
+
       return {
         success: false,
         error: {
           status: response.status,
-          message: (data && (data.message || data.error)) || response.statusText || 'Unknown error',
-          details: data && (data.details || data.errors),
+          message: (data && (data.message || data.error || data.detail)) || response.statusText || 'Unknown error',
+          details: data && (data.details || data.errors || data.detail),
         },
       };
     }

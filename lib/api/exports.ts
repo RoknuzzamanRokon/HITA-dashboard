@@ -22,13 +22,16 @@ const logError = (context: string, error: any) => {
 
 /**
  * Helper function to create user-friendly error messages based on status codes
+ * Requirement 6.1: Detect network errors and show user-friendly error messages
+ * Requirement 6.4: Show "Permission denied" notification and suggest contacting administrator
  */
 const getErrorMessage = (status: number, defaultMessage: string, context: string): string => {
     switch (status) {
         case 401:
             return 'Your session has expired. Please log in again.';
         case 403:
-            return "You don't have permission to perform this action.";
+            // Permission error - suggest contacting administrator (Requirement 6.4)
+            return "You don't have permission to perform this action. Please contact your administrator for access.";
         case 404:
             return context === 'download'
                 ? 'Export file not found or has expired.'
@@ -39,7 +42,8 @@ const getErrorMessage = (status: number, defaultMessage: string, context: string
         case 504:
             return 'Server error occurred. Please try again later.';
         case 0:
-            return 'Unable to connect to server. Please check your internet connection.';
+            // Network error - user-friendly message (Requirement 6.1)
+            return 'Unable to connect to server. Please check your internet connection and try again.';
         default:
             return defaultMessage;
     }
@@ -47,11 +51,18 @@ const getErrorMessage = (status: number, defaultMessage: string, context: string
 
 /**
  * Helper function to handle 401 errors by redirecting to login
+ * Requirement 6.3: Detect 401 errors, clear auth token, redirect to login, show "Session expired" message
  */
 const handleAuthError = () => {
     if (typeof window !== 'undefined') {
         logError('Authentication', 'Session expired, redirecting to login');
+        // Clear auth token from localStorage (Requirement 6.3)
         localStorage.removeItem('admin_auth_token');
+
+        // Store session expired message to show on login page (Requirement 6.3)
+        sessionStorage.setItem('auth_error_message', 'Your session has expired. Please log in again.');
+
+        // Redirect to login page (Requirement 6.3)
         window.location.href = '/login';
     }
 };
@@ -69,17 +80,21 @@ export class ExportAPI {
         filters: HotelExportFilters
     ): Promise<ApiResponse<ExportJobResponse>> {
         try {
-            logError('createHotelExport', `Creating hotel export with filters: ${JSON.stringify(filters)}`);
+            console.log('🔍 Original hotel filters (nested):', JSON.stringify(filters, null, 2));
+
+            // Backend expects nested structure: { filters: { ... }, format: "json", include_* }
+            console.log('🔍 Sending hotel payload to backend:', JSON.stringify(filters, null, 2));
+            console.log('[ExportAPI] createHotelExport: Creating hotel export with payload:', JSON.stringify(filters));
 
             const response = await apiClient.post<ExportJobResponse>(
                 '/export/hotels',
-                filters,
+                filters,  // Send nested structure as backend expects
                 true, // requiresAuth
                 3 // retryCount with exponential backoff
             );
 
             if (response.success) {
-                logError('createHotelExport', `Hotel export created successfully: ${response.data?.job_id}`);
+                console.log('[ExportAPI] createHotelExport: Hotel export created successfully:', response.data?.job_id);
                 return response;
             }
 
@@ -129,17 +144,39 @@ export class ExportAPI {
         filters: MappingExportFilters
     ): Promise<ApiResponse<ExportJobResponse>> {
         try {
-            logError('createMappingExport', `Creating mapping export with filters: ${JSON.stringify(filters)}`);
+            console.log('🔍 Original filters (nested):', JSON.stringify(filters, null, 2));
+
+            // Backend expects nested structure: { filters: { ... }, format: "json" }
+            // But dates must be valid or omitted (not empty strings)
+            const cleanedFilters: any = {
+                filters: {
+                    suppliers: filters.filters.suppliers,
+                    ittids: filters.filters.ittids,
+                    max_records: filters.filters.max_records,
+                },
+                format: filters.format,
+            };
+
+            // Only include dates if they have valid values (not empty strings)
+            if (filters.filters.date_from && filters.filters.date_from.trim() !== '') {
+                cleanedFilters.filters.date_from = filters.filters.date_from;
+            }
+            if (filters.filters.date_to && filters.filters.date_to.trim() !== '') {
+                cleanedFilters.filters.date_to = filters.filters.date_to;
+            }
+
+            console.log('🔍 Cleaned payload (dates omitted if empty):', JSON.stringify(cleanedFilters, null, 2));
+            console.log('[ExportAPI] createMappingExport: Creating mapping export with payload:', JSON.stringify(cleanedFilters));
 
             const response = await apiClient.post<ExportJobResponse>(
                 '/export/mappings',
-                filters,
+                cleanedFilters,  // Send cleaned structure
                 true, // requiresAuth
                 3 // retryCount with exponential backoff
             );
 
             if (response.success) {
-                logError('createMappingExport', `Mapping export created successfully: ${response.data?.job_id}`);
+                console.log('[ExportAPI] createMappingExport: Mapping export created successfully:', response.data?.job_id);
                 return response;
             }
 
@@ -187,7 +224,7 @@ export class ExportAPI {
      */
     async getExportStatus(jobId: string): Promise<ApiResponse<ExportJobStatus>> {
         try {
-            logError('getExportStatus', `Fetching status for job: ${jobId}`);
+            console.log('[ExportAPI] getExportStatus: Fetching status for job:', jobId);
 
             const response = await apiClient.get<ExportJobStatus>(
                 `/export/status/${jobId}`,
@@ -196,7 +233,7 @@ export class ExportAPI {
             );
 
             if (response.success) {
-                logError('getExportStatus', `Job status retrieved: ${response.data?.status}`);
+                console.log('[ExportAPI] getExportStatus: Job status retrieved:', response.data?.status);
                 return response;
             }
 
@@ -273,7 +310,7 @@ export class ExportAPI {
         retryDelay: number = 1000
     ): Promise<Blob> {
         try {
-            logError('downloadExport', `Downloading export file for job: ${jobId} (retries left: ${retriesLeft})`);
+            console.log(`📥 Downloading export file for job: ${jobId}`);
 
             // Get authentication token
             const token = typeof localStorage !== 'undefined'
@@ -289,19 +326,35 @@ export class ExportAPI {
                 throw error;
             }
 
+            // Get API key for general users
+            const apiKey = typeof localStorage !== 'undefined'
+                ? localStorage.getItem('user_api_key')
+                : null;
+
             // Construct the download URL
             const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8001';
             const apiVersion = process.env.NEXT_PUBLIC_API_VERSION || 'v1.0';
             const downloadUrl = `${baseUrl}/${apiVersion}/export/download/${jobId}`;
 
-            logError('downloadExport', `Fetching from: ${downloadUrl}`);
+            console.log(`🌐 Fetching from: ${downloadUrl}`);
+
+            // Prepare headers
+            const headers: Record<string, string> = {
+                'Authorization': `Bearer ${token}`,
+            };
+
+            // Add API key header if available (required for general users)
+            if (apiKey) {
+                headers['X-API-Key'] = apiKey;
+                console.log('✅ API Key added to download request');
+            } else {
+                console.log('ℹ️ No API key found (admin/super admin user)');
+            }
 
             // Make the download request
             const response = await fetch(downloadUrl, {
                 method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
+                headers,
                 mode: 'cors',
                 credentials: 'omit',
             });
@@ -347,9 +400,23 @@ export class ExportAPI {
                 throw new Error(getErrorMessage(response.status, errorMessage, 'download'));
             }
 
-            // Get the blob from response
-            const blob = await response.blob();
-            logError('downloadExport', `Export file downloaded successfully (${blob.size} bytes)`);
+            // Check content type to handle both blob and JSON responses
+            const contentType = response.headers.get('content-type') || '';
+
+            let blob: Blob;
+
+            if (contentType.includes('application/json')) {
+                // Backend returned JSON data - convert to blob
+                console.log('📄 Backend returned JSON data, converting to blob...');
+                const jsonData = await response.json();
+                const jsonString = JSON.stringify(jsonData, null, 2);
+                blob = new Blob([jsonString], { type: 'application/json' });
+            } else {
+                // Backend returned blob directly
+                blob = await response.blob();
+            }
+
+            console.log(`✅ Export file downloaded successfully (${blob.size} bytes)`);
 
             return blob;
         } catch (error) {
@@ -378,6 +445,173 @@ export class ExportAPI {
      */
     private delay(ms: number): Promise<void> {
         return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    /**
+     * Get all export jobs for the authenticated user
+     * @param filters - Optional filters for jobs (status, export_type, etc.)
+     * @returns Promise with list of export jobs
+     */
+    async getExportJobs(filters?: {
+        status?: string;
+        export_type?: string;
+        limit?: number;
+        offset?: number;
+    }): Promise<ApiResponse<{ jobs: any[]; total: number }>> {
+        try {
+            // Build query string from filters
+            const queryParams = new URLSearchParams();
+            if (filters?.status) queryParams.append('status', filters.status);
+            if (filters?.export_type) queryParams.append('export_type', filters.export_type);
+            if (filters?.limit) queryParams.append('limit', filters.limit.toString());
+            if (filters?.offset) queryParams.append('offset', filters.offset.toString());
+
+            const queryString = queryParams.toString();
+            const endpoint = `/export/jobs${queryString ? `?${queryString}` : ''}`;
+
+            console.log('🔍 Fetching export jobs from:', endpoint);
+
+            const response = await apiClient.get<{ jobs: any[]; total: number }>(
+                endpoint,
+                true, // requiresAuth
+                3 // retryCount
+            );
+
+            if (response.success) {
+                console.log(`✅ Fetched ${response.data?.jobs.length || 0} export jobs`);
+                return response;
+            }
+
+            // Handle errors
+            const status = response.error?.status || 0;
+            const originalMessage = response.error?.message || 'Failed to fetch export jobs';
+
+            if (status === 401) {
+                handleAuthError();
+            }
+
+            return {
+                success: false,
+                error: {
+                    status,
+                    message: getErrorMessage(status, originalMessage, 'Export jobs'),
+                    details: response.error?.details,
+                },
+            };
+        } catch (error) {
+            console.error('Error fetching export jobs:', error);
+            return {
+                success: false,
+                error: {
+                    status: 0,
+                    message: error instanceof Error
+                        ? error.message
+                        : 'An unexpected error occurred while fetching export jobs.',
+                    details: error,
+                },
+            };
+        }
+    }
+
+    /**
+     * Delete a specific export job
+     * @param jobId - The unique job identifier
+     * @returns Promise with success confirmation
+     */
+    async deleteExportJob(jobId: string): Promise<ApiResponse<{ success: boolean; message: string }>> {
+        try {
+            console.log('🗑️ Deleting export job:', jobId);
+
+            const response = await apiClient.delete<{ success: boolean; message: string }>(
+                `/export/jobs/${jobId}`,
+                true, // requiresAuth
+                2 // retryCount
+            );
+
+            if (response.success) {
+                console.log(`✅ Export job deleted: ${jobId}`);
+                return response;
+            }
+
+            // Handle errors
+            const status = response.error?.status || 0;
+            const originalMessage = response.error?.message || 'Failed to delete export job';
+
+            if (status === 401) {
+                handleAuthError();
+            }
+
+            return {
+                success: false,
+                error: {
+                    status,
+                    message: getErrorMessage(status, originalMessage, 'Delete job'),
+                    details: response.error?.details,
+                },
+            };
+        } catch (error) {
+            console.error('Error deleting export job:', error);
+            return {
+                success: false,
+                error: {
+                    status: 0,
+                    message: error instanceof Error
+                        ? error.message
+                        : 'An unexpected error occurred while deleting the export job.',
+                    details: error,
+                },
+            };
+        }
+    }
+
+    /**
+     * Clear all completed export jobs
+     * @returns Promise with number of jobs deleted
+     */
+    async clearCompletedJobs(): Promise<ApiResponse<{ success: boolean; deleted_count: number }>> {
+        try {
+            console.log('🗑️ Clearing completed export jobs');
+
+            const response = await apiClient.delete<{ success: boolean; deleted_count: number }>(
+                '/export/jobs/completed',
+                true, // requiresAuth
+                2 // retryCount
+            );
+
+            if (response.success) {
+                console.log(`✅ Cleared ${response.data?.deleted_count || 0} completed jobs`);
+                return response;
+            }
+
+            // Handle errors
+            const status = response.error?.status || 0;
+            const originalMessage = response.error?.message || 'Failed to clear completed jobs';
+
+            if (status === 401) {
+                handleAuthError();
+            }
+
+            return {
+                success: false,
+                error: {
+                    status,
+                    message: getErrorMessage(status, originalMessage, 'Clear completed jobs'),
+                    details: response.error?.details,
+                },
+            };
+        } catch (error) {
+            console.error('Error clearing completed jobs:', error);
+            return {
+                success: false,
+                error: {
+                    status: 0,
+                    message: error instanceof Error
+                        ? error.message
+                        : 'An unexpected error occurred while clearing completed jobs.',
+                    details: error,
+                },
+            };
+        }
     }
 }
 

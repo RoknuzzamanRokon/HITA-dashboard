@@ -74,7 +74,7 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
   const [propertyTypes, setPropertyTypes] = useState<string[]>([]);
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(100);
-  const [maxRecords, setMaxRecords] = useState<number>(1000);
+  const [maxRecords, setMaxRecords] = useState<number | "All">(1000);
   const [format, setFormat] = useState<"json" | "csv" | "excel">("json");
   const [includeLocations, setIncludeLocations] = useState<boolean>(true);
   const [includeContacts, setIncludeContacts] = useState<boolean>(true);
@@ -355,8 +355,8 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
     if (pageSize < 1) {
       newErrors.pageSize = "Page Size must be a positive integer";
     }
-    if (maxRecords < 1) {
-      newErrors.maxRecords = "Max Records must be a positive integer";
+    if (maxRecords !== "All" && maxRecords < 1) {
+      newErrors.maxRecords = "Max Records must be a positive integer or 'All'";
     }
 
     setErrors(newErrors);
@@ -466,7 +466,7 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
     minRating <= maxRating &&
     page >= 1 &&
     pageSize >= 1 &&
-    maxRecords >= 1;
+    (maxRecords === "All" || maxRecords >= 1);
 
   const formatOptions: RadioOption[] = [
     {
@@ -929,19 +929,46 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
             error={errors.pageSize}
           />
           <Input
-            type="number"
+            type="text"
             label="Max Records"
-            value={maxRecords}
+            value={maxRecords.toString()}
             onChange={(e) => {
-              const val = parseInt(e.target.value) || 1000;
-              setMaxRecords(val);
-              // Clear maxRecords error when valid
-              if (val >= 1 && errors.maxRecords) {
-                setErrors((prev) => ({ ...prev, maxRecords: undefined }));
+              const inputValue = e.target.value;
+
+              // Allow any input while typing
+              setMaxRecords(inputValue as any);
+
+              // Clear errors if input becomes valid
+              if (
+                inputValue.toLowerCase() === "all" ||
+                (!isNaN(parseInt(inputValue)) && parseInt(inputValue) >= 1)
+              ) {
+                if (errors.maxRecords) {
+                  setErrors((prev) => ({ ...prev, maxRecords: undefined }));
+                }
               }
             }}
-            min="1"
+            onBlur={(e) => {
+              const inputValue = e.target.value.trim();
+
+              // Normalize "All" on blur (case-insensitive)
+              if (inputValue.toLowerCase() === "all") {
+                setMaxRecords("All");
+              } else if (inputValue === "") {
+                setMaxRecords(1000);
+              } else {
+                const val = parseInt(inputValue);
+                if (!isNaN(val) && val >= 1) {
+                  setMaxRecords(val);
+                } else {
+                  // Invalid input, reset to default
+                  setMaxRecords(1000);
+                }
+              }
+            }}
             error={errors.maxRecords}
+            helperText='Enter a number or "All" to export all records'
+            placeholder='e.g., 1000 or "All"'
           />
         </div>
 

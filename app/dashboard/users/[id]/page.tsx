@@ -151,12 +151,12 @@ export default function UserProfilePage() {
       },
       user: {
         label: "User",
-        color: "bg-green-100 text-green-800",
+        color: "bg-green-100 text-gray-900",
         icon: UserCheck,
       },
       general_user: {
         label: "General User",
-        color: "bg-green-100 text-green-800",
+        color: "bg-green-100 text-gray-900",
         icon: UserCheck,
       },
     };
@@ -360,7 +360,7 @@ export default function UserProfilePage() {
                     variant={user.isActive ? "success" : "outline"}
                     className={
                       user.isActive
-                        ? "bg-green-100 text-green-800"
+                        ? "bg-green-100 text-gray-900"
                         : "text-gray-600"
                     }
                   >

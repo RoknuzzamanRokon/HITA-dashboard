@@ -40,7 +40,7 @@ export interface HotelExportFilters {
         property_types: string[] | 'All';
         page: number;
         page_size: number;
-        max_records: number;
+        max_records: number | 'All';
     };
     format: 'json' | 'csv' | 'excel';
     include_locations: boolean;
@@ -55,7 +55,7 @@ export interface MappingExportFilters {
         ittids: string | 'All';
         date_from: string;
         date_to: string;
-        max_records: number;
+        max_records: number | 'All';
     };
     format: 'json' | 'csv' | 'excel';
 }
@@ -67,7 +67,7 @@ export type ExportFilters = HotelExportFilters | MappingExportFilters;
 export type ExportType = 'hotel' | 'mapping';
 
 // Export status types
-export type ExportStatus = 'processing' | 'completed' | 'failed' | 'expired';
+export type ExportStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'expired';
 
 // Export format types
 export type ExportFormat = 'json' | 'csv' | 'excel';
@@ -84,6 +84,7 @@ export interface ExportJob {
     startedAt: Date | null;
     completedAt: Date | null;
     expiresAt: Date | null;
+    estimatedCompletionTime: Date | null;
     errorMessage: string | null;
     downloadUrl: string | null;
     filters: ExportFilters;

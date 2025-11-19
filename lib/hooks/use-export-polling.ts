@@ -18,6 +18,7 @@ import type { ExportJob, ExportJobStatus } from '@/lib/types/exports';
 interface UseExportPollingOptions {
     jobs: ExportJob[];
     onStatusUpdate: (jobId: string, status: ExportJobStatus) => void;
+    onPollingError?: (jobId: string, errorMessage: string) => void; // Callback for polling errors
     pollingInterval?: number; // default: 5000ms
 }
 
@@ -37,7 +38,7 @@ const DEFAULT_POLLING_INTERVAL = 5000; // 5 seconds
 const MAX_ERROR_COUNT = 3; // Stop polling after 3 consecutive failures
 const EXPONENTIAL_BACKOFF_BASE = 2; // Multiplier for backoff
 const CACHE_DURATION = 5000; // 5 seconds cache
-const MAX_CONCURRENT_POLLS = 5; // Maximum concurrent polling requests
+const MAX_CONCURRENT_POLLS = 10; // Maximum concurrent polling requests (Requirement 8.5)
 
 /**
  * Hook for automatic polling of export job status
@@ -58,6 +59,7 @@ const MAX_CONCURRENT_POLLS = 5; // Maximum concurrent polling requests
 export function useExportPolling({
     jobs,
     onStatusUpdate,
+    onPollingError,
     pollingInterval = DEFAULT_POLLING_INTERVAL,
 }: UseExportPollingOptions): void {
     // Store polling state for each job
@@ -100,8 +102,8 @@ export function useExportPolling({
     useEffect(() => {
         const pollingStates = pollingStatesRef.current;
 
-        // Get jobs that need polling (status = "processing")
-        const processingJobs = jobs.filter((job) => job.status === 'processing');
+        // Get jobs that need polling (status = "pending" or "processing") - Requirement 2.1
+        const processingJobs = jobs.filter((job) => job.status === 'pending' || job.status === 'processing');
 
         // Start polling for new processing jobs
         processingJobs.forEach((job) => {
@@ -174,6 +176,12 @@ export function useExportPolling({
                                 `🛑 Stopping polling for job ${job.jobId} after ${MAX_ERROR_COUNT} consecutive failures`
                             );
                             stopPollingJob(job.jobId);
+
+                            // Notify about polling failure (Requirement 2.4, 6.1, 6.4)
+                            if (onPollingError) {
+                                const errorMessage = response.error?.message || 'Failed to fetch export status after multiple attempts';
+                                onPollingError(job.jobId, errorMessage);
+                            }
                             return;
                         }
 
@@ -236,6 +244,12 @@ export function useExportPolling({
                             `🛑 Stopping polling for job ${job.jobId} after ${MAX_ERROR_COUNT} consecutive failures`
                         );
                         stopPollingJob(job.jobId);
+
+                        // Notify about polling failure (Requirement 2.4, 6.1, 6.4)
+                        if (onPollingError) {
+                            const errorMessage = error instanceof Error ? error.message : 'Unexpected error occurred while polling export status';
+                            onPollingError(job.jobId, errorMessage);
+                        }
                     }
                 } finally {
                     // Always mark as not polling and decrement active requests

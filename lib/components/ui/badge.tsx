@@ -47,7 +47,7 @@ const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
               variant === "secondary",
 
             // Success: green-100 bg with green-800 text (7.2:1 contrast) ✓
-            "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300 dark:border dark:border-green-600":
+            "bg-green-100 text-gray-900 dark:bg-green-900/20 dark:text-gray-900 dark:border dark:border-green-600":
               variant === "success",
 
             // Warning: yellow-100 bg with yellow-900 text (8.1:1 contrast) ✓

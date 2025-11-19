@@ -111,8 +111,24 @@ export default function ExportsPage() {
     [refreshJobStatus]
   );
 
+  // Polling error handler - displays notification when polling fails after max retries
+  const handlePollingError = useCallback(
+    (jobId: string, errorMessage: string) => {
+      console.error(`Polling failed for job ${jobId}:`, errorMessage);
+
+      // Display error notification (Requirement 2.4, 6.1, 6.4)
+      addNotification({
+        type: "error",
+        title: "Status Update Failed",
+        message: `Unable to fetch status for job ${jobId}. ${errorMessage}`,
+        autoDismiss: false,
+      });
+    },
+    [addNotification]
+  );
+
   /**
-   * Handler for downloading completed export files
+   * Handler for downloading completed export files (Requirements 4.1, 4.2, 4.3, 4.4, 4.5)
    * Triggers browser download with appropriate filename based on job type and format
    */
   const handleDownload = useCallback(
@@ -127,7 +143,7 @@ export default function ExportsPage() {
           throw new Error("Export job not found");
         }
 
-        // Check if job is completed
+        // Verify job status before attempting download (Requirement 4.1)
         if (job.status !== "completed" && job.status !== "expired") {
           addNotification({
             type: "warning",
@@ -157,7 +173,7 @@ export default function ExportsPage() {
           return;
         }
 
-        // Display info notification that download is starting
+        // Show info notification when download starts (Requirement 4.4)
         addNotification({
           type: "info",
           title: "Download Starting",
@@ -166,10 +182,11 @@ export default function ExportsPage() {
           duration: 3000,
         });
 
-        // Call the API to download the export file
+        // Call exportAPI.downloadExport with job ID (Requirement 4.1)
+        // Handle blob response from API (Requirement 4.2)
         const blob = await exportAPI.downloadExport(jobId);
 
-        // Generate appropriate filename based on job type and format
+        // Set appropriate filename with export type, timestamp, and format (Requirement 4.3)
         const timestamp = new Date()
           .toISOString()
           .split("T")[0]
@@ -177,21 +194,21 @@ export default function ExportsPage() {
         const format = job.filters.format || "json";
         const filename = `${job.exportType}_export_${timestamp}.${format}`;
 
-        // Create a temporary URL for the blob
+        // Create temporary blob URL for download (Requirement 4.2)
         const blobUrl = URL.createObjectURL(blob);
 
-        // Create a temporary anchor element to trigger download
+        // Create temporary anchor element with blob URL (Requirement 4.3)
         const link = document.createElement("a");
         link.href = blobUrl;
         link.download = filename;
         link.style.display = "none";
 
-        // Append to body, click, and remove
+        // Trigger click event to start download (Requirement 4.3)
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
 
-        // Clean up the blob URL after a short delay to ensure download starts
+        // Clean up blob URL after download (Requirement 4.3)
         setTimeout(() => {
           URL.revokeObjectURL(blobUrl);
         }, 100);
@@ -199,7 +216,8 @@ export default function ExportsPage() {
         // Reset retry count on success
         retryManager.resetRetry(operationType, operationId);
 
-        // Display success notification
+        // Display success notification when download completes (Requirement 4.5)
+        // Include filename in success notification (Requirement 4.5)
         addNotification({
           type: "success",
           title: "Download Complete",
@@ -489,10 +507,10 @@ export default function ExportsPage() {
    * Confirmation handler for dialog actions
    * Executes the appropriate action based on dialog type
    */
-  const handleConfirmAction = useCallback((): void => {
+  const handleConfirmAction = useCallback(async (): Promise<void> => {
     if (confirmDialog.type === "delete" && confirmDialog.jobId) {
       // Delete single job
-      deleteJob(confirmDialog.jobId);
+      await deleteJob(confirmDialog.jobId);
 
       addNotification({
         type: "success",
@@ -512,7 +530,7 @@ export default function ExportsPage() {
           job.status === "expired"
       ).length;
 
-      clearCompletedJobs();
+      await clearCompletedJobs();
 
       addNotification({
         type: "success",
@@ -536,6 +554,7 @@ export default function ExportsPage() {
 
   /**
    * Handler for validating API key
+   * Ensures the API key is valid and belongs to the current user
    */
   const handleValidateApiKey = async () => {
     if (!apiKey.trim()) {
@@ -565,29 +584,52 @@ export default function ExportsPage() {
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.detail || "Invalid API key");
       }
 
       const data = await response.json();
 
-      if (data.valid && data.access?.export_endpoints) {
-        setIsApiKeyValid(true);
-        setApiKeyUserInfo(data.user);
-        setShowApiKeyModal(false);
+      // Validate that the API key belongs to the current user
+      if (!data.valid) {
+        throw new Error("Invalid API key");
+      }
 
-        addNotification({
-          type: "success",
-          title: "API Key Validated",
-          message: `Welcome ${data.user?.username}! You have access to export endpoints.`,
-          autoDismiss: true,
-          duration: 5000,
-        });
-      } else {
+      if (!data.access?.export_endpoints) {
         throw new Error(
-          data.message || "API key is not valid for export endpoints"
+          "This API key does not have access to export endpoints"
         );
       }
+
+      // Verify the API key belongs to the current logged-in user
+      if (user && data.user?.user_id && data.user.user_id !== user.id) {
+        throw new Error(
+          "This API key does not belong to your account. Please use your own API key."
+        );
+      }
+
+      // Additional validation: check if user info matches
+      if (user && data.user?.username && data.user.username !== user.username) {
+        throw new Error("API key user mismatch. Please use your own API key.");
+      }
+
+      // All validations passed
+      setIsApiKeyValid(true);
+      setApiKeyUserInfo(data.user);
+      setShowApiKeyModal(false);
+
+      // Store API key in localStorage for use in API requests
+      localStorage.setItem("user_api_key", apiKey.trim());
+
+      addNotification({
+        type: "success",
+        title: "API Key Validated",
+        message: `Welcome ${
+          data.user?.username || user?.username
+        }! You have access to export endpoints.`,
+        autoDismiss: true,
+        duration: 5000,
+      });
     } catch (error) {
       console.error("API key validation error:", error);
       setApiKeyError(
@@ -625,6 +667,7 @@ export default function ExportsPage() {
   useExportPolling({
     jobs,
     onStatusUpdate: handleStatusUpdate,
+    onPollingError: handlePollingError,
     pollingInterval: 5000, // Poll every 5 seconds
   });
 
@@ -731,7 +774,13 @@ export default function ExportsPage() {
 
       {/* API Key Validation Modal - Only for General Users */}
       {isGeneralUser && showApiKeyModal && !isApiKeyValid && (
-        <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+        <div
+          className="absolute inset-0 bg-black/30 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            // Prevent closing modal by clicking backdrop
+            e.stopPropagation();
+          }}
+        >
           <div className="bg-[rgb(var(--bg-primary))] rounded-lg shadow-2xl max-w-md w-full border border-[rgb(var(--border-primary))]">
             {/* Modal Header */}
             <div className="border-b border-[rgb(var(--border-primary))] p-6">
@@ -751,11 +800,11 @@ export default function ExportsPage() {
                 </div>
                 <button
                   onClick={() => {
-                    setShowApiKeyModal(false);
-                    window.history.back();
+                    // Don't allow closing without validation - redirect back
+                    window.location.href = "/dashboard";
                   }}
                   className="text-[rgb(var(--text-tertiary))] hover:text-[rgb(var(--text-primary))] transition-colors p-2 hover:bg-[rgb(var(--bg-secondary))] rounded-lg"
-                  title="Close and go back"
+                  title="Go back to dashboard"
                 >
                   <svg
                     className="w-6 h-6"
@@ -836,13 +885,13 @@ export default function ExportsPage() {
             <div className="border-t border-[rgb(var(--border-primary))] p-6 flex justify-end gap-3">
               <button
                 onClick={() => {
-                  setShowApiKeyModal(false);
-                  window.history.back();
+                  // Redirect to dashboard instead of just closing
+                  window.location.href = "/dashboard";
                 }}
                 disabled={isValidatingApiKey}
                 className="px-6 py-2 border border-[rgb(var(--border-primary))] text-[rgb(var(--text-primary))] rounded-md hover:bg-[rgb(var(--bg-secondary))] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
               >
-                Cancel
+                Go Back
               </button>
               <button
                 onClick={handleValidateApiKey}
@@ -886,7 +935,29 @@ export default function ExportsPage() {
       )}
 
       <div className="mx-auto relative">
-        {isApiKeyValid ? (
+        {/* Block access for general users without valid API key */}
+        {isGeneralUser && !isApiKeyValid ? (
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="text-center max-w-md">
+              <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FileDown className="w-10 h-10 text-yellow-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-[rgb(var(--text-primary))] mb-2">
+                API Key Required
+              </h2>
+              <p className="text-[rgb(var(--text-secondary))] mb-6">
+                You need to provide a valid API key to access export features.
+                Please enter your API key to continue.
+              </p>
+              <button
+                onClick={() => setShowApiKeyModal(true)}
+                className="px-6 py-3 bg-primary-color text-white rounded-lg hover:bg-primary-hover transition-all duration-200 font-medium hover:shadow-lg"
+              >
+                Enter API Key
+              </button>
+            </div>
+          </div>
+        ) : isApiKeyValid ? (
           <div className="space-y-6">
             {/* Page Header */}
             <header className="bg-[rgb(var(--bg-primary))] rounded-lg shadow-md border border-[rgb(var(--border-primary))] p-6">
@@ -1057,21 +1128,7 @@ export default function ExportsPage() {
               variant="danger"
             />
           </div>
-        ) : (
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-primary-color/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FileDown className="w-8 h-8 text-primary-color" />
-              </div>
-              <h2 className="text-xl font-semibold text-[rgb(var(--text-primary))] mb-2">
-                API Key Required
-              </h2>
-              <p className="text-[rgb(var(--text-secondary))]">
-                Please enter your API key to access export features.
-              </p>
-            </div>
-          </div>
-        )}
+        ) : null}
       </div>
     </>
   );

@@ -20,7 +20,14 @@ import { ExportJobCard } from "./export-job-card";
 import { ExportJobsListSkeleton } from "./export-job-skeleton";
 import { Button } from "@/lib/components/ui/button";
 import { Badge } from "@/lib/components/ui/badge";
-import { cn, formatDateTime, formatNumber, truncate } from "@/lib/utils";
+import {
+  cn,
+  formatDateTime,
+  formatNumber,
+  truncate,
+  formatTimeRemaining,
+  formatEstimatedTime,
+} from "@/lib/utils";
 import {
   Download,
   RefreshCw,
@@ -103,34 +110,9 @@ export function ExportJobsList({
     return () => window.removeEventListener("resize", updateWidth);
   }, []);
 
-  // Loading state - show skeleton loaders
-  if (isLoading) {
-    return <ExportJobsListSkeleton count={3} />;
-  }
-
-  // Empty state
-  if (jobs.length === 0) {
-    return (
-      <div className="bg-[rgb(var(--bg-primary))] rounded-lg shadow-md border border-[rgb(var(--border-primary))] p-12">
-        <div className="flex flex-col items-center justify-center text-center">
-          <div className="w-16 h-16 bg-[rgb(var(--bg-secondary))] rounded-full flex items-center justify-center mb-4">
-            <Inbox className="w-8 h-8 text-[rgb(var(--text-secondary))]" />
-          </div>
-          <h3 className="text-lg font-semibold text-[rgb(var(--text-primary))] mb-2">
-            No export jobs yet
-          </h3>
-          <p className="text-sm text-[rgb(var(--text-secondary))] max-w-md">
-            Create your first export job using the filter panel above. Your
-            export jobs will appear here.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
-      {/* Header with Clear Completed button */}
+      {/* Header with Clear Completed button - Always visible */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-semibold text-[rgb(var(--text-primary))]">
@@ -212,7 +194,24 @@ export function ExportJobsList({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {useVirtualScrolling ? (
+              {sortedJobs.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12">
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <div className="w-16 h-16 bg-[rgb(var(--bg-secondary))] rounded-full flex items-center justify-center mb-4">
+                        <Inbox className="w-8 h-8 text-[rgb(var(--text-secondary))]" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-[rgb(var(--text-primary))] mb-2">
+                        No export jobs yet
+                      </h3>
+                      <p className="text-sm text-[rgb(var(--text-secondary))] max-w-md">
+                        Create your first export job using the filter panel
+                        above. Your export jobs will appear here.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : useVirtualScrolling ? (
                 <tr>
                   <td colSpan={7} className="p-0">
                     <FixedSizeList
@@ -260,7 +259,22 @@ export function ExportJobsList({
         role="list"
         aria-label="Export jobs cards"
       >
-        {useVirtualScrolling ? (
+        {sortedJobs.length === 0 ? (
+          <div className="bg-[rgb(var(--bg-primary))] rounded-lg shadow-md border border-[rgb(var(--border-primary))] p-12">
+            <div className="flex flex-col items-center justify-center text-center">
+              <div className="w-16 h-16 bg-[rgb(var(--bg-secondary))] rounded-full flex items-center justify-center mb-4">
+                <Inbox className="w-8 h-8 text-[rgb(var(--text-secondary))]" />
+              </div>
+              <h3 className="text-lg font-semibold text-[rgb(var(--text-primary))] mb-2">
+                No export jobs yet
+              </h3>
+              <p className="text-sm text-[rgb(var(--text-secondary))] max-w-md">
+                Create your first export job using the filter panel above. Your
+                export jobs will appear here.
+              </p>
+            </div>
+          </div>
+        ) : useVirtualScrolling ? (
           <FixedSizeList
             rowCount={Math.ceil(sortedJobs.length / 2)}
             rowHeight={CARD_HEIGHT + CARD_GAP}
@@ -303,7 +317,22 @@ export function ExportJobsList({
         role="list"
         aria-label="Export jobs cards"
       >
-        {useVirtualScrolling ? (
+        {sortedJobs.length === 0 ? (
+          <div className="bg-[rgb(var(--bg-primary))] rounded-lg shadow-md border border-[rgb(var(--border-primary))] p-12">
+            <div className="flex flex-col items-center justify-center text-center">
+              <div className="w-16 h-16 bg-[rgb(var(--bg-secondary))] rounded-full flex items-center justify-center mb-4">
+                <Inbox className="w-8 h-8 text-[rgb(var(--text-secondary))]" />
+              </div>
+              <h3 className="text-lg font-semibold text-[rgb(var(--text-primary))] mb-2">
+                No export jobs yet
+              </h3>
+              <p className="text-sm text-[rgb(var(--text-secondary))] max-w-md">
+                Create your first export job using the filter panel above. Your
+                export jobs will appear here.
+              </p>
+            </div>
+          </div>
+        ) : useVirtualScrolling ? (
           <FixedSizeList
             rowCount={sortedJobs.length}
             rowHeight={CARD_HEIGHT + CARD_GAP}
@@ -484,6 +513,18 @@ function ExportJobTableRow({
   const [copied, setCopied] = React.useState(false);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const [isDownloading, setIsDownloading] = React.useState(false);
+  const [, setTimerTick] = React.useState(0); // Force re-render for countdown timer
+
+  // Update timer every minute for expiration countdown (Requirement 5.5)
+  React.useEffect(() => {
+    if (job.status === "completed" && job.expiresAt) {
+      const interval = setInterval(() => {
+        setTimerTick((tick) => tick + 1);
+      }, 60000); // Update every minute
+
+      return () => clearInterval(interval);
+    }
+  }, [job.status, job.expiresAt]);
 
   // Copy job ID to clipboard
   const handleCopyJobId = async () => {
@@ -519,6 +560,12 @@ function ExportJobTableRow({
   // Get status badge variant and icon
   const getStatusConfig = () => {
     switch (job.status) {
+      case "pending":
+        return {
+          variant: "default" as const,
+          icon: <Clock className="w-3 h-3" />,
+          label: "Waiting to start",
+        };
       case "processing":
         return {
           variant: "info" as const,
@@ -568,10 +615,10 @@ function ExportJobTableRow({
 
   const typeConfig = exportTypeConfig[job.exportType];
 
-  // Check if download is available
+  // Check if download is available (Requirement 5.1, 5.2)
   const canDownload = job.status === "completed" && !isExpired();
 
-  // Check if job is expired
+  // Check if job is expired (Requirement 5.4)
   function isExpired(): boolean {
     if (!job.expiresAt) return false;
     return new Date(job.expiresAt) < new Date();
@@ -635,6 +682,12 @@ function ExportJobTableRow({
                 style={{ width: `${job.progress}%` }}
               />
             </div>
+            {/* Estimated completion time (Requirement 7.4) */}
+            {job.estimatedCompletionTime && (
+              <div className="text-xs text-[rgb(var(--text-tertiary))] mt-1">
+                ETA: {formatEstimatedTime(job.estimatedCompletionTime)}
+              </div>
+            )}
           </div>
         ) : (
           <span className="text-xs text-[rgb(var(--text-tertiary))]">—</span>
@@ -654,6 +707,12 @@ function ExportJobTableRow({
         <div className="text-sm text-[rgb(var(--text-secondary))]">
           {formatDateTime(job.createdAt)}
         </div>
+        {/* Display countdown timer for completed jobs (Requirement 5.5) */}
+        {job.status === "completed" && job.expiresAt && !isExpired() && (
+          <div className="text-xs font-semibold text-blue-600 mt-1">
+            Expires in {formatTimeRemaining(job.expiresAt)}
+          </div>
+        )}
       </td>
 
       {/* Actions */}
@@ -677,13 +736,15 @@ function ExportJobTableRow({
             </button>
           )}
 
-          {/* Download Button */}
+          {/* Download Button (Requirement 5.1, 5.3) */}
           {canDownload && (
             <button
               onClick={handleDownload}
               disabled={isDownloading}
               className="p-2 min-w-[40px] min-h-[40px] hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center"
-              title="Download Export"
+              title={`Download ${
+                job.exportType
+              } export (${job.filters.format.toUpperCase()} format)`}
               aria-label="Download export file"
             >
               {isDownloading ? (
@@ -692,6 +753,16 @@ function ExportJobTableRow({
                 <Download className="w-4 h-4 text-blue-600" />
               )}
             </button>
+          )}
+
+          {/* Expired Badge (Requirement 5.4) - shown instead of download button for expired jobs */}
+          {job.status === "expired" && !onCreateNew && (
+            <Badge variant="warning" size="sm">
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                Expired
+              </span>
+            </Badge>
           )}
 
           {/* Create New Export Button (only for expired jobs) */}
