@@ -72,9 +72,6 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
   const [dateTo, setDateTo] = useState<string>("");
   const [ittids, setIttids] = useState<string>("All");
   const [propertyTypes, setPropertyTypes] = useState<string[]>([]);
-  const [page, setPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(100);
-  const [maxRecords, setMaxRecords] = useState<number | "All">(1000);
   const [format, setFormat] = useState<"json" | "csv" | "excel">("json");
   const [includeLocations, setIncludeLocations] = useState<boolean>(true);
   const [includeContacts, setIncludeContacts] = useState<boolean>(true);
@@ -90,9 +87,6 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
     suppliers?: string;
     dateRange?: string;
     ratingRange?: string;
-    page?: string;
-    pageSize?: string;
-    maxRecords?: string;
   }>({});
 
   // Preset loaded feedback state
@@ -206,9 +200,6 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
     setDateTo("");
     setIttids("All");
     setPropertyTypes([]);
-    setPage(1);
-    setPageSize(100);
-    setMaxRecords(1000);
     setFormat("json");
     setIncludeLocations(true);
     setIncludeContacts(true);
@@ -269,9 +260,6 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
         ? PROPERTY_TYPE_OPTIONS.map((opt) => opt.value)
         : filters.filters.property_types
     );
-    setPage(filters.filters.page);
-    setPageSize(filters.filters.page_size);
-    setMaxRecords(filters.filters.max_records);
     setFormat(filters.format);
     setIncludeLocations(filters.include_locations);
     setIncludeContacts(filters.include_contacts);
@@ -297,9 +285,6 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
         date_to: formatDateToISO8601(dateTo),
         ittids,
         property_types: propertyTypes,
-        page,
-        page_size: pageSize,
-        max_records: maxRecords,
       },
       format,
       include_locations: includeLocations,
@@ -315,9 +300,6 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
     dateTo,
     ittids,
     propertyTypes,
-    page,
-    pageSize,
-    maxRecords,
     format,
     includeLocations,
     includeContacts,
@@ -348,17 +330,6 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
         "Min Rating must be less than or equal to Max Rating";
     }
 
-    // Validate positive integers
-    if (page < 1) {
-      newErrors.page = "Page must be a positive integer";
-    }
-    if (pageSize < 1) {
-      newErrors.pageSize = "Page Size must be a positive integer";
-    }
-    if (maxRecords !== "All" && maxRecords < 1) {
-      newErrors.maxRecords = "Max Records must be a positive integer or 'All'";
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }, [
@@ -367,9 +338,6 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
     dateTo,
     minRating,
     maxRating,
-    page,
-    pageSize,
-    maxRecords,
   ]);
 
   // Format date to ISO 8601 format (YYYY-MM-DDTHH:mm:ss)
@@ -411,9 +379,6 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
               propertyTypes.length === PROPERTY_TYPE_OPTIONS.length
                 ? "All"
                 : propertyTypes,
-            page,
-            page_size: pageSize,
-            max_records: maxRecords,
           },
           format,
           include_locations: includeLocations,
@@ -446,9 +411,6 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
       dateTo,
       ittids,
       propertyTypes,
-      page,
-      pageSize,
-      maxRecords,
       format,
       includeLocations,
       includeContacts,
@@ -463,10 +425,7 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
   const isFormValid =
     suppliers.length > 0 &&
     (dateFrom && dateTo ? new Date(dateFrom) < new Date(dateTo) : true) &&
-    minRating <= maxRating &&
-    page >= 1 &&
-    pageSize >= 1 &&
-    (maxRecords === "All" || maxRecords >= 1);
+    minRating <= maxRating;
 
   const formatOptions: RadioOption[] = [
     {
@@ -894,83 +853,6 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
             ))}
           </div>
         </fieldset>
-
-        {/* Pagination and Limits */}
-        <div className="grid grid-cols-3 gap-4">
-          <Input
-            type="number"
-            label="Page"
-            value={page}
-            onChange={(e) => {
-              const val = parseInt(e.target.value) || 1;
-              setPage(val);
-              // Clear page error when valid
-              if (val >= 1 && errors.page) {
-                setErrors((prev) => ({ ...prev, page: undefined }));
-              }
-            }}
-            min="1"
-            error={errors.page}
-          />
-          <Input
-            type="number"
-            label="Page Size"
-            value={pageSize}
-            onChange={(e) => {
-              const val = parseInt(e.target.value) || 100;
-              setPageSize(val);
-              // Clear pageSize error when valid
-              if (val >= 1 && errors.pageSize) {
-                setErrors((prev) => ({ ...prev, pageSize: undefined }));
-              }
-            }}
-            min="1"
-            max="1000"
-            error={errors.pageSize}
-          />
-          <Input
-            type="text"
-            label="Max Records"
-            value={maxRecords.toString()}
-            onChange={(e) => {
-              const inputValue = e.target.value;
-
-              // Allow any input while typing
-              setMaxRecords(inputValue as any);
-
-              // Clear errors if input becomes valid
-              if (
-                inputValue.toLowerCase() === "all" ||
-                (!isNaN(parseInt(inputValue)) && parseInt(inputValue) >= 1)
-              ) {
-                if (errors.maxRecords) {
-                  setErrors((prev) => ({ ...prev, maxRecords: undefined }));
-                }
-              }
-            }}
-            onBlur={(e) => {
-              const inputValue = e.target.value.trim();
-
-              // Normalize "All" on blur (case-insensitive)
-              if (inputValue.toLowerCase() === "all") {
-                setMaxRecords("All");
-              } else if (inputValue === "") {
-                setMaxRecords(1000);
-              } else {
-                const val = parseInt(inputValue);
-                if (!isNaN(val) && val >= 1) {
-                  setMaxRecords(val);
-                } else {
-                  // Invalid input, reset to default
-                  setMaxRecords(1000);
-                }
-              }
-            }}
-            error={errors.maxRecords}
-            helperText='Enter a number or "All" to export all records'
-            placeholder='e.g., 1000 or "All"'
-          />
-        </div>
 
         {/* Export Format */}
         <RadioGroup

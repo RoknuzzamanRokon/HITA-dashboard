@@ -56,8 +56,17 @@ const saveNotifiedJobs = (notifiedJobs: Map<string, Set<string>>): void => {
  * Triggers notifications when jobs are created, completed, or failed
  * Implements deduplication to avoid duplicate notifications
  */
+interface UseExportNotificationsOptions {
+    jobs: ExportJob[];
+    isLoading: boolean; // Add isLoading prop
+    onDownload: (jobId: string) => void;
+}
+
+// ...
+
 export function useExportNotifications({
     jobs,
+    isLoading,
     onDownload,
 }: UseExportNotificationsOptions): void {
     const { addNotification } = useNotification();
@@ -187,21 +196,24 @@ export function useExportNotifications({
         });
 
         // Cleanup: Remove tracking for jobs that no longer exist
-        const currentJobIds = new Set(jobs.map((job) => job.jobId));
-        const trackedJobIds = Array.from(notifiedJobs.keys());
+        // Only run cleanup if we're not loading, to prevent clearing history during initial load
+        if (!isLoading) {
+            const currentJobIds = new Set(jobs.map((job) => job.jobId));
+            const trackedJobIds = Array.from(notifiedJobs.keys());
 
-        trackedJobIds.forEach((jobId) => {
-            if (!currentJobIds.has(jobId)) {
-                notifiedJobs.delete(jobId);
-                console.log(`🧹 Cleanup: Removed tracking for job ${jobId}`);
-            }
-        });
+            trackedJobIds.forEach((jobId) => {
+                if (!currentJobIds.has(jobId)) {
+                    notifiedJobs.delete(jobId);
+                    console.log(`🧹 Cleanup: Removed tracking for job ${jobId}`);
+                }
+            });
 
-        // Save notified jobs to localStorage after cleanup
-        saveNotifiedJobs(notifiedJobs);
-        console.log(`💾 Saved notified jobs to localStorage:`, Array.from(notifiedJobs.entries()).map(([id, events]) => ({
-            jobId: id,
-            events: Array.from(events)
-        })));
-    }, [jobs, addNotification, onDownload]);
+            // Save notified jobs to localStorage after cleanup
+            saveNotifiedJobs(notifiedJobs);
+            console.log(`💾 Saved notified jobs to localStorage:`, Array.from(notifiedJobs.entries()).map(([id, events]) => ({
+                jobId: id,
+                events: Array.from(events)
+            })));
+        }
+    }, [jobs, isLoading, addNotification, onDownload]);
 }

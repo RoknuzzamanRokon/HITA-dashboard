@@ -34,13 +34,10 @@ export interface HotelExportFilters {
         country_codes: string | 'All';
         min_rating: number;
         max_rating: number;
-        date_from: string; // ISO 8601 format
-        date_to: string;
+        date_from: string | null; // ISO 8601 format or null
+        date_to: string | null;
         ittids: string | 'All';
         property_types: string[] | 'All';
-        page: number;
-        page_size: number;
-        max_records: number | 'All';
     };
     format: 'json' | 'csv' | 'excel';
     include_locations: boolean;

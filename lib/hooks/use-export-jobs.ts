@@ -25,8 +25,16 @@ interface UseExportJobsReturn {
     deleteJob: (jobId: string) => Promise<void>;
     clearCompletedJobs: () => Promise<void>;
     isCreating: boolean;
+    isLoading: boolean;
     error: string | null;
 }
+
+/**
+ * Helper to check if a date is valid
+ */
+const isValidDate = (date: any): date is Date => {
+    return date instanceof Date && !isNaN(date.getTime());
+};
 
 /**
  * Save jobs to localStorage
@@ -35,11 +43,11 @@ const saveJobsToStorage = (jobs: ExportJob[]): void => {
     try {
         const serializedJobs = jobs.map((job) => ({
             ...job,
-            createdAt: job.createdAt.toISOString(),
-            startedAt: job.startedAt?.toISOString() || null,
-            completedAt: job.completedAt?.toISOString() || null,
-            expiresAt: job.expiresAt?.toISOString() || null,
-            estimatedCompletionTime: job.estimatedCompletionTime?.toISOString() || null,
+            createdAt: isValidDate(job.createdAt) ? job.createdAt.toISOString() : new Date().toISOString(),
+            startedAt: isValidDate(job.startedAt) ? job.startedAt!.toISOString() : null,
+            completedAt: isValidDate(job.completedAt) ? job.completedAt!.toISOString() : null,
+            expiresAt: isValidDate(job.expiresAt) ? job.expiresAt!.toISOString() : null,
+            estimatedCompletionTime: isValidDate(job.estimatedCompletionTime) ? job.estimatedCompletionTime!.toISOString() : null,
         }));
         localStorage.setItem(STORAGE_KEY, JSON.stringify(serializedJobs));
         console.log('Jobs saved to localStorage:', serializedJobs.length);
@@ -64,15 +72,21 @@ const loadJobsFromStorage = (): ExportJob[] => {
 
         // Deserialize and filter expired jobs
         const jobs: ExportJob[] = parsed
-            .map((job: any) => ({
-                ...job,
-                createdAt: new Date(job.createdAt),
-                startedAt: job.startedAt ? new Date(job.startedAt) : null,
-                completedAt: job.completedAt ? new Date(job.completedAt) : null,
-                expiresAt: job.expiresAt ? new Date(job.expiresAt) : null,
-                estimatedCompletionTime: job.estimatedCompletionTime ? new Date(job.estimatedCompletionTime) : null,
-            }))
+            .map((job: any) => {
+                const createdAt = new Date(job.createdAt);
+                return {
+                    ...job,
+                    createdAt: isValidDate(createdAt) ? createdAt : new Date(), // Fallback to now if invalid
+                    startedAt: job.startedAt ? new Date(job.startedAt) : null,
+                    completedAt: job.completedAt ? new Date(job.completedAt) : null,
+                    expiresAt: job.expiresAt ? new Date(job.expiresAt) : null,
+                    estimatedCompletionTime: job.estimatedCompletionTime ? new Date(job.estimatedCompletionTime) : null,
+                };
+            })
             .filter((job: ExportJob) => {
+                // Ensure all dates are valid objects before using them
+                if (!isValidDate(job.createdAt)) return false;
+
                 // Remove jobs older than 24 hours
                 const age = now.getTime() - job.createdAt.getTime();
                 return age < expirationTime;
@@ -93,6 +107,7 @@ const loadJobsFromStorage = (): ExportJob[] => {
 export function useExportJobs(): UseExportJobsReturn {
     const [jobs, setJobs] = useState<ExportJob[]>([]);
     const [isCreating, setIsCreating] = useState(false);
+    const [isLoadingJobs, setIsLoadingJobs] = useState(true); // Add loading state
     const [error, setError] = useState<string | null>(null);
     const retryManager = useRetryManager();
     const { addNotification } = useNotification();
@@ -145,8 +160,6 @@ export function useExportJobs(): UseExportJobsReturn {
                     // Also save to localStorage as cache
                     saveJobsToStorage(apiJobs);
                 } else {
-                    // API failed, fallback to localStorage
-                    console.warn('⚠️ API failed, loading from localStorage');
                     const loadedJobs = loadJobsFromStorage();
                     setJobs(loadedJobs);
                 }
@@ -155,6 +168,8 @@ export function useExportJobs(): UseExportJobsReturn {
                 // Fallback to localStorage on error
                 const loadedJobs = loadJobsFromStorage();
                 setJobs(loadedJobs);
+            } finally {
+                setIsLoadingJobs(false);
             }
         };
 
@@ -562,6 +577,7 @@ export function useExportJobs(): UseExportJobsReturn {
         deleteJob,
         clearCompletedJobs,
         isCreating,
+        isLoading: isLoadingJobs, // Expose loading state
         error,
     };
 }

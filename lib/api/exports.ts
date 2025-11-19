@@ -82,13 +82,30 @@ export class ExportAPI {
         try {
             console.log('🔍 Original hotel filters (nested):', JSON.stringify(filters, null, 2));
 
-            // Backend expects nested structure: { filters: { ... }, format: "json", include_* }
-            console.log('🔍 Sending hotel payload to backend:', JSON.stringify(filters, null, 2));
-            console.log('[ExportAPI] createHotelExport: Creating hotel export with payload:', JSON.stringify(filters));
+            // Clean the payload - convert empty date strings to null
+            const cleanedFilters: HotelExportFilters = {
+                filters: {
+                    suppliers: filters.filters.suppliers,
+                    country_codes: filters.filters.country_codes,
+                    min_rating: filters.filters.min_rating,
+                    max_rating: filters.filters.max_rating,
+                    date_from: filters.filters.date_from && filters.filters.date_from.trim() !== '' ? filters.filters.date_from : null,
+                    date_to: filters.filters.date_to && filters.filters.date_to.trim() !== '' ? filters.filters.date_to : null,
+                    ittids: filters.filters.ittids,
+                    property_types: filters.filters.property_types,
+                },
+                format: filters.format,
+                include_locations: filters.include_locations,
+                include_contacts: filters.include_contacts,
+                include_mappings: filters.include_mappings,
+            };
+
+            console.log('🔍 Cleaned hotel payload:', JSON.stringify(cleanedFilters, null, 2));
+            console.log('[ExportAPI] createHotelExport: Creating hotel export with payload:', JSON.stringify(cleanedFilters));
 
             const response = await apiClient.post<ExportJobResponse>(
                 '/export/hotels',
-                filters,  // Send nested structure as backend expects
+                cleanedFilters,  // Send cleaned structure
                 true, // requiresAuth
                 3 // retryCount with exponential backoff
             );

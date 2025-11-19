@@ -69,7 +69,7 @@ export default function ExportsPage() {
   const [activeTab, setActiveTab] = useState<ExportTab>("hotel");
 
   // Loading state for initial jobs load
-  const [isLoadingJobs, setIsLoadingJobs] = useState(true);
+  // const [isLoadingJobs, setIsLoadingJobs] = useState(true); // Removed local state, using hook state instead
 
   // Confirmation dialog state
   const [confirmDialog, setConfirmDialog] = useState<ConfirmationDialogState>({
@@ -96,6 +96,7 @@ export default function ExportsPage() {
     deleteJob,
     clearCompletedJobs,
     isCreating,
+    isLoading: isLoadingJobs, // Get loading state
     error: jobsError,
   } = useExportJobs();
 
@@ -674,18 +675,19 @@ export default function ExportsPage() {
   // Initialize notification system for job status changes
   useExportNotifications({
     jobs,
+    isLoading: isLoadingJobs, // Pass loading state
     onDownload: handleDownload,
   });
 
   // Set loading to false after jobs are loaded (on mount)
-  React.useEffect(() => {
-    // Simulate initial load time for jobs from localStorage
-    const timer = setTimeout(() => {
-      setIsLoadingJobs(false);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, []);
+  // React.useEffect(() => {
+  //   // Simulate initial load time for jobs from localStorage
+  //   const timer = setTimeout(() => {
+  //     setIsLoadingJobs(false);
+  //   }, 300);
+  //
+  //   return () => clearTimeout(timer);
+  // }, []);
 
   // Keyboard shortcuts
   useKeyboardShortcuts([
