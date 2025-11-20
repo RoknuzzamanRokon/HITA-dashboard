@@ -124,6 +124,54 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         hover: "#111827",
         light: "#f3f4f6",
       },
+      yellow: {
+        primary: "#eab308",
+        primaryRgb: "234, 179, 8",
+        hover: "#ca8a04",
+        light: "#fef9c3",
+      },
+      cyan: {
+        primary: "#06b6d4",
+        primaryRgb: "6, 182, 212",
+        hover: "#0891b2",
+        light: "#cffafe",
+      },
+      lime: {
+        primary: "#84cc16",
+        primaryRgb: "132, 204, 22",
+        hover: "#65a30d",
+        light: "#ecfccb",
+      },
+      rose: {
+        primary: "#f43f5e",
+        primaryRgb: "244, 63, 94",
+        hover: "#e11d48",
+        light: "#ffe4e6",
+      },
+      amber: {
+        primary: "#f59e0b",
+        primaryRgb: "245, 158, 11",
+        hover: "#d97706",
+        light: "#fef3c7",
+      },
+      emerald: {
+        primary: "#10b981",
+        primaryRgb: "16, 185, 129",
+        hover: "#059669",
+        light: "#d1fae5",
+      },
+      violet: {
+        primary: "#7c3aed",
+        primaryRgb: "124, 58, 237",
+        hover: "#6d28d9",
+        light: "#ede9fe",
+      },
+      sky: {
+        primary: "#0ea5e9",
+        primaryRgb: "14, 165, 233",
+        hover: "#0284c7",
+        light: "#e0f2fe",
+      },
     };
 
     const theme = colorThemes[settings.accentColor] || colorThemes.blue;

@@ -15,6 +15,14 @@ export interface ColorTheme {
 
 export const colorThemes: ColorTheme[] = [
   {
+    id: "blue",
+    name: "Blue",
+    primary: "#3b82f6",
+    primaryRgb: "59, 130, 246",
+    hover: "#2563eb",
+    light: "#dbeafe",
+  },
+  {
     id: "red",
     name: "Red",
     primary: "#ef4444",
@@ -78,6 +86,70 @@ export const colorThemes: ColorTheme[] = [
     hover: "#111827",
     light: "#f3f4f6",
   },
+  {
+    id: "yellow",
+    name: "Yellow",
+    primary: "#eab308",
+    primaryRgb: "234, 179, 8",
+    hover: "#ca8a04",
+    light: "#fef9c3",
+  },
+  {
+    id: "cyan",
+    name: "Cyan",
+    primary: "#06b6d4",
+    primaryRgb: "6, 182, 212",
+    hover: "#0891b2",
+    light: "#cffafe",
+  },
+  {
+    id: "lime",
+    name: "Lime",
+    primary: "#84cc16",
+    primaryRgb: "132, 204, 22",
+    hover: "#65a30d",
+    light: "#ecfccb",
+  },
+  {
+    id: "rose",
+    name: "Rose",
+    primary: "#f43f5e",
+    primaryRgb: "244, 63, 94",
+    hover: "#e11d48",
+    light: "#ffe4e6",
+  },
+  {
+    id: "amber",
+    name: "Amber",
+    primary: "#f59e0b",
+    primaryRgb: "245, 158, 11",
+    hover: "#d97706",
+    light: "#fef3c7",
+  },
+  {
+    id: "emerald",
+    name: "Emerald",
+    primary: "#10b981",
+    primaryRgb: "16, 185, 129",
+    hover: "#059669",
+    light: "#d1fae5",
+  },
+  {
+    id: "violet",
+    name: "Violet",
+    primary: "#7c3aed",
+    primaryRgb: "124, 58, 237",
+    hover: "#6d28d9",
+    light: "#ede9fe",
+  },
+  {
+    id: "sky",
+    name: "Sky",
+    primary: "#0ea5e9",
+    primaryRgb: "14, 165, 233",
+    hover: "#0284c7",
+    light: "#e0f2fe",
+  },
 ];
 
 interface ColorThemeSelectorProps {
@@ -125,12 +197,12 @@ export const ColorThemeSelector: React.FC<ColorThemeSelectorProps> = ({
         Select a color to personalize your experience
       </p>
 
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-9 gap-4">
         {colorThemes.map((theme) => (
           <button
             key={theme.id}
             onClick={() => handleColorSelect(theme.id)}
-            className="relative flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all hover:scale-105"
+            className="relative flex flex-col items-center gap-3 p-4 rounded-lg border-2 transition-all hover:scale-105"
             style={{
               borderColor:
                 selectedColor === theme.id ? theme.primary : "#e5e7eb",
@@ -142,17 +214,17 @@ export const ColorThemeSelector: React.FC<ColorThemeSelectorProps> = ({
           >
             {/* Color Circle */}
             <div
-              className="w-12 h-12 rounded-full shadow-md flex items-center justify-center"
+              className="w-16 h-16 rounded-full shadow-md flex items-center justify-center"
               style={{ backgroundColor: theme.primary }}
             >
               {selectedColor === theme.id && (
-                <Check className="w-6 h-6 text-white" aria-hidden="true" />
+                <Check className="w-7 h-7 text-white" aria-hidden="true" />
               )}
             </div>
 
             {/* Color Name */}
             <span
-              className="text-xs font-medium"
+              className="text-sm font-medium"
               style={{
                 color: selectedColor === theme.id ? theme.primary : "#374151",
               }}

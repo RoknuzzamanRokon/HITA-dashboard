@@ -228,781 +228,499 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="mx-auto space-y-8 p-6">
-        {/* Animated Background Elements */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-          <div className="absolute top-40 right-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+    <div className="min-h-screen bg-slate-50/50 p-6 space-y-8">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Analytics Overview</h1>
+          <p className="text-slate-500 mt-1">
+            Monitor your system performance and user growth
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <TimePeriodSelector
+            selectedPeriod={selectedPeriod}
+            onPeriodChange={handlePeriodChange}
+            loading={isRefreshing}
+          />
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            disabled={isRefreshing || statsLoading || userMgmtLoading}
+            className="h-10 w-10"
+          >
+            <RefreshCw
+              className={`w-4 h-4 ${
+                isRefreshing || statsLoading || userMgmtLoading
+                  ? "animate-spin"
+                  : ""
+              }`}
+            />
+          </Button>
+        </div>
+      </div>
+
+      {/* Error State */}
+      {(statsError || userMgmtError) && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+          <div className="p-2 bg-red-100 rounded-lg">
+            <Activity className="w-5 h-5 text-red-600" />
+          </div>
+          <div>
+            <h3 className="font-medium text-red-900">Error Loading Data</h3>
+            <p className="text-sm text-red-700 mt-1">
+              {statsError || userMgmtError}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Key Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Total Users Card */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow group">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
+              <Users className="w-6 h-6 text-blue-600" />
+            </div>
+            <span className="text-xs font-medium px-2.5 py-1 bg-green-50 text-green-700 rounded-full flex items-center gap-1">
+              <TrendingUp className="w-3 h-3" />
+              +{stats?.recentSignups || 0}
+            </span>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-500">Total Users</p>
+            <h3 className="text-2xl font-bold text-slate-900 mt-1">
+              {exportLoading ? (
+                <div className="h-8 w-24 bg-slate-100 rounded animate-pulse" />
+              ) : (
+                exportData?.user_analytics.total_users?.toLocaleString() ||
+                stats?.totalUsers?.toLocaleString() ||
+                "0"
+              )}
+            </h3>
+          </div>
+          <div className="mt-4 pt-4 border-t border-slate-50">
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-500">API Adoption</span>
+              <span className="font-medium text-slate-900">
+                {exportData
+                  ? `${exportData.user_analytics.api_adoption_rate.toFixed(1)}%`
+                  : "N/A"}
+              </span>
+            </div>
+            <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2">
+              <div
+                className="bg-blue-500 h-1.5 rounded-full transition-all duration-1000"
+                style={{
+                  width: `${
+                    exportData?.user_analytics.api_adoption_rate || 0
+                  }%`,
+                }}
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Header Section */}
-        <div className="relative flex items-center justify-between backdrop-blur-sm bg-white/60 rounded-2xl p-6 shadow-lg border border-white/20">
-          <div className="space-y-2">
-            <div className="flex items-center space-x-4">
-              <BackButton fallbackUrl="/dashboard" />
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent flex items-center space-x-3">
-                <div className="p-3 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-2xl text-white shadow-lg animate-pulse-slow">
-                  <BarChart3 className="w-7 h-7" />
-                </div>
-                <span>Analytics Dashboard</span>
-              </h1>
+        {/* Active Users Card */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow group">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-3 bg-emerald-50 rounded-xl group-hover:bg-emerald-100 transition-colors">
+              <Activity className="w-6 h-6 text-emerald-600" />
             </div>
-            <div className="flex items-center space-x-2 text-sm text-gray-500 mb-1">
-              <button
-                onClick={() => (window.location.href = "/dashboard")}
-                className="hover:text-blue-600 hover:underline transition-colors"
-              >
-                Dashboard
-              </button>
-              <span>/</span>
-              <span className="text-gray-900 font-medium">Analytics</span>
+            <span className="text-xs font-medium px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full flex items-center gap-1">
+              <Zap className="w-3 h-3" />
+              Active
+            </span>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-500">Active Users</p>
+            <h3 className="text-2xl font-bold text-slate-900 mt-1">
+              {exportLoading ? (
+                <div className="h-8 w-24 bg-slate-100 rounded animate-pulse" />
+              ) : (
+                exportData?.user_analytics.active_users?.toLocaleString() ||
+                stats?.activeUsers?.toLocaleString() ||
+                "0"
+              )}
+            </h3>
+          </div>
+          <div className="mt-4 pt-4 border-t border-slate-50">
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-500">Activation Rate</span>
+              <span className="font-medium text-slate-900">
+                {exportData
+                  ? `${exportData.user_analytics.user_engagement_metrics.activation_rate.toFixed(
+                      1
+                    )}%`
+                  : "N/A"}
+              </span>
             </div>
-            <p className="text-gray-600">
-              Comprehensive insights and data visualization
+            <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2">
+              <div
+                className="bg-emerald-500 h-1.5 rounded-full transition-all duration-1000"
+                style={{
+                  width: `${
+                    exportData?.user_analytics.user_engagement_metrics
+                      .activation_rate || 0
+                  }%`,
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Points Distributed Card */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow group">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-3 bg-violet-50 rounded-xl group-hover:bg-violet-100 transition-colors">
+              <Target className="w-6 h-6 text-violet-600" />
+            </div>
+            <span className="text-xs font-medium px-2.5 py-1 bg-violet-50 text-violet-700 rounded-full">
+              Total Dist.
+            </span>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-500">
+              Points Distributed
             </p>
-            {(lastFetch || lastUserMgmtFetch) && (
-              <div className="flex items-center space-x-2 text-sm text-gray-500">
-                <Activity className="w-4 h-4" />
-                <span>
-                  Last updated:{" "}
-                  {(lastFetch || lastUserMgmtFetch)?.toLocaleTimeString()}
+            <h3 className="text-2xl font-bold text-slate-900 mt-1">
+              {exportLoading ? (
+                <div className="h-8 w-24 bg-slate-100 rounded animate-pulse" />
+              ) : exportData?.points_analytics.points_economy
+                  .total_points_distributed ? (
+                `${(
+                  parseInt(
+                    exportData.points_analytics.points_economy
+                      .total_points_distributed
+                  ) / 1000000
+                ).toFixed(1)}M`
+              ) : stats?.totalPointsDistributed ? (
+                `${(stats.totalPointsDistributed / 1000000).toFixed(1)}M`
+              ) : (
+                "0"
+              )}
+            </h3>
+          </div>
+          <div className="mt-4 pt-4 border-t border-slate-50">
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-500">Utilization</span>
+              <span className="font-medium text-slate-900">
+                {exportData
+                  ? `${exportData.points_analytics.points_economy.points_utilization_rate}%`
+                  : "N/A"}
+              </span>
+            </div>
+            <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2">
+              <div
+                className="bg-violet-500 h-1.5 rounded-full transition-all duration-1000"
+                style={{
+                  width: exportData?.points_analytics.points_economy
+                    .points_utilization_rate
+                    ? `${parseFloat(
+                        exportData.points_analytics.points_economy
+                          .points_utilization_rate
+                      )}%`
+                    : "0%",
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* System Health Card */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow group">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-3 bg-amber-50 rounded-xl group-hover:bg-amber-100 transition-colors">
+              <Database className="w-6 h-6 text-amber-600" />
+            </div>
+            <span
+              className={`text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1 ${
+                exportData?.system_analytics.database_health.system_status ===
+                "operational"
+                  ? "bg-green-50 text-green-700"
+                  : "bg-amber-50 text-amber-700"
+              }`}
+            >
+              <CheckCircle className="w-3 h-3" />
+              {exportData?.system_analytics.database_health.system_status ||
+                "Unknown"}
+            </span>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-500">System Health</p>
+            <h3 className="text-2xl font-bold text-slate-900 mt-1">
+              {exportData?.performance_analytics.system_health_score || 0}%
+            </h3>
+          </div>
+          <div className="mt-4 pt-4 border-t border-slate-50">
+            <div className="flex justify-between text-xs">
+              <span className="text-slate-500">Uptime</span>
+              <span className="font-medium text-slate-900">
+                {exportData?.performance_analytics.performance_benchmarks
+                  .uptime || "N/A"}
+              </span>
+            </div>
+            <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2">
+              <div
+                className="bg-amber-500 h-1.5 rounded-full transition-all duration-1000"
+                style={{
+                  width: `${
+                    exportData?.performance_analytics.system_health_score || 0
+                  }%`,
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column - Charts */}
+        <div className="lg:col-span-2 space-y-8">
+          {/* Main Analytics Chart */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">
+                  Analytics Trends
+                </h3>
+                <p className="text-sm text-slate-500">
+                  User activity and growth over time
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md">
+                  <div className="w-2 h-2 rounded-full bg-blue-500" />
+                  Users
+                </span>
+                <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md">
+                  <div className="w-2 h-2 rounded-full bg-violet-500" />
+                  Activity
                 </span>
               </div>
+            </div>
+            {statsLoading || isRefreshing ? (
+              <SkeletonLoader className="h-[350px] w-full rounded-xl" />
+            ) : stats ? (
+              <AnalyticsCharts
+                stats={stats}
+                timePeriod={selectedPeriod}
+                loading={isRefreshing}
+              />
+            ) : (
+              <EmptyState
+                title="No Data Available"
+                description="No analytics data found for this period."
+                icon={<BarChart3 className="w-12 h-12 text-slate-300" />}
+              />
             )}
           </div>
 
-          <div className="flex items-center space-x-4">
-            <TimePeriodSelector
-              selectedPeriod={selectedPeriod}
-              onPeriodChange={handlePeriodChange}
-              loading={isRefreshing}
-            />
-            <Button
-              variant="outline"
-              onClick={handleRefresh}
-              disabled={isRefreshing || statsLoading || userMgmtLoading}
-              leftIcon={
-                <RefreshCw
-                  className={`w-4 h-4 ${
-                    isRefreshing || statsLoading || userMgmtLoading
-                      ? "animate-spin"
-                      : ""
-                  }`}
-                />
-              }
-            >
-              Refresh
-            </Button>
-          </div>
-        </div>
-
-        {/* Error State */}
-        {(statsError || userMgmtError) && (
-          <Card variant="elevated" className="border-red-200 bg-red-50">
-            <CardContent>
-              <div className="space-y-2">
-                {statsError && (
-                  <div className="flex items-center space-x-3 text-red-700">
-                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                    <span className="font-medium">Dashboard stats error:</span>
-                    <span>{statsError}</span>
-                  </div>
-                )}
-                {userMgmtError && (
-                  <div className="flex items-center space-x-3 text-red-700">
-                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                    <span className="font-medium">User management error:</span>
-                    <span>{userMgmtError}</span>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Analytics Summary */}
-        {exportData && (
-          <Card
-            variant="elevated"
-            className="border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50"
-          >
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                  <BarChart3 className="w-5 h-5 text-blue-600" />
-                  <span>Analytics Summary</span>
-                </h3>
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                  <Clock className="w-4 h-4" />
-                  <span>
-                    Last updated:{" "}
-                    {new Date(
-                      exportData.export_metadata.export_timestamp
-                    ).toLocaleString()}
-                  </span>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-                  <div className="text-xl font-bold text-blue-900">
-                    {exportData.export_summary.total_data_points}
-                  </div>
-                  <div className="text-sm text-blue-700">Data Points</div>
-                </div>
-                <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-                  <div className="text-xl font-bold text-green-900">
-                    {exportData.export_summary.data_categories_exported}
-                  </div>
-                  <div className="text-sm text-green-700">Categories</div>
-                </div>
-                <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-                  <div className="text-xl font-bold text-purple-900 capitalize">
-                    {exportData.export_summary.export_completeness}
-                  </div>
-                  <div className="text-sm text-purple-700">Completeness</div>
-                </div>
-                <div className="text-center p-3 bg-white rounded-lg shadow-sm">
-                  <div className="text-xl font-bold text-orange-900 capitalize">
-                    {exportData.export_summary.data_quality}
-                  </div>
-                  <div className="text-sm text-orange-700">Quality</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Key Metrics Overview - Enhanced with Animations */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-blue-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                  <Users className="w-6 h-6 text-white" />
-                </div>
-                <div className="text-xs font-semibold text-white/80 bg-white/20 px-3 py-1 rounded-full">
-                  +{stats?.recentSignups || 0} new
-                </div>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-white/80 mb-1">
-                  Total Users
-                </p>
-                <div className="text-3xl font-bold text-white">
-                  {exportLoading ? (
-                    <div className="h-9 w-20 bg-white/20 rounded animate-pulse"></div>
-                  ) : (
-                    exportData?.user_analytics.total_users?.toLocaleString() ||
-                    stats?.totalUsers?.toLocaleString() ||
-                    "0"
-                  )}
-                </div>
-                <div className="flex items-center space-x-2 mt-2">
-                  <div className="flex-1 bg-white/20 rounded-full h-2">
-                    <div
-                      className="bg-white h-2 rounded-full transition-all duration-1000"
-                      style={{ width: "75%" }}
-                    ></div>
-                  </div>
-                  <span className="text-xs text-white/90 font-semibold">
-                    75%
-                  </span>
-                </div>
-                <p className="text-xs text-white/70 flex items-center mt-2">
-                  <TrendingUp className="w-3 h-3 mr-1" />
-                  {exportData
-                    ? `${exportData.user_analytics.api_adoption_rate.toFixed(
-                        1
-                      )}% API adoption`
-                    : `Growing steadily`}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-400 to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                  <Activity className="w-6 h-6 text-white" />
-                </div>
-                <div className="text-xs font-semibold text-white/80 bg-white/20 px-3 py-1 rounded-full animate-pulse">
-                  Live
-                </div>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-white/80 mb-1">
-                  Active Users
-                </p>
-                <div className="text-3xl font-bold text-white">
-                  {exportLoading ? (
-                    <div className="h-9 w-20 bg-white/20 rounded animate-pulse"></div>
-                  ) : (
-                    exportData?.user_analytics.active_users?.toLocaleString() ||
-                    stats?.activeUsers?.toLocaleString() ||
-                    "0"
-                  )}
-                </div>
-                <div className="flex items-center space-x-2 mt-2">
-                  <div className="flex-1 bg-white/20 rounded-full h-2">
-                    <div
-                      className="bg-white h-2 rounded-full transition-all duration-1000 animate-pulse"
-                      style={{ width: "85%" }}
-                    ></div>
-                  </div>
-                  <span className="text-xs text-white/90 font-semibold">
-                    85%
-                  </span>
-                </div>
-                <p className="text-xs text-white/70 flex items-center mt-2">
-                  <TrendingUp className="w-3 h-3 mr-1" />
-                  {exportData
-                    ? `${exportData.user_analytics.user_engagement_metrics.activation_rate.toFixed(
-                        1
-                      )}% activation`
-                    : `High engagement`}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-pink-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                  <DollarSign className="w-6 h-6 text-white" />
-                </div>
-                <div className="text-xs font-semibold text-white/80 bg-white/20 px-3 py-1 rounded-full">
-                  Total
-                </div>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-white/80 mb-1">
-                  Points Distributed
-                </p>
-                <div className="text-3xl font-bold text-white">
-                  {exportLoading ? (
-                    <div className="h-9 w-24 bg-white/20 rounded animate-pulse"></div>
-                  ) : exportData?.points_analytics.points_economy
-                      .total_points_distributed ? (
-                    `${(
-                      parseInt(
-                        exportData.points_analytics.points_economy
-                          .total_points_distributed
-                      ) / 1000000
-                    ).toFixed(1)}M`
-                  ) : stats?.totalPointsDistributed ? (
-                    `${(stats.totalPointsDistributed / 1000000).toFixed(1)}M`
-                  ) : (
-                    "0"
-                  )}
-                </div>
-                <div className="flex items-center space-x-2 mt-2">
-                  <div className="flex-1 bg-white/20 rounded-full h-2">
-                    <div
-                      className="bg-gradient-to-r from-white to-pink-200 h-2 rounded-full transition-all duration-1000"
-                      style={{ width: "92%" }}
-                    ></div>
-                  </div>
-                  <span className="text-xs text-white/90 font-semibold">
-                    92%
-                  </span>
-                </div>
-                <p className="text-xs text-white/70 flex items-center mt-2">
-                  <Target className="w-3 h-3 mr-1" />
-                  {exportData
-                    ? `${exportData.points_analytics.points_economy.points_utilization_rate}% utilization`
-                    : "High distribution"}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer">
-            <div className="absolute inset-0 bg-gradient-to-br from-orange-400 to-red-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                  <DollarSign className="w-6 h-6 text-white" />
-                </div>
-                <div className="text-xs font-semibold text-white/80 bg-white/20 px-3 py-1 rounded-full">
-                  Available
-                </div>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-white/80 mb-1">
-                  Current Balance
-                </p>
-                <div className="text-3xl font-bold text-white">
-                  {exportLoading ? (
-                    <div className="h-9 w-24 bg-white/20 rounded animate-pulse"></div>
-                  ) : exportData?.points_analytics.points_economy
-                      .current_points_balance ? (
-                    `${(
-                      parseInt(
-                        exportData.points_analytics.points_economy
-                          .current_points_balance
-                      ) / 1000000
-                    ).toFixed(1)}M`
-                  ) : stats?.currentPointsBalance ? (
-                    `${(stats.currentPointsBalance / 1000000).toFixed(1)}M`
-                  ) : (
-                    "0"
-                  )}
-                </div>
-                <div className="flex items-center space-x-2 mt-2">
-                  <div className="flex-1 bg-white/20 rounded-full h-2">
-                    <div
-                      className="bg-gradient-to-r from-white to-yellow-200 h-2 rounded-full transition-all duration-1000"
-                      style={{ width: "68%" }}
-                    ></div>
-                  </div>
-                  <span className="text-xs text-white/90 font-semibold">
-                    68%
-                  </span>
-                </div>
-                <p className="text-xs text-white/70 flex items-center mt-2">
-                  <CheckCircle className="w-3 h-3 mr-1" />
-                  {exportData?.points_analytics.points_economy
-                    .points_system_health === "operational"
-                    ? "System healthy"
-                    : "Ready to use"}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* System Health & Performance Metrics */}
-        {exportData && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* System Health */}
-            <Card>
-              <CardHeader>
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                  <Database className="w-5 h-5 text-blue-600" />
-                  <span>System Health</span>
-                </h3>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                      <span className="font-medium text-green-900">
-                        Database Status
-                      </span>
-                    </div>
-                    <span className="text-sm font-medium text-green-700 capitalize">
-                      {
-                        exportData.system_analytics.database_health
-                          .system_status
-                      }
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center p-3 bg-blue-50 rounded-lg">
-                      <div className="text-xl font-bold text-blue-900">
-                        {(
-                          exportData.system_analytics.database_health
-                            .total_hotels / 1000000
-                        ).toFixed(1)}
-                        M
-                      </div>
-                      <div className="text-sm text-blue-700">Hotels</div>
-                    </div>
-                    <div className="text-center p-3 bg-purple-50 rounded-lg">
-                      <div className="text-xl font-bold text-purple-900">
-                        {(
-                          exportData.system_analytics.database_health
-                            .total_locations / 1000000
-                        ).toFixed(1)}
-                        M
-                      </div>
-                      <div className="text-sm text-purple-700">Locations</div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <span className="font-medium text-gray-700">
-                      Data Integrity
-                    </span>
-                    <div className="flex items-center space-x-2">
-                      <Shield className="w-4 h-4 text-green-600" />
-                      <span className="text-sm font-medium text-green-700 capitalize">
-                        {
-                          exportData.system_analytics.database_health
-                            .data_integrity
-                        }
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <span className="font-medium text-gray-700">
-                      System Utilization
-                    </span>
-                    <span className="text-sm font-medium text-gray-700 capitalize">
-                      {
-                        exportData.system_analytics.capacity_metrics
-                          .system_utilization
-                      }
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Performance Analytics */}
-            <Card>
-              <CardHeader>
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                  <Zap className="w-5 h-5 text-yellow-600" />
-                  <span>Performance Analytics</span>
-                </h3>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="text-center p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg">
-                    <div className="text-3xl font-bold text-green-900">
-                      {exportData.performance_analytics.system_health_score}
-                    </div>
-                    <div className="text-sm text-green-700">Health Score</div>
-                    <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                      <div
-                        className="bg-green-600 h-2 rounded-full transition-all duration-500"
-                        style={{
-                          width: `${exportData.performance_analytics.system_health_score}%`,
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-3">
-                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                      <span className="font-medium text-blue-900">
-                        Response Time
-                      </span>
-                      <span className="text-sm font-bold text-blue-700">
-                        {
-                          exportData.performance_analytics
-                            .performance_benchmarks.response_time
-                        }
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                      <span className="font-medium text-green-900">Uptime</span>
-                      <span className="text-sm font-bold text-green-700">
-                        {
-                          exportData.performance_analytics
-                            .performance_benchmarks.uptime
-                        }
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                      <span className="font-medium text-purple-900">
-                        Error Rate
-                      </span>
-                      <span className="text-sm font-bold text-purple-700">
-                        {
-                          exportData.performance_analytics
-                            .performance_benchmarks.error_rate
-                        }
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="text-center p-3 bg-orange-50 rounded-lg">
-                    <div className="text-lg font-bold text-orange-900">
-                      {exportData.performance_analytics.activity_metrics.recent_activity_7d.toLocaleString()}
-                    </div>
-                    <div className="text-sm text-orange-700">
-                      Activities (7 days)
-                    </div>
-                    <div className="text-xs text-orange-600 mt-1">
-                      Avg:{" "}
-                      {
-                        exportData.performance_analytics.activity_metrics
-                          .avg_daily_activity
-                      }
-                      /day
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* User Role Distribution */}
-        {exportData && (
-          <Card>
-            <CardHeader>
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                <Users className="w-5 h-5 text-indigo-600" />
-                <span>User Role Distribution</span>
+          {/* Provider Access Chart */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <div className="mb-6">
+              <h3 className="text-lg font-bold text-slate-900">
+                Provider Access
               </h3>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center p-6 bg-gradient-to-br from-red-50 to-pink-50 rounded-xl">
-                  <div className="text-3xl font-bold text-red-900 mb-2">
-                    {exportData.user_analytics.role_distribution.admin_user}
-                  </div>
-                  <div className="text-sm font-medium text-red-700 mb-1">
-                    Admin Users
-                  </div>
-                  <div className="text-xs text-red-600">
-                    {(
-                      (exportData.user_analytics.role_distribution.admin_user /
-                        exportData.user_analytics.total_users) *
-                      100
-                    ).toFixed(1)}
-                    % of total
-                  </div>
-                </div>
-
-                <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl">
-                  <div className="text-3xl font-bold text-blue-900 mb-2">
-                    {exportData.user_analytics.role_distribution.general_user}
-                  </div>
-                  <div className="text-sm font-medium text-blue-700 mb-1">
-                    General Users
-                  </div>
-                  <div className="text-xs text-blue-600">
-                    {(
-                      (exportData.user_analytics.role_distribution
-                        .general_user /
-                        exportData.user_analytics.total_users) *
-                      100
-                    ).toFixed(1)}
-                    % of total
-                  </div>
-                </div>
-
-                <div className="text-center p-6 bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl">
-                  <div className="text-3xl font-bold text-purple-900 mb-2">
-                    {exportData.user_analytics.role_distribution.super_user}
-                  </div>
-                  <div className="text-sm font-medium text-purple-700 mb-1">
-                    Super Users
-                  </div>
-                  <div className="text-xs text-purple-600">
-                    {(
-                      (exportData.user_analytics.role_distribution.super_user /
-                        exportData.user_analytics.total_users) *
-                      100
-                    ).toFixed(1)}
-                    % of total
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium text-gray-700">
-                    API Integration
-                  </span>
-                  <span className="text-gray-600">
-                    {exportData.user_analytics.users_with_api_keys} users (
-                    {exportData.user_analytics.api_adoption_rate.toFixed(1)}%)
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* User Management Analytics */}
-        <UserManagementOverview
-          data={userManagement || undefined}
-          loading={userMgmtLoading || isRefreshing}
-        />
-
-        {/* Provider Access Chart */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+              <p className="text-sm text-slate-500">
+                Distribution of provider access types
+              </p>
+            </div>
             <ProviderAccessChart
               data={userManagement || undefined}
               loading={userMgmtLoading || isRefreshing}
             />
           </div>
-
-          {/* Additional User Lifecycle Metrics */}
-          <Card>
-            <CardHeader>
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                <TrendingUp className="w-5 h-5 text-green-600" />
-                <span>User Lifecycle</span>
-              </h3>
-            </CardHeader>
-            <CardContent>
-              {userMgmtLoading || isRefreshing ? (
-                <div className="animate-pulse space-y-4">
-                  {[...Array(4)].map((_, i) => (
-                    <div key={i} className="h-4 bg-gray-200 rounded"></div>
-                  ))}
-                </div>
-              ) : userManagement ? (
-                <div className="space-y-4">
-                  <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-900">
-                      {userManagement.user_lifecycle.new_users_30d}
-                    </div>
-                    <div className="text-sm text-blue-700">
-                      New Users (30 days)
-                    </div>
-                  </div>
-
-                  <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-900">
-                      {userManagement.user_lifecycle.activation_rate.toFixed(1)}
-                      %
-                    </div>
-                    <div className="text-sm text-green-700">
-                      Activation Rate
-                    </div>
-                  </div>
-
-                  <div className="text-center p-4 bg-purple-50 rounded-lg">
-                    <div className="text-2xl font-bold text-purple-900">
-                      {userManagement.user_lifecycle.user_growth_rate.toFixed(
-                        1
-                      )}
-                      %
-                    </div>
-                    <div className="text-sm text-purple-700">Growth Rate</div>
-                  </div>
-
-                  <div className="text-center p-4 bg-orange-50 rounded-lg">
-                    <div className="text-2xl font-bold text-orange-900">
-                      {userManagement.recent_activity.api_keys_issued}
-                    </div>
-                    <div className="text-sm text-orange-700">
-                      API Keys Issued
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">No lifecycle data</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
         </div>
 
-        {/* Real-Time Activity Feed - NEW FEATURE */}
-        <Card className="relative overflow-hidden border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-blue-200 rounded-full filter blur-3xl opacity-30 animate-pulse"></div>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold text-gray-900 flex items-center space-x-2">
-                <div className="relative">
-                  <Activity className="w-6 h-6 text-blue-600" />
-                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
-                  </span>
-                </div>
-                <span>Real-Time Activity</span>
+        {/* Right Column - Stats & Activity */}
+        <div className="space-y-8">
+          {/* User Role Distribution */}
+          {exportData && (
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+              <h3 className="text-lg font-bold text-slate-900 mb-6">
+                User Distribution
               </h3>
-              <div className="flex items-center space-x-2 text-sm text-green-600 font-semibold">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span>Live Updates</span>
+              <div className="space-y-4">
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium text-slate-700">
+                      Admin Users
+                    </span>
+                    <span className="text-sm font-bold text-slate-900">
+                      {exportData.user_analytics.role_distribution.admin_user}
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-200 rounded-full h-2">
+                    <div
+                      className="bg-slate-800 h-2 rounded-full"
+                      style={{
+                        width: `${
+                          (exportData.user_analytics.role_distribution
+                            .admin_user /
+                            exportData.user_analytics.total_users) *
+                          100
+                        }%`,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium text-blue-900">
+                      General Users
+                    </span>
+                    <span className="text-sm font-bold text-blue-900">
+                      {exportData.user_analytics.role_distribution.general_user}
+                    </span>
+                  </div>
+                  <div className="w-full bg-blue-200 rounded-full h-2">
+                    <div
+                      className="bg-blue-600 h-2 rounded-full"
+                      style={{
+                        width: `${
+                          (exportData.user_analytics.role_distribution
+                            .general_user /
+                            exportData.user_analytics.total_users) *
+                          100
+                        }%`,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl bg-violet-50 border border-violet-100">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium text-violet-900">
+                      Super Users
+                    </span>
+                    <span className="text-sm font-bold text-violet-900">
+                      {exportData.user_analytics.role_distribution.super_user}
+                    </span>
+                  </div>
+                  <div className="w-full bg-violet-200 rounded-full h-2">
+                    <div
+                      className="bg-violet-600 h-2 rounded-full"
+                      style={{
+                        width: `${
+                          (exportData.user_analytics.role_distribution
+                            .super_user /
+                            exportData.user_analytics.total_users) *
+                          100
+                        }%`,
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <Users className="w-5 h-5 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Active Now</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {stats?.activeUsers || 0}
-                    </p>
-                  </div>
-                </div>
+          )}
+
+          {/* Real-Time Activity */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">
+                  Live Activity
+                </h3>
+                <p className="text-sm text-slate-500">Real-time system events</p>
               </div>
-              <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Activity className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Actions Today</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {exportData?.performance_analytics.activity_metrics
-                        .avg_daily_activity || 0}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <TrendingUp className="w-5 h-5 text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Growth Rate</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {userManagement?.user_lifecycle.user_growth_rate.toFixed(
-                        1
-                      ) || 0}
-                      %
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+              </span>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Interactive Charts - NEW FEATURE */}
-        <InteractiveCharts stats={stats} exportData={exportData} />
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors">
+                <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+                  <Users className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-900">
+                    Active Users
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {stats?.activeUsers || 0} users online now
+                  </p>
+                </div>
+              </div>
 
-        {/* Main Analytics Charts */}
-        {statsLoading || isRefreshing ? (
-          <div className="space-y-6">
-            <SkeletonLoader className="h-96 w-full rounded-xl" />
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <SkeletonLoader className="h-80 w-full rounded-xl" />
-              <SkeletonLoader className="h-80 w-full rounded-xl" />
+              <div className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors">
+                <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
+                  <Activity className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-900">
+                    Daily Actions
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {exportData?.performance_analytics.activity_metrics
+                      .avg_daily_activity || 0}{" "}
+                    avg. per day
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors">
+                <div className="p-2 bg-violet-100 text-violet-600 rounded-lg">
+                  <TrendingUp className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-900">Growth</p>
+                  <p className="text-xs text-slate-500">
+                    {userManagement?.user_lifecycle.user_growth_rate.toFixed(
+                      1
+                    ) || 0}
+                    % increase
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
-        ) : stats ? (
-          <AnalyticsCharts
-            stats={stats}
-            timePeriod={selectedPeriod}
-            loading={isRefreshing}
-          />
-        ) : (
-          <EmptyState
-            title="No Analytics Data Available"
-            description="We couldn't find any analytics data for the selected time period."
-            icon={<BarChart3 className="w-12 h-12 text-gray-400" />}
-            action={
-              <Button onClick={handleRefresh} variant="primary">
-                Try Again
-              </Button>
-            }
-          />
-        )}
+
+          {/* System Performance Mini-Cards */}
+          {exportData && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                <p className="text-xs font-medium text-slate-500 mb-1">
+                  Response Time
+                </p>
+                <p className="text-lg font-bold text-slate-900">
+                  {
+                    exportData.performance_analytics.performance_benchmarks
+                      .response_time
+                  }
+                </p>
+              </div>
+              <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                <p className="text-xs font-medium text-slate-500 mb-1">
+                  Error Rate
+                </p>
+                <p className="text-lg font-bold text-slate-900">
+                  {
+                    exportData.performance_analytics.performance_benchmarks
+                      .error_rate
+                  }
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Interactive Charts Section */}
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        <div className="mb-6">
+          <h3 className="text-lg font-bold text-slate-900">Deep Dive</h3>
+          <p className="text-sm text-slate-500">
+            Detailed analysis and interactive visualizations
+          </p>
+        </div>
+        <InteractiveCharts stats={stats} exportData={exportData} />
       </div>
     </div>
   );

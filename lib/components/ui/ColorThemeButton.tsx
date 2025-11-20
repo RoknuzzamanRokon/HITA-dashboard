@@ -41,7 +41,7 @@ export const ColorThemeButton: React.FC = () => {
           />
 
           {/* Dropdown Content */}
-          <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 animate-fade-in">
+          <div className="absolute right-0 mt-2 w-[1050px] max-w-[95vw] bg-white rounded-lg shadow-xl border border-gray-200 z-50 animate-fade-in">
             <ColorThemeSelector onClose={() => setIsOpen(false)} />
           </div>
         </>

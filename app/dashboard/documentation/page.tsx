@@ -5,13 +5,14 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/lib/contexts/auth-context";
+import { useLayout } from "@/lib/contexts/layout-context";
 import { DocViewer, DocNavigation } from "@/lib/components/docs/doc-viewer";
 import { Card } from "@/lib/components/ui/card";
 import { Badge } from "@/lib/components/ui/badge";
 import { Input } from "@/lib/components/ui/input";
-import { BookOpen, Rocket, FileText, HelpCircle, MessageCircle, Code, Shield, Crown, User, Search } from "lucide-react";
+import { BookOpen, Rocket, FileText, HelpCircle, MessageCircle, Code, Shield, Crown, User, Search, ChevronLeft } from "lucide-react";
 import { UserRole } from "@/lib/types/auth";
 import { getDocsForUser, getUserDocFolder, type DocFile } from "@/lib/utils/doc-loader";
 
@@ -27,15 +28,29 @@ export default function DocumentationPage() {
   const [showingApiDoc, setShowingApiDoc] = useState(false);
   const [apiSearchTerm, setApiSearchTerm] = useState("");
   const [activeApiDoc, setActiveApiDoc] = useState<string>("");
+  const { setSidebarOpen } = useLayout();
+
+  // Auto-hide sidebar when viewing API docs
+  useEffect(() => {
+    if (showingApiDoc) {
+      setSidebarOpen(false);
+    } else {
+      setSidebarOpen(true);
+    }
+  }, [showingApiDoc, setSidebarOpen]);
 
   // Get role-specific API docs
-  const isPaidUser = (user as any)?.paid_status === "Paid";
+  // Logic: 
+  // - Admin/Super User: Admin docs
+  // - General User with points > 0: Paid User docs
+  // - General User with points = 0: Demo User docs
+  
+  const isAdminOrSuper = user?.role === UserRole.SUPER_USER || user?.role === UserRole.ADMIN_USER;
+  const isPaidUser = user?.role === UserRole.GENERAL_USER && (user?.pointBalance || 0) > 0;
+  const isDemoUser = user?.role === UserRole.GENERAL_USER && (user?.pointBalance || 0) === 0;
+
   const apiDocs = user ? getDocsForUser(user.role, isPaidUser) : [];
   const userFolder = user ? getUserDocFolder(user.role, isPaidUser) : "";
-
-  // Determine user type for API docs
-  const isAdminOrSuper = user?.role === UserRole.SUPER_USER || user?.role === UserRole.ADMIN_USER;
-  const isDemoUser = !isPaidUser && user?.role === UserRole.GENERAL_USER;
 
   // Get API documentation content based on user type
   const getApiDocContent = () => {
@@ -148,6 +163,117 @@ X-API-Key: DEMO_KEY
 
   const badgeInfo = getUserBadgeInfo();
 
+  // Filter API docs based on search term
+  const filteredApiDocs = apiDocs.filter(doc => 
+    doc.title.toLowerCase().includes(apiSearchTerm.toLowerCase())
+  );
+
+  // Fullscreen API Documentation Layout
+  if (showingApiDoc) {
+    return (
+      <div className="fixed inset-0 z-50 bg-[rgb(var(--bg-primary))] flex flex-col animate-in fade-in duration-200">
+        {/* Fixed Header */}
+        <div className="flex-none h-16 border-b border-[rgb(var(--border-primary))] bg-[rgb(var(--bg-secondary))] flex items-center justify-between px-6 shadow-sm">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => {
+                setShowingApiDoc(false);
+                setActiveApiDoc("");
+              }}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-[rgb(var(--bg-tertiary))] text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))] transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5" />
+              <span className="font-medium">Back to Dashboard</span>
+            </button>
+            <div className="h-6 w-px bg-[rgb(var(--border-primary))]" />
+            <h2 className="font-semibold text-lg text-[rgb(var(--text-primary))]">
+              {isAdminOrSuper ? "Admin" : isPaidUser ? "Paid" : "Demo"} API Documentation
+            </h2>
+          </div>
+          <Badge variant={badgeInfo.variant} className="flex items-center gap-1.5">
+            {badgeInfo.icon}
+            {badgeInfo.label} Access
+          </Badge>
+        </div>
+
+        {/* Main Layout */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Fixed Sidebar */}
+          <div className="w-72 flex-none border-r border-[rgb(var(--border-primary))] bg-[rgb(var(--bg-secondary))] flex flex-col">
+            {/* Fixed Search Header */}
+            <div className="p-4 border-b border-[rgb(var(--border-primary))] bg-[rgb(var(--bg-secondary))]">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[rgb(var(--text-secondary))]" />
+                <Input
+                  placeholder="Filter endpoints..."
+                  value={apiSearchTerm}
+                  onChange={(e) => setApiSearchTerm(e.target.value)}
+                  className="pl-9 bg-[rgb(var(--bg-primary))]"
+                />
+              </div>
+            </div>
+
+            {/* Scrollable Menu */}
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="bg-[rgb(var(--bg-primary))] border border-[rgb(var(--border-primary))] rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Code className="w-5 h-5 text-primary-color" />
+                  <h3 className="font-semibold text-[rgb(var(--text-primary))]">
+                    API Reference
+                  </h3>
+                </div>
+                <nav className="space-y-1">
+                  {filteredApiDocs.length > 0 ? (
+                    filteredApiDocs.map((doc) => (
+                      <button
+                        key={doc.path}
+                        onClick={() => setActiveApiDoc(doc.path)}
+                        type="button"
+                        className={`w-full text-left px-3 py-2 rounded-lg transition-colors flex items-center gap-2 cursor-pointer ${
+                          activeApiDoc === doc.path
+                            ? "bg-primary-color text-white"
+                            : "hover:bg-[rgb(var(--bg-secondary))] text-[rgb(var(--text-primary))]"
+                        }`}
+                      >
+                        <FileText className="w-4 h-4" />
+                        <span className="text-sm font-medium">{doc.title}</span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="text-sm text-[rgb(var(--text-secondary))] text-center py-4">
+                      No endpoints found
+                    </div>
+                  )}
+                </nav>
+              </div>
+            </div>
+          </div>
+
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto bg-[rgb(var(--bg-primary))]">
+            <div className="max-w-5xl mx-auto p-8">
+              {activeApiDoc ? (
+                <DocViewer docPath={activeApiDoc} />
+              ) : (
+                <Card className="p-12" hover={false}>
+                  <div className="text-center">
+                    <Code className="w-16 h-16 mx-auto mb-4 text-[rgb(var(--text-tertiary))]" />
+                    <h3 className="text-lg font-semibold text-[rgb(var(--text-primary))] mb-2">
+                      Select an API Documentation
+                    </h3>
+                    <p className="text-sm text-[rgb(var(--text-secondary))]">
+                      Choose a topic from the left sidebar to view documentation
+                    </p>
+                  </div>
+                </Card>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto">
       {/* Header */}
@@ -162,120 +288,44 @@ X-API-Key: DEMO_KEY
       </div>
 
       {/* Documentation Content */}
-      <div className={`grid grid-cols-1 ${showingApiDoc ? 'lg:grid-cols-1' : 'lg:grid-cols-4'} gap-6`}>
-        {/* Documentation Navigation - Hide when showing API docs */}
-        {!showingApiDoc && (
-          <div className="lg:col-span-1">
-            <DocNavigation
-              items={generalDocItems}
-              activePath={showingApiDoc ? "" : activeDoc}
-              onNavigate={(path) => {
-                setActiveDoc(path);
-                setShowingApiDoc(false);
-              }}
-            />
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Documentation Navigation */}
+        <div className="lg:col-span-1">
+          <DocNavigation
+            items={generalDocItems}
+            activePath={activeDoc}
+            onNavigate={(path) => {
+              setActiveDoc(path);
+            }}
+          />
             
-            {/* API Documentation Button */}
-            <div className="mt-4">
-              <div className="bg-[rgb(var(--bg-primary))] border border-[rgb(var(--border-primary))] rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <Code className="w-5 h-5 text-primary-color" />
-                  <h3 className="font-semibold text-[rgb(var(--text-primary))]">API Access</h3>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowingApiDoc(true);
-                    setActiveDoc("");
-                  }}
-                  className={`w-full text-left px-3 py-2 rounded-lg transition-colors flex items-center gap-2 ${
-                    showingApiDoc
-                      ? "bg-primary-color text-white"
-                      : "hover:bg-[rgb(var(--bg-secondary))] text-[rgb(var(--text-primary))]"
-                  }`}
-                >
-                  <FileText className="w-4 h-4" />
-                  <span className="text-sm font-medium flex-1">API Documentation</span>
-                  <Badge variant={badgeInfo.variant} size="sm">
-                    {badgeInfo.icon}
-                  </Badge>
-                </button>
+          {/* API Documentation Button */}
+          <div className="mt-4">
+            <div className="bg-[rgb(var(--bg-primary))] border border-[rgb(var(--border-primary))] rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <Code className="w-5 h-5 text-primary-color" />
+                <h3 className="font-semibold text-[rgb(var(--text-primary))]">API Access</h3>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* Documentation Viewer */}
-        <div className={showingApiDoc ? 'lg:col-span-1' : 'lg:col-span-3'}>
-          {showingApiDoc ? (
-            <div className="space-y-4">
-              {/* Back Button */}
               <button
                 onClick={() => {
-                  setShowingApiDoc(false);
-                  setActiveApiDoc("");
+                  setShowingApiDoc(true);
+                  setActiveDoc("");
                 }}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[rgb(var(--bg-secondary))] hover:bg-[rgb(var(--bg-tertiary))] text-[rgb(var(--text-primary))] transition-colors"
+                className="w-full text-left px-3 py-2 rounded-lg transition-colors flex items-center gap-2 hover:bg-[rgb(var(--bg-secondary))] text-[rgb(var(--text-primary))]"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                <span className="text-sm font-medium">Back to Documentation</span>
+                <FileText className="w-4 h-4" />
+                <span className="text-sm font-medium flex-1">API Documentation</span>
+                <Badge variant={badgeInfo.variant} size="sm">
+                  {badgeInfo.icon}
+                </Badge>
               </button>
-
-              {/* API Docs Navigation and Viewer */}
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                {/* API Docs List */}
-                <div className="lg:col-span-1">
-                  <div className="bg-[rgb(var(--bg-primary))] border border-[rgb(var(--border-primary))] rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Code className="w-5 h-5 text-primary-color" />
-                      <h3 className="font-semibold text-[rgb(var(--text-primary))]">
-                        {isAdminOrSuper ? "Admin" : isPaidUser ? "Paid" : "Demo"} API Docs
-                      </h3>
-                    </div>
-                    <nav className="space-y-1">
-                      {apiDocs.map((doc) => (
-                        <button
-                          key={doc.path}
-                          onClick={() => setActiveApiDoc(doc.path)}
-                          type="button"
-                          className={`w-full text-left px-3 py-2 rounded-lg transition-colors flex items-center gap-2 cursor-pointer ${
-                            activeApiDoc === doc.path
-                              ? "bg-primary-color text-white"
-                              : "hover:bg-[rgb(var(--bg-secondary))] text-[rgb(var(--text-primary))]"
-                          }`}
-                        >
-                          <FileText className="w-4 h-4" />
-                          <span className="text-sm font-medium">{doc.title}</span>
-                        </button>
-                      ))}
-                    </nav>
-                  </div>
-                </div>
-
-                {/* API Doc Viewer */}
-                <div className="lg:col-span-3">
-                  {activeApiDoc ? (
-                    <DocViewer docPath={activeApiDoc} />
-                  ) : (
-                    <Card className="p-12" hover={false}>
-                      <div className="text-center">
-                        <Code className="w-16 h-16 mx-auto mb-4 text-[rgb(var(--text-tertiary))]" />
-                        <h3 className="text-lg font-semibold text-[rgb(var(--text-primary))] mb-2">
-                          Select an API Documentation
-                        </h3>
-                        <p className="text-sm text-[rgb(var(--text-secondary))]">
-                          Choose a topic from the left to view documentation
-                        </p>
-                      </div>
-                    </Card>
-                  )}
-                </div>
-              </div>
             </div>
-          ) : (
-            <DocViewer docPath={activeDoc} />
-          )}
+          </div>
+        </div>
+
+        {/* Documentation Viewer */}
+        <div className="lg:col-span-3">
+          <DocViewer docPath={activeDoc} />
         </div>
       </div>
     </div>
