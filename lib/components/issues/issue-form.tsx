@@ -133,7 +133,7 @@ export function IssueForm({ onSubmit, isSubmitting = false }: IssueFormProps) {
             label="Category"
             placeholder="Select category"
             value={formData.category}
-            onChange={(value) => setFormData({ ...formData, category: value as IssueCategory })}
+            onChange={(e) => setFormData({ ...formData, category: e.target.value as IssueCategory })}
             options={categoryOptions}
             required
           />
@@ -142,7 +142,7 @@ export function IssueForm({ onSubmit, isSubmitting = false }: IssueFormProps) {
             label="Priority"
             placeholder="Select priority"
             value={formData.priority}
-            onChange={(value) => setFormData({ ...formData, priority: value as IssuePriority })}
+            onChange={(e) => setFormData({ ...formData, priority: e.target.value as IssuePriority })}
             options={priorityOptions}
             required
           />

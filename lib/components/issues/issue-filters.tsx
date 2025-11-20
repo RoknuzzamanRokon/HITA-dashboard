@@ -97,8 +97,8 @@ export function IssueFilters({ filters, onFilterChange, resultCount }: IssueFilt
         <Select
           placeholder="Filter by status"
           value={filters.status}
-          onChange={(value) =>
-            onFilterChange({ ...filters, status: value as IssueStatus | "all" })
+          onChange={(e) =>
+            onFilterChange({ ...filters, status: e.target.value as IssueStatus | "all" })
           }
           options={statusOptions}
         />
@@ -107,8 +107,8 @@ export function IssueFilters({ filters, onFilterChange, resultCount }: IssueFilt
         <Select
           placeholder="Filter by priority"
           value={filters.priority}
-          onChange={(value) =>
-            onFilterChange({ ...filters, priority: value as IssuePriority | "all" })
+          onChange={(e) =>
+            onFilterChange({ ...filters, priority: e.target.value as IssuePriority | "all" })
           }
           options={priorityOptions}
         />
@@ -118,8 +118,8 @@ export function IssueFilters({ filters, onFilterChange, resultCount }: IssueFilt
           <Select
             placeholder="Filter by category"
             value={filters.category}
-            onChange={(value) =>
-              onFilterChange({ ...filters, category: value as IssueCategory | "all" })
+            onChange={(e) =>
+              onFilterChange({ ...filters, category: e.target.value as IssueCategory | "all" })
             }
             options={categoryOptions}
           />
