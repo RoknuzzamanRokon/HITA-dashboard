@@ -1,0 +1,1705 @@
+{
+	"info": {
+		"_postman_id": "f290f4b8-6b6b-44e4-a532-5ef70fbae101",
+		"name": "ITT Hotel API for User --------------> HITA USER",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "38769584"
+	},
+	"item": [
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "Authentication",
+					"item": [
+						{
+							"name": "Who am  I",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									},
+									{
+										"key": "",
+										"value": "",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{host}}/v1.0/user/check-me",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"user",
+										"check-me"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Login",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Parse the JSON response body\r",
+											"let response = pm.response.json();\r",
+											"\r",
+											"// Check if access_token exists\r",
+											"if (response.access_token) {\r",
+											"    // Set the token as an environment variable\r",
+											"    pm.environment.set(\"token\", response.access_token);\r",
+											"    console.log(\"Access token saved to environment variable 'token'\");\r",
+											"} else {\r",
+											"    console.error(\"Access token not found in response\");\r",
+											"}\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "username",
+											"value": "ursamroko",
+											"description": "super user",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": "ursamroko123",
+											"type": "text"
+										},
+										{
+											"key": "username",
+											"value": "ron123",
+											"description": "admin user",
+											"type": "text",
+											"disabled": true
+										},
+										{
+											"key": "password",
+											"value": "ron123",
+											"type": "text",
+											"disabled": true
+										},
+										{
+											"key": "username",
+											"value": "roman",
+											"description": "general user",
+											"type": "text",
+											"disabled": true
+										},
+										{
+											"key": "password",
+											"value": "roman123",
+											"type": "text",
+											"disabled": true
+										},
+										{
+											"key": "username",
+											"value": "rokon",
+											"description": "super ueser",
+											"type": "text",
+											"disabled": true
+										},
+										{
+											"key": "password",
+											"value": "rokon123",
+											"type": "text",
+											"disabled": true
+										},
+										{
+											"key": "username",
+											"value": "rokonrokon",
+											"type": "text",
+											"disabled": true
+										},
+										{
+											"key": "password",
+											"value": "rokonrokon",
+											"type": "text",
+											"disabled": true
+										}
+									]
+								},
+								"url": {
+									"raw": "{{host}}/v1.0/auth/token",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"auth",
+										"token"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Register New User",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"username\": \"safwan\",\r\n  \"email\": \"safwan@gmail.com\",\r\n  \"password\": \"safwan\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/v1.0/auth/register",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"auth",
+										"register"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Refresh token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1cnNhbXJva28iLCJ1c2VyX2lkIjoiMWEyMDNjY2RhNCIsInJvbGUiOiJzdXBlcl91c2VyIiwiZXhwIjoxNzYzODcwODQ3LCJ0eXBlIjoiYWNjZXNzIiwiaWF0IjoxNzYyMDcwODQ3fQ.4NgWHKm-B4cBOf2vzmyN1KMZSkr4M3ScL-XQNB9pNS4\",\r\n    \"token_type\": \"bearer\"\r\n}"
+								},
+								"url": {
+									"raw": "{{host}}/v1.0/auth/refresh-token",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"auth",
+										"refresh-token"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Logout",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{host}}/v1.0/auth/logout",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"auth",
+										"logout"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Logout from all device",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{host}}/v1.0/auth/logout-all",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"auth",
+										"logout-all"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Health checking",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{host}}/v1.0/auth/health",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"auth",
+										"health"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Check My API Key",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{host}}/v1.0/auth/check-api-key",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"auth",
+										"check-api-key"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Reset Password",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "// {\r\n//     \"current_password\": \"string\",\r\n//     \"new_password\": \"string\", \r\n//     \"confirm_password\": \"string\"\r\n// }\r\n\r\n\r\n{\r\n    \"current_password\": \"string\",\r\n    \"new_password\": \"string\", \r\n    \"confirm_password\": \"string\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/v1.0/auth/reset-password",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"auth",
+										"reset-password"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "User Use",
+					"item": [
+						{
+							"name": "Who am  I",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									},
+									{
+										"key": "",
+										"value": "",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{host}}/v1.0/user/check-me",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"user",
+										"check-me"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Point History",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{host}}/v1.0/user/points-check",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"user",
+										"points-check"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Check Active my Provider List",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{host}}/v1.0/user/check-active-my-supplier",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"user",
+										"check-active-my-supplier"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get All active suppler list with info",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/v1.0/hotels/check-my-active-suppliers-info",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"hotels",
+										"check-my-active-suppliers-info"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Get All active suppler list with info",
+									"originalRequest": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json",
+												"type": "text"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{host}}/v1.0/hotels/check-my-active-suppliers-info",
+											"host": [
+												"{{host}}"
+											],
+											"path": [
+												"v1.0",
+												"hotels",
+												"check-my-active-suppliers-info"
+											]
+										}
+									},
+									"_postman_previewlanguage": "",
+									"header": [],
+									"cookie": [
+										{
+											"expires": "Invalid Date",
+											"domain": "",
+											"path": ""
+										}
+									],
+									"body": "{\r\n    \"userId\": \"2f010fe4c5\",\r\n    \"role\": \"admin_user\",\r\n    \"accessSummary\": {\r\n        \"totalSuppliersInSystem\": 2,\r\n        \"accessibleSuppliersCount\": 2,\r\n        \"permissionBased\": false\r\n    },\r\n    \"supplierAnalytics\": {\r\n        \"totalHotelsAccessible\": 313778,\r\n        \"activeSuppliers\": 2,\r\n        \"inactiveSuppliers\": 0,\r\n        \"accessCoveragePercentage\": 100.0\r\n    },\r\n    \"accessibleSuppliers\": [\r\n        {\r\n            \"supplierName\": \"agoda\",\r\n            \"totalHotels\": 234831,\r\n            \"accessType\": \"fullAccess\",\r\n            \"permissionGrantedAt\": null,\r\n            \"lastUpdated\": \"2025-11-06T13:10:45\",\r\n            \"availabilityStatus\": \"active\"\r\n        },\r\n        {\r\n            \"supplierName\": \"dotw\",\r\n            \"totalHotels\": 78947,\r\n            \"accessType\": \"fullAccess\",\r\n            \"permissionGrantedAt\": null,\r\n            \"lastUpdated\": \"2025-11-06T13:10:30\",\r\n            \"availabilityStatus\": \"active\"\r\n        }\r\n    ],\r\n    \"responseMetadata\": {\r\n        \"generatedAt\": \"2025-11-06T13:17:21.868620\"\r\n    }\r\n}"
+								}
+							]
+						},
+						{
+							"name": "Get Supplier info",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/v1.0/hotels/get-supplier-info?supplier={{supplier_name}}",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"hotels",
+										"get-supplier-info"
+									],
+									"query": [
+										{
+											"key": "supplier",
+											"value": "{{supplier_name}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Turn On Supplier",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"supplier_name\": [\r\n        \"dotw\"\r\n    ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/v1.0/permissions/turn-on-supplier",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"permissions",
+										"turn-on-supplier"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Turn off Supplier",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"supplier_name\": [\r\n        \"dotw\",\r\n        \"ean\",\r\n        \"goglobal\",\r\n        \"grnconnect\",\r\n        \"hotelbeds\",\r\n        \"hotelston\",\r\n        \"hyperguestdirect\",\r\n        \"illusionshotel\",\r\n        \"innstanttravel\",\r\n        \"itt\"\r\n    ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/v1.0/permissions/turn-off-supplier",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"permissions",
+										"turn-off-supplier"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Hotel",
+			"item": [
+				{
+					"name": "Mapping",
+					"item": [
+						{
+							"name": "Get All Ittid",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/v1.0/content/get-all-ittid",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"content",
+										"get-all-ittid"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1",
+											"disabled": true
+										},
+										{
+											"key": "resume_key",
+											"value": "{{resume_value}}",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get update hotel mapping",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/v1.0/content/get-update-provider-info?from_date={{from_date}}&to_date={{to_date}}",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"content",
+										"get-update-provider-info"
+									],
+									"query": [
+										{
+											"key": "resume_key",
+											"value": "3481068_IrNc9SmE6FDiDcALaBVZt1c1PjAV4QIHFuTu8yVnBvg1Yx8jVn",
+											"disabled": true
+										},
+										{
+											"key": "from_date",
+											"value": "{{from_date}}",
+											"description": "YYYY-MM-DD"
+										},
+										{
+											"key": "to_date",
+											"value": "{{to_date}}",
+											"description": "YYYY-MM-DD"
+										},
+										{
+											"key": "limit_per_page",
+											"value": "{{limit_value}}",
+											"disabled": true
+										},
+										{
+											"key": "page",
+											"value": "{{page_number}}",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get mapping with Country ISO",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"supplier\": \"restel\",\r\n  \"country_iso\": \"TH\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/v1.0/content/get-basic-info-follow-countryCode",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"content",
+										"get-basic-info-follow-countryCode"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get hotel mapping info using ittid",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"ittid\": \"10000003\"\n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/v1.0/mapping/get-mapping-hotel-with-ittid",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"mapping",
+										"get-mapping-hotel-with-ittid"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get hotel mapping info with provider name & id",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"provider_hotel_identity\": [\n    {\n      \"provider_name\": \"hotelbeds\",\n      \"provider_id\": \"1\"\n    }\n  ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/v1.0/content/get-hotel-mapping-info-using-provider-name-and-id",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"content",
+										"get-hotel-mapping-info-using-provider-name-and-id"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Location Search",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/v1.0/locations/search?city={{city_name}}&country={{country_name}}&limit=10&offset=0",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"locations",
+										"search"
+									],
+									"query": [
+										{
+											"key": "city",
+											"value": "{{city_name}}"
+										},
+										{
+											"key": "country",
+											"value": "{{country_name}}"
+										},
+										{
+											"key": "limit",
+											"value": "10"
+										},
+										{
+											"key": "offset",
+											"value": "0"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Content",
+					"item": [
+						{
+							"name": "Get hotel with ittid",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{host}}/v1.0/content/get-hotel-with-ittid/{{ittid}}",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"content",
+										"get-hotel-with-ittid",
+										"{{ittid}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get hotel info using ittid list",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"ittid\": [\"10000004\"]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/v1.0/content/get-hotel-with-ittid",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"content",
+										"get-hotel-with-ittid"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get hotel info with provider name & id",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"provider_hotel_identity\": [\n    {\n      \"provider_name\": \"hotelbeds\",\n      \"provider_id\": \"1\"\n    }\n\n  ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/v1.0/content/get-hotel-data-with-provider-name-and-id",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"content",
+										"get-hotel-data-with-provider-name-and-id"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get all basic info with supplier",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"supplier_name\": [\"tbohotel\"]\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/v1.0/content/get-all-hotel-basic-info-with-supplier?limit_per_page={{limit_per_page}}",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"content",
+										"get-all-hotel-basic-info-with-supplier"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1",
+											"disabled": true
+										},
+										{
+											"key": "resume_key",
+											"value": "{{resume_value}}",
+											"disabled": true
+										},
+										{
+											"key": "limit_per_page",
+											"value": "{{limit_per_page}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get all Hotel basic info",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/v1.0/content/get-all-basic-hotel-info?limit={{limit_per_page}}",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"content",
+										"get-all-basic-hotel-info"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1",
+											"disabled": true
+										},
+										{
+											"key": "resume_key",
+											"value": "{{resume_value}}",
+											"disabled": true
+										},
+										{
+											"key": "limit",
+											"value": "{{limit_per_page}}"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Basic",
+					"item": [
+						{
+							"name": "Get all Countries ISO",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{host}}/v1.0/locations/country-iso",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"locations",
+										"country-iso"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get all Countries name List",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{host}}/v1.0/locations/countries",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"locations",
+										"countries"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get all Cities",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/v1.0/locations/cities",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"locations",
+										"cities"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get all Cities With Countries",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{host}}/v1.0/locations/cities-with-countries",
+									"host": [
+										"{{host}}"
+									],
+									"path": [
+										"v1.0",
+										"locations",
+										"cities-with-countries"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Get List of Available Supplier",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}/v1.0/user/check-available-suppliers",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"v1.0",
+						"user",
+						"check-available-suppliers"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

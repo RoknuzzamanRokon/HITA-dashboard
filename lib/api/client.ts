@@ -280,8 +280,16 @@ export class ApiClient {
     }
 
     if (!response.ok) {
-      console.error(`❌ Error response - Status: ${response.status}`);
-      console.error(`❌ Error data:`, JSON.stringify(data, null, 2));
+      // Only log unexpected errors to console (not 403/404 which are expected for demo users)
+      const isExpectedError = response.status === 403 || response.status === 404;
+
+      if (!isExpectedError) {
+        console.error(`❌ Error response - Status: ${response.status}`);
+        console.error(`❌ Error data:`, JSON.stringify(data, null, 2));
+      } else {
+        // Just log as info for expected errors
+        console.log(`ℹ️ Expected error response - Status: ${response.status}`);
+      }
 
       // For 422 validation errors, show detailed field errors
       if (response.status === 422 && data && data.detail) {
