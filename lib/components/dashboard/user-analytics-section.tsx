@@ -20,6 +20,7 @@ import {
   Key,
   Users,
 } from "lucide-react";
+import { fetchMyActivity, type MyActivityResponse } from "@/lib/api/audit";
 
 interface UserAnalytics {
   totalLogins: number;
@@ -40,52 +41,49 @@ interface ActivityItem {
 
 export function UserAnalyticsSection() {
   const [analytics, setAnalytics] = useState<UserAnalytics | null>(null);
+  const [apiData, setApiData] = useState<MyActivityResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Mock data for now - will integrate with audit API
-    const mockData: UserAnalytics = {
-      totalLogins: 127,
-      apiCalls: 1543,
-      failedAttempts: 3,
-      lastLogin: new Date().toISOString(),
-      securityScore: 95,
-      recentActivities: [
-        {
-          id: "1",
-          type: "login",
-          description: "Successful login from Chrome",
-          timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-          status: "success",
-        },
-        {
-          id: "2",
-          type: "api_call",
-          description: "Hotel search API request",
-          timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-          status: "success",
-        },
-        {
-          id: "3",
-          type: "export",
-          description: "Created hotel export job",
-          timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-          status: "success",
-        },
-        {
-          id: "4",
-          type: "failed_login",
-          description: "Failed login attempt",
-          timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-          status: "warning",
-        },
-      ],
+    const loadAnalytics = async () => {
+      try {
+        setLoading(true);
+        const response = await fetchMyActivity(30);
+        
+        if (response.success && response.data) {
+          setApiData(response.data);
+          
+          // Map API response to analytics format
+          const mappedData: UserAnalytics = {
+            totalLogins: response.data.authentication.successful_logins,
+            apiCalls: response.data.summary.total_endpoint_calls,
+            failedAttempts: response.data.authentication.failed_logins,
+            lastLogin: response.data.user.account_created,
+            securityScore: response.data.authentication.success_rate,
+            recentActivities: response.data.recent_activities.slice(0, 4).map((activity) => ({
+              id: activity.id.toString(),
+              type: activity.action,
+              description: `${activity.action_label}${activity.endpoint ? ` - ${activity.endpoint}` : ''}`,
+              timestamp: activity.created_at,
+              status: activity.details?.success === false ? "error" : "success" as "success" | "warning" | "error",
+            })),
+          };
+          
+          setAnalytics(mappedData);
+          setError(null);
+        } else {
+          setError(response.error?.message || 'Failed to load analytics');
+        }
+      } catch (err) {
+        console.error('Error loading analytics:', err);
+        setError('Failed to load analytics data');
+      } finally {
+        setLoading(false);
+      }
     };
 
-    setTimeout(() => {
-      setAnalytics(mockData);
-      setLoading(false);
-    }, 500);
+    loadAnalytics();
   }, []);
 
   const getIconForActivity = (type: string) => {
@@ -93,6 +91,7 @@ export function UserAnalyticsSection() {
       case "login":
         return <Key className="w-4 h-4" />;
       case "api_call":
+      case "api_access":
         return <Activity className="w-4 h-4" />;
       case "export":
         return <BarChart3 className="w-4 h-4" />;
@@ -131,6 +130,22 @@ export function UserAnalyticsSection() {
     );
   }
 
+  if (error) {
+    return (
+      <Card className="p-6">
+        <div className="text-center">
+          <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-[rgb(var(--text-primary))] mb-2">
+            Unable to Load Analytics
+          </h3>
+          <p className="text-sm text-[rgb(var(--text-secondary))]">
+            {error}
+          </p>
+        </div>
+      </Card>
+    );
+  }
+
   if (!analytics) return null;
 
   return (
@@ -143,7 +158,7 @@ export function UserAnalyticsSection() {
             Your Activity Analytics
           </h2>
           <p className="text-sm text-[rgb(var(--text-secondary))] mt-1">
-            Track your usage patterns and security status
+            Track your usage patterns and security status {apiData && `(Last ${apiData.period.days} days)`}
           </p>
         </div>
       </div>
@@ -154,9 +169,9 @@ export function UserAnalyticsSection() {
         <Card className="p-6 bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200" hover={false}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-blue-600">Total Logins</p>
+              <p className="text-sm font-medium text-blue-600">Successful Logins</p>
               <p className="text-3xl font-bold text-blue-900 mt-2">{analytics.totalLogins}</p>
-              <p className="text-xs text-blue-600 mt-1">All time</p>
+              <p className="text-xs text-blue-600 mt-1">Last 30 days</p>
             </div>
             <div className="p-3 bg-blue-500 rounded-lg">
               <Key className="w-6 h-6 text-white" />
@@ -170,7 +185,7 @@ export function UserAnalyticsSection() {
             <div>
               <p className="text-sm font-medium text-purple-600">API Requests</p>
               <p className="text-3xl font-bold text-purple-900 mt-2">{analytics.apiCalls}</p>
-              <p className="text-xs text-purple-600 mt-1">All time</p>
+              <p className="text-xs text-purple-600 mt-1">Last 30 days</p>
             </div>
             <div className="p-3 bg-purple-500 rounded-lg">
               <Activity className="w-6 h-6 text-white" />
@@ -182,11 +197,13 @@ export function UserAnalyticsSection() {
         <Card className="p-6 bg-gradient-to-br from-green-50 to-green-100/50 border-green-200" hover={false}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-green-600">Security Score</p>
+              <p className="text-sm font-medium text-green-600">Success Rate</p>
               <p className="text-3xl font-bold text-green-900 mt-2">{analytics.securityScore}%</p>
               <div className="flex items-center gap-1 mt-1">
                 <CheckCircle className="w-3 h-3 text-green-600" />
-                <p className="text-xs text-green-600">Excellent</p>
+                <p className="text-xs text-green-600">
+                  {analytics.securityScore >= 95 ? 'Excellent' : analytics.securityScore >= 80 ? 'Good' : 'Fair'}
+                </p>
               </div>
             </div>
             <div className="p-3 bg-green-500 rounded-lg">
@@ -233,195 +250,138 @@ export function UserAnalyticsSection() {
         </div>
 
         <div className="space-y-4">
-          {analytics.recentActivities.map((activity, index) => (
-            <div
-              key={activity.id}
-              className="flex items-start gap-4 pb-4 border-b border-[rgb(var(--border-primary))] last:border-b-0 last:pb-0"
-            >
-              <div className={`p-2 rounded-lg ${getStatusColor(activity.status)}`}>
-                {getIconForActivity(activity.type)}
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-[rgb(var(--text-primary))]">
-                  {activity.description}
-                </p>
-                <p className="text-xs text-[rgb(var(--text-secondary))] mt-1">
-                  {new Date(activity.timestamp).toLocaleString()}
-                </p>
-              </div>
-              <Badge 
-                variant={activity.status === "success" ? "success" : activity.status === "warning" ? "warning" : "error"}
-                size="sm"
+          {analytics.recentActivities.length > 0 ? (
+            analytics.recentActivities.map((activity, index) => (
+              <div
+                key={activity.id}
+                className="flex items-start gap-4 pb-4 border-b border-[rgb(var(--border-primary))] last:border-b-0 last:pb-0"
               >
-                {activity.status}
-              </Badge>
+                <div className={`p-2 rounded-lg ${getStatusColor(activity.status)}`}>
+                  {getIconForActivity(activity.type)}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-[rgb(var(--text-primary))]">
+                    {activity.description}
+                  </p>
+                  <p className="text-xs text-[rgb(var(--text-secondary))] mt-1">
+                    {new Date(activity.timestamp).toLocaleString()}
+                  </p>
+                </div>
+                <Badge 
+                  variant={activity.status === "success" ? "success" : activity.status === "warning" ? "warning" : "error"}
+                  size="sm"
+                >
+                  {activity.status}
+                </Badge>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-8">
+              <Eye className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+              <p className="text-sm text-[rgb(var(--text-secondary))]">No recent activities</p>
             </div>
-          ))}
+          )}
         </div>
       </Card>
 
       {/* Usage Trends & Top Activities */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* This Month vs Last Month */}
-        <Card className="p-6" hover={false}>
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-primary-color" />
+      {apiData && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Top Endpoints */}
+          <Card className="p-6" hover={false}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-primary-color" />
+                <h3 className="text-lg font-semibold text-[rgb(var(--text-primary))]">
+                  Top Endpoints
+                </h3>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {apiData.endpoint_usage.top_endpoints.slice(0, 5).map((endpoint, idx) => (
+                <div key={idx}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-[rgb(var(--text-primary))]">{endpoint.endpoint}</span>
+                    <span className="text-sm font-semibold text-purple-600">{endpoint.calls} calls</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="bg-purple-500 h-2 rounded-full" style={{ width: `${endpoint.percentage}%` }}></div>
+                  </div>
+                </div>
+              ))}
+              {apiData.endpoint_usage.top_endpoints.length === 0 && (
+                <p className="text-sm text-[rgb(var(--text-secondary))] text-center py-4">No endpoint data available</p>
+              )}
+            </div>
+          </Card>
+
+          {/* Top Activities Breakdown */}
+          <Card className="p-6" hover={false}>
+            <div className="flex items-center gap-2 mb-6">
+              <Activity className="w-5 h-5 text-primary-color" />
               <h3 className="text-lg font-semibold text-[rgb(var(--text-primary))]">
-                Monthly Comparison
+                Activity Breakdown
               </h3>
             </div>
-          </div>
 
-          <div className="space-y-4">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-[rgb(var(--text-primary))]">Logins</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-green-600">+23%</span>
-                  <TrendingUp className="w-4 h-4 text-green-600" />
+            <div className="space-y-4">
+              {apiData.activity_breakdown.map((activity, idx) => (
+                <div key={idx} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      {getIconForActivity(activity.action)}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-[rgb(var(--text-primary))]">{activity.action_label}</p>
+                      <p className="text-xs text-[rgb(var(--text-secondary))]">{activity.percentage.toFixed(1)}%</p>
+                    </div>
+                  </div>
+                  <span className="text-lg font-bold text-blue-600">{activity.count}</span>
                 </div>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-blue-500 h-2 rounded-full" style={{ width: '75%' }}></div>
-              </div>
-              <div className="flex justify-between text-xs text-[rgb(var(--text-secondary))] mt-1">
-                <span>This month: 45</span>
-                <span>Last month: 37</span>
-              </div>
+              ))}
+              {apiData.activity_breakdown.length === 0 && (
+                <p className="text-sm text-[rgb(var(--text-secondary))] text-center py-4">No activity data available</p>
+              )}
             </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-[rgb(var(--text-primary))]">API Calls</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-green-600">+156%</span>
-                  <TrendingUp className="w-4 h-4 text-green-600" />
-                </div>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-purple-500 h-2 rounded-full" style={{ width: '92%' }}></div>
-              </div>
-              <div className="flex justify-between text-xs text-[rgb(var(--text-secondary))] mt-1">
-                <span>This month: 823</span>
-                <span>Last month: 321</span>
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-[rgb(var(--text-primary))]">Exports</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-green-600">+40%</span>
-                  <TrendingUp className="w-4 h-4 text-green-600" />
-                </div>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-green-500 h-2 rounded-full" style={{ width: '65%' }}></div>
-              </div>
-              <div className="flex justify-between text-xs text-[rgb(var(--text-secondary))] mt-1">
-                <span>This month: 14</span>
-                <span>Last month: 10</span>
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        {/* Top Activities Breakdown */}
-        <Card className="p-6" hover={false}>
-          <div className="flex items-center gap-2 mb-6">
-            <Activity className="w-5 h-5 text-primary-color" />
-            <h3 className="text-lg font-semibold text-[rgb(var(--text-primary))]">
-              Top Activities
-            </h3>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Key className="w-4 h-4 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-[rgb(var(--text-primary))]">Login Sessions</p>
-                  <p className="text-xs text-[rgb(var(--text-secondary))]">Authentication</p>
-                </div>
-              </div>
-              <span className="text-lg font-bold text-blue-600">127</span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <Activity className="w-4 h-4 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-[rgb(var(--text-primary))]">API Requests</p>
-                  <p className="text-xs text-[rgb(var(--text-secondary))]">Data queries</p>
-                </div>
-              </div>
-              <span className="text-lg font-bold text-purple-600">1,543</span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <BarChart3 className="w-4 h-4 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-[rgb(var(--text-primary))]">Export Jobs</p>
-                  <p className="text-xs text-[rgb(var(--text-secondary))]">Data exports</p>
-                </div>
-              </div>
-              <span className="text-lg font-bold text-green-600">24</span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-orange-100 rounded-lg">
-                  <Eye className="w-4 h-4 text-orange-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-[rgb(var(--text-primary))]">Page Views</p>
-                  <p className="text-xs text-[rgb(var(--text-secondary))]">Navigation</p>
-                </div>
-              </div>
-              <span className="text-lg font-bold text-orange-600">892</span>
-            </div>
-          </div>
-        </Card>
-      </div>
+          </Card>
+        </div>
+      )}
 
       {/* Performance Insights */}
-      <Card className="p-6 bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200" hover={false}>
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-3">
-              <CheckCircle className="w-5 h-5 text-indigo-600" />
-              <h3 className="text-lg font-semibold text-indigo-900">
-                Performance Insights
-              </h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <p className="text-sm text-indigo-600 mb-1">Avg. Session Time</p>
-                <p className="text-2xl font-bold text-indigo-900">8m 32s</p>
-                <p className="text-xs text-indigo-600 mt-1">+12% from last week</p>
+      {apiData && (
+        <Card className="p-6 bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200" hover={false}>
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-3">
+                <CheckCircle className="w-5 h-5 text-indigo-600" />
+                <h3 className="text-lg font-semibold text-indigo-900">
+                  Activity Insights
+                </h3>
               </div>
-              <div>
-                <p className="text-sm text-indigo-600 mb-1">Most Active Day</p>
-                <p className="text-2xl font-bold text-indigo-900">Tuesday</p>
-                <p className="text-xs text-indigo-600 mt-1">37 activities</p>
-              </div>
-              <div>
-                <p className="text-sm text-indigo-600 mb-1">Success Rate</p>
-                <p className="text-2xl font-bold text-indigo-900">98.2%</p>
-                <p className="text-xs text-indigo-600 mt-1">Excellent performance</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <p className="text-sm text-indigo-600 mb-1">Avg. Daily Activities</p>
+                  <p className="text-2xl font-bold text-indigo-900">{apiData.summary.average_daily_activities.toFixed(1)}</p>
+                  <p className="text-xs text-indigo-600 mt-1">activities per day</p>
+                </div>
+                <div>
+                  <p className="text-sm text-indigo-600 mb-1">Most Active Day</p>
+                  <p className="text-2xl font-bold text-indigo-900">{apiData.patterns.most_active_day_of_week}</p>
+                  <p className="text-xs text-indigo-600 mt-1">{apiData.summary.most_active_day.count} activities</p>
+                </div>
+                <div>
+                  <p className="text-sm text-indigo-600 mb-1">Success Rate</p>
+                  <p className="text-2xl font-bold text-indigo-900">{apiData.authentication.success_rate}%</p>
+                  <p className="text-xs text-indigo-600 mt-1">
+                    {apiData.authentication.success_rate >= 95 ? 'Excellent performance' : 'Good performance'}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      )}
     </div>
   );
 }
