@@ -476,9 +476,9 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
         {/* Left Column - Charts */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="lg:col-span-1 space-y-8">
           {/* Main Analytics Chart */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
             <div className="flex items-center justify-between mb-6">
@@ -501,21 +501,9 @@ export default function AnalyticsPage() {
                 </span>
               </div>
             </div>
-            {statsLoading || isRefreshing ? (
-              <SkeletonLoader className="h-[350px] w-full rounded-xl" />
-            ) : stats ? (
-              <AnalyticsCharts
-                stats={stats}
-                timePeriod={selectedPeriod}
-                loading={isRefreshing}
-              />
-            ) : (
-              <EmptyState
-                title="No Data Available"
-                description="No analytics data found for this period."
-                icon={<BarChart3 className="w-12 h-12 text-slate-300" />}
-              />
-            )}
+            <AnalyticsCharts
+              timePeriod={selectedPeriod}
+            />
           </div>
 
           {/* Provider Access Chart */}
@@ -533,182 +521,6 @@ export default function AnalyticsPage() {
               loading={userMgmtLoading || isRefreshing}
             />
           </div>
-        </div>
-
-        {/* Right Column - Stats & Activity */}
-        <div className="space-y-8">
-          {/* User Role Distribution */}
-          {exportData && (
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-              <h3 className="text-lg font-bold text-slate-900 mb-6">
-                User Distribution
-              </h3>
-              <div className="space-y-4">
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium text-slate-700">
-                      Admin Users
-                    </span>
-                    <span className="text-sm font-bold text-slate-900">
-                      {exportData.user_analytics.role_distribution.admin_user}
-                    </span>
-                  </div>
-                  <div className="w-full bg-slate-200 rounded-full h-2">
-                    <div
-                      className="bg-slate-800 h-2 rounded-full"
-                      style={{
-                        width: `${
-                          (exportData.user_analytics.role_distribution
-                            .admin_user /
-                            exportData.user_analytics.total_users) *
-                          100
-                        }%`,
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium text-blue-900">
-                      General Users
-                    </span>
-                    <span className="text-sm font-bold text-blue-900">
-                      {exportData.user_analytics.role_distribution.general_user}
-                    </span>
-                  </div>
-                  <div className="w-full bg-blue-200 rounded-full h-2">
-                    <div
-                      className="bg-blue-600 h-2 rounded-full"
-                      style={{
-                        width: `${
-                          (exportData.user_analytics.role_distribution
-                            .general_user /
-                            exportData.user_analytics.total_users) *
-                          100
-                        }%`,
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-xl bg-violet-50 border border-violet-100">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium text-violet-900">
-                      Super Users
-                    </span>
-                    <span className="text-sm font-bold text-violet-900">
-                      {exportData.user_analytics.role_distribution.super_user}
-                    </span>
-                  </div>
-                  <div className="w-full bg-violet-200 rounded-full h-2">
-                    <div
-                      className="bg-violet-600 h-2 rounded-full"
-                      style={{
-                        width: `${
-                          (exportData.user_analytics.role_distribution
-                            .super_user /
-                            exportData.user_analytics.total_users) *
-                          100
-                        }%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Real-Time Activity */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-lg font-bold text-slate-900">
-                  Live Activity
-                </h3>
-                <p className="text-sm text-slate-500">Real-time system events</p>
-              </div>
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-              </span>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors">
-                <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
-                  <Users className="w-4 h-4" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-900">
-                    Active Users
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {stats?.activeUsers || 0} users online now
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors">
-                <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
-                  <Activity className="w-4 h-4" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-900">
-                    Daily Actions
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {exportData?.performance_analytics.activity_metrics
-                      .avg_daily_activity || 0}{" "}
-                    avg. per day
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors">
-                <div className="p-2 bg-violet-100 text-violet-600 rounded-lg">
-                  <TrendingUp className="w-4 h-4" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-900">Growth</p>
-                  <p className="text-xs text-slate-500">
-                    {userManagement?.user_lifecycle.user_growth_rate.toFixed(
-                      1
-                    ) || 0}
-                    % increase
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* System Performance Mini-Cards */}
-          {exportData && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                <p className="text-xs font-medium text-slate-500 mb-1">
-                  Response Time
-                </p>
-                <p className="text-lg font-bold text-slate-900">
-                  {
-                    exportData.performance_analytics.performance_benchmarks
-                      .response_time
-                  }
-                </p>
-              </div>
-              <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                <p className="text-xs font-medium text-slate-500 mb-1">
-                  Error Rate
-                </p>
-                <p className="text-lg font-bold text-slate-900">
-                  {
-                    exportData.performance_analytics.performance_benchmarks
-                      .error_rate
-                  }
-                </p>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 

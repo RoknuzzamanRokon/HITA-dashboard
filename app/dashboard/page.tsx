@@ -13,7 +13,6 @@ import {
   RevenueTrendChart,
   UserActivityChart,
   BookingSourcesChart,
-  LiveActivityFeed,
   QuickActions,
   RecentTransactions,
   SupplierHotelCountsChart,
@@ -21,7 +20,6 @@ import {
   SupplierFreshnessScatterChart,
   UserLoginTimelineChart,
   ApiRequestTimelineChart,
-  PackagePointComparisonChart,
   CombinedActivityChart,
   UserAnalyticsSection,
 } from "@/lib/components/dashboard";
@@ -464,16 +462,6 @@ export default function DashboardPage() {
         <div className="lg:col-span-2">
           <RevenueTrendChart loading={statsLoading} stats={stats} />
         </div>
-        <PermissionGuard
-          permissions={[
-            Permission.VIEW_ANALYTICS,
-            Permission.MANAGE_SYSTEM_SETTINGS,
-          ]}
-        >
-          <div className="lg:row-span-2">
-            <LiveActivityFeed isEnabled={realTimeEnabled} />
-          </div>
-        </PermissionGuard>
         <UserActivityChart loading={statsLoading} stats={stats} />
         <PermissionGuard
           permissions={[
@@ -493,27 +481,7 @@ export default function DashboardPage() {
           }}
         >
           <div className="mb-8">
-            <h2 className="text-lg font-medium text-[rgb(var(--text-primary))] mb-4">
-              Platform Analytics
-            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Supplier Hotel Counts - 2 columns */}
-              <div className="col-span-1 md:col-span-2">
-                <SupplierHotelCountsChart
-                  suppliers={chartsData?.suppliers || []}
-                  loading={chartsLoading}
-                  isRefreshing={chartsRefreshing}
-                />
-              </div>
-
-              {/* Package Points - 1 column */}
-              <div className="col-span-1">
-                <PackagePointComparisonChart
-                  packages={chartsData?.packages || []}
-                  loading={chartsLoading}
-                  isRefreshing={chartsRefreshing}
-                />
-              </div>
 
               {/* Combined Activity - 3 columns - Admin/Super User Only */}
               <PermissionGuard

@@ -34,7 +34,6 @@ export type {
     CombinedActivityChartProps,
 } from "./analytics-charts-new";
 
-export { LiveActivityFeed } from "./live-activity-feed";
 export { QuickActions } from "./quick-actions";
 export { RecentTransactions } from "./recent-transactions";
 export { UserAnalyticsSection } from "./user-analytics-section";

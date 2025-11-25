@@ -1,6 +1,7 @@
 /**
  * Analytics Charts Components
  * Interactive charts with smooth animations and custom tooltips
+ * Updated to fetch data from Points Summary API
  */
 
 "use client";
@@ -24,34 +25,31 @@ import {
   Legend,
 } from "recharts";
 import ChartWrapper from "./chart-wrapper";
+import { fetchPointsSummary, type PointsSummaryResponse } from "@/lib/api/dashboard";
 
-// Sample data - in a real app, this would come from props or API
-const revenueData = [
-  { month: "Jan", revenue: 12000, users: 450 },
-  { month: "Feb", revenue: 15000, users: 520 },
-  { month: "Mar", revenue: 18000, users: 680 },
-  { month: "Apr", revenue: 22000, users: 750 },
-  { month: "May", revenue: 25000, users: 890 },
-  { month: "Jun", revenue: 28000, users: 920 },
-];
+// Color palette for charts
+const chartColors = {
+  primary: "#3b82f6",
+  secondary: "#10b981",
+  accent: "#8b5cf6",
+  warning: "#f59e0b",
+  error: "#ef4444",
+  gradients: {
+    blue: ["#3b82f6", "#1d4ed8"],
+    green: ["#10b981", "#059669"],
+    purple: ["#8b5cf6", "#7c3aed"],
+    orange: ["#f59e0b", "#d97706"],
+    pink: ["#ec4899", "#db2777"],
+    cyan: ["#06b6d4", "#0891b2"],
+    red: ["#ef4444", "#dc2626"],
+  },
+};
 
-const userActivityData = [
-  { day: "Mon", active: 120, inactive: 30 },
-  { day: "Tue", active: 150, inactive: 25 },
-  { day: "Wed", active: 180, inactive: 20 },
-  { day: "Thu", active: 200, inactive: 15 },
-  { day: "Fri", active: 250, inactive: 10 },
-  { day: "Sat", active: 180, inactive: 35 },
-  { day: "Sun", active: 160, inactive: 40 },
-];
-
-const bookingSourceData = [
-  { name: "Direct", value: 35, color: "#8884d8" },
-  { name: "Booking.com", value: 25, color: "#82ca9d" },
-  { name: "Expedia", value: 20, color: "#ffc658" },
-  { name: "Airbnb", value: 15, color: "#ff7c7c" },
-  { name: "Others", value: 5, color: "#8dd1e1" },
-];
+const ROLE_COLORS: Record<string, string> = {
+  admin_user: chartColors.gradients.red[0],
+  general_user: chartColors.gradients.blue[0],
+  super_user: chartColors.gradients.purple[0],
+};
 
 // Custom tooltip component
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -61,7 +59,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         <p className="font-medium text-gray-900 mb-2">{label}</p>
         {payload.map((entry: any, index: number) => (
           <p key={index} className="text-sm" style={{ color: entry.color }}>
-            {entry.name}: {entry.value.toLocaleString()}
+            {entry.name}: {typeof entry.value === "number" ? entry.value.toLocaleString() : entry.value}
           </p>
         ))}
       </div>
@@ -70,34 +68,43 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-// Revenue Trend Chart
+// Revenue Trend Chart - Fetches data from API
 export const RevenueTrendChart: React.FC<{
   loading?: boolean;
   stats?: any;
-}> = ({ loading = false, stats }) => {
+}> = ({ loading: externalLoading = false }) => {
   const [animationKey, setAnimationKey] = useState(0);
+  const [data, setData] = useState<PointsSummaryResponse | null>(null);
+  const [internalLoading, setInternalLoading] = useState(true);
 
   useEffect(() => {
-    if (!loading) {
-      setAnimationKey((prev) => prev + 1);
-    }
-  }, [loading]);
+    const loadData = async () => {
+      try {
+        setInternalLoading(true);
+        const response = await fetchPointsSummary();
+        
+        if (response.success && response.data) {
+          setData(response.data);
+          setAnimationKey((prev) => prev + 1);
+        }
+      } catch (err) {
+        console.error('Error loading chart data:', err);
+      } finally {
+        setInternalLoading(false);
+      }
+    };
 
-  // Transform activity trends data for the chart
-  const chartData =
-    stats?.activityTrends?.map((trend: any) => ({
-      date: new Date(trend.date).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      }),
-      points: parseInt(trend.points_transferred),
-      transactions: trend.transaction_count,
-    })) ||
-    revenueData.map((item) => ({
-      ...item,
-      points: item.revenue,
-      transactions: item.users,
-    }));
+    loadData();
+  }, []);
+
+  const loading = externalLoading || internalLoading;
+
+  // Generate chart data from API transaction types
+  const chartData = data?.transaction_types?.slice(0, 6).map((item, index) => ({
+    date: item.type.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase()),
+    points: parseInt(item.total_points),
+    transactions: item.count,
+  })) || [];
 
   return (
     <ChartWrapper
@@ -119,7 +126,7 @@ export const RevenueTrendChart: React.FC<{
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-          <XAxis dataKey="month" stroke="#666" fontSize={12} tickLine={false} />
+          <XAxis dataKey="date" stroke="#666" fontSize={12} tickLine={false} />
           <YAxis
             stroke="#666"
             fontSize={12}
@@ -154,41 +161,43 @@ export const RevenueTrendChart: React.FC<{
   );
 };
 
-// User Activity Chart
+// User Activity Chart - Fetches data from API
 export const UserActivityChart: React.FC<{
   loading?: boolean;
   stats?: any;
-}> = ({ loading = false, stats }) => {
+}> = ({ loading: externalLoading = false }) => {
   const [animationKey, setAnimationKey] = useState(0);
+  const [data, setData] = useState<PointsSummaryResponse | null>(null);
+  const [internalLoading, setInternalLoading] = useState(true);
 
   useEffect(() => {
-    if (!loading) {
-      setAnimationKey((prev) => prev + 1);
-    }
-  }, [loading]);
+    const loadData = async () => {
+      try {
+        setInternalLoading(true);
+        const response = await fetchPointsSummary();
+        
+        if (response.success && response.data) {
+          setData(response.data);
+          setAnimationKey((prev) => prev + 1);
+        }
+      } catch (err) {
+        console.error('Error loading chart data:', err);
+      } finally {
+        setInternalLoading(false);
+      }
+    };
 
-  // Use real data or fallback to mock data
-  const chartData = stats
-    ? [
-        { category: "Super Users", count: stats.superUsers, color: "#8884d8" },
-        { category: "Admin Users", count: stats.adminUsers, color: "#82ca9d" },
-        {
-          category: "General Users",
-          count: stats.generalUsers,
-          color: "#ffc658",
-        },
-        {
-          category: "Active Users",
-          count: stats.activeUsers,
-          color: "#ff7c7c",
-        },
-        {
-          category: "Inactive Users",
-          count: stats.inactiveUsers,
-          color: "#8dd1e1",
-        },
-      ]
-    : userActivityData;
+    loadData();
+  }, []);
+
+  const loading = externalLoading || internalLoading;
+
+  // Use API data from points_by_role
+  const chartData = data?.points_by_role?.map((item) => ({
+    category: item.role.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase()),
+    count: item.user_count,
+    color: ROLE_COLORS[item.role] || chartColors.primary,
+  })) || [];
 
   return (
     <ChartWrapper
@@ -228,18 +237,36 @@ export const UserActivityChart: React.FC<{
   );
 };
 
-// Booking Sources Chart
+// Booking Sources Chart - Uses Points Distribution data from API
 export const BookingSourcesChart: React.FC<{
   loading?: boolean;
   stats?: any;
-}> = ({ loading = false, stats }) => {
+}> = ({ loading: externalLoading = false }) => {
   const [animationKey, setAnimationKey] = useState(0);
+  const [data, setData] = useState<PointsSummaryResponse | null>(null);
+  const [internalLoading, setInternalLoading] = useState(true);
 
   useEffect(() => {
-    if (!loading) {
-      setAnimationKey((prev) => prev + 1);
-    }
-  }, [loading]);
+    const loadData = async () => {
+      try {
+        setInternalLoading(true);
+        const response = await fetchPointsSummary();
+        
+        if (response.success && response.data) {
+          setData(response.data);
+          setAnimationKey((prev) => prev + 1);
+        }
+      } catch (err) {
+        console.error('Error loading chart data:', err);
+      } finally {
+        setInternalLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const loading = externalLoading || internalLoading;
 
   const renderCustomLabel = ({
     cx,
@@ -265,23 +292,19 @@ export const BookingSourcesChart: React.FC<{
         fontSize={12}
         fontWeight="bold"
       >
-        {stats?.pointDistribution
-          ? `${value.toFixed(1)}M`
-          : `${(percent * 100).toFixed(0)}%`}
+        {`${value.toFixed(1)}M`}
       </text>
     );
   };
 
-  // Transform point distribution data for the chart
-  const chartData =
-    stats?.pointDistribution?.map((item: any, index: number) => ({
-      name: item.role
-        .replace("_", " ")
-        .replace(/\b\w/g, (l: string) => l.toUpperCase()),
-      value: parseInt(item.total_points) / 1000000, // Convert to millions
-      color:
-        bookingSourceData[index % bookingSourceData.length]?.color || "#8884d8",
-    })) || bookingSourceData;
+  // Transform point distribution data from API only
+  const chartData = data?.points_by_role?.map((item) => ({
+    name: item.role
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (l) => l.toUpperCase()),
+    value: parseInt(item.current_points) / 1000000, // Convert to millions
+    color: ROLE_COLORS[item.role] || chartColors.primary,
+  })) || [];
 
   return (
     <ChartWrapper
@@ -304,7 +327,7 @@ export const BookingSourcesChart: React.FC<{
             animationDuration={1500}
             animationBegin={0}
           >
-            {bookingSourceData.map((entry, index) => (
+            {chartData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.color} />
             ))}
           </Pie>
