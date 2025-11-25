@@ -12,7 +12,7 @@ import { DocViewer, DocNavigation } from "@/lib/components/docs/doc-viewer";
 import { Card } from "@/lib/components/ui/card";
 import { Badge } from "@/lib/components/ui/badge";
 import { Input } from "@/lib/components/ui/input";
-import { BookOpen, Rocket, FileText, HelpCircle, MessageCircle, Code, Shield, Crown, User, Search, ChevronLeft } from "lucide-react";
+import { BookOpen, Rocket, FileText, HelpCircle, MessageCircle, Code, Shield, Crown, User, Search, ChevronLeft, Download } from "lucide-react";
 import { UserRole } from "@/lib/types/auth";
 import { getDocsForUser, getUserDocFolder, type DocFile } from "@/lib/utils/doc-loader";
 
@@ -190,10 +190,26 @@ X-API-Key: DEMO_KEY
               {isAdminOrSuper ? "Admin" : isPaidUser ? "Paid" : "Demo"} API Documentation
             </h2>
           </div>
-          <Badge variant={badgeInfo.variant} className="flex items-center gap-1.5">
-            {badgeInfo.icon}
-            {badgeInfo.label} Access
-          </Badge>
+            <div className="flex items-center gap-4">
+              <Badge variant={badgeInfo.variant} className="flex items-center gap-1.5">
+                {badgeInfo.icon}
+                {badgeInfo.label} Access
+              </Badge>
+              <a
+                href={
+                  isAdminOrSuper
+                    ? "/docs/admin/postman_collection/ITT Hotel API for admin.postman_collection.json"
+                    : isPaidUser
+                    ? "/docs/paid_user/postman_collection/ITT Hotel API for paid user.postman_collection.json"
+                    : "/docs/non_paid_user/postman_collection/ITT Hotel API for non paid user.postman_collection.json"
+                }
+                download
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-color hover:opacity-90 text-white transition-all shadow-sm hover:shadow-md"
+              >
+                <Download className="w-4 h-4" />
+                <span className="font-medium text-sm">Download Postman Collection</span>
+              </a>
+            </div>
         </div>
 
         {/* Main Layout */}
@@ -277,15 +293,9 @@ X-API-Key: DEMO_KEY
   return (
     <div className="mx-auto">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-[rgb(var(--text-primary))] flex items-center gap-3">
-          <BookOpen className="w-8 h-8 text-primary-color" />
-          Documentation
-        </h1>
-        <p className="text-[rgb(var(--text-secondary))] mt-2">
-          Learn how to use the platform effectively
-        </p>
-      </div>
+        <div className="mb-8">
+          {/* Postman collection download buttons removed */}
+        </div>
 
       {/* Documentation Content */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
