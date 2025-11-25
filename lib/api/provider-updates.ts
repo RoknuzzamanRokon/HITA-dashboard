@@ -39,6 +39,12 @@ export interface AllIttidResponse {
     ittid_list: string[];
 }
 
+export interface DemoIttidResponse {
+    status: string;
+    count: number;
+    hotel_ids: string[];
+}
+
 export interface CountryMappingResponse {
     success: boolean;
     supplier: string;
@@ -164,6 +170,28 @@ export class ProviderUpdatesApi {
     }
 
     /**
+     * Get all demo ITTIDs (for users with no points)
+     */
+    static async getAllDemoIds(): Promise<ApiResponse<DemoIttidResponse>> {
+        try {
+            const endpoint = `/demo/hotel/get-all-demo-id`;
+            // Use auth=true to send token and prevent 401 redirects
+            const response = await apiClient.get<DemoIttidResponse>(endpoint, true);
+
+            return response;
+        } catch (error) {
+            console.error('Failed to fetch all Demo ITTIDs:', error);
+            return {
+                success: false,
+                error: {
+                    status: 500,
+                    message: 'Failed to fetch Demo ITTID data',
+                },
+            };
+        }
+    }
+
+    /**
      * Get updated provider information within date range
      */
     static async getUpdatedProviderInfo(params: {
@@ -255,6 +283,32 @@ export class ProviderUpdatesApi {
     }
 
     /**
+     * Get demo provider mapping info using ITTID
+     */
+    static async getDemoProviderMapping(
+        request: HotelSearchRequest
+    ): Promise<ApiResponse<ProviderMappingResponse>> {
+        try {
+            console.log('📡 Making request to demo provider mapping API with ITTID:', request.ittid);
+            const endpoint = `/demo/hotel/${request.ittid}`;
+            // Use auth=true to send token and prevent 401 redirects
+            const response = await apiClient.get<ProviderMappingResponse>(endpoint, true);
+            console.log('📡 Demo provider mapping API response:', response);
+
+            return response;
+        } catch (error) {
+            console.error('Failed to fetch demo provider mapping by ITTID:', error);
+            return {
+                success: false,
+                error: {
+                    status: 500,
+                    message: 'Failed to fetch demo provider mapping data',
+                },
+            };
+        }
+    }
+
+    /**
      * Get hotel mapping info using provider name and ID
      */
     static async getHotelMappingByProviderIdentity(
@@ -279,6 +333,34 @@ export class ProviderUpdatesApi {
                 error: {
                     status: 500,
                     message: 'Failed to fetch provider identity mapping data',
+                },
+            };
+        }
+    }
+
+    /**
+     * Get demo hotel mapping info using provider name and ID (for users with no points)
+     */
+    static async getDemoHotelMappingByProviderIdentity(
+        request: ProviderIdentityRequest
+    ): Promise<ApiResponse<any>> {
+        try {
+            console.log('📡 Making request to demo provider identity API:', request);
+            const response = await apiClient.post<any>(
+                '/demo/content/get-hotel-mapping-info-using-provider-name-and-id',
+                request,
+                true // requiresAuth
+            );
+            console.log('📡 Demo provider identity API response:', response);
+
+            return response;
+        } catch (error) {
+            console.error('Failed to fetch demo hotel mapping by provider identity:', error);
+            return {
+                success: false,
+                error: {
+                    status: 500,
+                    message: 'Failed to fetch demo provider identity mapping data',
                 },
             };
         }

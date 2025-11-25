@@ -157,9 +157,22 @@ export default function ProviderUpdatePage() {
   const fetchActiveSuppliers = async () => {
     setSuppliersLoading(true);
     try {
-      const response = await apiClient.get<any>(
-        "/user/check-active-my-supplier"
-      );
+      let response;
+      // Check if user has points - if not, use demo endpoint
+      const isDemoUser = !user?.pointBalance || user.pointBalance <= 0;
+      
+      if (isDemoUser) {
+        console.log('📞 Calling demo active suppliers endpoint');
+        response = await apiClient.get<any>(
+          "/demo/check-active-my-supplier"
+        );
+      } else {
+        console.log('📞 Calling standard active suppliers endpoint');
+        response = await apiClient.get<any>(
+          "/user/check-active-my-supplier"
+        );
+      }
+      
       if (response.success && response.data) {
         const suppliers = response.data.on_supplier_list || [];
         setActiveSuppliers(suppliers);
@@ -193,14 +206,23 @@ export default function ProviderUpdatePage() {
     const targetPage = pageToFetch || currentPage;
 
     try {
-      const response = await ProviderUpdatesApi.getAllIttids({
-        page: targetPage,
-      });
+      let response;
+      // Check if user has points - if not, show demo data
+      if (!user?.pointBalance || user.pointBalance <= 0) {
+        response = await ProviderUpdatesApi.getAllDemoIds();
+      } else {
+        response = await ProviderUpdatesApi.getAllIttids({
+          page: targetPage,
+        });
+      }
 
       if (response.success && response.data) {
         // Backend returns AllIttidResponse with ittid_list, convert to HotelMapping format
-        const ittidList = response.data.ittid_list || [];
-        const totalItems = response.data.total_ittid || ittidList.length;
+        const responseData = response.data as any;
+        const ittidList =
+          responseData.ittid_list || responseData.hotel_ids || [];
+        const totalItems =
+          responseData.total_ittid || responseData.count || ittidList.length;
 
         // Memory safety check
         if (!checkMemoryForOperation(ittidList.length)) {
@@ -233,7 +255,7 @@ export default function ProviderUpdatePage() {
 
         setAllIttids(hotelMappings);
         setIttidStats({
-          totalSuppliers: response.data.total_supplier || 0,
+          totalSuppliers: responseData.total_supplier || 0,
           totalIttids: totalItems,
         });
 
@@ -258,9 +280,11 @@ export default function ProviderUpdatePage() {
           setMemoryWarning(
             `Page ${targetPage} of ${calculatedTotalPages} • Showing ${
               limitedList.length
-            } items • Total: ${totalItems.toLocaleString()} items from ${
-              response.data.total_supplier
-            } suppliers`
+            } items • Total: ${totalItems.toLocaleString()} items${
+              responseData.total_supplier
+                ? ` from ${responseData.total_supplier} suppliers`
+                : ""
+            }`
           );
         }
 
@@ -515,6 +539,10 @@ export default function ProviderUpdatePage() {
   // };
 
   const searchByProviderIdentity = async () => {
+    console.log('🔍 searchByProviderIdentity called');
+    console.log('👤 User:', user);
+    console.log('💰 Point Balance:', user?.pointBalance);
+    
     if (!providerIdentityName || !providerIdentityId) {
       setError("Please enter both provider name and provider ID");
       return;
@@ -533,8 +561,18 @@ export default function ProviderUpdatePage() {
         ],
       };
 
-      const response =
-        await ProviderUpdatesApi.getHotelMappingByProviderIdentity(request);
+      let response;
+      // Check if user has points - if not, use demo endpoint
+      const isDemoUser = !user?.pointBalance || user.pointBalance <= 0;
+      console.log('🎯 Is Demo User:', isDemoUser);
+      
+      if (isDemoUser) {
+        console.log('📞 Calling demo provider identity endpoint');
+        response = await ProviderUpdatesApi.getDemoHotelMappingByProviderIdentity(request);
+      } else {
+        console.log('📞 Calling standard provider identity endpoint');
+        response = await ProviderUpdatesApi.getHotelMappingByProviderIdentity(request);
+      }
 
       // Store the raw response for debugging
       setLastApiResponse(response);
@@ -583,6 +621,10 @@ export default function ProviderUpdatePage() {
   };
 
   const searchProviderMapping = async () => {
+    console.log('🔍 searchProviderMapping called');
+    console.log('👤 User:', user);
+    console.log('💰 Point Balance:', user?.pointBalance);
+    
     if (!providerMappingIttid) {
       setError("Please enter an ITTID");
       return;
@@ -593,18 +635,43 @@ export default function ProviderUpdatePage() {
     setProviderMappingResult(null);
 
     try {
-      const response = await ProviderUpdatesApi.getProviderMappingByIttid({
-        ittid: providerMappingIttid,
-      });
+      let response;
+      // Check if user has points - if not, show demo data
+      const isDemoUser = !user?.pointBalance || user.pointBalance <= 0;
+      console.log('🎯 Is Demo User:', isDemoUser);
+      
+      if (isDemoUser) {
+        console.log('📞 Calling demo API endpoint');
+        response = await ProviderUpdatesApi.getDemoProviderMapping({
+          ittid: providerMappingIttid,
+        });
+      } else {
+        console.log('📞 Calling standard API endpoint');
+        response = await ProviderUpdatesApi.getProviderMappingByIttid({
+          ittid: providerMappingIttid,
+        });
+      }
+
+      console.log('✅ API Response:', response);
 
       if (response.success && response.data) {
         setProviderMappingResult(response.data);
       } else {
-        setError(
-          response.error?.message || "Failed to fetch provider mapping data"
-        );
+        // Handle demo mode access restrictions
+        if (response.error?.status === 403) {
+          setError(
+            "Access denied: This item is not available in demo mode. Only the first 100 items are accessible."
+          );
+        } else if (response.error?.status === 404) {
+          setError("This hotel id not open for you.");
+        } else {
+          setError(
+            response.error?.message || "Failed to fetch provider mapping data"
+          );
+        }
       }
     } catch (err) {
+      console.error('❌ Error in searchProviderMapping:', err);
       setError(
         err instanceof Error
           ? err.message
@@ -707,7 +774,16 @@ export default function ProviderUpdatePage() {
               { id: "mapping", label: "Country Mapping", icon: MapPin },
               { id: "all-ittids", label: "All ITTIDs", icon: Database },
               { id: "updates", label: "Provider Updates", icon: RefreshCw },
-            ].map((tab) => (
+            ]
+              .filter((tab) => {
+                // For demo users (no points), only show specific tabs
+                if (!user?.pointBalance || user.pointBalance <= 0) {
+                  return ["provider-identity", "provider-mapping", "all-ittids"].includes(tab.id);
+                }
+                // For paid users, show all tabs
+                return true;
+              })
+              .map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
@@ -1479,6 +1555,7 @@ export default function ProviderUpdatePage() {
               </div>
               <div className="flex gap-2">
                 <button
+                  type="button"
                   onClick={searchByProviderIdentity}
                   disabled={loading}
                   className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
@@ -1489,6 +1566,7 @@ export default function ProviderUpdatePage() {
                   {loading ? "Searching..." : "Search"}
                 </button>
                 <button
+                  type="button"
                   onClick={() => {
                     setProviderIdentityResult(null);
                     setProviderMappingResult(null);
@@ -1510,6 +1588,7 @@ export default function ProviderUpdatePage() {
                     Provider Name
                   </label>
                   <button
+                    type="button"
                     onClick={fetchActiveSuppliers}
                     disabled={suppliersLoading}
                     className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
@@ -1560,6 +1639,12 @@ export default function ProviderUpdatePage() {
                   placeholder="e.g., 1134459"
                   value={providerIdentityId}
                   onChange={(e) => setProviderIdentityId(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      searchByProviderIdentity();
+                    }
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <p className="text-xs text-gray-500 mt-1">
@@ -1694,6 +1779,7 @@ export default function ProviderUpdatePage() {
                 </p>
               </div>
               <button
+                type="button"
                 onClick={searchProviderMapping}
                 disabled={loading}
                 className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
@@ -1714,6 +1800,12 @@ export default function ProviderUpdatePage() {
                 placeholder="e.g., 10000004"
                 value={providerMappingIttid}
                 onChange={(e) => setProviderMappingIttid(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    searchProviderMapping();
+                  }
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <p className="text-xs text-gray-500 mt-1">
@@ -1770,7 +1862,8 @@ export default function ProviderUpdatePage() {
                           Active Mappings
                         </p>
                         <p className="text-lg font-bold text-purple-700">
-                          {providerMappingResult.provider_mappings.length}
+                          {(providerMappingResult.provider_mappings || [])
+                            .length}
                         </p>
                       </div>
                     </div>
@@ -1783,15 +1876,21 @@ export default function ProviderUpdatePage() {
                     Available Providers:
                   </h4>
                   <div className="flex flex-wrap gap-2">
-                    {providerMappingResult.provider_list.map(
-                      (provider, index) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                        >
-                          {getSupplierDisplayName(provider)}
-                        </span>
+                    {(providerMappingResult.provider_list || []).length > 0 ? (
+                      (providerMappingResult.provider_list || []).map(
+                        (provider, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                          >
+                            {getSupplierDisplayName(provider)}
+                          </span>
+                        )
                       )
+                    ) : (
+                      <span className="text-xs text-gray-500">
+                        No providers listed
+                      </span>
                     )}
                   </div>
                 </div>

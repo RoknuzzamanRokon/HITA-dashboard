@@ -13,6 +13,7 @@
  */
 
 import React, { useState, useRef, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { useRequireAuth } from "@/lib/hooks/use-auth";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { useExportJobs } from "@/lib/hooks/use-export-jobs";
@@ -50,12 +51,16 @@ type ConfirmationDialogState = {
 
 export default function ExportsPage() {
   // Authentication check
+  const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useRequireAuth();
   const { user } = useAuth();
 
   // Check if user is general user (needs API key validation)
   const isGeneralUser =
     user?.role === UserRole.GENERAL_USER || user?.role === UserRole.USER;
+
+  // Check if user is a demo user (0 points) - they should not access exports
+  const isDemoUser = user?.pointBalance === 0 || !user?.pointBalance;
 
   // API Key validation state
   const [showApiKeyModal, setShowApiKeyModal] = useState(isGeneralUser);
@@ -653,6 +658,16 @@ export default function ExportsPage() {
       setShowApiKeyModal(false);
     }
   }, [isAuthenticated, isGeneralUser]);
+
+  /**
+   * Redirect demo users to dashboard (they should not access exports)
+   */
+  React.useEffect(() => {
+    if (isAuthenticated && isDemoUser) {
+      console.log('🚫 Demo user detected, redirecting to dashboard...');
+      router.push('/dashboard');
+    }
+  }, [isAuthenticated, isDemoUser, router]);
 
   /**
    * Handler for closing confirmation dialog

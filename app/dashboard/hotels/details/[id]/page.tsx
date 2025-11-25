@@ -8,6 +8,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { HotelService } from "@/lib/api/hotels";
+import { useAuth } from "@/lib/contexts/auth-context";
 import type { FullHotelDetailsResponse } from "@/lib/types/full-hotel-details";
 import { Card } from "@/lib/components/ui/card";
 import { Button } from "@/lib/components/ui/button";
@@ -17,6 +18,7 @@ import { Copy, Check, ChevronDown, ChevronUp } from "lucide-react";
 export default function HotelDetailsPage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
   const ittid = params.id as string;
 
   const [hotelDetails, setHotelDetails] =
@@ -39,7 +41,18 @@ export default function HotelDetailsPage() {
       setError(null);
 
       try {
-        const response = await HotelService.getFullHotelDetails(ittid);
+        let response;
+        // Check if user has points - if not, use demo endpoint
+        const isDemoUser = !user?.pointBalance || user.pointBalance <= 0;
+        console.log('🎯 Is Demo User:', isDemoUser);
+        
+        if (isDemoUser) {
+          console.log('📞 Calling demo full hotel details endpoint');
+          response = await HotelService.getDemoFullHotelDetails(ittid);
+        } else {
+          console.log('📞 Calling standard full hotel details endpoint');
+          response = await HotelService.getFullHotelDetails(ittid);
+        }
 
         if (response.success && response.data) {
           setHotelDetails(response.data);
@@ -54,7 +67,7 @@ export default function HotelDetailsPage() {
     };
 
     fetchHotelDetails();
-  }, [ittid]);
+  }, [ittid, user]);
 
   const handleCopyProviderId = async (providerId: string) => {
     try {

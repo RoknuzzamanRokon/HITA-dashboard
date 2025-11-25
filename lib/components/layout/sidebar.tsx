@@ -18,6 +18,7 @@ import {
 } from "@/lib/utils/menu-config";
 import { useNavigationGuard } from "@/lib/hooks/use-navigation-guard";
 import { useTheme } from "@/lib/contexts/theme-context";
+import { useAuth } from "@/lib/contexts/auth-context";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -173,12 +174,24 @@ function MenuItemComponent({
 export function Sidebar({ isOpen, onClose, onToggle, userRole }: SidebarProps) {
   const pathname = usePathname();
   const { theme } = useTheme();
+  const { user } = useAuth();
   const { hasRouteAccess } = useNavigationGuard();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [isMobile, setIsMobile] = useState(false);
 
+  // Check if user is a demo user
+  const isDemoUser = user?.pointBalance === 0 || !user?.pointBalance;
+
   // Get menu sections filtered by user role
-  const menuSections = getMenuSectionsByRole(userRole);
+  let menuSections = getMenuSectionsByRole(userRole);
+
+  // Filter out exports for demo users
+  if (isDemoUser) {
+    menuSections = menuSections.map(section => ({
+      ...section,
+      items: section.items.filter(item => item.id !== 'exports')
+    })).filter(section => section.items.length > 0);
+  }
 
   // Handle responsive behavior
   useEffect(() => {

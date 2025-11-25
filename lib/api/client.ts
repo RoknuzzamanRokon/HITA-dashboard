@@ -32,7 +32,12 @@ export class ApiClient {
     const apiVersion = process.env.NEXT_PUBLIC_API_VERSION || 'v1.0';
 
     if (apiBaseUrl) {
-      this.baseUrl = `${apiBaseUrl}/${apiVersion}`;
+      // Check if apiBaseUrl already contains the version to avoid double prefixing
+      if (apiBaseUrl.endsWith(apiVersion) || apiBaseUrl.endsWith(`${apiVersion}/`)) {
+        this.baseUrl = apiBaseUrl;
+      } else {
+        this.baseUrl = `${apiBaseUrl}/${apiVersion}`;
+      }
     } else if (process.env.NODE_ENV === 'development') {
       this.baseUrl = 'http://localhost:8001/v1.0';
       console.warn('API URL not set, using fallback:', this.baseUrl);

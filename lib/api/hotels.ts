@@ -560,6 +560,30 @@ export class HotelService {
     }
 
     /**
+     * Check active my supplier (DEMO) - returns demo active/inactive supplier counts for users with no points
+     */
+    static async checkActiveDemoSupplier(): Promise<ApiResponse<{
+        active_supplier: number;
+        total_on_supplier: number;
+        total_off_supplier: number;
+        off_supplier_list: string[];
+        on_supplier_list: string[];
+    }>> {
+        try {
+            return await apiClient.get('/demo/check-active-my-supplier', true);
+        } catch (error) {
+            return {
+                success: false,
+                error: {
+                    status: 0,
+                    message: 'Failed to fetch demo active supplier count',
+                    details: error,
+                },
+            };
+        }
+    }
+
+    /**
      * Autocomplete hotel search - suggests hotel names based on query
      */
     static async autocompleteHotel(query: string): Promise<ApiResponse<Array<{
@@ -934,6 +958,86 @@ export class HotelService {
                 error: {
                     status: 0,
                     message: 'Failed to fetch hotel details',
+                    details: error
+                }
+            };
+        }
+    }
+
+    /**
+     * Get full hotel details by ITTID (DEMO VERSION for users with no points)
+     * Fetches comprehensive hotel information from demo endpoint
+     * 
+     * @param ittid - Hotel ITT mapping ID
+     * @param abortSignal - Optional AbortSignal for request cancellation
+     * @returns Full hotel details with all provider information
+     */
+    static async getDemoFullHotelDetails(
+        ittid: string,
+        abortSignal?: AbortSignal
+    ): Promise<ApiResponse<import('@/lib/types/full-hotel-details').FullHotelDetailsResponse>> {
+        try {
+            console.log(`🏨 Fetching DEMO full hotel details for ittid: ${ittid}`);
+
+            // Check if request was cancelled before starting
+            if (abortSignal?.aborted) {
+                return {
+                    success: false,
+                    error: {
+                        status: 0,
+                        message: 'Request cancelled',
+                        details: 'Request was cancelled before it started'
+                    }
+                };
+            }
+
+            // Make API request to demo endpoint
+            const response = await apiClient.get<import('@/lib/types/full-hotel-details').FullHotelDetailsResponse>(
+                `/demo/content/get-full-hotel-with-itt-mapping-id/${ittid}`,
+                true, // requiresAuth
+                2 // maxRetries
+            );
+
+            // Check if request was cancelled after API call
+            if (abortSignal?.aborted) {
+                return {
+                    success: false,
+                    error: {
+                        status: 0,
+                        message: 'Request cancelled',
+                        details: 'Request was cancelled after API call'
+                    }
+                };
+            }
+
+            if (response.success && response.data) {
+                console.log(`✅ Successfully fetched DEMO full hotel details for ${ittid}`);
+                return response;
+            }
+
+            console.warn(`⚠️ Failed to fetch DEMO full hotel details for ${ittid}:`, response.error);
+            return response;
+
+        } catch (error) {
+            console.error(`❌ Error fetching DEMO full hotel details for ${ittid}:`, error);
+
+            // Handle abort errors
+            if (error instanceof Error && error.name === 'AbortError') {
+                return {
+                    success: false,
+                    error: {
+                        status: 0,
+                        message: 'Request cancelled',
+                        details: error
+                    }
+                };
+            }
+
+            return {
+                success: false,
+                error: {
+                    status: 0,
+                    message: 'Failed to fetch demo hotel details',
                     details: error
                 }
             };
