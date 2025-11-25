@@ -175,11 +175,11 @@ export default function ProviderUpdatePage() {
         }
       } else {
         // Fallback to default suppliers if API fails
-        setActiveSuppliers(["restel", "booking", "expedia"]);
+        setActiveSuppliers(["restel", "expedia"]);
       }
     } catch (error) {
       // Fallback to default suppliers if API fails
-      setActiveSuppliers(["restel", "booking", "expedia"]);
+      setActiveSuppliers(["restel", "expedia"]);
     } finally {
       setSuppliersLoading(false);
     }
@@ -850,7 +850,6 @@ export default function ProviderUpdatePage() {
                   ) : (
                     <>
                       <option value="restel">Restel</option>
-                      <option value="booking">Booking.com</option>
                       <option value="expedia">Expedia</option>
                     </>
                   )}
