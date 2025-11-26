@@ -13,9 +13,28 @@ import {
 } from "lucide-react";
 import { TokenStorage } from "@/lib/auth/token-storage";
 
-interface IpListItem {
-  ip: string;
+interface IpEntry {
+  id: number;
+  ip_address: string;
   created_at: string;
+  updated_at: string;
+}
+
+interface ApiResponse {
+  success: boolean;
+  user: {
+    id: string;
+    username: string;
+    email: string;
+  };
+  ip_whitelist: {
+    total_entries: number;
+    entries: IpEntry[];
+  };
+  managed_by: {
+    id: string;
+    username: string;
+  };
 }
 
 type TabType = "list" | "activate" | "deactivate";
@@ -23,7 +42,9 @@ type TabType = "list" | "activate" | "deactivate";
 export function IpAddressPermissionSection() {
   const [activeTab, setActiveTab] = useState<TabType>("list");
   const [userId, setUserId] = useState("");
-  const [ipList, setIpList] = useState<IpListItem[]>([]);
+  const [ipList, setIpList] = useState<IpEntry[]>([]);
+  const [userInfo, setUserInfo] = useState<ApiResponse["user"] | null>(null);
+  const [managedBy, setManagedBy] = useState<ApiResponse["managed_by"] | null>(null);
   const [newIp, setNewIp] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
@@ -45,8 +66,9 @@ export function IpAddressPermissionSection() {
         throw new Error("Authentication token not found");
       }
 
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8001';
       const response = await fetch(
-        `http://127.0.0.1:8001/v1.0/permissions/ip/list/${userId}`,
+        `${apiBaseUrl}/v1.0/permissions/ip/list/${userId}`,
         {
           method: "GET",
           headers: {
@@ -58,13 +80,19 @@ export function IpAddressPermissionSection() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to fetch IP list");
+        throw new Error(errorData.message || errorData.detail || "Failed to fetch IP list");
       }
 
-      const data = await response.json();
-      setIpList(data.ip_list || []);
-      setSuccess(`Found ${data.ip_list?.length || 0} IP addresses`);
-      setTimeout(() => setSuccess(null), 3000);
+      const data: ApiResponse = await response.json();
+      
+      // Extract IP entries from the response
+      const entries = data.ip_whitelist?.entries || [];
+      setIpList(entries);
+      setUserInfo(data.user);
+      setManagedBy(data.managed_by);
+      
+      setSuccess(`Found ${entries.length} active IP address${entries.length !== 1 ? 'es' : ''} for ${data.user?.username || 'user'}`);
+      setTimeout(() => setSuccess(null), 5000);
     } catch (err) {
       console.error("Error fetching IP list:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch IP list");
@@ -263,22 +291,41 @@ export function IpAddressPermissionSection() {
               </button>
 
               {ipList.length > 0 && (
-                <div className="space-y-2 max-h-64 overflow-y-auto">
+                <div className="space-y-2 max-h-96 overflow-y-auto">
                   <p className="text-sm font-medium text-[rgb(var(--text-secondary))]">
-                    IP Addresses ({ipList.length})
+                    Active IP Addresses ({ipList.length})
                   </p>
-                  {ipList.map((item, index) => (
+                  {ipList.map((entry) => (
                     <div
-                      key={index}
-                      className="p-3 bg-[rgb(var(--bg-secondary))] rounded-md border border-[rgb(var(--border-primary))]"
+                      key={entry.id}
+                      className="p-4 bg-[rgb(var(--bg-secondary))] rounded-md border border-[rgb(var(--border-primary))] hover:border-cyan-500 dark:hover:border-cyan-400 transition-colors"
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="text-[rgb(var(--text-primary))] font-mono font-medium">
-                          {item.ip}
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[rgb(var(--text-primary))] font-mono font-bold text-lg flex items-center">
+                          <Globe className="w-4 h-4 mr-2 text-cyan-600 dark:text-cyan-400" />
+                          {entry.ip_address}
                         </span>
-                        <span className="text-xs text-[rgb(var(--text-secondary))]">
-                          {new Date(item.created_at).toLocaleString()}
+                        <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-black text-xs font-semibold rounded-full">
+                          ACTIVE
                         </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-[rgb(var(--text-secondary))]">Created:</span>
+                          <span className="ml-2 text-[rgb(var(--text-primary))] font-medium">
+                            {new Date(entry.created_at).toLocaleString()}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[rgb(var(--text-secondary))]">Updated:</span>
+                          <span className="ml-2 text-[rgb(var(--text-primary))] font-medium">
+                            {new Date(entry.updated_at).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="mt-2 text-xs">
+                        <span className="text-[rgb(var(--text-secondary))]">Entry ID:</span>
+                        <span className="ml-2 text-[rgb(var(--text-primary))] font-mono">#{entry.id}</span>
                       </div>
                     </div>
                   ))}

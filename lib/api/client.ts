@@ -280,15 +280,16 @@ export class ApiClient {
     }
 
     if (!response.ok) {
-      // Only log unexpected errors to console (not 403/404 which are expected for demo users)
-      const isExpectedError = response.status === 403 || response.status === 404;
+      // Only log unexpected errors to console
+      // 400 (validation/user errors), 403 (permission), 404 (not found) are expected and should be treated as info
+      const isExpectedError = response.status === 400 || response.status === 403 || response.status === 404;
 
       if (!isExpectedError) {
         console.error(`❌ Error response - Status: ${response.status}`);
         console.error(`❌ Error data:`, JSON.stringify(data, null, 2));
       } else {
         // Just log as info for expected errors
-        console.log(`ℹ️ Expected error response - Status: ${response.status}`);
+        console.log(`ℹ️ Expected error response - Status: ${response.status}`, data?.message || data?.error || 'No message');
       }
 
       // For 422 validation errors, show detailed field errors
