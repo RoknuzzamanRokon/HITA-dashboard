@@ -520,11 +520,23 @@ export default function UsersPage() {
   };
 
   /**
-   * Fetch current user details
+   * Fetch current user details with caching
    */
   const fetchCurrentUserDetails = useCallback(async () => {
+    // Prevent duplicate calls within 30 seconds
+    const now = Date.now();
+    const lastFetchKey = "current-user-details-last-fetch";
+    const lastFetch = parseInt(localStorage.getItem(lastFetchKey) || "0");
+
+    if (now - lastFetch < 30000) {
+      // 30 seconds cooldown
+      console.log("🚫 Skipping current user details fetch - too recent");
+      return;
+    }
+
     try {
       console.log("👤 Fetching current user details...");
+      localStorage.setItem(lastFetchKey, now.toString());
 
       // Make direct API call to get raw response from /user/check-me
       const response = await apiClient.get<any>("/user/check-me");

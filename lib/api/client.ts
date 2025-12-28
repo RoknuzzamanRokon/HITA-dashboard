@@ -25,6 +25,7 @@ export interface ApiResponse<T = any> {
 
 export class ApiClient {
   private baseUrl: string;
+  private activeRequests: Map<string, AbortController> = new Map();
 
   constructor(baseUrl?: string) {
     // Use the full API URL with version, not just the base URL
@@ -65,6 +66,25 @@ export class ApiClient {
       retryCount = 0,
       retryDelay = 1000
     } = options;
+
+    // Create a unique request ID for tracking
+    const requestId = `${method}-${endpoint}-${Date.now()}`;
+
+    // Cancel any existing request to the same endpoint
+    const existingController = this.activeRequests.get(endpoint);
+    if (existingController) {
+      console.log(`🚫 Cancelling existing request to ${endpoint}`);
+      existingController.abort();
+    }
+
+    // Create new abort controller for this request
+    const abortController = new AbortController();
+    this.activeRequests.set(endpoint, abortController);
+
+    // Clean up the request tracking when done
+    const cleanup = () => {
+      this.activeRequests.delete(endpoint);
+    };
 
     console.log('🚀 API Request:', method, endpoint);
 
@@ -137,6 +157,8 @@ export class ApiClient {
       headers: requestHeaders,
       mode: 'cors',
       credentials: 'omit', // Changed from 'include' to avoid CORS issues
+      // Use the abort controller for better connection handling
+      signal: abortController.signal,
     };
 
     if (body && method !== 'GET') {
@@ -215,6 +237,7 @@ export class ApiClient {
         }
       }
 
+      cleanup();
       return result;
     } catch (err) {
       console.error('API request failed:', err);
@@ -224,19 +247,31 @@ export class ApiClient {
       let errorMessage = 'Network error';
       let errorStatus = 0;
 
-      // Check if this is a CORS error
-      if (err instanceof TypeError && err.message.includes('fetch')) {
+      // Handle different types of errors
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        console.warn('🚫 Request was cancelled or timed out');
+        cleanup();
+        errorMessage = 'Request was cancelled. Please try again.';
+        errorStatus = 408; // Request Timeout
+      } else if (err instanceof TypeError && err.message.includes('fetch')) {
         console.error('🚨 CORS Error detected - this is likely a backend CORS configuration issue');
         console.error('💡 Your backend needs to allow requests from http://localhost:3000');
 
         errorMessage = `Cannot connect to backend API at ${this.baseUrl}. Please ensure:\n1. Backend server is running at ${this.baseUrl}\n2. CORS is configured to allow requests from ${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}`;
         errorStatus = 0;
       } else if (err instanceof Error) {
-        errorMessage = err.message;
+        // Handle connection reset errors more gracefully
+        if (err.message.includes('connection') || err.message.includes('network')) {
+          console.warn('🔌 Connection issue detected - this is usually temporary');
+          errorMessage = 'Connection interrupted. Please try again.';
+          errorStatus = 0;
+        } else {
+          errorMessage = err.message;
+        }
       }
 
-      // Retry on network errors
-      if (retryCount > 0) {
+      // Retry on network errors (but not on abort errors to avoid infinite loops)
+      if (retryCount > 0 && !(err instanceof DOMException && err.name === 'AbortError')) {
         console.log(`🔄 Retrying request after error (${retryCount} attempts remaining)...`);
         await this.delay(retryDelay);
         return this.request<T>(endpoint, {
@@ -246,6 +281,7 @@ export class ApiClient {
         });
       }
 
+      cleanup();
       return {
         success: false,
         error: {
@@ -260,6 +296,15 @@ export class ApiClient {
   // Delay helper for retry logic
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // Cancel all active requests (useful for cleanup on navigation)
+  public cancelAllRequests(): void {
+    console.log(`🚫 Cancelling ${this.activeRequests.size} active requests`);
+    for (const [endpoint, controller] of this.activeRequests) {
+      controller.abort();
+    }
+    this.activeRequests.clear();
   }
 
   // Parse and normalize responses
@@ -372,4 +417,21 @@ export class ApiClient {
 }
 
 export const apiClient = new ApiClient();
+
+// Add global cleanup to prevent connection reset errors
+if (typeof window !== 'undefined') {
+  // Cancel all requests when the page is about to unload
+  window.addEventListener('beforeunload', () => {
+    apiClient.cancelAllRequests();
+  });
+
+  // Cancel all requests when the page becomes hidden (tab switch, minimize, etc.)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      console.log('🔄 Page hidden, cancelling active requests to prevent connection errors');
+      apiClient.cancelAllRequests();
+    }
+  });
+}
+
 export default apiClient;

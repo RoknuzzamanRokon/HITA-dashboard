@@ -57,6 +57,12 @@ export const useDashboardStats = (realTimeInterval?: number): UseDashboardStatsR
     const [lastFetch, setLastFetch] = useState<Date | null>(null);
 
     const fetchStats = async (isBackground = false) => {
+        // Prevent duplicate calls within 5 seconds
+        if (lastFetch && Date.now() - lastFetch.getTime() < 5000 && !isBackground) {
+            console.log('🚫 Skipping duplicate dashboard stats API call - too recent');
+            return;
+        }
+
         try {
             if (!isBackground) {
                 setLoading(true);

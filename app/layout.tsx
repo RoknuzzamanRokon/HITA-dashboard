@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/lib/contexts/theme-context";
 import { ToastProvider } from "@/lib/components/ui/toast";
 import { NotificationProvider } from "@/lib/components/notifications/notification-provider";
 import { NotificationContainerLazy } from "@/lib/components/notifications/notification-container-lazy";
+import { ChunkErrorHandler } from "@/lib/components/error/chunk-error-handler";
 
 export const metadata: Metadata = {
   title: config.app.name,
@@ -25,6 +26,7 @@ export default function RootLayout({
             <NotificationProvider>
               <ToastProvider>{children}</ToastProvider>
               <NotificationContainerLazy />
+              <ChunkErrorHandler />
             </NotificationProvider>
           </AuthProvider>
         </ThemeProvider>

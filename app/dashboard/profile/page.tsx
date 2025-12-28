@@ -79,13 +79,30 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      fetchProfile();
+      // Add a small delay and cache check to prevent duplicate calls
+      const timeoutId = setTimeout(() => {
+        fetchProfile();
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
     }
   }, [isAuthenticated]);
 
   const fetchProfile = async () => {
+    // Prevent duplicate calls within 30 seconds
+    const now = Date.now();
+    const lastFetchKey = "profile-last-fetch";
+    const lastFetch = parseInt(localStorage.getItem(lastFetchKey) || "0");
+
+    if (now - lastFetch < 30000) {
+      // 30 seconds cooldown
+      console.log("🚫 Skipping profile fetch - too recent");
+      return;
+    }
+
     setLoading(true);
     setError(null);
+    localStorage.setItem(lastFetchKey, now.toString());
 
     try {
       const token = TokenStorage.getToken();

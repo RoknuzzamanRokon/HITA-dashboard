@@ -9,6 +9,7 @@ import React, {
   useContext,
   useReducer,
   useEffect,
+  useRef,
   ReactNode,
 } from "react";
 import { AuthService } from "@/lib/api/auth";
@@ -100,6 +101,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [error, setError] = React.useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = React.useState(false);
 
+  // Cache for refreshUser to prevent duplicate calls
+  const refreshUserCache = useRef({ lastRefreshTime: 0 });
+
   // Initialize authentication state on mount
   useEffect(() => {
     // Initialize session tracking
@@ -109,11 +113,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Add visibility change listener to re-authenticate when tab becomes visible
   useEffect(() => {
+    let lastRefreshTime = 0;
+    const REFRESH_COOLDOWN = 30000; // 30 seconds cooldown
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible" && state.isAuthenticated) {
-        // Update session activity and silently refresh user data
-        SessionPersistence.updateActivity();
-        refreshUser();
+        const now = Date.now();
+
+        // Only refresh if enough time has passed since last refresh
+        if (now - lastRefreshTime > REFRESH_COOLDOWN) {
+          console.log(
+            "🔄 Tab became visible, refreshing user data (throttled)"
+          );
+          SessionPersistence.updateActivity();
+          refreshUser();
+          lastRefreshTime = now;
+        } else {
+          console.log(
+            "🚫 Skipping user refresh - too recent (within 30s cooldown)"
+          );
+          // Just update activity without API call
+          SessionPersistence.updateActivity();
+        }
       }
     };
 
@@ -358,15 +379,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   /**
-   * Refresh user data
+   * Refresh user data with caching to prevent duplicate API calls
    */
   const refreshUser = async (): Promise<void> => {
+    const now = Date.now();
+    const REFRESH_COOLDOWN = 10000; // 10 seconds cooldown for refreshUser
+
+    // Prevent duplicate calls within cooldown period
+    if (now - refreshUserCache.current.lastRefreshTime < REFRESH_COOLDOWN) {
+      console.log("🚫 Skipping refreshUser - too recent (within 10s cooldown)");
+      return;
+    }
+
     try {
       if (!state.isAuthenticated) return;
+
+      console.log("🔄 Refreshing user data...");
+      refreshUserCache.current.lastRefreshTime = now;
 
       const userResponse = await AuthService.getCurrentUser();
       if (userResponse.success && userResponse.data) {
         dispatch({ type: "SET_USER", payload: userResponse.data });
+        console.log("✅ User data refreshed successfully");
       }
     } catch (error) {
       console.error("Failed to refresh user:", error);

@@ -55,7 +55,24 @@ export default function DashboardPage() {
     "checking" | "connected" | "disconnected"
   >("checking");
   const [testingAPI, setTestingAPI] = useState(false);
-  const [realTimeEnabled, setRealTimeEnabled] = useState(true);
+  const [realTimeEnabled, setRealTimeEnabled] = useState(() => {
+    // Load real-time preference from localStorage, default to false
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("dashboard-realtime-enabled");
+      return saved === "true";
+    }
+    return false;
+  });
+
+  // Save real-time preference to localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        "dashboard-realtime-enabled",
+        realTimeEnabled.toString()
+      );
+    }
+  }, [realTimeEnabled]);
 
   // Dashboard stats hook with conditional real-time updates
   const {
@@ -189,12 +206,20 @@ export default function DashboardPage() {
                 <div className="flex items-center space-x-2 text-xs text-[rgb(var(--text-tertiary))]">
                   <div
                     className={`w-2 h-2 rounded-full ${
-                      realTimeEnabled
-                        ? "bg-green-500 dark:bg-green-400 animate-pulse"
+                      statsLoading || chartsLoading || chartsRefreshing
+                        ? "bg-blue-500 dark:bg-blue-400 animate-pulse"
+                        : realTimeEnabled
+                        ? "bg-green-500 dark:bg-green-400"
                         : "bg-gray-400 dark:bg-gray-600"
                     }`}
                   ></div>
-                  <span>Last updated: {lastFetch.toLocaleTimeString()}</span>
+                  <span>
+                    {statsLoading || chartsLoading
+                      ? "Loading..."
+                      : chartsRefreshing
+                      ? "Updating..."
+                      : `Last updated: ${lastFetch.toLocaleTimeString()}`}
+                  </span>
                 </div>
               )}
             </div>
@@ -202,6 +227,11 @@ export default function DashboardPage() {
           <div className="flex space-x-2">
             <button
               onClick={() => setRealTimeEnabled(!realTimeEnabled)}
+              title={
+                realTimeEnabled
+                  ? "Disable automatic updates every 30 seconds"
+                  : "Enable automatic updates every 30 seconds"
+              }
               className={`px-4 py-2 rounded-md flex items-center space-x-2 transition-colors ${
                 realTimeEnabled
                   ? "bg-green-600 dark:bg-green-500 text-white hover:bg-green-700 dark:hover:bg-green-600"
@@ -209,11 +239,14 @@ export default function DashboardPage() {
               }`}
             >
               <Activity className="w-4 h-4" />
-              <span>{realTimeEnabled ? "Real-time ON" : "Real-time OFF"}</span>
+              <span>
+                {realTimeEnabled ? "Auto-refresh ON" : "Auto-refresh OFF"}
+              </span>
             </button>
             <button
               onClick={handleRefreshStats}
               disabled={statsLoading}
+              title="Manually refresh dashboard data"
               className="px-4 py-2 bg-green-600 dark:bg-green-500 text-white rounded-md hover:bg-green-700 dark:hover:bg-green-600 disabled:opacity-50 flex items-center space-x-2 transition-colors"
             >
               <RefreshCw
@@ -482,7 +515,6 @@ export default function DashboardPage() {
         >
           <div className="mb-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
               {/* Combined Activity - 3 columns - Admin/Super User Only */}
               <PermissionGuard
                 permissions={[

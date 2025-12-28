@@ -46,6 +46,12 @@ export const useDashboardCharts = (
     const [isRefreshing, setIsRefreshing] = useState(false);
 
     const fetchCharts = useCallback(async (isBackground = false) => {
+        // Prevent duplicate calls within 5 seconds
+        if (lastFetch && Date.now() - lastFetch.getTime() < 5000 && !isBackground) {
+            console.log('🚫 Skipping duplicate API call - too recent');
+            return;
+        }
+
         try {
             if (!isBackground) {
                 setLoading(true);
@@ -183,7 +189,7 @@ export const useDashboardCharts = (
                 setIsRefreshing(false);
             }
         }
-    }, []);
+    }, [userRole]); // Add userRole as dependency since it's used in the function
 
     // Initial fetch
     useEffect(() => {

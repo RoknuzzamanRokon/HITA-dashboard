@@ -7,6 +7,36 @@ const nextConfig = {
   // Allow cross-origin requests from network IP during development
   allowedDevOrigins: ["192.168.88.124"],
 
+  // Webpack configuration for better chunk handling
+  webpack: (config, { dev, isServer }) => {
+    if (!isServer) {
+      // Improve chunk loading reliability
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          ...config.optimization.splitChunks,
+          cacheGroups: {
+            ...config.optimization.splitChunks.cacheGroups,
+            // Create more stable chunks
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: "vendors",
+              chunks: "all",
+              priority: 10,
+            },
+          },
+        },
+      };
+    }
+    return config;
+  },
+
+  // Experimental features for better chunk loading
+  experimental: {
+    // Optimize chunk loading
+    optimizePackageImports: ["lucide-react"],
+  },
+
   // Proxy disabled - using backend CORS instead
   // rewrites() {
   //   return [
