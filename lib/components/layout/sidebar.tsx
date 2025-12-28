@@ -179,18 +179,23 @@ export function Sidebar({ isOpen, onClose, onToggle, userRole }: SidebarProps) {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [isMobile, setIsMobile] = useState(false);
 
-  // Check if user is a demo user
-  const isDemoUser = user?.pointBalance === 0 || !user?.pointBalance;
+  // Check if user is a demo user - super users and admin users get full access
+  const isDemoUser =
+    user?.role !== "super_user" &&
+    user?.role !== "admin_user" &&
+    (user?.pointBalance === 0 || !user?.pointBalance);
 
   // Get menu sections filtered by user role
   let menuSections = getMenuSectionsByRole(userRole);
 
   // Filter out exports for demo users
   if (isDemoUser) {
-    menuSections = menuSections.map(section => ({
-      ...section,
-      items: section.items.filter(item => item.id !== 'exports')
-    })).filter(section => section.items.length > 0);
+    menuSections = menuSections
+      .map((section) => ({
+        ...section,
+        items: section.items.filter((item) => item.id !== "exports"),
+      }))
+      .filter((section) => section.items.length > 0);
   }
 
   // Handle responsive behavior
@@ -311,36 +316,46 @@ export function Sidebar({ isOpen, onClose, onToggle, userRole }: SidebarProps) {
           isMobile && isOpen
             ? "w-80 translate-x-0"
             : isMobile && "w-80 -translate-x-full",
-          
-          theme === 'dark' ? "bg-gray-900/80 border-gray-700" : "bg-white/80 border-white/20",
+
+          theme === "dark"
+            ? "bg-gray-900/80 border-gray-700"
+            : "bg-white/80 border-white/20",
 
           // Animation classes
           "transform-gpu will-change-transform"
         )}
         style={{
-          background: theme === 'dark'
-            ? "linear-gradient(135deg, rgba(17, 24, 39, 0.9) 0%, rgba(17, 24, 39, 0.7) 100%)"
-            : "linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%)",
-          boxShadow: theme === 'dark'
-            ? "0 25px 45px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(55, 65, 81, 0.3)"
-            : "0 25px 45px -12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.6)",
+          background:
+            theme === "dark"
+              ? "linear-gradient(135deg, rgba(17, 24, 39, 0.9) 0%, rgba(17, 24, 39, 0.7) 100%)"
+              : "linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%)",
+          boxShadow:
+            theme === "dark"
+              ? "0 25px 45px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(55, 65, 81, 0.3)"
+              : "0 25px 45px -12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.6)",
         }}
       >
         <div className="flex flex-col h-full relative">
           {/* Enhanced Sidebar Header */}
-          <div className={cn(
-            "flex items-center justify-between p-6 border-b backdrop-blur-sm",
-            theme === 'dark' ? "border-gray-700/30 bg-gradient-to-r from-gray-800/20 to-transparent" : "border-white/20 bg-gradient-to-r from-white/20 to-transparent"
-          )}>
+          <div
+            className={cn(
+              "flex items-center justify-between p-6 border-b backdrop-blur-sm",
+              theme === "dark"
+                ? "border-gray-700/30 bg-gradient-to-r from-gray-800/20 to-transparent"
+                : "border-white/20 bg-gradient-to-r from-white/20 to-transparent"
+            )}
+          >
             {isOpen && (
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
                   <Menu className="h-4 w-4 text-white" />
                 </div>
-                <h2 className={cn(
-                  "text-lg font-bold tracking-tight",
-                  theme === 'dark' ? "text-white" : "text-gray-800"
-                )}>
+                <h2
+                  className={cn(
+                    "text-lg font-bold tracking-tight",
+                    theme === "dark" ? "text-white" : "text-gray-800"
+                  )}
+                >
                   Navigation
                 </h2>
               </div>
@@ -351,7 +366,7 @@ export function Sidebar({ isOpen, onClose, onToggle, userRole }: SidebarProps) {
               onClick={isMobile ? onClose : onToggle}
               className={cn(
                 "p-2 rounded-xl transition-all duration-300 group relative overflow-hidden",
-                theme === 'dark'
+                theme === "dark"
                   ? "text-gray-300 hover:text-white hover:bg-gray-700/40"
                   : "text-gray-600 hover:text-gray-900 hover:bg-white/40",
                 "hover:backdrop-blur-sm hover:shadow-lg hover:scale-110",
@@ -360,12 +375,14 @@ export function Sidebar({ isOpen, onClose, onToggle, userRole }: SidebarProps) {
               )}
               aria-label={isMobile ? "Close sidebar" : "Toggle sidebar"}
             >
-              <div className={cn(
-                "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl",
-                theme === 'dark'
-                  ? "bg-gradient-to-r from-gray-700/20 to-transparent"
-                  : "bg-gradient-to-r from-white/20 to-transparent"
-              )} />
+              <div
+                className={cn(
+                  "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl",
+                  theme === "dark"
+                    ? "bg-gradient-to-r from-gray-700/20 to-transparent"
+                    : "bg-gradient-to-r from-white/20 to-transparent"
+                )}
+              />
               {isMobile ? (
                 <X className="h-5 w-5 relative z-10 transition-transform duration-300 group-hover:rotate-90" />
               ) : (

@@ -158,21 +158,20 @@ export default function ProviderUpdatePage() {
     setSuppliersLoading(true);
     try {
       let response;
-      // Check if user has points - if not, use demo endpoint
-      const isDemoUser = !user?.pointBalance || user.pointBalance <= 0;
-      
+      // Check if user should use demo endpoint - super users and admin users get full access
+      const isDemoUser =
+        user?.role !== "super_user" &&
+        user?.role !== "admin_user" &&
+        (!user?.pointBalance || user.pointBalance <= 0);
+
       if (isDemoUser) {
-        console.log('📞 Calling demo active suppliers endpoint');
-        response = await apiClient.get<any>(
-          "/demo/check-active-my-supplier"
-        );
+        console.log("📞 Calling demo active suppliers endpoint");
+        response = await apiClient.get<any>("/demo/check-active-my-supplier");
       } else {
-        console.log('📞 Calling standard active suppliers endpoint');
-        response = await apiClient.get<any>(
-          "/user/check-active-my-supplier"
-        );
+        console.log("📞 Calling standard active suppliers endpoint");
+        response = await apiClient.get<any>("/user/check-active-my-supplier");
       }
-      
+
       if (response.success && response.data) {
         const suppliers = response.data.on_supplier_list || [];
         setActiveSuppliers(suppliers);
@@ -207,8 +206,13 @@ export default function ProviderUpdatePage() {
 
     try {
       let response;
-      // Check if user has points - if not, show demo data
-      if (!user?.pointBalance || user.pointBalance <= 0) {
+      // Check if user should use demo endpoint - super users and admin users get full access
+      const isDemoUser =
+        user?.role !== "super_user" &&
+        user?.role !== "admin_user" &&
+        (!user?.pointBalance || user.pointBalance <= 0);
+
+      if (isDemoUser) {
         response = await ProviderUpdatesApi.getAllDemoIds();
       } else {
         response = await ProviderUpdatesApi.getAllIttids({
@@ -539,10 +543,10 @@ export default function ProviderUpdatePage() {
   // };
 
   const searchByProviderIdentity = async () => {
-    console.log('🔍 searchByProviderIdentity called');
-    console.log('👤 User:', user);
-    console.log('💰 Point Balance:', user?.pointBalance);
-    
+    console.log("🔍 searchByProviderIdentity called");
+    console.log("👤 User:", user);
+    console.log("💰 Point Balance:", user?.pointBalance);
+
     if (!providerIdentityName || !providerIdentityId) {
       setError("Please enter both provider name and provider ID");
       return;
@@ -562,16 +566,24 @@ export default function ProviderUpdatePage() {
       };
 
       let response;
-      // Check if user has points - if not, use demo endpoint
-      const isDemoUser = !user?.pointBalance || user.pointBalance <= 0;
-      console.log('🎯 Is Demo User:', isDemoUser);
-      
+      // Check if user should use demo endpoint - super users and admin users get full access
+      const isDemoUser =
+        user?.role !== "super_user" &&
+        user?.role !== "admin_user" &&
+        (!user?.pointBalance || user.pointBalance <= 0);
+      console.log("🎯 Is Demo User:", isDemoUser);
+
       if (isDemoUser) {
-        console.log('📞 Calling demo provider identity endpoint');
-        response = await ProviderUpdatesApi.getDemoHotelMappingByProviderIdentity(request);
+        console.log("📞 Calling demo provider identity endpoint");
+        response =
+          await ProviderUpdatesApi.getDemoHotelMappingByProviderIdentity(
+            request
+          );
       } else {
-        console.log('📞 Calling standard provider identity endpoint');
-        response = await ProviderUpdatesApi.getHotelMappingByProviderIdentity(request);
+        console.log("📞 Calling standard provider identity endpoint");
+        response = await ProviderUpdatesApi.getHotelMappingByProviderIdentity(
+          request
+        );
       }
 
       // Store the raw response for debugging
@@ -621,10 +633,10 @@ export default function ProviderUpdatePage() {
   };
 
   const searchProviderMapping = async () => {
-    console.log('🔍 searchProviderMapping called');
-    console.log('👤 User:', user);
-    console.log('💰 Point Balance:', user?.pointBalance);
-    
+    console.log("🔍 searchProviderMapping called");
+    console.log("👤 User:", user);
+    console.log("💰 Point Balance:", user?.pointBalance);
+
     if (!providerMappingIttid) {
       setError("Please enter an ITTID");
       return;
@@ -636,23 +648,26 @@ export default function ProviderUpdatePage() {
 
     try {
       let response;
-      // Check if user has points - if not, show demo data
-      const isDemoUser = !user?.pointBalance || user.pointBalance <= 0;
-      console.log('🎯 Is Demo User:', isDemoUser);
-      
+      // Check if user should use demo endpoint - super users and admin users get full access
+      const isDemoUser =
+        user?.role !== "super_user" &&
+        user?.role !== "admin_user" &&
+        (!user?.pointBalance || user.pointBalance <= 0);
+      console.log("🎯 Is Demo User:", isDemoUser);
+
       if (isDemoUser) {
-        console.log('📞 Calling demo API endpoint');
+        console.log("📞 Calling demo API endpoint");
         response = await ProviderUpdatesApi.getDemoProviderMapping({
           ittid: providerMappingIttid,
         });
       } else {
-        console.log('📞 Calling standard API endpoint');
+        console.log("📞 Calling standard API endpoint");
         response = await ProviderUpdatesApi.getProviderMappingByIttid({
           ittid: providerMappingIttid,
         });
       }
 
-      console.log('✅ API Response:', response);
+      console.log("✅ API Response:", response);
 
       if (response.success && response.data) {
         setProviderMappingResult(response.data);
@@ -671,7 +686,7 @@ export default function ProviderUpdatePage() {
         }
       }
     } catch (err) {
-      console.error('❌ Error in searchProviderMapping:', err);
+      console.error("❌ Error in searchProviderMapping:", err);
       setError(
         err instanceof Error
           ? err.message
@@ -776,27 +791,38 @@ export default function ProviderUpdatePage() {
               { id: "updates", label: "Provider Updates", icon: RefreshCw },
             ]
               .filter((tab) => {
-                // For demo users (no points), only show specific tabs
+                // Super users and admin users should see all tabs
+                if (
+                  user?.role === "super_user" ||
+                  user?.role === "admin_user"
+                ) {
+                  return true;
+                }
+                // For demo users (no points) or general users, only show specific tabs
                 if (!user?.pointBalance || user.pointBalance <= 0) {
-                  return ["provider-identity", "provider-mapping", "all-ittids"].includes(tab.id);
+                  return [
+                    "provider-identity",
+                    "provider-mapping",
+                    "all-ittids",
+                  ].includes(tab.id);
                 }
                 // For paid users, show all tabs
                 return true;
               })
               .map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === tab.id
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                <tab.icon className="h-4 w-4 mr-2" />
-                {tab.label}
-              </button>
-            ))}
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`flex items-center py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === tab.id
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <tab.icon className="h-4 w-4 mr-2" />
+                  {tab.label}
+                </button>
+              ))}
           </nav>
         </div>
       </div>
@@ -1640,7 +1666,7 @@ export default function ProviderUpdatePage() {
                   value={providerIdentityId}
                   onChange={(e) => setProviderIdentityId(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === "Enter") {
                       e.preventDefault();
                       searchByProviderIdentity();
                     }
@@ -1801,7 +1827,7 @@ export default function ProviderUpdatePage() {
                 value={providerMappingIttid}
                 onChange={(e) => setProviderMappingIttid(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     e.preventDefault();
                     searchProviderMapping();
                   }
@@ -1862,8 +1888,10 @@ export default function ProviderUpdatePage() {
                           Active Mappings
                         </p>
                         <p className="text-lg font-bold text-purple-700">
-                          {(providerMappingResult.provider_mappings || [])
-                            .length}
+                          {
+                            (providerMappingResult.provider_mappings || [])
+                              .length
+                          }
                         </p>
                       </div>
                     </div>

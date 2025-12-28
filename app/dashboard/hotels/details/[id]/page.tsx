@@ -42,15 +42,18 @@ export default function HotelDetailsPage() {
 
       try {
         let response;
-        // Check if user has points - if not, use demo endpoint
-        const isDemoUser = !user?.pointBalance || user.pointBalance <= 0;
-        console.log('🎯 Is Demo User:', isDemoUser);
-        
+        // Check if user should use demo endpoint - super users and admin users get full access
+        const isDemoUser =
+          user?.role !== "super_user" &&
+          user?.role !== "admin_user" &&
+          (!user?.pointBalance || user.pointBalance <= 0);
+        console.log("🎯 Is Demo User:", isDemoUser);
+
         if (isDemoUser) {
-          console.log('📞 Calling demo full hotel details endpoint');
+          console.log("📞 Calling demo full hotel details endpoint");
           response = await HotelService.getDemoFullHotelDetails(ittid);
         } else {
-          console.log('📞 Calling standard full hotel details endpoint');
+          console.log("📞 Calling standard full hotel details endpoint");
           response = await HotelService.getFullHotelDetails(ittid);
         }
 
@@ -114,17 +117,24 @@ export default function HotelDetailsPage() {
 
   if (error) {
     // Determine if this is a permission error
-    const isPermissionError = error.includes("permission") || error.includes("403");
+    const isPermissionError =
+      error.includes("permission") || error.includes("403");
     const isAuthError = error.includes("session") || error.includes("401");
-    
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
         <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Card className={`border-${isPermissionError || isAuthError ? 'yellow' : 'red'}-200 bg-${isPermissionError || isAuthError ? 'yellow' : 'red'}-50`}>
+          <Card
+            className={`border-${
+              isPermissionError || isAuthError ? "yellow" : "red"
+            }-200 bg-${isPermissionError || isAuthError ? "yellow" : "red"}-50`}
+          >
             <div className="p-6">
               <div className="flex items-start gap-3">
                 <svg
-                  className={`h-6 w-6 text-${isPermissionError || isAuthError ? 'yellow' : 'red'}-500 flex-shrink-0 mt-0.5`}
+                  className={`h-6 w-6 text-${
+                    isPermissionError || isAuthError ? "yellow" : "red"
+                  }-500 flex-shrink-0 mt-0.5`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -133,22 +143,51 @@ export default function HotelDetailsPage() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d={isPermissionError || isAuthError ? "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" : "M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"}
+                    d={
+                      isPermissionError || isAuthError
+                        ? "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                        : "M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    }
                   />
                 </svg>
                 <div className="flex-1">
-                  <h3 className={`text-lg font-semibold text-${isPermissionError || isAuthError ? 'yellow' : 'red'}-900`}>
-                    {isPermissionError ? "Access Denied" : isAuthError ? "Authentication Required" : "Error"}
+                  <h3
+                    className={`text-lg font-semibold text-${
+                      isPermissionError || isAuthError ? "yellow" : "red"
+                    }-900`}
+                  >
+                    {isPermissionError
+                      ? "Access Denied"
+                      : isAuthError
+                      ? "Authentication Required"
+                      : "Error"}
                   </h3>
-                  <p className={`text-sm text-${isPermissionError || isAuthError ? 'yellow' : 'red'}-800 mt-1`}>{error}</p>
-                  
+                  <p
+                    className={`text-sm text-${
+                      isPermissionError || isAuthError ? "yellow" : "red"
+                    }-800 mt-1`}
+                  >
+                    {error}
+                  </p>
+
                   {isPermissionError && (
                     <div className="mt-3 p-3 bg-white rounded border border-yellow-200">
-                      <p className="text-sm text-gray-700 font-medium mb-2">Possible solutions:</p>
+                      <p className="text-sm text-gray-700 font-medium mb-2">
+                        Possible solutions:
+                      </p>
                       <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
-                        <li>Contact your administrator to request access to hotel details</li>
-                        <li>Verify that you have the necessary permissions for this feature</li>
-                        <li>Check if you need to provide an API key for this operation</li>
+                        <li>
+                          Contact your administrator to request access to hotel
+                          details
+                        </li>
+                        <li>
+                          Verify that you have the necessary permissions for
+                          this feature
+                        </li>
+                        <li>
+                          Check if you need to provide an API key for this
+                          operation
+                        </li>
                       </ul>
                     </div>
                   )}
@@ -159,7 +198,13 @@ export default function HotelDetailsPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => router.back()}
-                  className={`text-${isPermissionError || isAuthError ? 'yellow' : 'red'}-700 border-${isPermissionError || isAuthError ? 'yellow' : 'red'}-300 hover:bg-${isPermissionError || isAuthError ? 'yellow' : 'red'}-100`}
+                  className={`text-${
+                    isPermissionError || isAuthError ? "yellow" : "red"
+                  }-700 border-${
+                    isPermissionError || isAuthError ? "yellow" : "red"
+                  }-300 hover:bg-${
+                    isPermissionError || isAuthError ? "yellow" : "red"
+                  }-100`}
                 >
                   Go Back
                 </Button>

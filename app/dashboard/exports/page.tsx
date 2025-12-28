@@ -59,8 +59,11 @@ export default function ExportsPage() {
   const isGeneralUser =
     user?.role === UserRole.GENERAL_USER || user?.role === UserRole.USER;
 
-  // Check if user is a demo user (0 points) - they should not access exports
-  const isDemoUser = user?.pointBalance === 0 || !user?.pointBalance;
+  // Check if user is a demo user (0 points) - super users and admin users get full access
+  const isDemoUser =
+    user?.role !== "super_user" &&
+    user?.role !== "admin_user" &&
+    (user?.pointBalance === 0 || !user?.pointBalance);
 
   // API Key validation state
   const [showApiKeyModal, setShowApiKeyModal] = useState(isGeneralUser);
@@ -664,8 +667,8 @@ export default function ExportsPage() {
    */
   React.useEffect(() => {
     if (isAuthenticated && isDemoUser) {
-      console.log('🚫 Demo user detected, redirecting to dashboard...');
-      router.push('/dashboard');
+      console.log("🚫 Demo user detected, redirecting to dashboard...");
+      router.push("/dashboard");
     }
   }, [isAuthenticated, isDemoUser, router]);
 
