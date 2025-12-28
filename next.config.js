@@ -4,6 +4,9 @@ const withBundleAnalyzer = require("@next/bundle-analyzer")({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Allow cross-origin requests from network IP during development
+  allowedDevOrigins: ["192.168.88.124"],
+
   // Proxy disabled - using backend CORS instead
   // rewrites() {
   //   return [

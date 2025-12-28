@@ -111,6 +111,15 @@ export class ApiClient {
         console.log('✅ Token added to headers');
       } else {
         console.warn('⚠️ No auth token found in localStorage');
+        // For authenticated endpoints without token, return early with auth error
+        return {
+          success: false,
+          error: {
+            status: 401,
+            message: 'Authentication required. Please log in to continue.',
+            details: { reason: 'no_token' }
+          }
+        };
       }
 
       // Add X-API-Key header if available (required for export endpoints)
