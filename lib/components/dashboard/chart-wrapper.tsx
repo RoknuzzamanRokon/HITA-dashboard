@@ -88,7 +88,7 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
               {onRetry && (
                 <button
                   onClick={onRetry}
-                  className="inline-flex items-center space-x-2 px-4 py-2 bg-red-600 dark:bg-red-500 text-white rounded-md hover:bg-red-700 dark:hover:bg-red-600 transition-colors"
+                  className="inline-flex items-center space-x-2 px-4 py-2 bg-red-600 dark:bg-red-500 text-white rounded-md transition-colors"
                   aria-label="Retry loading chart"
                 >
                   <svg

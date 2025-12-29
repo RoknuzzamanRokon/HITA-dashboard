@@ -54,7 +54,7 @@ export function ThemeSwitcher({ className }: ThemeSwitcherProps) {
     <div className={`relative ${className}`}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm"
+        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-gray-200 transition-colors shadow-sm"
         aria-label="Change theme"
       >
         <svg
@@ -115,7 +115,7 @@ export function ThemeSwitcher({ className }: ThemeSwitcherProps) {
                     className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all ${
                       currentTheme === theme.value
                         ? "bg-gradient-to-r from-blue-50 to-blue-100 text-gray-900 shadow-sm"
-                        : "text-gray-700 hover:bg-gray-50"
+                        : "text-gray-700"
                     }`}
                   >
                     <span className="text-2xl">{theme.icon}</span>

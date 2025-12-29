@@ -54,6 +54,7 @@ export const apiEndpoints = {
         checkActiveSupplier: '/user/check-active-my-supplier',
         // Dashboard statistics
         dashboardStats: '/dashboard/stats',
+        supplierFreshness: '/dashboard/supplier-freshness',
         // Specific user creation endpoints
         createSuperUser: '/user/create_super_user/',
         createAdminUser: '/user/create_admin_user/',

@@ -255,7 +255,7 @@ export function DataTable<T extends Record<string, any>>({
                   key={String(column.key)}
                   className={cn(
                     "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider",
-                    column.sortable && "cursor-pointer hover:bg-gray-100",
+                    column.sortable && "cursor-pointer",
                     column.headerClassName
                   )}
                   onClick={() => column.sortable && handleSort(column.key)}
@@ -289,7 +289,7 @@ export function DataTable<T extends Record<string, any>>({
               </tr>
             ) : (
               filteredData.map((row, index) => (
-                <tr key={index} className="hover:bg-gray-50">
+                <tr key={index} className="">
                   {columns.map((column) => (
                     <td
                       key={String(column.key)}

@@ -425,7 +425,7 @@ export const SupplierHotelCountsChart: React.FC<
   }
 
   return (
-    <div className="bg-gradient-to-br from-white via-blue-50/30 to-purple-50/30 dark:from-gray-800 dark:via-gray-800 dark:to-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-300 hover:shadow-xl">
+    <div className="bg-gradient-to-br from-white via-blue-50/30 to-purple-50/30 dark:from-gray-800 dark:via-gray-800 dark:to-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-300">
       {/* Header */}
       <div className="mb-6">
         <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
@@ -440,7 +440,7 @@ export const SupplierHotelCountsChart: React.FC<
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {/* Total Hotels Card */}
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white shadow-lg transform transition-transform hover:scale-105">
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white shadow-lg transform transition-transform">
           <div className="flex items-center justify-between mb-2">
             <span className="text-blue-100 text-sm font-medium">
               Total Hotels
@@ -454,7 +454,7 @@ export const SupplierHotelCountsChart: React.FC<
         </div>
 
         {/* Average per Supplier Card */}
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white shadow-lg transform transition-transform hover:scale-105">
+        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white shadow-lg transform transition-transform">
           <div className="flex items-center justify-between mb-2">
             <span className="text-purple-100 text-sm font-medium">
               Avg per Supplier
@@ -468,7 +468,7 @@ export const SupplierHotelCountsChart: React.FC<
         </div>
 
         {/* Fresh Data Card */}
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 text-white shadow-lg transform transition-transform hover:scale-105">
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 text-white shadow-lg transform transition-transform">
           <div className="flex items-center justify-between mb-2">
             <span className="text-green-100 text-sm font-medium">
               Fresh Data
@@ -1350,7 +1350,7 @@ export const CombinedActivityChart: React.FC<CombinedActivityChartProps> = ({
                 handleLegendClick(item.key);
               }
             }}
-            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded px-2 py-1"
+            className="flex items-center gap-2 cursor-pointer transition-opacity focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded px-2 py-1"
             style={{
               opacity: visibleLines[item.key] ? 1 : 0.4,
             }}

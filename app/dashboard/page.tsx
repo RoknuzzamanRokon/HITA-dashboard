@@ -13,6 +13,8 @@ import {
   RevenueTrendChart,
   UserActivityChart,
   BookingSourcesChart,
+  SupplierFreshnessChart,
+  SupplierDataFreshnessCardWithGraphs,
   QuickActions,
   RecentTransactions,
   SupplierHotelCountsChart,
@@ -234,8 +236,8 @@ export default function DashboardPage() {
               }
               className={`px-4 py-2 rounded-md flex items-center space-x-2 transition-colors ${
                 realTimeEnabled
-                  ? "bg-green-600 dark:bg-green-500 text-white hover:bg-green-700 dark:hover:bg-green-600"
-                  : "bg-gray-600 dark:bg-gray-700 text-white hover:bg-gray-700 dark:hover:bg-gray-600"
+                  ? "bg-green-600 dark:bg-green-500 text-white"
+                  : "bg-gray-600 dark:bg-gray-700 text-white"
               }`}
             >
               <Activity className="w-4 h-4" />
@@ -247,7 +249,7 @@ export default function DashboardPage() {
               onClick={handleRefreshStats}
               disabled={statsLoading}
               title="Manually refresh dashboard data"
-              className="px-4 py-2 bg-green-600 dark:bg-green-500 text-white rounded-md hover:bg-green-700 dark:hover:bg-green-600 disabled:opacity-50 flex items-center space-x-2 transition-colors"
+              className="px-4 py-2 bg-green-600 dark:bg-green-500 text-white rounded-md disabled:opacity-50 flex items-center space-x-2 transition-colors"
             >
               <RefreshCw
                 className={`w-4 h-4 ${statsLoading ? "animate-spin" : ""}`}
@@ -263,7 +265,7 @@ export default function DashboardPage() {
               <button
                 onClick={handleTestAPI}
                 disabled={testingAPI}
-                className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50 flex items-center space-x-2 transition-colors"
+                className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-md disabled:opacity-50 flex items-center space-x-2 transition-colors"
               >
                 <RefreshCw
                   className={`w-4 h-4 ${testingAPI ? "animate-spin" : ""}`}
@@ -272,7 +274,7 @@ export default function DashboardPage() {
               </button>
               <button
                 onClick={handleCheckToken}
-                className="px-4 py-2 bg-purple-600 dark:bg-purple-500 text-white rounded-md hover:bg-purple-700 dark:hover:bg-purple-600 flex items-center space-x-2 transition-colors"
+                className="px-4 py-2 bg-purple-600 dark:bg-purple-500 text-white rounded-md flex items-center space-x-2 transition-colors"
               >
                 <Shield className="w-4 h-4" />
                 <span>Check Token</span>
@@ -302,174 +304,6 @@ export default function DashboardPage() {
         </div>
       </PermissionGuard>
 
-      {/* User Statistics Grid - Admin Only */}
-      <PermissionGuard
-        permissions={[
-          Permission.VIEW_ALL_USERS,
-          Permission.MANAGE_SYSTEM_SETTINGS,
-        ]}
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatsCard
-            title="Total Users"
-            value={stats?.totalUsers || 0}
-            change={{
-              value: stats?.recentSignups || 0,
-              type: "increase",
-            }}
-            icon={<Users className="w-6 h-6" />}
-            gradient="primary"
-            loading={statsLoading}
-          />
-
-          <StatsCard
-            title="Active Users"
-            value={stats?.activeUsers || 0}
-            change={{
-              value: stats?.totalUsers
-                ? Math.round((stats.activeUsers / stats.totalUsers) * 100)
-                : 0,
-              type: "increase",
-            }}
-            icon={<UserCheck className="w-6 h-6" />}
-            gradient="success"
-            loading={statsLoading}
-          />
-
-          <StatsCard
-            title="Admin Users"
-            value={stats?.adminUsers || 0}
-            change={{
-              value: stats?.superUsers || 0,
-              type: "neutral",
-            }}
-            icon={<Shield className="w-6 h-6" />}
-            gradient="accent"
-            loading={statsLoading}
-          />
-
-          <StatsCard
-            title="General Users"
-            value={stats?.generalUsers || 0}
-            change={{
-              value: stats?.totalUsers
-                ? Math.round((stats.generalUsers / stats.totalUsers) * 100)
-                : 0,
-              type: "increase",
-            }}
-            icon={<UserCog className="w-6 h-6" />}
-            gradient="secondary"
-            loading={statsLoading}
-          />
-        </div>
-      </PermissionGuard>
-
-      {/* Points Statistics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <PermissionGuard
-          permissions={[
-            Permission.VIEW_ALL_TRANSACTIONS,
-            Permission.MANAGE_POINTS,
-          ]}
-        >
-          <StatsCard
-            title="Points Distributed"
-            value={
-              stats?.totalPointsDistributed
-                ? `${(stats.totalPointsDistributed / 1000000).toFixed(1)}M`
-                : "0"
-            }
-            change={{
-              value:
-                stats?.currentPointsBalance && stats?.totalPointsDistributed
-                  ? Math.round(
-                      (stats.currentPointsBalance /
-                        stats.totalPointsDistributed) *
-                        100
-                    )
-                  : 0,
-              type: "increase",
-            }}
-            icon={<Coins className="w-6 h-6" />}
-            gradient="warning"
-            loading={statsLoading}
-          />
-        </PermissionGuard>
-
-        <PermissionGuard
-          permissions={[
-            Permission.VIEW_ALL_TRANSACTIONS,
-            Permission.MANAGE_POINTS,
-          ]}
-        >
-          <StatsCard
-            title="Current Balance"
-            value={
-              stats?.currentPointsBalance
-                ? `${(stats.currentPointsBalance / 1000000).toFixed(1)}M`
-                : "0"
-            }
-            change={{
-              value:
-                stats?.totalPointsDistributed && stats?.currentPointsBalance
-                  ? Math.round(
-                      ((stats.totalPointsDistributed -
-                        stats.currentPointsBalance) /
-                        stats.totalPointsDistributed) *
-                        100
-                    )
-                  : 0,
-              type: "decrease",
-            }}
-            icon={<Wallet className="w-6 h-6" />}
-            gradient="success"
-            loading={statsLoading}
-          />
-        </PermissionGuard>
-
-        <PermissionGuard
-          permissions={[
-            Permission.VIEW_ALL_USERS,
-            Permission.MANAGE_SYSTEM_SETTINGS,
-          ]}
-        >
-          <StatsCard
-            title="Recent Signups"
-            value={stats?.recentSignups || 0}
-            change={{
-              value: stats?.totalUsers
-                ? Math.round((stats.recentSignups / stats.totalUsers) * 100)
-                : 0,
-              type: "increase",
-            }}
-            icon={<UserPlus className="w-6 h-6" />}
-            gradient="primary"
-            loading={statsLoading}
-          />
-        </PermissionGuard>
-
-        <PermissionGuard
-          permissions={[
-            Permission.VIEW_ALL_USERS,
-            Permission.MANAGE_SYSTEM_SETTINGS,
-          ]}
-        >
-          <StatsCard
-            title="Inactive Users"
-            value={stats?.inactiveUsers || 0}
-            change={{
-              value: stats?.totalUsers
-                ? Math.round((stats.inactiveUsers / stats.totalUsers) * 100)
-                : 0,
-              type: "neutral",
-            }}
-            icon={<Activity className="w-6 h-6" />}
-            gradient="error"
-            loading={statsLoading}
-          />
-        </PermissionGuard>
-      </div>
-
       {/* Quick Actions Panel - Admin/Super User Only */}
       <PermissionGuard
         permissions={[
@@ -491,10 +325,14 @@ export default function DashboardPage() {
       </div>
 
       {/* Analytics Charts and Live Feed */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div className="lg:col-span-2">
           <RevenueTrendChart loading={statsLoading} stats={stats} />
         </div>
+      </div>
+
+      {/* Second Row - User Activity and Points/Supplier Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <UserActivityChart loading={statsLoading} stats={stats} />
         <PermissionGuard
           permissions={[
@@ -503,6 +341,14 @@ export default function DashboardPage() {
           ]}
         >
           <BookingSourcesChart loading={statsLoading} stats={stats} />
+        </PermissionGuard>
+        <PermissionGuard
+          permissions={[
+            Permission.VIEW_ALL_TRANSACTIONS,
+            Permission.MANAGE_POINTS,
+          ]}
+        >
+          <SupplierDataFreshnessCardWithGraphs loading={statsLoading} />
         </PermissionGuard>
       </div>
 

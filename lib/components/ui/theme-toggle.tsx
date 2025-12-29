@@ -24,7 +24,7 @@ export function ThemeToggle() {
             ${
               settings.theme === value
                 ? "bg-[rgb(var(--bg-primary))] text-[rgb(var(--text-primary))] shadow-sm"
-                : "text-[rgb(var(--text-tertiary))] hover:text-[rgb(var(--text-secondary))]"
+                : "text-[rgb(var(--text-tertiary))]"
             }
           `}
           title={`Switch to ${label} mode`}
@@ -44,7 +44,7 @@ export function ThemeToggleCompact() {
   return (
     <button
       onClick={toggleTheme}
-      className="p-2 rounded-lg bg-[rgb(var(--bg-secondary))] hover:bg-[rgb(var(--bg-hover))] border border-[rgb(var(--border-primary))] transition-all"
+      className="p-2 rounded-lg bg-[rgb(var(--bg-secondary))] border border-[rgb(var(--border-primary))] transition-all"
       title={`Switch to ${resolvedTheme === "dark" ? "light" : "dark"} mode`}
       aria-label={`Switch to ${
         resolvedTheme === "dark" ? "light" : "dark"

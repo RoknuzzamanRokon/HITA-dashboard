@@ -107,11 +107,11 @@ export const animationConfigs = {
         },
     },
     card: {
-        hover: 'hover:scale-[1.02] hover:shadow-lg transition-all duration-300',
+        hover: '',
         click: 'active:scale-[0.98] transition-transform duration-150',
     },
     button: {
-        hover: 'hover:scale-105 transition-transform duration-200',
+        hover: '',
         click: 'active:scale-95 transition-transform duration-150',
     },
 } as const;

@@ -54,8 +54,7 @@ export function RadioGroup({
               {
                 "border-primary-color bg-primary-color/10 shadow-md":
                   value === option.value,
-                "border-[rgb(var(--border-primary))] hover:border-[rgb(var(--border-secondary))]":
-                  value !== option.value,
+                "border-[rgb(var(--border-primary))]": value !== option.value,
               }
             )}
           >
@@ -73,7 +72,7 @@ export function RadioGroup({
               <div
                 className={clsx(
                   "relative rounded-full border-2 transition-all duration-300 ease-out",
-                  "group-hover:scale-110 group-active:scale-95",
+                  "group-active:scale-95",
                   {
                     "w-4 h-4": size === "sm",
                     "w-5 h-5": size === "md",

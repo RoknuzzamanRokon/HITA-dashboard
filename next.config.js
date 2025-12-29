@@ -7,9 +7,10 @@ const nextConfig = {
   // Allow cross-origin requests from network IP during development
   allowedDevOrigins: ["192.168.88.124"],
 
-  // Webpack configuration for better chunk handling
+  // Webpack configuration for better chunk handling (only when not using Turbopack)
   webpack: (config, { dev, isServer }) => {
-    if (!isServer) {
+    // Only apply webpack config when not using Turbopack
+    if (!process.env.TURBOPACK && !isServer) {
       // Improve chunk loading reliability
       config.optimization = {
         ...config.optimization,
@@ -31,10 +32,21 @@ const nextConfig = {
     return config;
   },
 
-  // Experimental features for better chunk loading
+  // Experimental features
   experimental: {
     // Optimize chunk loading
     optimizePackageImports: ["lucide-react"],
+  },
+
+  // Turbopack configuration (for when using --turbopack flag)
+  turbopack: {
+    rules: {
+      // Configure Turbopack rules if needed
+      "*.svg": {
+        loaders: ["@svgr/webpack"],
+        as: "*.js",
+      },
+    },
   },
 
   // Proxy disabled - using backend CORS instead

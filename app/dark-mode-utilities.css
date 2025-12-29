@@ -13,8 +13,8 @@
     background-color: rgb(var(--bg-tertiary));
 }
 
-.bg-hover:hover {
-    background-color: rgb(var(--bg-hover));
+.bg-hover {
+    background-color: rgb(var(--bg-primary));
 }
 
 /* Text utilities */

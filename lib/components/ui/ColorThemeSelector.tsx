@@ -157,7 +157,7 @@ export const colorThemes: ColorTheme[] = [
     primaryRgb: "107, 114, 128",
     hover: "#4b5563",
     light: "#f3f4f6",
-  }
+  },
 ];
 
 interface ColorThemeSelectorProps {
@@ -210,7 +210,7 @@ export const ColorThemeSelector: React.FC<ColorThemeSelectorProps> = ({
           <button
             key={theme.id}
             onClick={() => handleColorSelect(theme.id)}
-            className="relative flex flex-col items-center gap-3 p-4 rounded-lg border-2 transition-all hover:scale-105"
+            className="relative flex flex-col items-center gap-3 p-4 rounded-lg border-2 transition-all"
             style={{
               borderColor:
                 selectedColor === theme.id ? theme.primary : "#e5e7eb",

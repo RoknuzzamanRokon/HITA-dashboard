@@ -15,6 +15,9 @@ export {
     BookingSourcesChart,
 } from "./analytics-charts";
 
+export { SupplierFreshnessChart } from "./supplier-freshness-chart";
+export { SupplierDataFreshnessCardWithGraphs } from "./supplier-data-freshness-card-with-graphs";
+
 export {
     SupplierHotelCountsChart,
     UserRegistrationTrendChart,

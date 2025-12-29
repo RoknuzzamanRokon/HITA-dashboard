@@ -150,14 +150,13 @@ const StatsCard: React.FC<StatsCardProps> = ({
       hover={true}
       className={cn(
         "relative overflow-hidden group transition-all duration-300",
-        "hover:shadow-xl hover:-translate-y-1",
         className
       )}
     >
       {/* Gradient background overlay */}
       <div
         className={cn(
-          " inset-0 bg-gradient-to-br opacity-5 group-hover:opacity-10 transition-opacity duration-300",
+          " inset-0 bg-gradient-to-br opacity-5 transition-opacity duration-300",
           gradientClasses[gradient]
         )}
       />
@@ -172,7 +171,7 @@ const StatsCard: React.FC<StatsCardProps> = ({
         >
           <div
             className={cn(
-              "rounded-xl bg-gradient-to-br shadow-lg transform group-hover:scale-110 transition-transform duration-300",
+              "rounded-xl bg-gradient-to-br shadow-lg transform transition-transform duration-300",
               compact ? "p-2" : "p-3",
               gradientClasses[gradient]
             )}
@@ -185,8 +184,7 @@ const StatsCard: React.FC<StatsCardProps> = ({
               className={cn(
                 "flex items-center space-x-1 px-2 py-1 rounded-full font-medium transition-all duration-300",
                 compact ? "text-xs" : "text-xs",
-                getTrendColor(),
-                "group-hover:scale-105"
+                getTrendColor()
               )}
             >
               {getTrendIcon()}
@@ -211,7 +209,7 @@ const StatsCard: React.FC<StatsCardProps> = ({
         {/* Title */}
         <div
           className={cn(
-            "font-medium text-gray-600 group-hover:text-gray-700 transition-colors duration-300",
+            "font-medium text-gray-600 transition-colors duration-300",
             compact ? "text-xs" : "text-sm"
           )}
         >
@@ -222,7 +220,7 @@ const StatsCard: React.FC<StatsCardProps> = ({
       {/* Animated border on hover */}
       <div
         className={cn(
-          " inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300",
+          " inset-0 rounded-xl opacity-0 transition-opacity duration-300",
           "bg-gradient-to-r p-[1px]",
           gradientClasses[gradient],
           "pointer-events-none"
