@@ -19,6 +19,9 @@ import {
   Eye,
   Key,
   Users,
+  PieChart,
+  Calendar,
+  Clock as ClockIcon,
 } from "lucide-react";
 import { fetchMyActivity, type MyActivityResponse } from "@/lib/api/audit";
 
@@ -425,6 +428,180 @@ export function UserAnalyticsSection() {
                 apiData.activity_breakdown.length === 0) && (
                 <p className="text-sm text-[rgb(var(--text-secondary))] text-center py-4">
                   No activity data available
+                </p>
+              )}
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Additional Analytics - HTTP Methods & Status Codes */}
+      {apiData && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* HTTP Methods Breakdown */}
+          <Card className="p-6" hover={false}>
+            <div className="flex items-center gap-2 mb-6">
+              <PieChart className="w-5 h-5 text-primary-color" />
+              <h3 className="text-lg font-semibold text-[rgb(var(--text-primary))]">
+                HTTP Methods Usage
+              </h3>
+            </div>
+
+            <div className="space-y-4">
+              {apiData?.http_methods?.breakdown?.map((method, idx) => (
+                <div key={idx} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <span className="text-sm font-bold text-purple-600">{method.method}</span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-[rgb(var(--text-primary))]">
+                        {method.method} Requests
+                      </p>
+                      <p className="text-xs text-[rgb(var(--text-secondary))]">
+                        {method.percentage.toFixed(1)}% of total
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-lg font-bold text-purple-600">
+                    {method.count}
+                  </span>
+                </div>
+              )) || []}
+              {(!apiData?.http_methods?.breakdown ||
+                apiData.http_methods.breakdown.length === 0) && (
+                <p className="text-sm text-[rgb(var(--text-secondary))] text-center py-4">
+                  No HTTP method data available
+                </p>
+              )}
+            </div>
+          </Card>
+
+          {/* Status Codes Breakdown */}
+          <Card className="p-6" hover={false}>
+            <div className="flex items-center gap-2 mb-6">
+              <Shield className="w-5 h-5 text-primary-color" />
+              <h3 className="text-lg font-semibold text-[rgb(var(--text-primary))]">
+                Response Status Codes
+              </h3>
+            </div>
+
+            <div className="space-y-4">
+              {apiData?.status_codes?.breakdown?.map((status, idx) => (
+                <div key={idx} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${status.status_code === 200 ? 'bg-green-100' : 'bg-yellow-100'}`}>
+                      <span className={`text-sm font-bold ${status.status_code === 200 ? 'text-green-600' : 'text-yellow-600'}`}>
+                        {status.status_code}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-[rgb(var(--text-primary))]">
+                        {status.status_code === 200 ? 'Success' : 'Errors'}
+                      </p>
+                      <p className="text-xs text-[rgb(var(--text-secondary))]">
+                        {status.percentage.toFixed(1)}% of responses
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-lg font-bold text-[rgb(var(--text-primary))]">
+                    {status.count}
+                  </span>
+                </div>
+              )) || []}
+              {(!apiData?.status_codes?.breakdown ||
+                apiData.status_codes.breakdown.length === 0) && (
+                <p className="text-sm text-[rgb(var(--text-secondary))] text-center py-4">
+                  No status code data available
+                </p>
+              )}
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Usage Patterns - Time Analysis */}
+      {apiData && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Hourly Distribution */}
+          <Card className="p-6" hover={false}>
+            <div className="flex items-center gap-2 mb-6">
+              <ClockIcon className="w-5 h-5 text-primary-color" />
+              <h3 className="text-lg font-semibold text-[rgb(var(--text-primary))]">
+                Most Active Hours
+              </h3>
+            </div>
+
+            <div className="space-y-4">
+              {apiData?.patterns?.hourly_distribution
+                ?.sort((a, b) => b.count - a.count)
+                ?.slice(0, 3)
+                ?.map((hour, idx) => (
+                  <div key={idx} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <ClockIcon className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-[rgb(var(--text-primary))]">
+                          {hour.hour_label}
+                        </p>
+                        <p className="text-xs text-[rgb(var(--text-secondary))]">
+                          {Math.round((hour.count / (apiData?.patterns?.hourly_distribution?.reduce((sum, h) => sum + h.count, 0) || 1)) * 100)}% of activity
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-lg font-bold text-blue-600">
+                      {hour.count} activities
+                    </span>
+                  </div>
+                )) || []}
+              {(!apiData?.patterns?.hourly_distribution ||
+                apiData.patterns.hourly_distribution.length === 0) && (
+                <p className="text-sm text-[rgb(var(--text-secondary))] text-center py-4">
+                  No hourly data available
+                </p>
+              )}
+            </div>
+          </Card>
+
+          {/* Day of Week Distribution */}
+          <Card className="p-6" hover={false}>
+            <div className="flex items-center gap-2 mb-6">
+              <Calendar className="w-5 h-5 text-primary-color" />
+              <h3 className="text-lg font-semibold text-[rgb(var(--text-primary))]">
+                Activity by Day of Week
+              </h3>
+            </div>
+
+            <div className="space-y-4">
+              {apiData?.patterns?.day_of_week_distribution
+                ?.sort((a, b) => b.count - a.count)
+                ?.slice(0, 3)
+                ?.map((day, idx) => (
+                  <div key={idx} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-green-100 rounded-lg">
+                        <Calendar className="w-4 h-4 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-[rgb(var(--text-primary))]">
+                          {day.day_name}
+                        </p>
+                        <p className="text-xs text-[rgb(var(--text-secondary))]">
+                          {day.percentage.toFixed(1)}% of activity
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-lg font-bold text-green-600">
+                      {day.count} activities
+                    </span>
+                  </div>
+                )) || []}
+              {(!apiData?.patterns?.day_of_week_distribution ||
+                apiData.patterns.day_of_week_distribution.length === 0) && (
+                <p className="text-sm text-[rgb(var(--text-secondary))] text-center py-4">
+                  No day of week data available
                 </p>
               )}
             </div>
