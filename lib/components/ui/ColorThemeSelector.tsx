@@ -150,6 +150,14 @@ export const colorThemes: ColorTheme[] = [
     hover: "#0284c7",
     light: "#e0f2fe",
   },
+  {
+    id: "gray",
+    name: "Gray",
+    primary: "#6b7280",
+    primaryRgb: "107, 114, 128",
+    hover: "#4b5563",
+    light: "#f3f4f6",
+  }
 ];
 
 interface ColorThemeSelectorProps {
