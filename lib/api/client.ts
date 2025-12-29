@@ -70,20 +70,17 @@ export class ApiClient {
     // Create a unique request ID for tracking
     const requestId = `${method}-${endpoint}-${Date.now()}`;
 
-    // Cancel any existing request to the same endpoint
-    const existingController = this.activeRequests.get(endpoint);
-    if (existingController) {
-      console.log(`🚫 Cancelling existing request to ${endpoint}`);
-      existingController.abort();
-    }
+    // Don't automatically cancel existing requests - allow concurrent requests
+    // This prevents the "Request was cancelled" errors when navigating between pages
 
     // Create new abort controller for this request
     const abortController = new AbortController();
-    this.activeRequests.set(endpoint, abortController);
+    const requestKey = `${requestId}`;
+    this.activeRequests.set(requestKey, abortController);
 
     // Clean up the request tracking when done
     const cleanup = () => {
-      this.activeRequests.delete(endpoint);
+      this.activeRequests.delete(requestKey);
     };
 
     console.log('🚀 API Request:', method, endpoint);
@@ -298,13 +295,15 @@ export class ApiClient {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  // Cancel all active requests (useful for cleanup on navigation)
+  // Cancel all active requests (only used on page unload now)
   public cancelAllRequests(): void {
-    console.log(`🚫 Cancelling ${this.activeRequests.size} active requests`);
-    for (const [endpoint, controller] of this.activeRequests) {
-      controller.abort();
+    if (this.activeRequests.size > 0) {
+      console.log(`🔄 Cancelling ${this.activeRequests.size} active requests due to page unload`);
+      for (const [requestKey, controller] of this.activeRequests) {
+        controller.abort();
+      }
+      this.activeRequests.clear();
     }
-    this.activeRequests.clear();
   }
 
   // Parse and normalize responses
@@ -420,18 +419,14 @@ export const apiClient = new ApiClient();
 
 // Add global cleanup to prevent connection reset errors
 if (typeof window !== 'undefined') {
-  // Cancel all requests when the page is about to unload
+  // Only cancel requests when the page is actually being unloaded (user navigating away permanently)
   window.addEventListener('beforeunload', () => {
+    console.log('🔄 Page unloading, cancelling active requests');
     apiClient.cancelAllRequests();
   });
 
-  // Cancel all requests when the page becomes hidden (tab switch, minimize, etc.)
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') {
-      console.log('🔄 Page hidden, cancelling active requests to prevent connection errors');
-      apiClient.cancelAllRequests();
-    }
-  });
+  // Remove the aggressive visibility change cancellation
+  // Users should be able to switch tabs/workstations without losing their requests
 }
 
 export default apiClient;
