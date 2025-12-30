@@ -170,6 +170,53 @@ export class UserService {
     }
 
     /**
+     * Get detailed user information with full API response (for user details modal)
+     */
+    static async getDetailedUserInfo(id: string): Promise<ApiResponse<any>> {
+        console.log("📡 Fetching detailed user info for ID:", id);
+
+        const response = await apiClient.get<any>(apiEndpoints.users.getUserInfo(id));
+
+        if (response.success && response.data) {
+            console.log("✅ Detailed user info retrieved:", response.data);
+        }
+
+        return response;
+    }
+
+    /**
+     * Check user info using the new API endpoint
+     */
+    static async checkUserInfo(id: string): Promise<ApiResponse<any>> {
+        console.log("📡 Checking user info for ID:", id);
+        console.log("📡 Making request to endpoint: /user/check-user-info/" + id);
+
+        try {
+            const response = await apiClient.get<any>(`/user/check-user-info/${id}`);
+
+            console.log("📡 Raw API response:", response);
+
+            if (response.success && response.data) {
+                console.log("✅ User info checked successfully:", response.data);
+            } else {
+                console.error("❌ API returned error:", response.error);
+            }
+
+            return response;
+        } catch (error) {
+            console.error("❌ Exception in checkUserInfo:", error);
+            return {
+                success: false,
+                error: {
+                    status: 500,
+                    message: error instanceof Error ? error.message : "Unknown error occurred",
+                    details: error
+                }
+            };
+        }
+    }
+
+    /**
      * Create new user (generic) - routes to appropriate specific endpoint
      */
     static async createUser(userData: UserFormData): Promise<ApiResponse<User>> {

@@ -78,6 +78,7 @@ export default function UsersPage() {
 
   // Modal state
   const [selectedUser, setSelectedUser] = useState<UserListItem | null>(null);
+  const [selectedUserDetails, setSelectedUserDetails] = useState<any>(null);
   const [showUserModal, setShowUserModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -633,34 +634,61 @@ export default function UsersPage() {
     setPagination((prev) => ({ ...prev, pageSize, page: 1 }));
   };
 
-  /**
-   * Handle user actions
-   */
   const handleViewUser = async (user: UserListItem) => {
     try {
       setLoading(true);
-      console.log("👁️ Viewing user details for:", user.username);
+      console.log(
+        "👁️ Viewing user details for:",
+        user.username,
+        "ID:",
+        user.id
+      );
 
-      // Fetch detailed user information
-      const response = await UserService.getUserInfo(user.id);
+      // Fetch detailed user information using the new check-user-info API
+      const response = await UserService.checkUserInfo(user.id);
+
+      console.log("📡 API Response:", response);
 
       if (response.success && response.data) {
-        setSelectedUser(response.data);
+        console.log("✅ User details fetched successfully:", response.data);
+        setSelectedUser(user);
+        setSelectedUserDetails(response.data);
         setShowUserModal(true);
       } else {
         console.error("❌ Failed to fetch user details:", response.error);
+        console.error("❌ Full response:", JSON.stringify(response, null, 2));
+
+        // Show more detailed error information
+        const errorMsg =
+          response.error?.message || response.error?.details || "Unknown error";
+        console.error("❌ Error message:", errorMsg);
+
         // Fallback to using the existing user data
         setSelectedUser(user);
+        setSelectedUserDetails(null);
         setShowUserModal(true);
       }
     } catch (err) {
       console.error("❌ Error fetching user details:", err);
+      console.error("❌ Error type:", typeof err);
+      console.error(
+        "❌ Error details:",
+        err instanceof Error ? err.message : String(err)
+      );
+
       // Fallback to using the existing user data
       setSelectedUser(user);
+      setSelectedUserDetails(null);
       setShowUserModal(true);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCheckActivity = () => {
+    // TODO: Implement check activity functionality
+    console.log("🔍 Check Activity clicked for user:", selectedUser?.username);
+    // This will be implemented in the next step
   };
 
   const handleEditUser = (user: UserListItem) => {
@@ -1457,136 +1485,277 @@ export default function UsersPage() {
             onClose={() => {
               setShowUserModal(false);
               setSelectedUser(null);
+              setSelectedUserDetails(null);
             }}
             title="User Details"
             size="lg"
           >
             {selectedUser && (
               <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Username
-                    </label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {selectedUser.username}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Email
-                    </label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {selectedUser.email}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Role
-                    </label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {selectedUser.role}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Status
-                    </label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {selectedUser.isActive ? "Active" : "Inactive"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Current Points
-                    </label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {selectedUser.pointBalance !== undefined
-                        ? selectedUser.pointBalance.toLocaleString()
-                        : "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Total Points
-                    </label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {selectedUser.totalPoints !== undefined
-                        ? selectedUser.totalPoints.toLocaleString()
-                        : "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Payment Status
-                    </label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {selectedUser.paidStatus ===
-                      "I am super user, I have unlimited points."
-                        ? "Unlimited Points"
-                        : selectedUser.paidStatus || "Unknown"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Total Requests
-                    </label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {selectedUser.totalRequests !== undefined
-                        ? selectedUser.totalRequests.toLocaleString()
-                        : "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Request Status
-                    </label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {selectedUser.usingRqStatus || "Unknown"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Created
-                    </label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {new Date(selectedUser.createdAt).toLocaleString()}
-                    </p>
-                  </div>
-                  {selectedUser.createdBy && (
+                {/* Display detailed user information if available */}
+                {selectedUserDetails ? (
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
-                        Created By
+                        Username
                       </label>
                       <p className="mt-1 text-sm text-gray-900">
-                        {selectedUser.createdBy}
+                        {selectedUserDetails.username}
                       </p>
                     </div>
-                  )}
-                  {selectedUser.updatedAt && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Email
+                      </label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedUserDetails.email}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Role
+                      </label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedUserDetails.role}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Status
+                      </label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedUserDetails.is_active ? "Active" : "Inactive"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Current Points
+                      </label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedUserDetails.points?.current_points !==
+                        undefined
+                          ? selectedUserDetails.points.current_points.toLocaleString()
+                          : "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Total Points
+                      </label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedUserDetails.points?.total_points !== undefined
+                          ? selectedUserDetails.points.total_points.toLocaleString()
+                          : "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Used Points
+                      </label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedUserDetails.points?.total_used_points !==
+                        undefined
+                          ? selectedUserDetails.points.total_used_points.toLocaleString()
+                          : "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Payment Status
+                      </label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedUserDetails.points?.paid_status || "Unknown"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Total Requests
+                      </label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedUserDetails.points?.total_rq !== undefined
+                          ? selectedUserDetails.points.total_rq.toLocaleString()
+                          : "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Request Status
+                      </label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedUserDetails.using_rq_status || "Unknown"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        User Status
+                      </label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedUserDetails.user_status || "Unknown"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Total Suppliers
+                      </label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedUserDetails.total_suppliers || 0}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Created
+                      </label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {new Date(
+                          selectedUserDetails.created_at
+                        ).toLocaleString()}
+                      </p>
+                    </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         Updated
                       </label>
                       <p className="mt-1 text-sm text-gray-900">
-                        {new Date(selectedUser.updatedAt).toLocaleString()}
+                        {new Date(
+                          selectedUserDetails.updated_at
+                        ).toLocaleString()}
                       </p>
                     </div>
-                  )}
-                </div>
+                    {selectedUserDetails.created_by && (
+                      <div className="col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Created By
+                        </label>
+                        <p className="mt-1 text-sm text-gray-900">
+                          {selectedUserDetails.created_by}
+                        </p>
+                      </div>
+                    )}
+                    {selectedUserDetails.viewed_by && (
+                      <div className="col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Viewed By
+                        </label>
+                        <p className="mt-1 text-sm text-gray-900">
+                          {selectedUserDetails.viewed_by.username} (
+                          {selectedUserDetails.viewed_by.email}) -{" "}
+                          {selectedUserDetails.viewed_by.role}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* Fallback to basic user information */
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Username
+                      </label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedUser.username}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Email
+                      </label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedUser.email}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Role
+                      </label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedUser.role}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Status
+                      </label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedUser.isActive ? "Active" : "Inactive"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Current Points
+                      </label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedUser.pointBalance !== undefined
+                          ? selectedUser.pointBalance.toLocaleString()
+                          : "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Total Points
+                      </label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedUser.totalPoints !== undefined
+                          ? selectedUser.totalPoints.toLocaleString()
+                          : "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
-                {selectedUser.activeSuppliers &&
-                  selectedUser.activeSuppliers.length > 0 && (
+                {/* API Key Information */}
+                {selectedUserDetails?.api_key_info && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      API Key Information
+                    </label>
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-500">API Key:</span>
+                          <span className="ml-2 text-gray-900">
+                            {selectedUserDetails.api_key_info.api_key ||
+                              "Not set"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Created:</span>
+                          <span className="ml-2 text-gray-900">
+                            {selectedUserDetails.api_key_info.created || "N/A"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Expires:</span>
+                          <span className="ml-2 text-gray-900">
+                            {selectedUserDetails.api_key_info.expires || "N/A"}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Active Days:</span>
+                          <span className="ml-2 text-gray-900">
+                            {selectedUserDetails.api_key_info.active_for_days ||
+                              "N/A"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Active Suppliers */}
+                {selectedUserDetails?.active_suppliers &&
+                  selectedUserDetails.active_suppliers.length > 0 && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Active Suppliers
+                        Active Suppliers ({selectedUserDetails.total_suppliers})
                       </label>
                       <div className="flex flex-wrap gap-2">
-                        {selectedUser.activeSuppliers.map((supplier, index) => (
-                          <Badge key={index} variant="outline">
-                            {supplier}
-                          </Badge>
-                        ))}
+                        {selectedUserDetails.active_suppliers.map(
+                          (supplier: string, index: number) => (
+                            <Badge key={index} variant="outline">
+                              {supplier}
+                            </Badge>
+                          )
+                        )}
                       </div>
                     </div>
                   )}
@@ -1597,9 +1766,13 @@ export default function UsersPage() {
                     onClick={() => {
                       setShowUserModal(false);
                       setSelectedUser(null);
+                      setSelectedUserDetails(null);
                     }}
                   >
                     Close
+                  </Button>
+                  <Button variant="primary" onClick={handleCheckActivity}>
+                    Check Activity
                   </Button>
                 </div>
               </div>
@@ -2756,7 +2929,7 @@ export default function UsersPage() {
                 >
                   Close
                 </Button>
-                
+
                 <Button
                   type="button"
                   size="sm"

@@ -212,6 +212,69 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
+    // User info check endpoint (for checking other users)
+    if (
+      path.match(/^\/v1\.0\/user\/check-user-info\/(.+)$/) &&
+      req.method === "GET"
+    ) {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: true,
+            message: "Could not validate credentials",
+            error_code: "HTTP_401",
+            details: { status_code: 401 },
+            timestamp: new Date().toISOString(),
+          })
+        );
+        return;
+      }
+
+      const userId = path.match(/^\/v1\.0\/user\/check-user-info\/(.+)$/)[1];
+      console.log(`✅ Checking user info for ID: ${userId}`);
+
+      // Mock user data based on the example you provided
+      const mockUserInfo = {
+        id: userId,
+        username: "ron123",
+        email: "ron123@gmail.com",
+        role: "admin_user",
+        api_key_info: {
+          api_key: null,
+          created: null,
+          expires: null,
+          active_for_days: null,
+        },
+        points: {
+          total_points: 6012000,
+          current_points: 5843500,
+          total_used_points: 168500,
+          paid_status: "Paid",
+          total_rq: 5,
+        },
+        active_suppliers: [],
+        total_suppliers: 0,
+        created_at: "2025-05-08T19:10:48",
+        updated_at: "2025-10-12T09:29:43",
+        user_status: "admin_user",
+        is_active: true,
+        using_rq_status: "Inactive",
+        created_by: "super_user: ursamroko@romel.com",
+        viewed_by: {
+          user_id: "1a203ccda4",
+          username: "ursamroko",
+          email: "ursamroko@romel.com",
+          role: "super_user",
+        },
+      };
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(mockUserInfo));
+      return;
+    }
+
     // User points check endpoint
     if (path === "/v1.0/user/points-check" && req.method === "GET") {
       const authHeader = req.headers.authorization;
@@ -586,7 +649,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-const PORT = 8001;
+const PORT = 8002;
 const HOST = "127.0.0.1";
 
 server.listen(PORT, HOST, () => {
@@ -594,6 +657,7 @@ server.listen(PORT, HOST, () => {
   console.log("📋 Available endpoints:");
   console.log("  POST /v1.0/auth/token - Authentication");
   console.log("  GET  /v1.0/user/check-me - User profile");
+  console.log("  GET  /v1.0/user/check-user-info/{id} - Check user info");
   console.log("  GET  /v1.0/user/points-check - User points");
   console.log("  GET  /v1.0/user/check-active-my-supplier - Active suppliers");
   console.log("  GET  /v1.0/audit/my-activity - User audit activity");
