@@ -218,7 +218,7 @@ export function DataTable<T extends Record<string, any>>({
   return (
     <div
       className={cn(
-        "bg-white shadow-sm rounded-lg border border-gray-200",
+        "bg-white shadow-sm rounded-lg border p-6 border-gray-200",
         className
       )}
     >

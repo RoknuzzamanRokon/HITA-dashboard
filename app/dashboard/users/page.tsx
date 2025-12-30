@@ -1417,7 +1417,7 @@ export default function UsersPage() {
           </div>
 
           {/* Users Table */}
-          <div className="mb-12">
+          <div className="mb-12 p-6">
             <DataTable
               data={users}
               columns={columns}
@@ -2756,6 +2756,7 @@ export default function UsersPage() {
                 >
                   Close
                 </Button>
+                
                 <Button
                   type="button"
                   size="sm"
