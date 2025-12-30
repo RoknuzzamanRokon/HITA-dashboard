@@ -139,6 +139,16 @@ export interface ProviderIdentityResponse {
     }>;
 }
 
+export interface ProviderAllIdsResponse {
+    provider_name: string;
+    total_hotel_ids: number;
+    current_page: number;
+    total_pages: number;
+    hotel_ids_this_page: number;
+    resume_key?: string;
+    hotel_ids: string[];
+}
+
 export class ProviderUpdatesApi {
     /**
      * Get all ITTID records
@@ -361,6 +371,46 @@ export class ProviderUpdatesApi {
                 error: {
                     status: 500,
                     message: 'Failed to fetch demo provider identity mapping data',
+                },
+            };
+        }
+    }
+
+    /**
+     * Get all hotel IDs for a specific provider (e.g., Kiwihotel)
+     */
+    static async getProviderAllIds(params?: {
+        provider?: string;
+        limitPerPage?: number;
+        resumeKey?: string;
+    }): Promise<ApiResponse<ProviderAllIdsResponse>> {
+        try {
+            const provider = params?.provider || 'kiwihotel';
+            const searchParams = new URLSearchParams();
+
+            if (params?.limitPerPage) {
+                searchParams.append('limit_per_page', params.limitPerPage.toString());
+            } else {
+                searchParams.append('limit_per_page', '1000');
+            }
+
+            if (params?.resumeKey) {
+                searchParams.append('resume_key', params.resumeKey);
+            }
+
+            const endpoint = `/content/get-all-hotel-id/${provider}?${searchParams.toString()}`;
+            console.log('📡 Making request to provider all IDs API:', endpoint);
+            const response = await apiClient.get<ProviderAllIdsResponse>(endpoint);
+            console.log('📡 Provider all IDs API response:', response);
+
+            return response;
+        } catch (error) {
+            console.error('Failed to fetch provider all IDs:', error);
+            return {
+                success: false,
+                error: {
+                    status: 500,
+                    message: 'Failed to fetch provider all IDs',
                 },
             };
         }
