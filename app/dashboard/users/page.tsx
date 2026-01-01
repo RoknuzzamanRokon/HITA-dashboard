@@ -113,6 +113,11 @@ export default function UsersPage() {
   const [showUserDetailModal, setShowUserDetailModal] = useState(false);
   const [selectedUserDetail, setSelectedUserDetail] = useState<any>(null);
 
+  // User activity modal state
+  const [showUserActivityModal, setShowUserActivityModal] = useState(false);
+  const [selectedUserActivity, setSelectedUserActivity] = useState<any>(null);
+  const [userActivityLoading, setUserActivityLoading] = useState(false);
+
   /**
    * Fetch users with current parameters
    */
@@ -685,10 +690,39 @@ export default function UsersPage() {
     }
   };
 
-  const handleCheckActivity = () => {
-    // TODO: Implement check activity functionality
-    console.log("🔍 Check Activity clicked for user:", selectedUser?.username);
-    // This will be implemented in the next step
+  const handleCheckActivity = async () => {
+    try {
+      setUserActivityLoading(true);
+      console.log(
+        "🔍 Check Activity clicked for user:",
+        selectedUser?.username || selectedUserDetail?.username
+      );
+
+      const userId =
+        selectedUserDetails?.id || selectedUser?.id || selectedUserDetail?.id;
+      if (!userId) {
+        console.error("❌ No user ID available for activity check");
+        return;
+      }
+
+      console.log("📡 Fetching activity for user ID:", userId);
+      const response = await UserService.getUserActivity(userId);
+
+      if (response.success && response.data) {
+        console.log("✅ User activity fetched successfully:", response.data);
+        setSelectedUserActivity(response.data);
+        setShowUserActivityModal(true);
+      } else {
+        console.error("❌ Failed to fetch user activity:", response.error);
+        // Show error message to user
+        alert("Failed to fetch user activity. Please try again.");
+      }
+    } catch (err) {
+      console.error("❌ Error fetching user activity:", err);
+      alert("An error occurred while fetching user activity.");
+    } finally {
+      setUserActivityLoading(false);
+    }
   };
 
   const handleEditUser = (user: UserListItem) => {
@@ -1488,281 +1522,335 @@ export default function UsersPage() {
               setSelectedUserDetails(null);
             }}
             title="User Details"
-            size="lg"
+            size="md"
           >
             {selectedUser && (
-              <div className="space-y-6">
-                {/* Display detailed user information if available */}
-                {selectedUserDetails ? (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Username
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedUserDetails.username}
-                      </p>
+              <div className="space-y-4">
+                {/* User Header */}
+                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-lg p-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg">
+                      {(selectedUserDetails?.username || selectedUser.username)
+                        ?.charAt(0)
+                        .toUpperCase()}
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Email
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedUserDetails.email}
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-gray-900">
+                        {selectedUserDetails?.username || selectedUser.username}
+                      </h3>
+                      <p className="text-gray-600 text-sm mt-0.5">
+                        {selectedUserDetails?.email || selectedUser.email}
                       </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Role
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedUserDetails.role}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Status
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedUserDetails.is_active ? "Active" : "Inactive"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Current Points
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedUserDetails.points?.current_points !==
-                        undefined
-                          ? selectedUserDetails.points.current_points.toLocaleString()
-                          : "N/A"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Total Points
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedUserDetails.points?.total_points !== undefined
-                          ? selectedUserDetails.points.total_points.toLocaleString()
-                          : "N/A"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Used Points
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedUserDetails.points?.total_used_points !==
-                        undefined
-                          ? selectedUserDetails.points.total_used_points.toLocaleString()
-                          : "N/A"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Payment Status
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedUserDetails.points?.paid_status || "Unknown"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Total Requests
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedUserDetails.points?.total_rq !== undefined
-                          ? selectedUserDetails.points.total_rq.toLocaleString()
-                          : "N/A"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Request Status
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedUserDetails.using_rq_status || "Unknown"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        User Status
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedUserDetails.user_status || "Unknown"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Total Suppliers
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedUserDetails.total_suppliers || 0}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Created
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {new Date(
-                          selectedUserDetails.created_at
-                        ).toLocaleString()}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Updated
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {new Date(
-                          selectedUserDetails.updated_at
-                        ).toLocaleString()}
-                      </p>
-                    </div>
-                    {selectedUserDetails.created_by && (
-                      <div className="col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Created By
-                        </label>
-                        <p className="mt-1 text-sm text-gray-900">
-                          {selectedUserDetails.created_by}
-                        </p>
+                      <div className="flex items-center space-x-2 mt-1.5">
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-xs font-medium border-2 ${
+                            (selectedUserDetails?.using_rq_status ||
+                              selectedUser.usingRqStatus) === "Active"
+                              ? "bg-green-50 text-green-700 border-green-300"
+                              : "bg-red-50 text-red-700 border-red-300"
+                          }`}
+                        >
+                          {selectedUserDetails?.using_rq_status ||
+                            selectedUser.usingRqStatus ||
+                            "INACTIVE"}
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-xs font-medium border-2 ${
+                            (selectedUserDetails?.points?.paid_status ||
+                              selectedUser.paidStatus) === "Paid"
+                              ? "bg-cyan-50 text-cyan-700 border-cyan-300"
+                              : "bg-amber-50 text-amber-700 border-amber-300"
+                          }`}
+                        >
+                          {(selectedUserDetails?.points?.paid_status ||
+                            selectedUser.paidStatus) === "Paid"
+                            ? "PAID"
+                            : "PENDING"}
+                        </span>
                       </div>
-                    )}
-                    {selectedUserDetails.viewed_by && (
-                      <div className="col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Viewed By
-                        </label>
-                        <p className="mt-1 text-sm text-gray-900">
-                          {selectedUserDetails.viewed_by.username} (
-                          {selectedUserDetails.viewed_by.email}) -{" "}
-                          {selectedUserDetails.viewed_by.role}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  /* Fallback to basic user information */
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Username
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedUser.username}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Email
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedUser.email}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Role
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedUser.role}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Status
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedUser.isActive ? "Active" : "Inactive"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Current Points
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedUser.pointBalance !== undefined
-                          ? selectedUser.pointBalance.toLocaleString()
-                          : "N/A"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Total Points
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedUser.totalPoints !== undefined
-                          ? selectedUser.totalPoints.toLocaleString()
-                          : "N/A"}
-                      </p>
                     </div>
                   </div>
-                )}
+                </div>
 
-                {/* API Key Information */}
-                {selectedUserDetails?.api_key_info && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      API Key Information
-                    </label>
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-500">API Key:</span>
-                          <span className="ml-2 text-gray-900">
-                            {selectedUserDetails.api_key_info.api_key ||
-                              "Not set"}
+                {/* Detailed Information Table */}
+                <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+                  <table className="w-full border-collapse">
+                    <thead className="sticky top-0 bg-[rgb(var(--bg-secondary))]">
+                      <tr className="border-b border-[rgb(var(--border-primary))]">
+                        <th className="text-left py-2 px-3 text-xs font-semibold text-[rgb(var(--text-primary))]">
+                          Field
+                        </th>
+                        <th className="text-left py-2 px-3 text-xs font-semibold text-[rgb(var(--text-primary))]">
+                          Value
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[rgb(var(--border-primary))]">
+                      <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                        <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                          User ID
+                        </td>
+                        <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))] font-mono">
+                          {selectedUserDetails?.id || selectedUser.id}
+                        </td>
+                      </tr>
+                      <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                        <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                          Username
+                        </td>
+                        <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))] font-semibold">
+                          {selectedUserDetails?.username ||
+                            selectedUser.username}
+                        </td>
+                      </tr>
+                      <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                        <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                          Email
+                        </td>
+                        <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))]">
+                          {selectedUserDetails?.email || selectedUser.email}
+                        </td>
+                      </tr>
+                      <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                        <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                          Role
+                        </td>
+                        <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))]">
+                          {selectedUserDetails?.role || selectedUser.role}
+                        </td>
+                      </tr>
+                      <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                        <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                          Status
+                        </td>
+                        <td className="py-2 px-3 text-xs">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${
+                              (selectedUserDetails?.using_rq_status ||
+                                selectedUser.usingRqStatus) === "Active"
+                                ? "border-green-600 dark:border-green-400 text-green-600 dark:text-green-400 bg-transparent"
+                                : "border-red-600 dark:border-red-400 text-red-600 dark:text-red-400 bg-transparent"
+                            }`}
+                          >
+                            {selectedUserDetails?.using_rq_status ||
+                              selectedUser.usingRqStatus ||
+                              "Inactive"}
                           </span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Created:</span>
-                          <span className="ml-2 text-gray-900">
-                            {selectedUserDetails.api_key_info.created || "N/A"}
+                        </td>
+                      </tr>
+                      <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                        <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                          Current Points
+                        </td>
+                        <td className="py-2 px-3 text-sm text-primary-color font-bold">
+                          {(
+                            selectedUserDetails?.points?.current_points ??
+                            selectedUser.pointBalance
+                          )?.toLocaleString() || "0"}
+                        </td>
+                      </tr>
+                      <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                        <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                          Total Points
+                        </td>
+                        <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))] font-semibold">
+                          {(
+                            selectedUserDetails?.points?.total_points ??
+                            selectedUser.totalPoints
+                          )?.toLocaleString() || "0"}
+                        </td>
+                      </tr>
+                      {selectedUserDetails?.points?.total_used_points !==
+                        undefined && (
+                        <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                          <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                            Used Points
+                          </td>
+                          <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))] font-semibold">
+                            {selectedUserDetails.points.total_used_points.toLocaleString()}
+                          </td>
+                        </tr>
+                      )}
+                      <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                        <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                          Payment Status
+                        </td>
+                        <td className="py-2 px-3 text-xs">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${
+                              (selectedUserDetails?.points?.paid_status ||
+                                selectedUser.paidStatus) === "Paid"
+                                ? "border-cyan-600 dark:border-cyan-400 text-cyan-600 dark:text-cyan-400 bg-transparent"
+                                : "border-amber-600 dark:border-amber-400 text-amber-600 dark:text-amber-400 bg-transparent"
+                            }`}
+                          >
+                            {selectedUserDetails?.points?.paid_status ||
+                              selectedUser.paidStatus ||
+                              "Pending"}
                           </span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Expires:</span>
-                          <span className="ml-2 text-gray-900">
-                            {selectedUserDetails.api_key_info.expires || "N/A"}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Active Days:</span>
-                          <span className="ml-2 text-gray-900">
-                            {selectedUserDetails.api_key_info.active_for_days ||
-                              "N/A"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Active Suppliers */}
-                {selectedUserDetails?.active_suppliers &&
-                  selectedUserDetails.active_suppliers.length > 0 && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Active Suppliers ({selectedUserDetails.total_suppliers})
-                      </label>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedUserDetails.active_suppliers.map(
-                          (supplier: string, index: number) => (
-                            <Badge key={index} variant="outline">
-                              {supplier}
-                            </Badge>
-                          )
+                        </td>
+                      </tr>
+                      <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                        <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                          Total Requests
+                        </td>
+                        <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))] font-semibold">
+                          {selectedUserDetails?.points?.total_rq ||
+                            selectedUser.totalRequests ||
+                            "0"}
+                        </td>
+                      </tr>
+                      {selectedUserDetails?.using_rq_status && (
+                        <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                          <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                            Request Status
+                          </td>
+                          <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))]">
+                            {selectedUserDetails.using_rq_status}
+                          </td>
+                        </tr>
+                      )}
+                      {selectedUserDetails?.user_status && (
+                        <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                          <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                            User Status
+                          </td>
+                          <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))]">
+                            {selectedUserDetails.user_status}
+                          </td>
+                        </tr>
+                      )}
+                      {selectedUserDetails?.total_suppliers !== undefined && (
+                        <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                          <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                            Total Suppliers
+                          </td>
+                          <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))] font-semibold">
+                            {selectedUserDetails.total_suppliers}
+                          </td>
+                        </tr>
+                      )}
+                      {selectedUserDetails?.active_suppliers &&
+                        selectedUserDetails.active_suppliers.length > 0 && (
+                          <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                            <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))] align-top">
+                              Active Suppliers
+                            </td>
+                            <td className="py-2 px-3">
+                              <div className="flex flex-wrap gap-1.5">
+                                {selectedUserDetails.active_suppliers.map(
+                                  (supplier: string, idx: number) => (
+                                    <span
+                                      key={idx}
+                                      className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border border-primary-color text-primary-color bg-transparent"
+                                    >
+                                      {supplier}
+                                    </span>
+                                  )
+                                )}
+                              </div>
+                            </td>
+                          </tr>
                         )}
-                      </div>
-                    </div>
-                  )}
+                      {selectedUserDetails?.api_key_info && (
+                        <>
+                          <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                            <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                              API Key
+                            </td>
+                            <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))] font-mono">
+                              {selectedUserDetails.api_key_info.api_key ||
+                                "Not set"}
+                            </td>
+                          </tr>
+                          <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                            <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                              API Key Created
+                            </td>
+                            <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))]">
+                              {selectedUserDetails.api_key_info.created ||
+                                "N/A"}
+                            </td>
+                          </tr>
+                          <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                            <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                              API Key Expires
+                            </td>
+                            <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))]">
+                              {selectedUserDetails.api_key_info.expires ||
+                                "N/A"}
+                            </td>
+                          </tr>
+                          <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                            <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                              API Key Active Days
+                            </td>
+                            <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))]">
+                              {selectedUserDetails.api_key_info
+                                .active_for_days || "N/A"}
+                            </td>
+                          </tr>
+                        </>
+                      )}
+                      <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                        <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                          Created At
+                        </td>
+                        <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))]">
+                          {selectedUserDetails?.created_at
+                            ? new Date(
+                                selectedUserDetails.created_at
+                              ).toLocaleString()
+                            : selectedUser.createdAt
+                            ? new Date(selectedUser.createdAt).toLocaleString()
+                            : "N/A"}
+                        </td>
+                      </tr>
+                      {selectedUserDetails?.updated_at && (
+                        <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                          <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                            Updated At
+                          </td>
+                          <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))]">
+                            {new Date(
+                              selectedUserDetails.updated_at
+                            ).toLocaleString()}
+                          </td>
+                        </tr>
+                      )}
+                      {(selectedUserDetails?.created_by ||
+                        selectedUser.createdBy) && (
+                        <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                          <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                            Created By
+                          </td>
+                          <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))]">
+                            {selectedUserDetails?.created_by ||
+                              selectedUser.createdBy}
+                          </td>
+                        </tr>
+                      )}
+                      {selectedUserDetails?.viewed_by && (
+                        <tr className="hover:bg-[rgb(var(--bg-secondary))] transition-colors">
+                          <td className="py-2 px-3 text-xs font-medium text-[rgb(var(--text-secondary))]">
+                            Viewed By
+                          </td>
+                          <td className="py-2 px-3 text-xs text-[rgb(var(--text-primary))]">
+                            {selectedUserDetails.viewed_by.username} (
+                            {selectedUserDetails.viewed_by.email}) -{" "}
+                            {selectedUserDetails.viewed_by.role}
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
 
-                <div className="flex justify-end space-x-3 pt-4 border-t">
+                {/* Action Buttons */}
+                <div className="flex justify-end space-x-2 pt-3 border-t border-[rgb(var(--border-primary))]">
                   <Button
                     variant="outline"
+                    size="sm"
                     onClick={() => {
                       setShowUserModal(false);
                       setSelectedUser(null);
@@ -1771,8 +1859,36 @@ export default function UsersPage() {
                   >
                     Close
                   </Button>
-                  <Button variant="primary" onClick={handleCheckActivity}>
-                    Check Activity
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log(
+                        "Edit User clicked, navigating to billing page for userId:",
+                        selectedUserDetails?.id || selectedUser.id
+                      );
+
+                      // Close the modal
+                      setShowUserModal(false);
+
+                      // Navigate to billing page
+                      router.push("/dashboard/billing");
+                    }}
+                    leftIcon={<Edit className="h-3 w-3" />}
+                  >
+                    Edit User
+                  </Button>
+
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleCheckActivity}
+                    disabled={userActivityLoading}
+                  >
+                    {userActivityLoading ? "Loading..." : "Check Activity"}
                   </Button>
                 </div>
               </div>
@@ -2738,12 +2854,12 @@ export default function UsersPage() {
                     <div className="flex items-center space-x-2 mt-1.5">
                       <span
                         className={`px-2 py-0.5 rounded-full text-xs font-medium border-2 ${
-                          selectedUserDetail.is_active
+                          selectedUserDetail.using_rq_status === "Active"
                             ? "bg-green-50 text-green-700 border-green-300"
-                            : "bg-gray-50 text-gray-700 border-gray-300"
+                            : "bg-red-50 text-red-700 border-red-300"
                         }`}
                       >
-                        {selectedUserDetail.is_active ? "ACTIVE" : "INACTIVE"}
+                        {selectedUserDetail.using_rq_status || "INACTIVE"}
                       </span>
                       <span
                         className={`px-2 py-0.5 rounded-full text-xs font-medium border-2 ${
@@ -2950,6 +3066,477 @@ export default function UsersPage() {
                   leftIcon={<Edit className="h-3 w-3" />}
                 >
                   Edit User
+                </Button>
+              </div>
+            </div>
+          )}
+        </Modal>
+        {/* User Activity Modal */}
+        <Modal
+          isOpen={showUserActivityModal}
+          onClose={() => {
+            setShowUserActivityModal(false);
+            setSelectedUserActivity(null);
+          }}
+          title="User Activity Log"
+          size="xl"
+        >
+          {selectedUserActivity && (
+            <div className="space-y-6">
+              {/* Activity Summary */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-4">
+                <h3 className="text-lg font-bold text-gray-900 mb-3">
+                  Activity Summary
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-blue-600">
+                      {selectedUserActivity.summary?.total_activities || 0}
+                    </p>
+                    <p className="text-sm text-gray-600">Total Activities</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-green-600">
+                      {selectedUserActivity.summary?.successful_calls || 0}
+                    </p>
+                    <p className="text-sm text-gray-600">Successful Calls</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-red-600">
+                      {selectedUserActivity.summary?.failed_calls || 0}
+                    </p>
+                    <p className="text-sm text-gray-600">Failed Calls</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-purple-600">
+                      {selectedUserActivity.summary?.unique_endpoints || 0}
+                    </p>
+                    <p className="text-sm text-gray-600">Unique Endpoints</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Charts Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Success Rate Chart */}
+                <div className="bg-white border rounded-lg p-4">
+                  <h4 className="text-md font-semibold text-gray-900 mb-3">
+                    Success Rate
+                  </h4>
+                  <div className="h-64 flex items-center justify-center">
+                    {(() => {
+                      const successfulCalls =
+                        selectedUserActivity.summary?.successful_calls || 0;
+                      const failedCalls =
+                        selectedUserActivity.summary?.failed_calls || 0;
+                      const total = successfulCalls + failedCalls;
+
+                      if (total === 0) {
+                        return (
+                          <p className="text-gray-500">No data available</p>
+                        );
+                      }
+
+                      const successRate = (
+                        (successfulCalls / total) *
+                        100
+                      ).toFixed(1);
+                      const failureRate = ((failedCalls / total) * 100).toFixed(
+                        1
+                      );
+
+                      return (
+                        <div className="w-full">
+                          <div className="relative w-32 h-32 mx-auto mb-4">
+                            <svg
+                              className="w-32 h-32 transform -rotate-90"
+                              viewBox="0 0 36 36"
+                            >
+                              <path
+                                className="text-gray-200"
+                                stroke="currentColor"
+                                strokeWidth="3"
+                                fill="transparent"
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              />
+                              <path
+                                className="text-green-500"
+                                stroke="currentColor"
+                                strokeWidth="3"
+                                strokeDasharray={`${
+                                  (successfulCalls / total) * 100
+                                }, 100`}
+                                strokeLinecap="round"
+                                fill="transparent"
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                              />
+                            </svg>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className="text-xl font-bold text-gray-700">
+                                {successRate}%
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-center space-y-2">
+                            <div className="flex items-center justify-center space-x-4">
+                              <div className="flex items-center space-x-2">
+                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                <span className="text-sm text-gray-600">
+                                  Success ({successfulCalls})
+                                </span>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                                <span className="text-sm text-gray-600">
+                                  Failed ({failedCalls})
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+
+                {/* HTTP Methods Chart */}
+                <div className="bg-white border rounded-lg p-4">
+                  <h4 className="text-md font-semibold text-gray-900 mb-3">
+                    HTTP Methods
+                  </h4>
+                  <div className="h-64">
+                    {(() => {
+                      const methodCounts =
+                        selectedUserActivity.activities?.reduce(
+                          (acc: any, activity: any) => {
+                            const method = activity.method || "Unknown";
+                            acc[method] = (acc[method] || 0) + 1;
+                            return acc;
+                          },
+                          {}
+                        ) || {};
+
+                      const methods = Object.keys(methodCounts);
+                      const colors = {
+                        GET: "#3B82F6",
+                        POST: "#10B981",
+                        PUT: "#F59E0B",
+                        DELETE: "#EF4444",
+                        PATCH: "#8B5CF6",
+                        Unknown: "#6B7280",
+                      };
+
+                      if (methods.length === 0) {
+                        return (
+                          <div className="flex items-center justify-center h-full">
+                            <p className="text-gray-500">No data available</p>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="h-full flex flex-col">
+                          <div className="flex-1 flex items-center justify-center">
+                            <div className="grid grid-cols-2 gap-4 w-full">
+                              {methods.map((method, index) => (
+                                <div
+                                  key={method}
+                                  className="flex items-center justify-between p-3 bg-gray-50 rounded"
+                                >
+                                  <div className="flex items-center space-x-2">
+                                    <div
+                                      className="w-4 h-4 rounded"
+                                      style={{
+                                        backgroundColor:
+                                          colors[
+                                            method as keyof typeof colors
+                                          ] || colors.Unknown,
+                                      }}
+                                    ></div>
+                                    <span className="text-sm font-medium">
+                                      {method}
+                                    </span>
+                                  </div>
+                                  <span className="text-sm font-bold">
+                                    {methodCounts[method]}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+
+              {/* Activity Timeline */}
+              <div className="bg-white border rounded-lg p-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">
+                  Activity Timeline
+                </h4>
+                <div className="h-64">
+                  {selectedUserActivity.activities &&
+                  selectedUserActivity.activities.length > 0 ? (
+                    <div className="h-full">
+                      {(() => {
+                        // Group activities by date
+                        const activityByDate =
+                          selectedUserActivity.activities.reduce(
+                            (acc: any, activity: any) => {
+                              const date = new Date(
+                                activity.created_at
+                              ).toLocaleDateString();
+                              acc[date] = (acc[date] || 0) + 1;
+                              return acc;
+                            },
+                            {}
+                          );
+
+                        const dates = Object.keys(activityByDate).sort();
+                        const maxCount = Math.max(
+                          ...(Object.values(activityByDate) as number[])
+                        );
+
+                        return (
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-1 gap-3">
+                              {dates.slice(-7).map((date, index) => {
+                                const count = activityByDate[date];
+                                const widthPercentage =
+                                  (count / maxCount) * 100;
+
+                                return (
+                                  <div key={date} className="space-y-1">
+                                    <div className="flex items-center justify-between text-sm">
+                                      <span className="text-gray-700">
+                                        {date}
+                                      </span>
+                                      <span className="font-semibold">
+                                        {count} activities
+                                      </span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-3">
+                                      <div
+                                        className="bg-blue-500 h-3 rounded-full transition-all duration-300"
+                                        style={{ width: `${widthPercentage}%` }}
+                                      ></div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <p className="text-gray-500">
+                        No timeline data available
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Most Used Endpoints */}
+              {selectedUserActivity.summary?.most_used_endpoints &&
+                selectedUserActivity.summary.most_used_endpoints.length > 0 && (
+                  <div className="bg-white border rounded-lg p-4">
+                    <h4 className="text-md font-semibold text-gray-900 mb-3">
+                      Most Used Endpoints
+                    </h4>
+                    <div className="h-64">
+                      <div className="space-y-3">
+                        {selectedUserActivity.summary.most_used_endpoints
+                          .slice(0, 5)
+                          .map((endpoint: any, index: number) => {
+                            const maxCount = Math.max(
+                              ...selectedUserActivity.summary.most_used_endpoints.map(
+                                (e: any) => e.count
+                              )
+                            );
+                            const widthPercentage =
+                              (endpoint.count / maxCount) * 100;
+
+                            return (
+                              <div key={index} className="space-y-2">
+                                <div className="flex items-center justify-between text-sm">
+                                  <span className="font-mono text-gray-700 truncate flex-1 mr-2">
+                                    {endpoint.endpoint}
+                                  </span>
+                                  <div className="flex items-center space-x-2">
+                                    <span className="font-semibold">
+                                      {endpoint.count}
+                                    </span>
+                                    <span
+                                      className={`text-xs px-2 py-1 rounded ${
+                                        endpoint.success_rate >= 80
+                                          ? "bg-green-100 text-green-800"
+                                          : endpoint.success_rate >= 50
+                                          ? "bg-yellow-100 text-yellow-800"
+                                          : "bg-red-100 text-red-800"
+                                      }`}
+                                    >
+                                      {endpoint.success_rate.toFixed(1)}%
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                  <div
+                                    className={`h-2 rounded-full ${
+                                      endpoint.success_rate >= 80
+                                        ? "bg-green-500"
+                                        : endpoint.success_rate >= 50
+                                        ? "bg-yellow-500"
+                                        : "bg-red-500"
+                                    }`}
+                                    style={{ width: `${widthPercentage}%` }}
+                                  ></div>
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  Last used:{" "}
+                                  {new Date(
+                                    endpoint.last_used
+                                  ).toLocaleString()}
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+              {/* Recent Activities */}
+              <div>
+                <h4 className="text-md font-semibold text-gray-900 mb-3">
+                  Recent Activities
+                </h4>
+                <div className="max-h-96 overflow-y-auto">
+                  <div className="space-y-3">
+                    {selectedUserActivity.activities &&
+                    selectedUserActivity.activities.length > 0 ? (
+                      selectedUserActivity.activities.map(
+                        (activity: any, index: number) => (
+                          <div
+                            key={activity.id || index}
+                            className="bg-white border rounded-lg p-4 hover:shadow-md transition-shadow"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2 mb-2">
+                                  <span
+                                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                      activity.action === "api_access"
+                                        ? "bg-green-100 text-green-800"
+                                        : activity.action === "api_error"
+                                        ? "bg-red-100 text-red-800"
+                                        : "bg-blue-100 text-blue-800"
+                                    }`}
+                                  >
+                                    {activity.action}
+                                  </span>
+                                  <span
+                                    className={`px-2 py-1 rounded text-xs font-mono ${
+                                      activity.method === "GET"
+                                        ? "bg-blue-100 text-blue-800"
+                                        : activity.method === "POST"
+                                        ? "bg-green-100 text-green-800"
+                                        : activity.method === "PUT"
+                                        ? "bg-yellow-100 text-yellow-800"
+                                        : activity.method === "DELETE"
+                                        ? "bg-red-100 text-red-800"
+                                        : "bg-gray-100 text-gray-800"
+                                    }`}
+                                  >
+                                    {activity.method}
+                                  </span>
+                                  {activity.status_code && (
+                                    <span
+                                      className={`px-2 py-1 rounded text-xs font-mono ${
+                                        activity.status_code >= 200 &&
+                                        activity.status_code < 300
+                                          ? "bg-green-100 text-green-800"
+                                          : activity.status_code >= 400 &&
+                                            activity.status_code < 500
+                                          ? "bg-yellow-100 text-yellow-800"
+                                          : activity.status_code >= 500
+                                          ? "bg-red-100 text-red-800"
+                                          : "bg-gray-100 text-gray-800"
+                                      }`}
+                                    >
+                                      {activity.status_code}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="font-mono text-sm text-gray-800 mb-1">
+                                  {activity.endpoint}
+                                </p>
+                                <p className="text-xs text-gray-500 mb-2">
+                                  {new Date(
+                                    activity.created_at
+                                  ).toLocaleString()}{" "}
+                                  • IP: {activity.ip_address}
+                                </p>
+                                {activity.details && (
+                                  <div className="mt-2">
+                                    <details className="text-xs">
+                                      <summary className="cursor-pointer text-blue-600 hover:text-blue-800">
+                                        View Details
+                                      </summary>
+                                      <div className="mt-2 p-2 bg-gray-50 rounded border">
+                                        <pre className="text-xs text-gray-700 whitespace-pre-wrap overflow-x-auto">
+                                          {JSON.stringify(
+                                            activity.details,
+                                            null,
+                                            2
+                                          )}
+                                        </pre>
+                                      </div>
+                                    </details>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      )
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <p>No recent activities found</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Date Range */}
+              {selectedUserActivity.summary?.date_range && (
+                <div className="text-xs text-gray-500 text-center pt-4 border-t">
+                  Activity period:{" "}
+                  {new Date(
+                    selectedUserActivity.summary.date_range.start
+                  ).toLocaleDateString()}{" "}
+                  -{" "}
+                  {new Date(
+                    selectedUserActivity.summary.date_range.end
+                  ).toLocaleDateString()}
+                </div>
+              )}
+
+              {/* Close Button */}
+              <div className="flex justify-end pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowUserActivityModal(false);
+                    setSelectedUserActivity(null);
+                  }}
+                >
+                  Close
                 </Button>
               </div>
             </div>

@@ -275,6 +275,163 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    // User activity endpoint
+    if (path.match(/^\/v1\.0\/user\/(.+)\/activity$/) && req.method === "GET") {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(
+          JSON.stringify({
+            error: true,
+            message: "Could not validate credentials",
+            error_code: "HTTP_401",
+            details: { status_code: 401 },
+            timestamp: new Date().toISOString(),
+          })
+        );
+        return;
+      }
+
+      const userId = path.match(/^\/v1\.0\/user\/(.+)\/activity$/)[1];
+      console.log(`✅ Fetching activity for user ID: ${userId}`);
+
+      // Mock user activity data based on the example you provided
+      const mockUserActivity = {
+        user_id: userId,
+        activities: [
+          {
+            id: 834874,
+            action: "api_error",
+            endpoint: "/v1.0/content/get-update-provider-info",
+            method: "GET",
+            status_code: 403,
+            details: {
+              method: "GET",
+              headers: {
+                "content-type": "application/json",
+                "content-length": "208",
+                "access-control-allow-origin": "*",
+                "access-control-allow-credentials": "true",
+              },
+              success: false,
+              user_id: userId,
+              endpoint: "/v1.0/content/get-update-provider-info",
+              client_ip: "127.0.0.1",
+              timestamp: "2025-12-29T10:20:31.339300",
+              user_role: "admin_user",
+              user_agent:
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+              user_email: "ron123@gmail.com",
+              status_code: 403,
+              content_type: "application/json",
+              query_params: {
+                page: "1",
+                to_date: "2025-12-29",
+                from_date: "2025-11-29",
+                limit_per_page: "100",
+              },
+              content_length: null,
+              security_level: "medium",
+              process_time_ms: 305.15,
+              endpoint_category: "other",
+              performance_category: "normal",
+            },
+            ip_address: "127.0.0.1",
+            user_agent:
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+            created_at: "2025-12-29T10:20:31",
+          },
+          {
+            id: 796358,
+            action: "api_access",
+            endpoint: "/audit/my-activity",
+            method: "GET",
+            status_code: 200,
+            details: {
+              action: "my_activity_access",
+              method: "GET",
+              success: true,
+              endpoint: "/audit/my-activity",
+              timestamp: "2025-12-28T11:06:53.842902",
+              days_requested: 30,
+              security_level: "low",
+            },
+            ip_address: "127.0.0.1",
+            user_agent:
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+            created_at: "2025-12-28T11:06:54",
+          },
+          {
+            id: 796359,
+            action: "api_access",
+            endpoint: "/v1.0/user/check-me",
+            method: "GET",
+            status_code: 200,
+            details: {
+              action: "profile_access",
+              method: "GET",
+              success: true,
+              endpoint: "/v1.0/user/check-me",
+              timestamp: "2025-12-28T09:15:22.123456",
+              security_level: "low",
+            },
+            ip_address: "127.0.0.1",
+            user_agent:
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+            created_at: "2025-12-28T09:15:22",
+          },
+        ],
+        summary: {
+          total_activities: 22,
+          total_api_calls: 4,
+          successful_calls: 3,
+          failed_calls: 1,
+          unique_actions: 2,
+          unique_endpoints: 5,
+          most_used_endpoints: [
+            {
+              endpoint: "GET /v1.0/dashboard/supplier-freshness",
+              count: 12,
+              success_rate: 75.0,
+              last_used: "2025-12-29T12:20:27",
+            },
+            {
+              endpoint: "GET /v1.0/content/get-update-provider-info",
+              count: 7,
+              success_rate: 28.57,
+              last_used: "2025-12-29T12:04:21",
+            },
+            {
+              endpoint: "GET /v1.0/user/" + userId + "/activity",
+              count: 1,
+              success_rate: 100.0,
+              last_used: "2025-12-29T12:58:57",
+            },
+            {
+              endpoint: "GET /v1.0/user/all-general-user",
+              count: 1,
+              success_rate: 100.0,
+              last_used: "2025-12-29T12:58:08",
+            },
+            {
+              endpoint: "GET /audit/my-activity",
+              count: 1,
+              success_rate: 100.0,
+              last_used: "2025-12-28T11:06:54",
+            },
+          ],
+          date_range: {
+            start: "2025-11-30T04:58:59.765581",
+            end: "2025-12-30T04:58:59.869603",
+          },
+        },
+      };
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(mockUserActivity));
+      return;
+    }
+
     // User points check endpoint
     if (path === "/v1.0/user/points-check" && req.method === "GET") {
       const authHeader = req.headers.authorization;
@@ -649,7 +806,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-const PORT = 8002;
+const PORT = 8003;
 const HOST = "127.0.0.1";
 
 server.listen(PORT, HOST, () => {
@@ -658,6 +815,7 @@ server.listen(PORT, HOST, () => {
   console.log("  POST /v1.0/auth/token - Authentication");
   console.log("  GET  /v1.0/user/check-me - User profile");
   console.log("  GET  /v1.0/user/check-user-info/{id} - Check user info");
+  console.log("  GET  /v1.0/user/{id}/activity - User activity log");
   console.log("  GET  /v1.0/user/points-check - User points");
   console.log("  GET  /v1.0/user/check-active-my-supplier - Active suppliers");
   console.log("  GET  /v1.0/audit/my-activity - User audit activity");

@@ -65,9 +65,9 @@ export class UserService {
             console.error("❌ Error in getAllUsers:", error);
 
             // Fallback to the original endpoint if the new one fails
-            console.log("🔄 Trying fallback endpoint: /user/check/all/");
+            console.log("🔄 Trying fallback endpoint: /user/check/all/fast/");
             try {
-                const fallbackResponse = await apiClient.get<any>('/user/check/all/');
+                const fallbackResponse = await apiClient.get<any>('/user/check/all/fast/');
 
                 if (fallbackResponse.success && fallbackResponse.data) {
                     // Handle the old format: { super_users: [], admin_users: [], general_users: [], root_user: {} }
@@ -205,6 +205,38 @@ export class UserService {
             return response;
         } catch (error) {
             console.error("❌ Exception in checkUserInfo:", error);
+            return {
+                success: false,
+                error: {
+                    status: 500,
+                    message: error instanceof Error ? error.message : "Unknown error occurred",
+                    details: error
+                }
+            };
+        }
+    }
+
+    /**
+     * Get user activity log
+     */
+    static async getUserActivity(id: string): Promise<ApiResponse<any>> {
+        console.log("📡 Fetching user activity for ID:", id);
+        console.log("📡 Making request to endpoint: /user/" + id + "/activity");
+
+        try {
+            const response = await apiClient.get<any>(`/user/${id}/activity`);
+
+            console.log("📡 Raw activity API response:", response);
+
+            if (response.success && response.data) {
+                console.log("✅ User activity fetched successfully:", response.data);
+            } else {
+                console.error("❌ API returned error:", response.error);
+            }
+
+            return response;
+        } catch (error) {
+            console.error("❌ Exception in getUserActivity:", error);
             return {
                 success: false,
                 error: {
