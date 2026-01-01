@@ -76,6 +76,12 @@ export default function ProfilePage() {
   const [showSupplierModal, setShowSupplierModal] = useState(false);
   const [supplierInfo, setSupplierInfo] = useState<SupplierInfo | null>(null);
   const [supplierLoading, setSupplierLoading] = useState(false);
+  const [selectedSupplierName, setSelectedSupplierName] = useState<string>("");
+  const [turningOffSupplier, setTurningOffSupplier] = useState(false);
+  const [turningOnSupplier, setTurningOnSupplier] = useState(false);
+  const [showTempOffSupplierModal, setShowTempOffSupplierModal] =
+    useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -186,6 +192,192 @@ export default function ProfilePage() {
     }
   };
 
+  const handleTurnOffSupplier = async () => {
+    if (!selectedSupplierName) return;
+
+    setTurningOffSupplier(true);
+
+    try {
+      const token = TokenStorage.getToken();
+
+      if (!token) {
+        throw new Error("Authentication token not found. Please login again.");
+      }
+
+      console.log("Turning off supplier:", selectedSupplierName);
+
+      const response = await fetch(
+        "http://127.0.0.1:8001/v1.0/permissions/turn-off-supplier",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            supplier_name: [selectedSupplierName],
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("Unauthorized. Please login again.");
+        }
+        throw new Error(`Failed to turn off supplier: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log("Turn off supplier response:", data);
+
+      // Optimistically update the profile state to move supplier to temporary off
+      if (profile) {
+        const updatedProfile = {
+          ...profile,
+          supplier_info: {
+            ...profile.supplier_info,
+            active_list: profile.supplier_info.active_list.filter(
+              (supplier) => supplier !== selectedSupplierName
+            ),
+            temporary_off_supplier: [
+              ...profile.supplier_info.temporary_off_supplier,
+              selectedSupplierName,
+            ],
+            total_active: profile.supplier_info.total_active - 1,
+            temporary_off: profile.supplier_info.temporary_off + 1,
+          },
+        };
+        setProfile(updatedProfile);
+      }
+
+      // Close modal
+      setShowSupplierModal(false);
+
+      // Show success message
+      setSuccessMessage(
+        `Supplier "${selectedSupplierName}" has been turned off successfully!`
+      );
+      setTimeout(() => setSuccessMessage(null), 3000);
+      setError(null);
+    } catch (err) {
+      console.error("Error turning off supplier:", err);
+
+      // Revert optimistic update on error by refreshing profile
+      await fetchProfile();
+
+      setError(
+        err instanceof Error ? err.message : "Failed to turn off supplier"
+      );
+    } finally {
+      setTurningOffSupplier(false);
+    }
+  };
+
+  const handleTempOffSupplierClick = (supplierName: string) => {
+    setSelectedSupplierName(supplierName);
+    setShowTempOffSupplierModal(true);
+  };
+
+  const handleTurnOnSupplier = async () => {
+    if (!selectedSupplierName) return;
+
+    setTurningOnSupplier(true);
+
+    try {
+      const token = TokenStorage.getToken();
+
+      if (!token) {
+        throw new Error("Authentication token not found. Please login again.");
+      }
+
+      console.log("Turning on supplier:", selectedSupplierName);
+
+      const response = await fetch(
+        "http://127.0.0.1:8001/v1.0/permissions/turn-on-supplier",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            supplier_name: [selectedSupplierName],
+          }),
+        }
+      );
+
+      console.log("Response status:", response.status);
+      console.log("Response statusText:", response.statusText);
+
+      if (!response.ok) {
+        // Try to get the response body for more details
+        let errorMessage = `Failed to turn on supplier: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          console.log("Error response data:", errorData);
+          errorMessage = errorData.message || errorData.detail || errorMessage;
+        } catch (e) {
+          console.log("Could not parse error response as JSON");
+        }
+
+        if (response.status === 401) {
+          throw new Error("Unauthorized. Please login again.");
+        }
+        if (response.status === 404) {
+          throw new Error(
+            "Turn-on supplier endpoint not found. This feature may not be implemented on the backend yet."
+          );
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      console.log("Turn on supplier response:", data);
+
+      // Optimistically update the profile state to move supplier to active
+      if (profile) {
+        const updatedProfile = {
+          ...profile,
+          supplier_info: {
+            ...profile.supplier_info,
+            active_list: [
+              ...profile.supplier_info.active_list,
+              selectedSupplierName,
+            ],
+            temporary_off_supplier:
+              profile.supplier_info.temporary_off_supplier.filter(
+                (supplier) => supplier !== selectedSupplierName
+              ),
+            total_active: profile.supplier_info.total_active + 1,
+            temporary_off: profile.supplier_info.temporary_off - 1,
+          },
+        };
+        setProfile(updatedProfile);
+      }
+
+      // Close modal
+      setShowTempOffSupplierModal(false);
+
+      // Show success message
+      setSuccessMessage(
+        `Supplier "${selectedSupplierName}" has been activated successfully!`
+      );
+      setTimeout(() => setSuccessMessage(null), 3000);
+      setError(null);
+    } catch (err) {
+      console.error("Error turning on supplier:", err);
+
+      // Revert optimistic update on error by refreshing profile
+      await fetchProfile();
+
+      setError(
+        err instanceof Error ? err.message : "Failed to turn on supplier"
+      );
+    } finally {
+      setTurningOnSupplier(false);
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[rgb(var(--bg-primary))]">
@@ -225,6 +417,7 @@ export default function ProfilePage() {
     setShowSupplierModal(true);
     setSupplierLoading(true);
     setSupplierInfo(null);
+    setSelectedSupplierName(supplierName);
 
     try {
       const token = TokenStorage.getToken();
@@ -271,6 +464,16 @@ export default function ProfilePage() {
 
   return (
     <div className="mx-auto">
+      {/* Success Message */}
+      {successMessage && (
+        <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md flex items-start space-x-3">
+          <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
+          <p className="text-sm text-green-600 dark:text-green-400">
+            {successMessage}
+          </p>
+        </div>
+      )}
+
       {/* Error Message */}
       {error && (
         <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md flex items-start space-x-3">
@@ -454,12 +657,13 @@ export default function ProfilePage() {
             </h3>
             <div className="flex flex-wrap gap-2">
               {profile.supplier_info.temporary_off_supplier.map((supplier) => (
-                <span
+                <button
                   key={supplier}
-                  className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border-2 border-orange-600 dark:border-orange-400 text-orange-600 dark:text-orange-400 bg-transparent"
+                  onClick={() => handleTempOffSupplierClick(supplier)}
+                  className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border-2 border-orange-600 dark:border-orange-400 text-orange-600 dark:text-orange-400 bg-transparent hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
                 >
                   {supplier}
-                </span>
+                </button>
               ))}
             </div>
           </div>
@@ -856,6 +1060,47 @@ export default function ProfilePage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Supplier Off Section */}
+                  <div className="border-t border-[rgb(var(--border-primary))] pt-6">
+                    <h4 className="text-lg font-semibold text-[rgb(var(--text-primary))] mb-4 flex items-center">
+                      <AlertCircle className="w-5 h-5 mr-2 text-orange-600 dark:text-orange-400" />
+                      Supplier Management
+                    </h4>
+
+                    <div className="p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                      <div className="flex items-start space-x-3">
+                        <AlertCircle className="w-5 h-5 text-orange-600 dark:text-orange-400 shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <h5 className="text-sm font-medium text-orange-800 dark:text-orange-200 mb-2">
+                            Turn Off Supplier
+                          </h5>
+                          <p className="text-sm text-orange-700 dark:text-orange-300 mb-4">
+                            This will temporarily disable the supplier "
+                            {selectedSupplierName}" from your active list. You
+                            can reactivate it later from your admin panel.
+                          </p>
+                          <button
+                            onClick={handleTurnOffSupplier}
+                            disabled={turningOffSupplier}
+                            className="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-md transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95"
+                          >
+                            {turningOffSupplier ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                Turning Off...
+                              </>
+                            ) : (
+                              <>
+                                <AlertCircle className="w-4 h-4 mr-2" />
+                                Turn Off Supplier
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ) : null}
             </div>
@@ -868,6 +1113,71 @@ export default function ProfilePage() {
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Temporary Off Supplier Modal */}
+      {showTempOffSupplierModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[rgb(var(--bg-primary))] rounded-lg shadow-2xl max-w-md w-full border border-[rgb(var(--border-primary))]">
+            {/* Modal Header */}
+            <div className="bg-[rgb(var(--bg-primary))] border-b border-[rgb(var(--border-primary))] p-6 flex items-center justify-between">
+              <h3 className="text-xl font-semibold text-[rgb(var(--text-primary))] flex items-center">
+                <CheckCircle className="w-5 h-5 mr-2 text-green-600 dark:text-green-400" />
+                Turn On Supplier
+              </h3>
+              <button
+                onClick={() => setShowTempOffSupplierModal(false)}
+                className="text-[rgb(var(--text-tertiary))] hover:text-[rgb(var(--text-primary))] transition-all duration-200 hover:scale-110 active:scale-95"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6">
+              <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                <div className="flex items-start space-x-3">
+                  <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h5 className="text-sm font-medium text-green-800 dark:text-green-200 mb-2">
+                      Activate Supplier
+                    </h5>
+                    <p className="text-sm text-green-700 dark:text-green-300 mb-4">
+                      This will reactivate the supplier "{selectedSupplierName}"
+                      and move it back to your active suppliers list.
+                    </p>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={handleTurnOnSupplier}
+                        disabled={turningOnSupplier}
+                        className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-md transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95"
+                      >
+                        {turningOnSupplier ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                            Activating...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Turn On Supplier
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setShowTempOffSupplierModal(false)}
+                        disabled={turningOnSupplier}
+                        className="inline-flex items-center px-4 py-2 bg-gray-300 hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 text-sm font-medium rounded-md transition-all duration-200"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
