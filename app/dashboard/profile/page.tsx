@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { useRequireAuth } from "@/lib/hooks/use-auth";
 import { TokenStorage } from "@/lib/auth/token-storage";
+import { useNotification } from "@/lib/components/notifications/notification-provider";
+import { NotificationService } from "@/lib/api/notifications";
 import {
   User,
   Mail,
@@ -81,7 +83,143 @@ export default function ProfilePage() {
   const [turningOnSupplier, setTurningOnSupplier] = useState(false);
   const [showTempOffSupplierModal, setShowTempOffSupplierModal] =
     useState(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const { addNotification } = useNotification();
+
+  // Create backend notification for supplier changes
+  const createSupplierNotification = async (
+    supplierName: string,
+    action: "turned_off" | "activated"
+  ) => {
+    try {
+      if (profile?.id) {
+        const currentTime = new Date().toISOString();
+
+        const notificationData = {
+          user_id: profile.id,
+          type: "permission" as const,
+          title: `Supplier ${
+            action === "turned_off" ? "Deactivated" : "Activated"
+          }`,
+          message: `Supplier "${supplierName}" has been ${
+            action === "turned_off"
+              ? "turned off and moved to temporary off list"
+              : "activated and moved to active suppliers list"
+          }.`,
+          priority: "medium" as const,
+          meta_data: {
+            supplier_name: supplierName,
+            action: action,
+            timestamp: currentTime,
+            source: "profile_management",
+            user_initiated: true,
+            previous_status:
+              action === "turned_off" ? "active" : "temporary_off",
+            new_status: action === "turned_off" ? "temporary_off" : "active",
+            change_time: currentTime,
+            user_id: profile.id,
+            username: profile.username,
+            sent_by: profile.username,
+            sent_by_role: profile.user_status,
+            sent_at: currentTime,
+            notification_source: "supplier_management",
+            operation_type: "supplier_status_change",
+            details: {
+              supplier: supplierName,
+              from_status: action === "turned_off" ? "active" : "temporary_off",
+              to_status: action === "turned_off" ? "temporary_off" : "active",
+              initiated_by: profile.username,
+              initiated_at: currentTime,
+            },
+          },
+        };
+
+        console.log(
+          "🔔 Creating supplier notification with enhanced meta_data:",
+          JSON.stringify(notificationData, null, 2)
+        );
+
+        const result = await NotificationService.createNotification(
+          notificationData
+        );
+
+        console.log("✅ Supplier notification created successfully:", result);
+        console.log("🔍 Returned notification meta_data:", result?.meta_data);
+
+        // Show immediate frontend notification
+        addNotification({
+          type: "success",
+          title: "Notification Created",
+          message: `Supplier notification for "${supplierName}" has been created and will appear in your notifications.`,
+          autoDismiss: true,
+          duration: 3000,
+        });
+
+        // Immediate refresh trigger
+        console.log("🔄 Triggering immediate notification refresh...");
+        window.dispatchEvent(new CustomEvent("refreshNotifications"));
+
+        // Verify the notification was created with meta_data
+        setTimeout(async () => {
+          try {
+            console.log(
+              "🔍 Fetching notifications to verify meta_data was saved..."
+            );
+
+            const notifications = await NotificationService.getNotifications(
+              1,
+              5
+            );
+            const latestNotification = notifications.notifications?.[0];
+
+            if (latestNotification && latestNotification.id === result?.id) {
+              console.log("✅ Verification: Found our notification");
+              console.log(
+                "🔍 Verification: meta_data in fetched notification:",
+                latestNotification.meta_data
+              );
+
+              if (
+                latestNotification.meta_data &&
+                latestNotification.meta_data.supplier_name === supplierName
+              ) {
+                console.log(
+                  "✅ SUCCESS: meta_data was saved and retrieved correctly!"
+                );
+              } else {
+                console.log(
+                  "❌ ISSUE: meta_data is missing or incomplete in saved notification!"
+                );
+                console.log("Expected supplier_name:", supplierName);
+                console.log("Actual meta_data:", latestNotification.meta_data);
+              }
+            } else {
+              console.log(
+                "⚠️ Could not find our notification for verification"
+              );
+            }
+
+            // Trigger a global notification refresh to update UI
+            console.log("🔄 Triggering global notification refresh...");
+            window.dispatchEvent(new CustomEvent("refreshNotifications"));
+
+            // Also trigger immediate refresh for any active notification hooks
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent("refreshNotifications"));
+            }, 1000);
+          } catch (fetchErr) {
+            console.error(
+              "Failed to fetch notifications for verification:",
+              fetchErr
+            );
+          }
+        }, 2000);
+      }
+    } catch (err) {
+      console.error("❌ Failed to create backend notification:", err);
+      console.error("❌ Error details:", err);
+      // Don't throw error as this is not critical for the main operation
+    }
+  };
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -253,11 +391,18 @@ export default function ProfilePage() {
       // Close modal
       setShowSupplierModal(false);
 
-      // Show success message
-      setSuccessMessage(
-        `Supplier "${selectedSupplierName}" has been turned off successfully!`
-      );
-      setTimeout(() => setSuccessMessage(null), 3000);
+      // Show success notification
+      addNotification({
+        type: "success",
+        title: "Supplier Turned Off",
+        message: `Supplier "${selectedSupplierName}" has been turned off successfully and moved to temporary off list.`,
+        autoDismiss: true,
+        duration: 5000,
+      });
+
+      // Create backend notification
+      await createSupplierNotification(selectedSupplierName, "turned_off");
+
       setError(null);
     } catch (err) {
       console.error("Error turning off supplier:", err);
@@ -265,9 +410,18 @@ export default function ProfilePage() {
       // Revert optimistic update on error by refreshing profile
       await fetchProfile();
 
-      setError(
-        err instanceof Error ? err.message : "Failed to turn off supplier"
-      );
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to turn off supplier";
+
+      // Show error notification
+      addNotification({
+        type: "error",
+        title: "Failed to Turn Off Supplier",
+        message: `Could not turn off supplier "${selectedSupplierName}". ${errorMessage}`,
+        autoDismiss: false, // Error notifications stay until dismissed
+      });
+
+      setError(errorMessage);
     } finally {
       setTurningOffSupplier(false);
     }
@@ -358,11 +512,18 @@ export default function ProfilePage() {
       // Close modal
       setShowTempOffSupplierModal(false);
 
-      // Show success message
-      setSuccessMessage(
-        `Supplier "${selectedSupplierName}" has been activated successfully!`
-      );
-      setTimeout(() => setSuccessMessage(null), 3000);
+      // Show success notification
+      addNotification({
+        type: "success",
+        title: "Supplier Activated",
+        message: `Supplier "${selectedSupplierName}" has been activated successfully and moved to active suppliers list.`,
+        autoDismiss: true,
+        duration: 5000,
+      });
+
+      // Create backend notification
+      await createSupplierNotification(selectedSupplierName, "activated");
+
       setError(null);
     } catch (err) {
       console.error("Error turning on supplier:", err);
@@ -370,9 +531,18 @@ export default function ProfilePage() {
       // Revert optimistic update on error by refreshing profile
       await fetchProfile();
 
-      setError(
-        err instanceof Error ? err.message : "Failed to turn on supplier"
-      );
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to turn on supplier";
+
+      // Show error notification
+      addNotification({
+        type: "error",
+        title: "Failed to Activate Supplier",
+        message: `Could not activate supplier "${selectedSupplierName}". ${errorMessage}`,
+        autoDismiss: false, // Error notifications stay until dismissed
+      });
+
+      setError(errorMessage);
     } finally {
       setTurningOnSupplier(false);
     }
@@ -464,16 +634,6 @@ export default function ProfilePage() {
 
   return (
     <div className="mx-auto">
-      {/* Success Message */}
-      {successMessage && (
-        <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md flex items-start space-x-3">
-          <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
-          <p className="text-sm text-green-600 dark:text-green-400">
-            {successMessage}
-          </p>
-        </div>
-      )}
-
       {/* Error Message */}
       {error && (
         <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md flex items-start space-x-3">
@@ -605,10 +765,25 @@ export default function ProfilePage() {
 
       {/* Supplier Information */}
       <div className="bg-[rgb(var(--bg-primary))] rounded-lg shadow-md border border-[rgb(var(--border-primary))] p-6 mb-6">
-        <h2 className="text-xl font-semibold text-[rgb(var(--text-primary))] mb-6 flex items-center">
-          <Building className="w-5 h-5 mr-2 text-primary-color" />
-          Supplier Information
-        </h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-[rgb(var(--text-primary))] flex items-center">
+            <Building className="w-5 h-5 mr-2 text-primary-color" />
+            Supplier Information
+          </h2>
+
+          {/* Test Notification Button (Development Only) */}
+          {process.env.NODE_ENV === "development" && (
+            <button
+              onClick={() =>
+                createSupplierNotification("test_supplier", "turned_off")
+              }
+              className="px-3 py-1 text-xs bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition-colors"
+              title="Test supplier notification"
+            >
+              Test Notification
+            </button>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div className="p-4 bg-[rgb(var(--bg-secondary))] rounded-lg border border-[rgb(var(--border-primary))]">
