@@ -196,9 +196,41 @@ export default function NotificationsPage() {
 
   const handleDelete = async (notificationId: number) => {
     try {
+      console.log(
+        `🗑️ UI: User clicked delete for notification ${notificationId}`
+      );
       await deleteNotification(notificationId);
+      console.log(`✅ UI: Delete completed successfully`);
+
+      // Show success feedback
+      console.log(`🎉 UI: Notification ${notificationId} deleted successfully`);
     } catch (err) {
-      console.error("Failed to delete notification:", err);
+      console.error(
+        `❌ UI: Failed to delete notification ${notificationId}:`,
+        err
+      );
+
+      // Show specific error messages to user
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to delete notification";
+
+      if (errorMessage.includes("Permission denied")) {
+        console.error(
+          `🚫 UI: Permission error - user cannot delete this notification`
+        );
+        alert("Permission denied: You can only delete your own notifications");
+      } else if (errorMessage.includes("Authentication failed")) {
+        console.error(`🔒 UI: Authentication error - token expired`);
+        alert("Authentication failed: Please login again");
+      } else if (errorMessage.includes("not found")) {
+        console.log(
+          `⚠️ UI: Notification not found - may have been already deleted`
+        );
+        // Don't show error to user, just refresh the list
+      } else {
+        console.error(`❌ UI: General delete error: ${errorMessage}`);
+        alert(`Failed to delete notification: ${errorMessage}`);
+      }
     }
   };
 
@@ -252,6 +284,17 @@ export default function NotificationsPage() {
               title="Sync unread count"
             >
               Sync Count
+            </button>
+
+            <button
+              onClick={() => {
+                console.log("🔄 Force refresh triggered");
+                refresh();
+              }}
+              className="px-3 py-2 text-xs bg-green-100 text-green-800 rounded-lg hover:bg-green-200 transition-colors"
+              title="Force refresh notifications"
+            >
+              Force Refresh
             </button>
 
             {displayUnreadCount > 0 && (

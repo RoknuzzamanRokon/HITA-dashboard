@@ -13,7 +13,7 @@ import type { FullHotelDetailsResponse } from "@/lib/types/full-hotel-details";
 import { Card } from "@/lib/components/ui/card";
 import { Button } from "@/lib/components/ui/button";
 import { Badge } from "@/lib/components/ui/badge";
-import { Copy, Check, ChevronDown, ChevronUp } from "lucide-react";
+import { Copy, Check, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
 
 export default function HotelDetailsPage() {
   const params = useParams();
@@ -28,6 +28,8 @@ export default function HotelDetailsPage() {
   const [selectedProvider, setSelectedProvider] = useState<number>(0);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showAllFacilities, setShowAllFacilities] = useState<boolean>(false);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [isFromCache, setIsFromCache] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchHotelDetails = async () => {
@@ -35,6 +37,27 @@ export default function HotelDetailsPage() {
         setError("No hotel ID provided");
         setIsLoading(false);
         return;
+      }
+
+      // Check cache first
+      const cacheKey = `hotel_details_${ittid}_${user?.id || "anonymous"}`;
+      const cachedData = sessionStorage.getItem(cacheKey);
+
+      if (cachedData) {
+        try {
+          const parsed = JSON.parse(cachedData);
+          const cacheAge = Date.now() - parsed.timestamp;
+          // Use cache if it's less than 5 minutes old
+          if (cacheAge < 5 * 60 * 1000) {
+            console.log("📦 Using cached hotel details");
+            setHotelDetails(parsed.data);
+            setIsFromCache(true);
+            setIsLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.log("⚠️ Invalid cache data, fetching fresh");
+        }
       }
 
       setIsLoading(true);
@@ -59,6 +82,15 @@ export default function HotelDetailsPage() {
 
         if (response.success && response.data) {
           setHotelDetails(response.data);
+          setIsFromCache(false);
+
+          // Cache the successful response
+          const cacheData = {
+            data: response.data,
+            timestamp: Date.now(),
+          };
+          sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
+          console.log("💾 Cached hotel details for future use");
         } else {
           setError(response.error?.message || "Failed to load hotel details");
         }
@@ -79,6 +111,54 @@ export default function HotelDetailsPage() {
       setTimeout(() => setCopiedId(null), 2000);
     } catch (err) {
       console.error("Failed to copy provider ID:", err);
+    }
+  };
+
+  const handleRefresh = async () => {
+    if (!ittid) return;
+
+    setIsRefreshing(true);
+
+    // Clear cache
+    const cacheKey = `hotel_details_${ittid}_${user?.id || "anonymous"}`;
+    sessionStorage.removeItem(cacheKey);
+    console.log("🗑️ Cleared cache, fetching fresh data");
+
+    // Refetch data
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      let response;
+      const isDemoUser =
+        user?.role !== "super_user" &&
+        user?.role !== "admin_user" &&
+        (!user?.pointBalance || user.pointBalance <= 0);
+
+      if (isDemoUser) {
+        response = await HotelService.getDemoFullHotelDetails(ittid);
+      } else {
+        response = await HotelService.getFullHotelDetails(ittid);
+      }
+
+      if (response.success && response.data) {
+        setHotelDetails(response.data);
+        setIsFromCache(false);
+
+        // Cache the fresh response
+        const cacheData = {
+          data: response.data,
+          timestamp: Date.now(),
+        };
+        sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
+      } else {
+        setError(response.error?.message || "Failed to load hotel details");
+      }
+    } catch (err) {
+      setError("An error occurred while loading hotel details");
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -108,6 +188,9 @@ export default function HotelDetailsPage() {
             </svg>
             <p className="text-gray-900 font-semibold text-lg">
               Loading hotel details...
+            </p>
+            <p className="text-gray-500 text-sm mt-2">
+              Checking cache for faster loading...
             </p>
           </div>
         </div>
@@ -226,28 +309,57 @@ export default function HotelDetailsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Back button */}
-        <Button
-          onClick={() => router.back()}
-          variant="primary"
-          size="sm"
-          className="mb-6"
-        >
-          <svg
-            className="h-4 w-4 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          Back to Search Results
-        </Button>
+        {/* Back button and Refresh button */}
+        <div className="flex items-center justify-between mb-6">
+          <Button onClick={() => router.back()} variant="primary" size="sm">
+            <svg
+              className="h-4 w-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            Back to Search Results
+          </Button>
+
+          <div className="flex items-center gap-3">
+            {isFromCache && (
+              <div className="flex items-center gap-1 text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  />
+                </svg>
+                Cached Data
+              </div>
+            )}
+            <Button
+              onClick={handleRefresh}
+              variant="outline"
+              size="sm"
+              disabled={isRefreshing}
+            >
+              <RefreshCw
+                className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`}
+              />
+              {isRefreshing ? "Refreshing..." : "Refresh Data"}
+            </Button>
+          </div>
+        </div>
 
         {/* Hotel Header */}
         <Card className="mb-6" hover={false}>

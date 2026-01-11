@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Delete Notifications Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .section {
+        margin-bottom: 30px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+      .section h3 {
+        margin-top: 0;
+        color: #333;
+      }
+      .user-info {
+        background-color: #e8f4fd;
+      }
+      .notifications-list {
+        background-color: #f8f9fa;
+      }
+      .test-results {
+        background-color: #fff3cd;
+      }
+      button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      button.danger {
+        background-color: #dc3545;
+      }
+      button.danger:hover {
+        background-color: #c82333;
+      }
+      .notification-item {
+        border: 1px solid #ddd;
+        padding: 10px;
+        margin: 5px 0;
+        border-radius: 4px;
+        background: white;
+      }
+      .notification-item.unread {
+        border-left: 4px solid #007bff;
+        background-color: #f8f9ff;
+      }
+      .log {
+        background-color: #f8f9fa;
+        border: 1px solid #ddd;
+        padding: 10px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 12px;
+        max-height: 300px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+      }
+      .status {
+        padding: 5px 10px;
+        border-radius: 3px;
+        font-size: 12px;
+        font-weight: bold;
+      }
+      .status.success {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .status.error {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .status.warning {
+        background-color: #fff3cd;
+        color: #856404;
+      }
+      .login-form {
+        background-color: #e8f4fd;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+      }
+      .login-form input {
+        padding: 8px;
+        margin: 5px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🗑️ Delete Notifications Test Page</h1>
+      <p>
+        This page helps debug the delete notification issue for user
+        <strong>jakaria_123</strong>
+      </p>
+
+      <!-- Login Section -->
+      <div class="section login-form">
+        <h3>🔐 Login</h3>
+        <input
+          type="text"
+          id="username"
+          placeholder="Username"
+          value="jakaria_123"
+        />
+        <input
+          type="password"
+          id="password"
+          placeholder="Password"
+          value="jakaria_123"
+        />
+        <button onclick="login()">Login</button>
+        <button onclick="logout()">Logout</button>
+        <div id="loginStatus"></div>
+      </div>
+
+      <!-- User Info Section -->
+      <div class="section user-info">
+        <h3>👤 Current User</h3>
+        <div id="userInfo">Not logged in</div>
+        <button onclick="getCurrentUser()">Refresh User Info</button>
+      </div>
+
+      <!-- Notifications Section -->
+      <div class="section notifications-list">
+        <h3>📋 Notifications</h3>
+        <div id="notificationsList">No notifications loaded</div>
+        <button onclick="loadNotifications()">Load Notifications</button>
+        <button onclick="createTestNotification()">
+          Create Test Notification
+        </button>
+      </div>
+
+      <!-- Test Results Section -->
+      <div class="section test-results">
+        <h3>🧪 Test Results</h3>
+        <div id="testResults" class="log">No tests run yet</div>
+        <button onclick="runComprehensiveTest()">Run Comprehensive Test</button>
+        <button onclick="clearLog()">Clear Log</button>
+      </div>
+    </div>
+
+    <script>
+      let currentUser = null;
+      let notifications = [];
+
+      function log(message, type = "info") {
+        const timestamp = new Date().toLocaleTimeString();
+        const logElement = document.getElementById("testResults");
+        const prefix =
+          type === "error"
+            ? "❌"
+            : type === "success"
+            ? "✅"
+            : type === "warning"
+            ? "⚠️"
+            : "ℹ️";
+        logElement.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+        logElement.scrollTop = logElement.scrollHeight;
+        console.log(`${prefix} ${message}`);
+      }
+
+      function clearLog() {
+        document.getElementById("testResults").textContent = "";
+      }
+
+      async function login() {
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+
+        log(`Attempting login for user: ${username}`);
+
+        try {
+          const response = await fetch(
+            "http://127.0.0.1:8001/v1.0/auth/token",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: `username=${encodeURIComponent(
+                username
+              )}&password=${encodeURIComponent(password)}`,
+            }
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            localStorage.setItem("admin_auth_token", data.access_token);
+            log(`Login successful for ${username}`, "success");
+            document.getElementById("loginStatus").innerHTML =
+              '<span class="status success">Logged in</span>';
+            await getCurrentUser();
+          } else {
+            const errorText = await response.text();
+            log(`Login failed: ${response.status} - ${errorText}`, "error");
+            document.getElementById("loginStatus").innerHTML =
+              '<span class="status error">Login failed</span>';
+          }
+        } catch (error) {
+          log(`Login error: ${error.message}`, "error");
+          document.getElementById("loginStatus").innerHTML =
+            '<span class="status error">Login error</span>';
+        }
+      }
+
+      function logout() {
+        localStorage.removeItem("admin_auth_token");
+        currentUser = null;
+        document.getElementById("loginStatus").innerHTML =
+          '<span class="status warning">Logged out</span>';
+        document.getElementById("userInfo").textContent = "Not logged in";
+        log("Logged out", "warning");
+      }
+
+      async function getCurrentUser() {
+        const token = localStorage.getItem("admin_auth_token");
+        if (!token) {
+          log("No auth token found", "warning");
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            "http://127.0.0.1:8001/v1.0/user/check-me",
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          if (response.ok) {
+            currentUser = await response.json();
+            document.getElementById("userInfo").innerHTML = `
+                        <strong>ID:</strong> ${currentUser.id}<br>
+                        <strong>Username:</strong> ${currentUser.username}<br>
+                        <strong>Role:</strong> ${currentUser.user_status}<br>
+                        <strong>Active:</strong> ${currentUser.is_active}
+                    `;
+            log(
+              `Current user: ${currentUser.username} (${currentUser.user_status})`,
+              "success"
+            );
+          } else {
+            log(`Failed to get user info: ${response.status}`, "error");
+          }
+        } catch (error) {
+          log(`Error getting user info: ${error.message}`, "error");
+        }
+      }
+
+      async function loadNotifications() {
+        const token = localStorage.getItem("admin_auth_token");
+        if (!token) {
+          log("No auth token found", "warning");
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            "http://127.0.0.1:8001/v1.0/notifications/?limit=50",
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            notifications = data.notifications || [];
+
+            const listElement = document.getElementById("notificationsList");
+            if (notifications.length === 0) {
+              listElement.innerHTML = "<p>No notifications found</p>";
+              log("No notifications found for current user");
+            } else {
+              listElement.innerHTML = notifications
+                .map(
+                  (n) => `
+                            <div class="notification-item ${n.status}">
+                                <strong>ID: ${n.id}</strong> - ${n.title}<br>
+                                <small>Status: ${n.status} | User: ${
+                    n.user_id
+                  } | Created: ${new Date(
+                    n.created_at
+                  ).toLocaleString()}</small><br>
+                                <button class="danger" onclick="deleteNotification(${
+                                  n.id
+                                })">Delete</button>
+                            </div>
+                        `
+                )
+                .join("");
+              log(`Loaded ${notifications.length} notifications`, "success");
+            }
+          } else {
+            log(`Failed to load notifications: ${response.status}`, "error");
+          }
+        } catch (error) {
+          log(`Error loading notifications: ${error.message}`, "error");
+        }
+      }
+
+      async function createTestNotification() {
+        const token = localStorage.getItem("admin_auth_token");
+        if (!token || !currentUser) {
+          log("Please login first", "warning");
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            "http://127.0.0.1:8001/v1.0/notifications/admin/create",
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                user_id: currentUser.id,
+                type: "system",
+                title: "Test Delete Notification",
+                message:
+                  "This is a test notification created for delete testing",
+                priority: "medium",
+                meta_data: {
+                  source: "test_page",
+                  created_for_testing: true,
+                  test_user: currentUser.username,
+                  created_at: new Date().toISOString(),
+                },
+              }),
+            }
+          );
+
+          if (response.ok) {
+            const notification = await response.json();
+            log(`Test notification created: ID ${notification.id}`, "success");
+            await loadNotifications();
+          } else {
+            const errorText = await response.text();
+            log(
+              `Failed to create test notification: ${response.status} - ${errorText}`,
+              "error"
+            );
+          }
+        } catch (error) {
+          log(`Error creating test notification: ${error.message}`, "error");
+        }
+      }
+
+      async function deleteNotification(notificationId) {
+        const token = localStorage.getItem("admin_auth_token");
+        if (!token) {
+          log("No auth token found", "warning");
+          return;
+        }
+
+        log(`Attempting to delete notification ${notificationId}`);
+
+        try {
+          const response = await fetch(
+            `http://127.0.0.1:8001/v1.0/notifications/${notificationId}`,
+            {
+              method: "DELETE",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          log(`Delete response status: ${response.status}`);
+
+          if (response.ok) {
+            log(
+              `Successfully deleted notification ${notificationId}`,
+              "success"
+            );
+            await loadNotifications(); // Refresh the list
+          } else {
+            const errorText = await response.text();
+            log(`Delete failed: ${response.status} - ${errorText}`, "error");
+
+            // Still refresh the list to see current state
+            await loadNotifications();
+          }
+        } catch (error) {
+          log(`Delete error: ${error.message}`, "error");
+        }
+      }
+
+      async function runComprehensiveTest() {
+        log("=== STARTING COMPREHENSIVE DELETE TEST ===");
+
+        // Step 1: Check authentication
+        const token = localStorage.getItem("admin_auth_token");
+        if (!token) {
+          log("STEP 1 FAILED: No auth token found", "error");
+          return;
+        }
+        log("STEP 1 PASSED: Auth token found");
+
+        // Step 2: Get current user
+        await getCurrentUser();
+        if (!currentUser) {
+          log("STEP 2 FAILED: Could not get current user", "error");
+          return;
+        }
+        log(`STEP 2 PASSED: Current user is ${currentUser.username}`);
+
+        // Step 3: Load notifications
+        await loadNotifications();
+        if (notifications.length === 0) {
+          log("STEP 3: No notifications found, creating test notification");
+          await createTestNotification();
+          await loadNotifications();
+        }
+
+        if (notifications.length === 0) {
+          log(
+            "STEP 3 FAILED: Still no notifications after creation attempt",
+            "error"
+          );
+          return;
+        }
+        log(`STEP 3 PASSED: Found ${notifications.length} notifications`);
+
+        // Step 4: Test delete on first notification
+        const firstNotification = notifications[0];
+        log(`STEP 4: Testing delete on notification ${firstNotification.id}`);
+
+        // Check ownership
+        if (firstNotification.user_id !== currentUser.id) {
+          log(
+            `STEP 4 WARNING: Notification belongs to user ${firstNotification.user_id}, current user is ${currentUser.id}`,
+            "warning"
+          );
+        } else {
+          log("STEP 4: Notification ownership verified");
+        }
+
+        // Attempt delete
+        const initialCount = notifications.length;
+        await deleteNotification(firstNotification.id);
+
+        // Verify deletion
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second
+        await loadNotifications();
+
+        if (notifications.length < initialCount) {
+          log(
+            "STEP 4 PASSED: Notification was successfully deleted",
+            "success"
+          );
+        } else {
+          const stillExists = notifications.find(
+            (n) => n.id === firstNotification.id
+          );
+          if (stillExists) {
+            log(
+              "STEP 4 FAILED: Notification still exists after delete",
+              "error"
+            );
+          } else {
+            log(
+              "STEP 4 PARTIAL: Notification gone but count unchanged (possible pagination issue)",
+              "warning"
+            );
+          }
+        }
+
+        log("=== COMPREHENSIVE TEST COMPLETED ===");
+      }
+
+      // Auto-login on page load if credentials are available
+      window.addEventListener("load", () => {
+        const token = localStorage.getItem("admin_auth_token");
+        if (token) {
+          getCurrentUser();
+          document.getElementById("loginStatus").innerHTML =
+            '<span class="status success">Already logged in</span>';
+        }
+      });
+    </script>
+  </body>
+</html>

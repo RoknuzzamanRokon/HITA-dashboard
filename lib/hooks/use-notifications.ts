@@ -138,18 +138,74 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
     // Delete notification
     const deleteNotification = useCallback(async (notificationId: number) => {
         try {
+            console.log(`🗑️ Hook: Deleting notification ${notificationId}...`);
+
+            const notification = notifications.find(n => n.id === notificationId);
+            console.log(`🗑️ Hook: Found notification to delete:`, notification ? `${notification.title} (${notification.status})` : 'Not found in local state');
+
             await NotificationService.deleteNotification(notificationId);
 
-            // Update local state
-            const notification = notifications.find(n => n.id === notificationId);
-            setNotifications(prev => prev.filter(n => n.id !== notificationId));
+            console.log(`🗑️ Hook: API call successful, updating local state...`);
+
+            // Always update local state immediately (optimistic update)
+            setNotifications(prev => {
+                const filtered = prev.filter(n => n.id !== notificationId);
+                console.log(`🗑️ Hook: Removed notification from local state. Count: ${prev.length} → ${filtered.length}`);
+                return filtered;
+            });
 
             // Update unread count if it was unread
             if (notification?.status === 'unread') {
-                setUnreadCount(prev => Math.max(0, prev - 1));
+                setUnreadCount(prev => {
+                    const newCount = Math.max(0, prev - 1);
+                    console.log(`🗑️ Hook: Updated unread count: ${prev} → ${newCount}`);
+                    return newCount;
+                });
             }
+
+            // Force refresh after a delay to sync with backend state
+            // This handles the backend bug where delete returns 200 but doesn't actually delete
+            setTimeout(async () => {
+                console.log(`🔄 Hook: Force refreshing notifications after delete...`);
+                try {
+                    const response = await NotificationService.getNotifications(1, 20);
+                    const stillExists = response.notifications.find(n => n.id === notificationId);
+
+                    if (stillExists) {
+                        console.warn(`⚠️ Hook: Backend bug detected - notification ${notificationId} still exists after delete`);
+                        console.warn(`⚠️ Hook: Keeping local state updated (notification removed from UI)`);
+                        // Don't add it back to local state - keep the UI consistent
+                        // Just update the unread count to match backend
+                        const actualUnreadCount = response.notifications.filter(n => n.status === 'unread').length;
+                        setUnreadCount(actualUnreadCount);
+                    } else {
+                        console.log(`✅ Hook: Backend deletion confirmed`);
+                        // Refresh the full list to ensure consistency
+                        setNotifications(response.notifications);
+                        setUnreadCount(response.notifications.filter(n => n.status === 'unread').length);
+                    }
+                } catch (refreshErr) {
+                    console.error(`❌ Hook: Failed to refresh after delete:`, refreshErr);
+                }
+            }, 2000);
+
+            console.log(`✅ Hook: Successfully deleted notification ${notificationId}`);
         } catch (err) {
-            console.error('Error deleting notification:', err);
+            console.error(`❌ Hook: Error deleting notification ${notificationId}:`, err);
+
+            // On error, force refresh to sync with backend state
+            setTimeout(async () => {
+                console.log(`🔄 Hook: Force refreshing notifications after delete error...`);
+                try {
+                    const response = await NotificationService.getNotifications(1, 20);
+                    setNotifications(response.notifications);
+                    setUnreadCount(response.notifications.filter(n => n.status === 'unread').length);
+                    console.log(`✅ Hook: Refreshed notifications after delete error`);
+                } catch (refreshErr) {
+                    console.error(`❌ Hook: Failed to refresh after delete error:`, refreshErr);
+                }
+            }, 1000);
+
             throw err;
         }
     }, [notifications]);
