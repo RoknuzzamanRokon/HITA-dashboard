@@ -1301,3 +1301,9 @@ erformance Optimizations */
 svg{
 display: inline
 }
+
+/* Next.js Portal positioning fixes */
+nextjs-portal {
+    left: unset !important;
+    top: unset !important;
+}

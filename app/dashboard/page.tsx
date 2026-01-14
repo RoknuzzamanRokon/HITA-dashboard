@@ -406,8 +406,8 @@ export default function DashboardPage() {
                 />
               </div>
 
-              {/* Supplier Freshness - 2 columns */}
-              <div className="col-span-1 md:col-span-2">
+              {/* Supplier Freshness - Full width on large screens */}
+              <div className="col-span-1 md:col-span-2 lg:col-span-3">
                 <SupplierFreshnessScatterChart
                   suppliers={chartsData?.suppliers || []}
                   loading={chartsLoading}

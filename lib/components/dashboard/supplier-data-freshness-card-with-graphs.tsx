@@ -101,15 +101,15 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-        <p className="font-medium text-gray-900 dark:text-gray-100 mb-2">
+      <div className="bg-[rgb(var(--bg-secondary))] p-3 rounded-xl shadow-[var(--shadow-lg)] border border-[rgb(var(--border-primary))]">
+        <p className="font-medium text-[rgb(var(--text-primary))] mb-2">
           {label}
         </p>
         <div className="space-y-1 text-sm">
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-[rgb(var(--text-secondary))]">
             Hours Ago: {data.hoursAgo}
           </p>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-[rgb(var(--text-secondary))]">
             Records: {data.recordCount?.toLocaleString() || "N/A"}
           </p>
           {data.errorCount > 0 && (
@@ -199,7 +199,7 @@ export const SupplierDataFreshnessCardWithGraphs: React.FC<
   const renderChart = () => {
     if (filteredSuppliers.length === 0) {
       return (
-        <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+        <div className="text-center text-[rgb(var(--text-secondary))] py-8">
           <Database className="w-8 h-8 mx-auto mb-2 opacity-50" />
           <p>No {selectedSection} suppliers found</p>
         </div>
@@ -323,13 +323,13 @@ export const SupplierDataFreshnessCardWithGraphs: React.FC<
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+      <div className="rounded-xl select-text before:absolute before:inset-0 before:rounded-xl before:transition-opacity before:duration-300 bg-[rgb(var(--bg-secondary))] shadow-xl border border-[rgb(var(--border-primary))] p-6 overflow-hidden transition-all duration-300 ease-out relative">
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-4"></div>
+          <div className="h-6 bg-[rgb(var(--bg-tertiary))] rounded w-1/2 mb-4"></div>
           <div className="space-y-3">
-            <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
-            <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
-            <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            <div className="h-16 bg-[rgb(var(--bg-tertiary))] rounded"></div>
+            <div className="h-16 bg-[rgb(var(--bg-tertiary))] rounded"></div>
+            <div className="h-16 bg-[rgb(var(--bg-tertiary))] rounded"></div>
           </div>
         </div>
       </div>
@@ -338,13 +338,13 @@ export const SupplierDataFreshnessCardWithGraphs: React.FC<
 
   if (error && !data) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+      <div className="rounded-xl select-text before:absolute before:inset-0 before:rounded-xl before:transition-opacity before:duration-300 bg-[rgb(var(--bg-secondary))] shadow-xl border border-[rgb(var(--border-primary))] p-6 overflow-hidden transition-all duration-300 ease-out relative">
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+          <h3 className="text-lg font-medium text-[rgb(var(--text-primary))] mb-2">
             Unable to Load Data
           </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          <p className="text-sm text-[rgb(var(--text-secondary))] mb-4">
             {error}
           </p>
           <button
@@ -360,15 +360,15 @@ export const SupplierDataFreshnessCardWithGraphs: React.FC<
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+    <div className="rounded-xl select-text before:absolute before:inset-0 before:rounded-xl before:transition-opacity before:duration-300 bg-[rgb(var(--bg-secondary))] shadow-xl border border-[rgb(var(--border-primary))] overflow-hidden transition-all duration-700 ease-out relative opacity-100 translate-y-0">
       {/* Header */}
-      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+      <div className="p-6 border-b border-[rgb(var(--border-primary))]">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            <h3 className="text-lg font-semibold text-[rgb(var(--text-primary))]">
               Supplier Data Freshness
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <p className="text-sm text-[rgb(var(--text-secondary))] mt-1">
               {lastRefresh
                 ? `Last updated ${formatLastUpdated(lastRefresh.toISOString())}`
                 : "Click a section to view graph"}
@@ -377,7 +377,7 @@ export const SupplierDataFreshnessCardWithGraphs: React.FC<
           <button
             onClick={fetchData}
             disabled={loading}
-            className="p-2 text-gray-500 dark:text-gray-400 transition-colors"
+            className="p-2 text-[rgb(var(--text-secondary))] transition-colors"
             title="Refresh data"
           >
             <RefreshCw className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
@@ -400,7 +400,7 @@ export const SupplierDataFreshnessCardWithGraphs: React.FC<
               className={`w-full p-4 rounded-lg border-2 transition-all duration-200 ${
                 isSelected
                   ? `${config.bgColor} ${config.borderColor}`
-                  : `bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-700`
+                  : `bg-[rgb(var(--bg-tertiary))] border-[rgb(var(--border-primary))]`
               }`}
             >
               <div className="flex items-center justify-between">
@@ -409,7 +409,7 @@ export const SupplierDataFreshnessCardWithGraphs: React.FC<
                     className={`w-6 h-6 ${
                       isSelected
                         ? config.iconColor
-                        : "text-gray-500 dark:text-gray-400"
+                        : "text-[rgb(var(--text-secondary))]"
                     }`}
                   />
                   <div className="text-left">
@@ -417,12 +417,12 @@ export const SupplierDataFreshnessCardWithGraphs: React.FC<
                       className={`font-medium ${
                         isSelected
                           ? config.textColor
-                          : "text-gray-900 dark:text-gray-100"
+                          : "text-[rgb(var(--text-primary))]"
                       }`}
                     >
                       {config.title}
                     </h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-[rgb(var(--text-secondary))]">
                       {count} supplier{count !== 1 ? "s" : ""}
                     </p>
                   </div>
@@ -432,7 +432,7 @@ export const SupplierDataFreshnessCardWithGraphs: React.FC<
                     className={`text-2xl font-bold ${
                       isSelected
                         ? config.textColor
-                        : "text-gray-700 dark:text-gray-300"
+                        : "text-[rgb(var(--text-primary))]"
                     }`}
                   >
                     {count}
@@ -443,7 +443,7 @@ export const SupplierDataFreshnessCardWithGraphs: React.FC<
                     } ${
                       isSelected
                         ? config.iconColor
-                        : "text-gray-400 dark:text-gray-500"
+                        : "text-[rgb(var(--text-tertiary))]"
                     }`}
                   />
                 </div>
@@ -455,10 +455,10 @@ export const SupplierDataFreshnessCardWithGraphs: React.FC<
 
       {/* Graph Section */}
       {selectedSection && (
-        <div className="border-t border-gray-200 dark:border-gray-700">
+        <div className="border-t border-[rgb(var(--border-primary))]">
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="font-medium text-gray-900 dark:text-gray-100">
+              <h4 className="font-medium text-[rgb(var(--text-primary))]">
                 {sectionConfig.title} - Data Visualization
               </h4>
 
@@ -469,7 +469,7 @@ export const SupplierDataFreshnessCardWithGraphs: React.FC<
                   className={`p-2 rounded-lg transition-colors ${
                     graphType === "bar"
                       ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
-                      : "text-gray-500 dark:text-gray-400"
+                      : "text-[rgb(var(--text-secondary))]"
                   }`}
                   title="Bar Chart"
                 >
@@ -480,7 +480,7 @@ export const SupplierDataFreshnessCardWithGraphs: React.FC<
                   className={`p-2 rounded-lg transition-colors ${
                     graphType === "pie"
                       ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
-                      : "text-gray-500 dark:text-gray-400"
+                      : "text-[rgb(var(--text-secondary))]"
                   }`}
                   title="Pie Chart"
                 >
@@ -491,7 +491,7 @@ export const SupplierDataFreshnessCardWithGraphs: React.FC<
                   className={`p-2 rounded-lg transition-colors ${
                     graphType === "line"
                       ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
-                      : "text-gray-500 dark:text-gray-400"
+                      : "text-[rgb(var(--text-secondary))]"
                   }`}
                   title="Line Chart"
                 >
@@ -501,13 +501,13 @@ export const SupplierDataFreshnessCardWithGraphs: React.FC<
             </div>
 
             {/* Chart Container */}
-            <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4">
+            <div className="bg-[rgb(var(--bg-tertiary))] rounded-lg p-4">
               {renderChart()}
             </div>
 
             {/* Chart Info */}
             {filteredSuppliers.length > 0 && (
-              <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+              <div className="mt-4 text-sm text-[rgb(var(--text-secondary))]">
                 <p>
                   Showing {filteredSuppliers.length} {selectedSection} supplier
                   {filteredSuppliers.length !== 1 ? "s" : ""} • Total Records:{" "}
