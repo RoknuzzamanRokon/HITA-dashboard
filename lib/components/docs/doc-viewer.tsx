@@ -716,10 +716,6 @@ export function DocViewer({ docPath }: DocViewerProps) {
             position: 'relative',
             zIndex: 10
           }}
-          onSelectStart={(e) => {
-            // Explicitly allow text selection
-            e.stopPropagation();
-          }}
           onMouseDown={(e) => {
             // Don't interfere with text selection
             // Only stop propagation for non-link elements to allow selection

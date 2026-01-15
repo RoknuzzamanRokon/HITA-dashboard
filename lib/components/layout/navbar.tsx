@@ -67,15 +67,26 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
   const notificationRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
-  // Get recent notifications (max 5 for dropdown)
-  const recentNotifications = notifications.slice(0, 5);
+  // Get recent unread notifications (max 5 for dropdown)
+  // Filter to show only unread notifications, so they disappear when marked as read
+  const recentNotifications = notifications
+    .filter(n => n.status === "unread")
+    .slice(0, 5);
 
   // Handle notification click
   const handleNotificationClick = async (notificationId: number) => {
     try {
+      // Mark notification as read
       await markAsRead(notificationId);
+      // Close the notification dropdown
+      setNotificationOpen(false);
+      // Navigate to notifications page
+      router.push("/dashboard/notifications");
     } catch (err) {
       console.error("Failed to mark notification as read:", err);
+      // Still navigate even if marking as read fails
+      setNotificationOpen(false);
+      router.push("/dashboard/notifications");
     }
   };
 

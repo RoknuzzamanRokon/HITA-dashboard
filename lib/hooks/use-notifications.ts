@@ -56,60 +56,40 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
 
     // Mark notification as read
     const markAsRead = useCallback(async (notificationId: number) => {
+        // Store previous state for potential rollback
+        let previousNotifications: BackendNotification[] = [];
+        let previousUnreadCount = 0;
+
+        // Update local state immediately (optimistic update)
+        setNotifications(prev => {
+            previousNotifications = [...prev];
+            const updated = prev.map(notification =>
+                notification.id === notificationId
+                    ? { ...notification, status: 'read' as const, read_at: new Date().toISOString() }
+                    : notification
+            );
+            return updated;
+        });
+
+        // Update unread count immediately
+        setUnreadCount(prev => {
+            previousUnreadCount = prev;
+            return Math.max(0, prev - 1);
+        });
+
         try {
             console.log(`🔄 Hook: Marking notification ${notificationId} as read...`);
-
             await NotificationService.markAsRead(notificationId);
-
-            console.log(`🔄 Hook: API call successful, updating local state...`);
-
-            // Update local state
-            setNotifications(prev => {
-                const updated = prev.map(notification =>
-                    notification.id === notificationId
-                        ? { ...notification, status: 'read' as const, read_at: new Date().toISOString() }
-                        : notification
-                );
-
-                console.log(`🔄 Hook: Updated notifications state`, {
-                    before: prev.find(n => n.id === notificationId)?.status,
-                    after: updated.find(n => n.id === notificationId)?.status
-                });
-
-                return updated;
-            });
-
-            // Update unread count
-            setUnreadCount(prev => {
-                const newCount = Math.max(0, prev - 1);
-                console.log(`🔄 Hook: Updated unread count: ${prev} → ${newCount}`);
-                return newCount;
-            });
-
             console.log(`✅ Hook: Successfully marked notification ${notificationId} as read`);
-
-            // Force refresh after a short delay to ensure backend persistence
-            setTimeout(async () => {
-                console.log(`🔄 Hook: Force refreshing notifications to verify persistence...`);
-                try {
-                    const response = await NotificationService.getNotifications(1, 20);
-                    const updatedNotification = response.notifications.find(n => n.id === notificationId);
-
-                    if (updatedNotification && updatedNotification.status === 'unread') {
-                        console.log(`⚠️ Hook: Backend didn't persist the read status, forcing local update again...`);
-                        // If backend didn't persist, we need to refresh the entire list
-                        setNotifications(response.notifications);
-                        setUnreadCount(response.notifications.filter(n => n.status === 'unread').length);
-                    } else {
-                        console.log(`✅ Hook: Backend persistence verified`);
-                    }
-                } catch (refreshErr) {
-                    console.error(`❌ Hook: Failed to verify persistence:`, refreshErr);
-                }
-            }, 2000);
-
+            
+            // Trigger global refresh event immediately so other components (like navbar) update right away
+            // The refresh will fetch the latest data from backend, ensuring consistency
+            window.dispatchEvent(new CustomEvent('refreshNotifications'));
         } catch (err) {
             console.error(`❌ Hook: Error marking notification ${notificationId} as read:`, err);
+            // Revert optimistic update on error
+            setNotifications(previousNotifications);
+            setUnreadCount(previousUnreadCount);
             throw err;
         }
     }, []);
@@ -260,9 +240,10 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
             fetchUnreadCount();
         }, refreshInterval);
 
-        // Listen for global refresh events (e.g., from supplier changes)
+        // Listen for global refresh events (e.g., from supplier changes or marking as read)
         const handleGlobalRefresh = () => {
             console.log('🔄 Global notification refresh triggered');
+            // Refresh immediately without delay
             refresh();
         };
 

@@ -83,6 +83,7 @@ export default function NotificationsPage() {
   const [filter, setFilter] = useState<"all" | "unread" | "read">("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [markingAsRead, setMarkingAsRead] = useState<Set<number>>(new Set());
 
   // Auto-sync unread count when there's a mismatch
   useEffect(() => {
@@ -123,66 +124,29 @@ export default function NotificationsPage() {
   });
 
   const handleMarkAsRead = async (notificationId: number) => {
+    // Prevent multiple clicks
+    if (markingAsRead.has(notificationId)) {
+      return;
+    }
+
     try {
+      setMarkingAsRead(prev => new Set(prev).add(notificationId));
       console.log(
         `🖱️ UI: User clicked mark as read for notification ${notificationId}`
       );
       await markAsRead(notificationId);
       console.log(`✅ UI: Mark as read completed successfully`);
-
-      // Verify the change by fetching the notification again
-      setTimeout(async () => {
-        try {
-          console.log(
-            `🔍 UI: Verifying notification ${notificationId} was marked as read...`
-          );
-          const verifyResponse = await fetch(
-            `http://127.0.0.1:8001/v1.0/notifications/?limit=20`,
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem(
-                  "admin_auth_token"
-                )}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-
-          if (verifyResponse.ok) {
-            const data = await verifyResponse.json();
-            const notification = data.notifications?.find(
-              (n: any) => n.id === notificationId
-            );
-            if (notification) {
-              console.log(
-                `🔍 UI: Verification result for notification ${notificationId}:`,
-                {
-                  status: notification.status,
-                  read_at: notification.read_at,
-                }
-              );
-
-              if (notification.status === "read") {
-                console.log(
-                  `✅ UI: Verification successful - notification is marked as read`
-                );
-              } else {
-                console.log(
-                  `❌ UI: Verification failed - notification is still unread!`
-                );
-              }
-            } else {
-              console.log(
-                `⚠️ UI: Could not find notification ${notificationId} in verification response`
-              );
-            }
-          }
-        } catch (verifyErr) {
-          console.error(`❌ UI: Verification failed:`, verifyErr);
-        }
-      }, 1000);
     } catch (err) {
       console.error(`❌ UI: Failed to mark notification as read:`, err);
+    } finally {
+      // Remove from loading set after a short delay to allow state to update
+      setTimeout(() => {
+        setMarkingAsRead(prev => {
+          const next = new Set(prev);
+          next.delete(notificationId);
+          return next;
+        });
+      }, 500);
     }
   };
 
@@ -243,7 +207,7 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-4xl mx-auto p-6" style={{ position: 'relative', zIndex: 1 }}>
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
@@ -394,14 +358,33 @@ export default function NotificationsPage() {
             </p>
           </div>
         ) : (
-          filteredNotifications.map((notification) => (
+          filteredNotifications.map((notification) => {
+            const isMarking = markingAsRead.has(notification.id);
+            return (
             <div
               key={notification.id}
+              onClick={async (e) => {
+                // Don't handle click if already marking as read
+                if (isMarking) {
+                  return;
+                }
+                
+                // Don't handle click if user clicked on a button or link
+                const target = e.target as HTMLElement;
+                if (target.closest('button') || target.closest('a')) {
+                  return;
+                }
+                
+                // Mark as read if notification is unread
+                if (notification.status === "unread") {
+                  await handleMarkAsRead(notification.id);
+                }
+              }}
               className={`p-4 rounded-lg border transition-all duration-200 hover:shadow-md ${
                 notification.status === "unread"
-                  ? "bg-blue-50/50 border-blue-200 shadow-sm"
+                  ? "bg-blue-50/50 border-blue-200 shadow-sm cursor-pointer"
                   : "bg-[rgb(var(--bg-primary))] border-[rgb(var(--border-primary))]"
-              }`}
+              } ${isMarking ? "opacity-50 pointer-events-none" : ""}`}
             >
               <div className="flex items-start space-x-4">
                 {/* Icon */}
@@ -534,16 +517,29 @@ export default function NotificationsPage() {
                   <div className="flex items-center space-x-2">
                     {notification.status === "unread" && (
                       <button
-                        onClick={() => handleMarkAsRead(notification.id)}
-                        className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center space-x-1"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!isMarking) {
+                            handleMarkAsRead(notification.id);
+                          }
+                        }}
+                        disabled={isMarking}
+                        className={`text-xs font-medium flex items-center space-x-1 ${
+                          isMarking 
+                            ? "text-gray-400 cursor-not-allowed" 
+                            : "text-blue-600 hover:text-blue-700"
+                        }`}
                       >
                         <Check className="w-3 h-3" />
-                        <span>Mark as read</span>
+                        <span>{isMarking ? "Marking..." : "Mark as read"}</span>
                       </button>
                     )}
 
                     <button
-                      onClick={() => handleDelete(notification.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(notification.id);
+                      }}
                       className="text-xs text-red-600 hover:text-red-700 font-medium flex items-center space-x-1"
                     >
                       <Trash2 className="w-3 h-3" />
@@ -553,7 +549,8 @@ export default function NotificationsPage() {
                 </div>
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </div>
 
