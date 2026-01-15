@@ -42,7 +42,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
         className={cn(
           // Base styles
           "rounded-xl transition-all duration-300 ease-out relative overflow-hidden select-text",
-          "before:absolute before:inset-0 before:rounded-xl before:transition-opacity before:duration-300",
+          "before:absolute before:inset-0 before:rounded-xl before:transition-opacity before:duration-300 before:pointer-events-none",
 
           // Variant styles
           {
