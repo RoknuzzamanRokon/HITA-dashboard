@@ -158,7 +158,7 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
       className={cn(
         "overflow-hidden transition-all duration-700 ease-out relative",
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4",
-        className
+        className,
       )}
     >
       {/* Refresh indicator */}
@@ -179,11 +179,15 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
       <CardContent>
         <div
           className={cn(
-            "transition-all duration-1000 ease-out",
+            "transition-all duration-1000 ease-out w-full",
             isVisible ? "opacity-100 scale-100" : "opacity-0 scale-95",
-            isRefreshing && "opacity-90"
+            isRefreshing && "opacity-90",
           )}
-          style={{ height }}
+          style={{
+            height,
+            minHeight: height,
+            minWidth: 300,
+          }}
         >
           {children}
         </div>

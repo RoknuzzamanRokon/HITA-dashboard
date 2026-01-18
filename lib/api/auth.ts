@@ -152,8 +152,12 @@ export class AuthService {
             // Call logout endpoint first
             try {
                 console.log("🔄 AuthService: Calling logout API...");
-                await apiClient.post('/auth/logout');
-                console.log("✅ AuthService: Logout API call successful");
+                const response = await apiClient.post(apiEndpoints.auth.logout, {}, true, 0); // No retries for logout
+                if (response.success) {
+                    console.log("✅ AuthService: Logout API call successful");
+                } else {
+                    console.warn("⚠️ AuthService: Logout API returned error:", response.error);
+                }
             } catch (apiError) {
                 console.warn("⚠️ AuthService: Logout API call failed, continuing with local logout:", apiError);
             }

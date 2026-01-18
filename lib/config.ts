@@ -40,6 +40,7 @@ export const apiEndpoints = {
         login: '/auth/token',
         register: '/auth/register',
         refresh: '/auth/refresh-token',
+        logout: '/auth/logout',
     },
 
     // User Management

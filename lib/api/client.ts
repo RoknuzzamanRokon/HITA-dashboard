@@ -140,12 +140,17 @@ export class ApiClient {
       }
 
       // Add X-API-Key header if available (required for export endpoints)
-      const apiKey = typeof localStorage !== 'undefined' ? localStorage.getItem('user_api_key') : null;
-      if (apiKey) {
-        requestHeaders['X-API-Key'] = apiKey;
-        console.log('✅ API Key added to headers:', apiKey.substring(0, 10) + '...');
-      } else {
-        console.warn('⚠️ No API key found in localStorage');
+      const isExportEndpoint = endpoint.includes('/export') ||
+        endpoint.includes('/download') ||
+        endpoint.includes('/content/export');
+      if (isExportEndpoint) {
+        const apiKey = typeof localStorage !== 'undefined' ? localStorage.getItem('user_api_key') : null;
+        if (apiKey) {
+          requestHeaders['X-API-Key'] = apiKey;
+          console.log('✅ API Key added to headers for export endpoint:', apiKey.substring(0, 10) + '...');
+        } else {
+          console.warn('⚠️ No API key found in localStorage for export endpoint:', endpoint);
+        }
       }
     }
 

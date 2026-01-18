@@ -25,7 +25,10 @@ import {
   Legend,
 } from "recharts";
 import ChartWrapper from "./chart-wrapper";
-import { fetchPointsSummary, type PointsSummaryResponse } from "@/lib/api/dashboard";
+import {
+  fetchPointsSummary,
+  type PointsSummaryResponse,
+} from "@/lib/api/dashboard";
 
 // Color palette for charts
 const chartColors = {
@@ -59,7 +62,10 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         <p className="font-medium text-gray-900 mb-2">{label}</p>
         {payload.map((entry: any, index: number) => (
           <p key={index} className="text-sm" style={{ color: entry.color }}>
-            {entry.name}: {typeof entry.value === "number" ? entry.value.toLocaleString() : entry.value}
+            {entry.name}:{" "}
+            {typeof entry.value === "number"
+              ? entry.value.toLocaleString()
+              : entry.value}
           </p>
         ))}
       </div>
@@ -76,19 +82,20 @@ export const RevenueTrendChart: React.FC<{
   const [animationKey, setAnimationKey] = useState(0);
   const [data, setData] = useState<PointsSummaryResponse | null>(null);
   const [internalLoading, setInternalLoading] = useState(true);
+  const [containerReady, setContainerReady] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setInternalLoading(true);
         const response = await fetchPointsSummary();
-        
+
         if (response.success && response.data) {
           setData(response.data);
           setAnimationKey((prev) => prev + 1);
         }
       } catch (err) {
-        console.error('Error loading chart data:', err);
+        console.error("Error loading chart data:", err);
       } finally {
         setInternalLoading(false);
       }
@@ -97,14 +104,25 @@ export const RevenueTrendChart: React.FC<{
     loadData();
   }, []);
 
+  // Ensure container is ready before rendering chart
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setContainerReady(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   const loading = externalLoading || internalLoading;
 
   // Generate chart data from API transaction types
-  const chartData = data?.transaction_types?.slice(0, 6).map((item, index) => ({
-    date: item.type.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase()),
-    points: parseInt(item.total_points),
-    transactions: item.count,
-  })) || [];
+  const chartData =
+    data?.transaction_types?.slice(0, 6).map((item, index) => ({
+      date: item.type
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (l) => l.toUpperCase()),
+      points: parseInt(item.total_points),
+      transactions: item.count,
+    })) || [];
 
   return (
     <ChartWrapper
@@ -113,50 +131,66 @@ export const RevenueTrendChart: React.FC<{
       loading={loading}
       height={350}
     >
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={chartData} key={animationKey}>
-          <defs>
-            <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
-              <stop offset="95%" stopColor="#8884d8" stopOpacity={0.1} />
-            </linearGradient>
-            <linearGradient id="usersGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8} />
-              <stop offset="95%" stopColor="#82ca9d" stopOpacity={0.1} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-          <XAxis dataKey="date" stroke="#666" fontSize={12} tickLine={false} />
-          <YAxis
-            stroke="#666"
-            fontSize={12}
-            tickLine={false}
-            axisLine={false}
-          />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend />
-          <Area
-            type="monotone"
-            dataKey="points"
-            stroke="#8884d8"
-            strokeWidth={3}
-            fill="url(#revenueGradient)"
-            name="Points Transferred"
-            animationDuration={1500}
-            animationBegin={0}
-          />
-          <Area
-            type="monotone"
-            dataKey="transactions"
-            stroke="#82ca9d"
-            strokeWidth={3}
-            fill="url(#usersGradient)"
-            name="Transactions"
-            animationDuration={1500}
-            animationBegin={300}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
+      {containerReady ? (
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          minWidth={300}
+          minHeight={200}
+        >
+          <AreaChart data={chartData} key={animationKey}>
+            <defs>
+              <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="#8884d8" stopOpacity={0.1} />
+              </linearGradient>
+              <linearGradient id="usersGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="#82ca9d" stopOpacity={0.1} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <XAxis
+              dataKey="date"
+              stroke="#666"
+              fontSize={12}
+              tickLine={false}
+            />
+            <YAxis
+              stroke="#666"
+              fontSize={12}
+              tickLine={false}
+              axisLine={false}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend />
+            <Area
+              type="monotone"
+              dataKey="points"
+              stroke="#8884d8"
+              strokeWidth={3}
+              fill="url(#revenueGradient)"
+              name="Points Transferred"
+              animationDuration={1500}
+              animationBegin={0}
+            />
+            <Area
+              type="monotone"
+              dataKey="transactions"
+              stroke="#82ca9d"
+              strokeWidth={3}
+              fill="url(#usersGradient)"
+              name="Transactions"
+              animationDuration={1500}
+              animationBegin={300}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      ) : (
+        <div className="w-full h-full flex items-center justify-center">
+          <div className="animate-pulse text-gray-400">Loading chart...</div>
+        </div>
+      )}
     </ChartWrapper>
   );
 };
@@ -175,13 +209,13 @@ export const UserActivityChart: React.FC<{
       try {
         setInternalLoading(true);
         const response = await fetchPointsSummary();
-        
+
         if (response.success && response.data) {
           setData(response.data);
           setAnimationKey((prev) => prev + 1);
         }
       } catch (err) {
-        console.error('Error loading chart data:', err);
+        console.error("Error loading chart data:", err);
       } finally {
         setInternalLoading(false);
       }
@@ -193,11 +227,14 @@ export const UserActivityChart: React.FC<{
   const loading = externalLoading || internalLoading;
 
   // Use API data from points_by_role
-  const chartData = data?.points_by_role?.map((item) => ({
-    category: item.role.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase()),
-    count: item.user_count,
-    color: ROLE_COLORS[item.role] || chartColors.primary,
-  })) || [];
+  const chartData =
+    data?.points_by_role?.map((item) => ({
+      category: item.role
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (l) => l.toUpperCase()),
+      count: item.user_count,
+      color: ROLE_COLORS[item.role] || chartColors.primary,
+    })) || [];
 
   return (
     <ChartWrapper
@@ -206,7 +243,12 @@ export const UserActivityChart: React.FC<{
       loading={loading}
       height={300}
     >
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer
+        width="100%"
+        height="100%"
+        minWidth={250}
+        minHeight={200}
+      >
         <BarChart data={chartData} key={animationKey}>
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
           <XAxis
@@ -251,13 +293,13 @@ export const BookingSourcesChart: React.FC<{
       try {
         setInternalLoading(true);
         const response = await fetchPointsSummary();
-        
+
         if (response.success && response.data) {
           setData(response.data);
           setAnimationKey((prev) => prev + 1);
         }
       } catch (err) {
-        console.error('Error loading chart data:', err);
+        console.error("Error loading chart data:", err);
       } finally {
         setInternalLoading(false);
       }
@@ -298,13 +340,14 @@ export const BookingSourcesChart: React.FC<{
   };
 
   // Transform point distribution data from API only
-  const chartData = data?.points_by_role?.map((item) => ({
-    name: item.role
-      .replace(/_/g, " ")
-      .replace(/\b\w/g, (l) => l.toUpperCase()),
-    value: parseInt(item.current_points) / 1000000, // Convert to millions
-    color: ROLE_COLORS[item.role] || chartColors.primary,
-  })) || [];
+  const chartData =
+    data?.points_by_role?.map((item) => ({
+      name: item.role
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (l) => l.toUpperCase()),
+      value: parseInt(item.current_points) / 1000000, // Convert to millions
+      color: ROLE_COLORS[item.role] || chartColors.primary,
+    })) || [];
 
   return (
     <ChartWrapper
