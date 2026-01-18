@@ -14,6 +14,7 @@
     "test:navigation": "jest --testPathPattern=navigation"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.90.19",
     "chart.js": "^4.5.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.24",

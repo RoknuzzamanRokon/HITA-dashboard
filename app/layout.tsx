@@ -3,6 +3,7 @@ import "./globals.css";
 import { config } from "@/lib/config";
 import { AuthProvider } from "@/lib/contexts/auth-context";
 import { ThemeProvider } from "@/lib/contexts/theme-context";
+import { QueryProvider } from "@/lib/providers/query-provider";
 import { ToastProvider } from "@/lib/components/ui/toast";
 import { NotificationProvider } from "@/lib/components/notifications/notification-provider";
 import { NotificationContainerLazy } from "@/lib/components/notifications/notification-container-lazy";
@@ -22,13 +23,15 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased" suppressHydrationWarning>
         <ThemeProvider>
-          <AuthProvider>
-            <NotificationProvider>
-              <ToastProvider>{children}</ToastProvider>
-              <NotificationContainerLazy />
-              <ChunkErrorHandler />
-            </NotificationProvider>
-          </AuthProvider>
+          <QueryProvider>
+            <AuthProvider>
+              <NotificationProvider>
+                <ToastProvider>{children}</ToastProvider>
+                <NotificationContainerLazy />
+                <ChunkErrorHandler />
+              </NotificationProvider>
+            </AuthProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiClient } from "@/lib/api/client";
 import { config } from "@/lib/config";
+import { useResilientData } from "./use-resilient-data";
 import {
     transformSupplierData,
     transformTimeSeriesData,
@@ -44,6 +45,7 @@ export const useDashboardCharts = (
     const [error, setError] = useState<string | null>(null);
     const [lastFetch, setLastFetch] = useState<Date | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const { handleApiError, handleApiSuccess, getFallbackData, isUsingFallback } = useResilientData();
 
     const fetchCharts = useCallback(async (isBackground = false) => {
         // Prevent duplicate calls within 5 seconds
@@ -160,6 +162,7 @@ export const useDashboardCharts = (
 
             setChartsData(transformed);
             setLastFetch(new Date());
+            handleApiSuccess('dashboard-charts'); // Mark API as successful
         } catch (err) {
             console.warn('⚠️ Dashboard charts fetch error:', {
                 error: err,
@@ -167,7 +170,15 @@ export const useDashboardCharts = (
                 isBackground,
             });
 
-            if (!isBackground) {
+            // Try to use fallback data
+            const useFallback = handleApiError(err, 'dashboard-charts');
+            if (useFallback) {
+                console.log('📊 Using fallback charts data');
+                const fallbackData = getFallbackData('chartsData');
+                setChartsData(fallbackData);
+                setLastFetch(new Date());
+                setError(null); // Clear error when using fallback
+            } else if (!isBackground) {
                 const errorMessage = err instanceof Error
                     ? err.message
                     : "Failed to fetch dashboard charts data";
