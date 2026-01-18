@@ -401,7 +401,10 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
 
                       <button
                         className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-white/40 hover:text-gray-900 transition-all duration-200 group"
-                        onClick={() => setDropdownOpen(false)}
+                        onClick={() => {
+                          setDropdownOpen(false);
+                          router.push("/dashboard/settings");
+                        }}
                       >
                         <Settings className="h-4 w-4 mr-3 text-gray-500 group-hover:text-blue-500 transition-colors duration-200" />
                         <span className="font-medium">Settings</span>

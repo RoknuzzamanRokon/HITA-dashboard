@@ -657,22 +657,22 @@ export default function ProfilePage() {
                 "radial-gradient(circle at 20% 50%, rgba(255,255,255,0.3) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(255,255,255,0.2) 0%, transparent 50%)",
             }}
           ></div>
-          <div className="absolute -bottom-12 left-8">
-            <div className="w-24 h-24 rounded-lg bg-[rgb(var(--bg-primary))] shadow-lg flex items-center justify-center border-4 border-[rgb(var(--bg-primary))]">
-              <span className="text-4xl font-bold text-primary-color">
+          <div className="absolute -bottom-24 left-8">
+            <div className="w-48 h-48 rounded-lg bg-[rgb(var(--bg-primary))] shadow-lg flex items-center justify-center border-8 border-[rgb(var(--bg-primary))]">
+              <span className="text-7xl font-bold text-primary-color">
                 {profile.username.charAt(0).toUpperCase()}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="pt-16 px-8 pb-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
+        <div className="pt-28 px-8 pb-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-end gap-4">
+            <div className="md:text-right">
               <h1 className="text-2xl font-bold text-[rgb(var(--text-primary))] mb-2">
                 {profile.username}
               </h1>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 md:justify-end">
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border-2 border-primary-color text-primary-color bg-transparent">
                   {roleInfo.icon}
                   <span className="ml-1">{roleInfo.label}</span>

@@ -10,7 +10,6 @@ import { GivePointsSection } from "@/lib/components/billing/give-points-section"
 import { ApiKeySection } from "@/lib/components/billing/api-key-section";
 import { SupplierPermissionSection } from "@/lib/components/billing/supplier-permission-section";
 import { IpAddressPermissionSection } from "@/lib/components/billing/ip-address-permission-section";
-import { DebugTokenInfo } from "@/lib/components/billing/debug-token-info";
 import { Shield, RefreshCw } from "lucide-react";
 
 export default function BillingPage() {
@@ -76,9 +75,6 @@ export default function BillingPage() {
             </button>
           </div>
         </div>
-
-        {/* Debug Token Info - Remove this in production */}
-        <DebugTokenInfo />
 
         {/* User Info Section */}
         <div className="mb-6">
