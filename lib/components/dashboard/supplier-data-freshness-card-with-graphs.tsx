@@ -107,7 +107,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         </p>
         <div className="space-y-1 text-sm">
           <p className="text-[rgb(var(--text-secondary))]">
-            Hours Ago: {data.hoursAgo}
+            Last Updated: {formatLastUpdated(data.lastUpdated)}
           </p>
           <p className="text-[rgb(var(--text-secondary))]">
             Records: {data.recordCount?.toLocaleString() || "N/A"}
@@ -170,7 +170,7 @@ export const SupplierDataFreshnessCardWithGraphs: React.FC<
 
   // Filter suppliers by selected section
   const getFilteredSuppliers = (
-    section: FreshnessSection
+    section: FreshnessSection,
   ): SupplierFreshnessData[] => {
     if (!data || !section) return [];
     return data.suppliers.filter((supplier) => supplier.status === section);
@@ -264,7 +264,7 @@ export const SupplierDataFreshnessCardWithGraphs: React.FC<
                   <Cell
                     key={`cell-${index}`}
                     fill={`${sectionConfig.chartColor}${Math.floor(
-                      0.5 + (index * 0.5) / pieData.length
+                      0.5 + (index * 0.5) / pieData.length,
                     )
                       .toString(16)
                       .padStart(2, "0")}`}
@@ -517,7 +517,7 @@ export const SupplierDataFreshnessCardWithGraphs: React.FC<
                   • Total Errors:{" "}
                   {filteredSuppliers.reduce(
                     (sum, s) => sum + (s.errorCount || 0),
-                    0
+                    0,
                   )}
                 </p>
               </div>

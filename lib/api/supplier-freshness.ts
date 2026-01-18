@@ -119,6 +119,14 @@ function getMockSupplierFreshnessData(): SupplierFreshnessResponse {
         }
     ];
 
+    // Calculate hoursAgo dynamically from lastUpdated timestamps
+    suppliers.forEach(supplier => {
+        const lastUpdatedTime = new Date(supplier.lastUpdated);
+        const diffMs = now.getTime() - lastUpdatedTime.getTime();
+        supplier.hoursAgo = Math.floor(diffMs / (1000 * 60 * 60));
+        supplier.status = calculateFreshnessStatus(supplier.hoursAgo);
+    });
+
     return {
         suppliers,
         summary: {

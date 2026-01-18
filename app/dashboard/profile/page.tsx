@@ -666,18 +666,16 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div className="pt-28 px-8 pb-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-end gap-4">
-            <div className="md:text-right">
-              <h1 className="text-2xl font-bold text-[rgb(var(--text-primary))] mb-2">
-                {profile.username}
-              </h1>
-              <div className="flex flex-wrap items-center gap-2 md:justify-end">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border-2 border-primary-color text-primary-color bg-transparent">
-                  {roleInfo.icon}
-                  <span className="ml-1">{roleInfo.label}</span>
-                </span>
-              </div>
+        <div className="relative pt-28 px-8 pb-6">
+          <div className="absolute top-4 right-8 text-right">
+            <h1 className="text-2xl font-bold text-[rgb(var(--text-primary))] mb-2">
+              {profile.username.charAt(0).toUpperCase() + profile.username.slice(1).toLowerCase()}
+            </h1>
+            <div className="flex flex-wrap items-center gap-2 justify-end">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border-2 border-primary-color text-primary-color bg-transparent">
+                {roleInfo.icon}
+                <span className="ml-1">{roleInfo.label}</span>
+              </span>
             </div>
           </div>
         </div>
@@ -697,7 +695,7 @@ export default function ProfilePage() {
               <span className="text-sm font-medium">Username</span>
             </div>
             <p className="text-lg font-semibold text-[rgb(var(--text-primary))]">
-              {profile.username}
+              {profile.username.charAt(0).toUpperCase() + profile.username.slice(1).toLowerCase()}
             </p>
           </div>
 

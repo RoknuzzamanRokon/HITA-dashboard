@@ -149,6 +149,15 @@ export class AuthService {
         try {
             console.log("🚪 AuthService: Logging out user...");
 
+            // Call logout endpoint first
+            try {
+                console.log("🔄 AuthService: Calling logout API...");
+                await apiClient.post('/auth/logout');
+                console.log("✅ AuthService: Logout API call successful");
+            } catch (apiError) {
+                console.warn("⚠️ AuthService: Logout API call failed, continuing with local logout:", apiError);
+            }
+
             // Clear tokens from storage
             console.log("🧹 AuthService: Clearing tokens from storage...");
             TokenStorage.clearTokens();
@@ -158,9 +167,6 @@ export class AuthService {
             const refreshTokenAfter = TokenStorage.getRefreshToken();
             console.log("🔍 AuthService: Token after clear:", tokenAfter ? "STILL EXISTS" : "CLEARED");
             console.log("🔍 AuthService: Refresh token after clear:", refreshTokenAfter ? "STILL EXISTS" : "CLEARED");
-
-            // Optional: Call logout endpoint if it exists
-            // await apiClient.post('/auth/logout');
 
             console.log("✅ AuthService: Logout completed");
         } catch (error) {

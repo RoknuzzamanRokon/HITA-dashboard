@@ -88,7 +88,7 @@ export default function NotificationsPage() {
   // Auto-sync unread count when there's a mismatch
   useEffect(() => {
     const actualUnreadCount = notifications.filter(
-      (n) => n.status === "unread"
+      (n) => n.status === "unread",
     ).length;
     if (actualUnreadCount !== unreadCount && notifications.length > 0) {
       console.log("🔄 Auto-syncing unread count due to mismatch");
@@ -98,7 +98,7 @@ export default function NotificationsPage() {
 
   // Calculate actual unread count from notifications
   const actualUnreadCount = notifications.filter(
-    (n) => n.status === "unread"
+    (n) => n.status === "unread",
   ).length;
   const displayUnreadCount = actualUnreadCount; // Use actual count instead of API count
 
@@ -130,9 +130,9 @@ export default function NotificationsPage() {
     }
 
     try {
-      setMarkingAsRead(prev => new Set(prev).add(notificationId));
+      setMarkingAsRead((prev) => new Set(prev).add(notificationId));
       console.log(
-        `🖱️ UI: User clicked mark as read for notification ${notificationId}`
+        `🖱️ UI: User clicked mark as read for notification ${notificationId}`,
       );
       await markAsRead(notificationId);
       console.log(`✅ UI: Mark as read completed successfully`);
@@ -141,7 +141,7 @@ export default function NotificationsPage() {
     } finally {
       // Remove from loading set after a short delay to allow state to update
       setTimeout(() => {
-        setMarkingAsRead(prev => {
+        setMarkingAsRead((prev) => {
           const next = new Set(prev);
           next.delete(notificationId);
           return next;
@@ -161,7 +161,7 @@ export default function NotificationsPage() {
   const handleDelete = async (notificationId: number) => {
     try {
       console.log(
-        `🗑️ UI: User clicked delete for notification ${notificationId}`
+        `🗑️ UI: User clicked delete for notification ${notificationId}`,
       );
       await deleteNotification(notificationId);
       console.log(`✅ UI: Delete completed successfully`);
@@ -171,7 +171,7 @@ export default function NotificationsPage() {
     } catch (err) {
       console.error(
         `❌ UI: Failed to delete notification ${notificationId}:`,
-        err
+        err,
       );
 
       // Show specific error messages to user
@@ -180,7 +180,7 @@ export default function NotificationsPage() {
 
       if (errorMessage.includes("Permission denied")) {
         console.error(
-          `🚫 UI: Permission error - user cannot delete this notification`
+          `🚫 UI: Permission error - user cannot delete this notification`,
         );
         alert("Permission denied: You can only delete your own notifications");
       } else if (errorMessage.includes("Authentication failed")) {
@@ -188,7 +188,7 @@ export default function NotificationsPage() {
         alert("Authentication failed: Please login again");
       } else if (errorMessage.includes("not found")) {
         console.log(
-          `⚠️ UI: Notification not found - may have been already deleted`
+          `⚠️ UI: Notification not found - may have been already deleted`,
         );
         // Don't show error to user, just refresh the list
       } else {
@@ -207,7 +207,10 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6" style={{ position: 'relative', zIndex: 1 }}>
+    <div
+      className="max-w-4xl mx-auto p-6"
+      style={{ position: "relative", zIndex: 1 }}
+    >
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
@@ -317,22 +320,6 @@ export default function NotificationsPage() {
         </div>
       </div>
 
-      {/* Debug Information (only in development) */}
-      {process.env.NODE_ENV === "development" && (
-        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs">
-          <strong>Debug Info:</strong>
-          <div>Total notifications: {notifications.length}</div>
-          <div>Unread count (API): {unreadCount}</div>
-          <div>Unread in list: {actualUnreadCount}</div>
-          <div>Display count: {displayUnreadCount}</div>
-          <div>Filtered notifications: {filteredNotifications.length}</div>
-          <div>
-            Current filters: Status={filter}, Type={typeFilter}, Search="
-            {searchQuery}"
-          </div>
-        </div>
-      )}
-
       {/* Error Message */}
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-3">
@@ -361,194 +348,202 @@ export default function NotificationsPage() {
           filteredNotifications.map((notification) => {
             const isMarking = markingAsRead.has(notification.id);
             return (
-            <div
-              key={notification.id}
-              onClick={async (e) => {
-                // Don't handle click if already marking as read
-                if (isMarking) {
-                  return;
-                }
-                
-                // Don't handle click if user clicked on a button or link
-                const target = e.target as HTMLElement;
-                if (target.closest('button') || target.closest('a')) {
-                  return;
-                }
-                
-                // Mark as read if notification is unread
-                if (notification.status === "unread") {
-                  await handleMarkAsRead(notification.id);
-                }
-              }}
-              className={`p-4 rounded-lg border transition-all duration-200 hover:shadow-md ${
-                notification.status === "unread"
-                  ? "bg-blue-50/50 border-blue-200 shadow-sm cursor-pointer"
-                  : "bg-[rgb(var(--bg-primary))] border-[rgb(var(--border-primary))]"
-              } ${isMarking ? "opacity-50 pointer-events-none" : ""}`}
-            >
-              <div className="flex items-start space-x-4">
-                {/* Icon */}
-                <div
-                  className={`p-2 rounded-lg border ${getNotificationColor(
-                    notification.type,
-                    notification.priority
-                  )}`}
-                >
-                  {getNotificationIcon(notification.type)}
-                </div>
+              <div
+                key={notification.id}
+                onClick={async (e) => {
+                  // Don't handle click if already marking as read
+                  if (isMarking) {
+                    return;
+                  }
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3
-                      className={`text-sm font-semibold ${
-                        notification.status === "unread"
-                          ? "text-[rgb(var(--text-primary))]"
-                          : "text-[rgb(var(--text-secondary))]"
-                      }`}
-                    >
-                      {notification.title}
-                    </h3>
+                  // Don't handle click if user clicked on a button or link
+                  const target = e.target as HTMLElement;
+                  if (target.closest("button") || target.closest("a")) {
+                    return;
+                  }
 
-                    <div className="flex items-center space-x-2 ml-4">
-                      {notification.priority === "critical" && (
-                        <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
-                          Critical
-                        </span>
-                      )}
-                      {notification.priority === "high" && (
-                        <span className="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
-                          High
-                        </span>
-                      )}
-                      <span className="text-xs text-[rgb(var(--text-tertiary))]">
-                        <RealTimeTimestamp
-                          dateString={notification.created_at}
-                          className="text-xs text-[rgb(var(--text-tertiary))]"
-                          updateInterval={5000}
-                        />
-                      </span>
-                    </div>
+                  // Mark as read if notification is unread
+                  if (notification.status === "unread") {
+                    await handleMarkAsRead(notification.id);
+                  }
+                }}
+                className={`p-4 rounded-lg border transition-all duration-200 hover:shadow-md ${
+                  notification.status === "unread"
+                    ? "bg-blue-50/50 border-blue-200 shadow-sm cursor-pointer"
+                    : "bg-[rgb(var(--bg-primary))] border-[rgb(var(--border-primary))]"
+                } ${isMarking ? "opacity-50 pointer-events-none" : ""}`}
+              >
+                <div className="flex items-start space-x-4">
+                  {/* Icon */}
+                  <div
+                    className={`p-2 rounded-lg border ${getNotificationColor(
+                      notification.type,
+                      notification.priority,
+                    )}`}
+                  >
+                    {getNotificationIcon(notification.type)}
                   </div>
 
-                  <p className="text-sm text-[rgb(var(--text-secondary))] mb-3">
-                    {notification.message}
-                  </p>
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between mb-2">
+                      <h3
+                        className={`text-sm font-semibold ${
+                          notification.status === "unread"
+                            ? "text-[rgb(var(--text-primary))]"
+                            : "text-[rgb(var(--text-secondary))]"
+                        }`}
+                      >
+                        {notification.title}
+                      </h3>
 
-                  {/* Timing and Metadata Information */}
-                  {notification.meta_data && (
-                    <div className="mb-3 p-2 bg-[rgb(var(--bg-secondary))] rounded-md border border-[rgb(var(--border-primary))]">
-                      <div className="text-xs text-[rgb(var(--text-tertiary))] space-y-1">
-                        {notification.meta_data.sent_by && (
-                          <div className="flex items-center space-x-2">
-                            <span className="font-medium">Sent by:</span>
-                            <span>{notification.meta_data.sent_by}</span>
-                            {notification.meta_data.sent_by_role && (
-                              <span className="px-1 py-0.5 bg-blue-100 text-blue-800 rounded text-xs">
-                                {notification.meta_data.sent_by_role}
-                              </span>
-                            )}
-                          </div>
+                      <div className="flex items-center space-x-2 ml-4">
+                        {notification.priority === "critical" && (
+                          <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+                            Critical
+                          </span>
                         )}
-                        {notification.meta_data.sent_at && (
-                          <div className="flex items-center space-x-2">
-                            <span className="font-medium">Sent at:</span>
-                            <span>
-                              <RealTimeTimestamp
-                                dateString={notification.meta_data.sent_at}
-                                className="text-xs"
-                              />{" "}
-                              (
-                              {new Date(
-                                notification.meta_data.sent_at
-                              ).toLocaleString()}
-                              )
-                            </span>
-                          </div>
+                        {notification.priority === "high" && (
+                          <span className="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
+                            High
+                          </span>
                         )}
-                        {notification.meta_data.source && (
-                          <div className="flex items-center space-x-2">
-                            <span className="font-medium">Source:</span>
-                            <span className="capitalize">
-                              {notification.meta_data.source.replace("_", " ")}
-                            </span>
-                          </div>
-                        )}
-                        {notification.meta_data.supplier_name && (
-                          <div className="flex items-center space-x-2">
-                            <span className="font-medium">Supplier:</span>
-                            <span className="font-mono">
-                              {notification.meta_data.supplier_name}
-                            </span>
-                            {notification.meta_data.action && (
-                              <span
-                                className={`px-1 py-0.5 rounded text-xs ${
-                                  notification.meta_data.action === "activated"
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-orange-100 text-orange-800"
-                                }`}
-                              >
-                                {notification.meta_data.action}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                        {notification.meta_data.change_time && (
-                          <div className="flex items-center space-x-2">
-                            <span className="font-medium">Changed at:</span>
-                            <span>
-                              <RealTimeTimestamp
-                                dateString={notification.meta_data.change_time}
-                                className="text-xs"
-                              />{" "}
-                              (
-                              {new Date(
-                                notification.meta_data.change_time
-                              ).toLocaleString()}
-                              )
-                            </span>
-                          </div>
-                        )}
+                        <span className="text-xs text-[rgb(var(--text-tertiary))]">
+                          <RealTimeTimestamp
+                            dateString={notification.created_at}
+                            className="text-xs text-[rgb(var(--text-tertiary))]"
+                            updateInterval={5000}
+                          />
+                        </span>
                       </div>
                     </div>
-                  )}
 
-                  {/* Actions */}
-                  <div className="flex items-center space-x-2">
-                    {notification.status === "unread" && (
+                    <p className="text-sm text-[rgb(var(--text-secondary))] mb-3">
+                      {notification.message}
+                    </p>
+
+                    {/* Timing and Metadata Information */}
+                    {notification.meta_data && (
+                      <div className="mb-3 p-2 bg-[rgb(var(--bg-secondary))] rounded-md border border-[rgb(var(--border-primary))]">
+                        <div className="text-xs text-[rgb(var(--text-tertiary))] space-y-1">
+                          {notification.meta_data.sent_by && (
+                            <div className="flex items-center space-x-2">
+                              <span className="font-medium">Sent by:</span>
+                              <span>{notification.meta_data.sent_by}</span>
+                              {notification.meta_data.sent_by_role && (
+                                <span className="px-1 py-0.5 bg-blue-100 text-blue-800 rounded text-xs">
+                                  {notification.meta_data.sent_by_role}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          {notification.meta_data.sent_at && (
+                            <div className="flex items-center space-x-2">
+                              <span className="font-medium">Sent at:</span>
+                              <span>
+                                <RealTimeTimestamp
+                                  dateString={notification.meta_data.sent_at}
+                                  className="text-xs"
+                                />{" "}
+                                (
+                                {new Date(
+                                  notification.meta_data.sent_at,
+                                ).toLocaleString()}
+                                )
+                              </span>
+                            </div>
+                          )}
+                          {notification.meta_data.source && (
+                            <div className="flex items-center space-x-2">
+                              <span className="font-medium">Source:</span>
+                              <span className="capitalize">
+                                {notification.meta_data.source.replace(
+                                  "_",
+                                  " ",
+                                )}
+                              </span>
+                            </div>
+                          )}
+                          {notification.meta_data.supplier_name && (
+                            <div className="flex items-center space-x-2">
+                              <span className="font-medium">Supplier:</span>
+                              <span className="font-mono">
+                                {notification.meta_data.supplier_name}
+                              </span>
+                              {notification.meta_data.action && (
+                                <span
+                                  className={`px-1 py-0.5 rounded text-xs ${
+                                    notification.meta_data.action ===
+                                    "activated"
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-orange-100 text-orange-800"
+                                  }`}
+                                >
+                                  {notification.meta_data.action}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          {notification.meta_data.change_time && (
+                            <div className="flex items-center space-x-2">
+                              <span className="font-medium">Changed at:</span>
+                              <span>
+                                <RealTimeTimestamp
+                                  dateString={
+                                    notification.meta_data.change_time
+                                  }
+                                  className="text-xs"
+                                />{" "}
+                                (
+                                {new Date(
+                                  notification.meta_data.change_time,
+                                ).toLocaleString()}
+                                )
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex items-center space-x-2">
+                      {notification.status === "unread" && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isMarking) {
+                              handleMarkAsRead(notification.id);
+                            }
+                          }}
+                          disabled={isMarking}
+                          className={`text-xs font-medium flex items-center space-x-1 ${
+                            isMarking
+                              ? "text-gray-400 cursor-not-allowed"
+                              : "text-blue-600 hover:text-blue-700"
+                          }`}
+                        >
+                          <Check className="w-3 h-3" />
+                          <span>
+                            {isMarking ? "Marking..." : "Mark as read"}
+                          </span>
+                        </button>
+                      )}
+
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (!isMarking) {
-                            handleMarkAsRead(notification.id);
-                          }
+                          handleDelete(notification.id);
                         }}
-                        disabled={isMarking}
-                        className={`text-xs font-medium flex items-center space-x-1 ${
-                          isMarking 
-                            ? "text-gray-400 cursor-not-allowed" 
-                            : "text-blue-600 hover:text-blue-700"
-                        }`}
+                        className="text-xs text-red-600 hover:text-red-700 font-medium flex items-center space-x-1"
                       >
-                        <Check className="w-3 h-3" />
-                        <span>{isMarking ? "Marking..." : "Mark as read"}</span>
+                        <Trash2 className="w-3 h-3" />
+                        <span>Delete</span>
                       </button>
-                    )}
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(notification.id);
-                      }}
-                      className="text-xs text-red-600 hover:text-red-700 font-medium flex items-center space-x-1"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                      <span>Delete</span>
-                    </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
             );
           })
         )}
