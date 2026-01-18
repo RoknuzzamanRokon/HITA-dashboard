@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   User,
   Mail,
@@ -47,13 +48,35 @@ interface UserInfo {
 }
 
 export function UserInfoSection() {
+  const searchParams = useSearchParams();
   const [userId, setUserId] = useState("");
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchUserInfo = async () => {
-    if (!userId.trim()) {
+  // Read user ID from URL query parameter and auto-fill
+  useEffect(() => {
+    const userIdFromUrl = searchParams.get("userId");
+    if (userIdFromUrl && userIdFromUrl !== userId) {
+      setUserId(userIdFromUrl);
+    }
+  }, [searchParams, userId]);
+
+  // Auto-fetch user info when userId is set from URL
+  useEffect(() => {
+    const userIdFromUrl = searchParams.get("userId");
+    if (userIdFromUrl && userIdFromUrl === userId && !userInfo && !loading) {
+      const timer = setTimeout(() => {
+        fetchUserInfo(userIdFromUrl);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  const fetchUserInfo = async (idToFetch?: string) => {
+    const id = idToFetch || userId.trim();
+    if (!id) {
       setError("Please enter a user ID");
       return;
     }
@@ -69,11 +92,11 @@ export function UserInfoSection() {
         throw new Error("Authentication token not found. Please login again.");
       }
 
-      console.log("Fetching user info for ID:", userId.trim());
+      console.log("Fetching user info for ID:", id);
       console.log("Token exists:", !!token);
 
       const response = await fetch(
-        `http://127.0.0.1:8001/v1.0/user/check-user-info/${userId.trim()}`,
+        `http://127.0.0.1:8001/v1.0/user/check-user-info/${id}`,
         {
           method: "GET",
           headers: {
@@ -134,7 +157,7 @@ export function UserInfoSection() {
             className="flex-1 px-4 py-2 border border-[rgb(var(--border-primary))] rounded-md bg-[rgb(var(--bg-secondary))] text-[rgb(var(--text-primary))] focus:ring-2 focus:ring-primary-color focus:border-transparent"
           />
           <button
-            onClick={fetchUserInfo}
+            onClick={() => fetchUserInfo()}
             disabled={loading || !userId.trim()}
             className="px-6 py-2 bg-primary-color text-white rounded-md hover:bg-primary-hover disabled:opacity-50 flex items-center space-x-2 transition-all duration-200 hover:shadow-lg hover:scale-105 active:scale-95"
           >

@@ -28,7 +28,8 @@ type AuthAction =
 // Auth context type
 interface AuthContextType extends AuthState {
   login: (
-    credentials: LoginCredentials
+    credentials: LoginCredentials,
+    rememberMe?: boolean
   ) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -249,16 +250,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   /**
    * Login user
+   * @param credentials - Login credentials (username and password)
+   * @param rememberMe - If true, tokens are stored in localStorage (persistent). If false, stored in sessionStorage (session-only)
    */
   const login = async (
-    credentials: LoginCredentials
+    credentials: LoginCredentials,
+    rememberMe: boolean = true
   ): Promise<{ success: boolean; error?: string }> => {
     try {
       dispatch({ type: "SET_LOADING", payload: true });
       setError(null);
 
-      console.log("🔐 Starting login process...");
-      const response = await AuthService.login(credentials);
+      console.log("🔐 Starting login process...", { rememberMe });
+      const response = await AuthService.login(credentials, rememberMe);
       console.log("🔐 Login response:", response);
 
       if (response.success && response.data) {

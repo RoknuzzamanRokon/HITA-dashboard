@@ -151,6 +151,11 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
     }
   };
 
+  const capitalizeFirstLetter = (str: string) => {
+    if (!str) return str;
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  };
+
   return (
     <nav
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-[rgba(var(--bg-primary),0.95)] backdrop-blur-xl border-b border-[rgb(var(--border-primary))]"
@@ -335,7 +340,7 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
                   </div>
                   <div className="hidden md:block text-left">
                     <div className="text-sm font-semibold text-gray-900">
-                      {user.username}
+                      {capitalizeFirstLetter(user.username)}
                     </div>
                     <div className="text-xs text-gray-600 font-medium">
                       {getRoleDisplayName(user.role)}
@@ -369,7 +374,7 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
                         </div>
                         <div>
                           <div className="text-sm font-semibold text-gray-900">
-                            {user.username}
+                            {capitalizeFirstLetter(user.username)}
                           </div>
                           <div className="text-sm text-gray-600">
                             {user.email}
@@ -385,7 +390,10 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
                     <div className="py-2">
                       <button
                         className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-white/40 hover:text-gray-900 transition-all duration-200 group"
-                        onClick={() => setDropdownOpen(false)}
+                        onClick={() => {
+                          setDropdownOpen(false);
+                          router.push("/dashboard/profile");
+                        }}
                       >
                         <User className="h-4 w-4 mr-3 text-gray-500 group-hover:text-blue-500 transition-colors duration-200" />
                         <span className="font-medium">Profile</span>
@@ -409,7 +417,10 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
 
                       <button
                         className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-white/40 hover:text-gray-900 transition-all duration-200 group"
-                        onClick={() => setDropdownOpen(false)}
+                        onClick={() => {
+                          setDropdownOpen(false);
+                          router.push("/dashboard/issues");
+                        }}
                       >
                         <HelpCircle className="h-4 w-4 mr-3 text-gray-500 group-hover:text-blue-500 transition-colors duration-200" />
                         <span className="font-medium">Help & Support</span>

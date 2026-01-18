@@ -6,7 +6,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useRequireAuth } from "@/lib/hooks/use-auth";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { UserService } from "@/lib/api/users";
@@ -49,6 +49,7 @@ import "@/app/globals.css";
 
 export default function UsersPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated, isLoading: authLoading } = useRequireAuth();
   const { user: currentUser } = useAuth();
   const permissions = usePermissions();
@@ -619,6 +620,17 @@ export default function UsersPage() {
       }, 500);
     }
   }, [isAuthenticated, fetchUsers, fetchCurrentUserDetails]);
+
+  // Check for create query parameter and open modal
+  useEffect(() => {
+    const createParam = searchParams.get("create");
+    if (createParam === "true" && isAuthenticated) {
+      setShowCreateModal(true);
+      // Remove the query parameter from URL without page reload
+      const newUrl = window.location.pathname;
+      router.replace(newUrl);
+    }
+  }, [searchParams, isAuthenticated, router]);
 
   /**
    * Handle search
@@ -1866,16 +1878,17 @@ export default function UsersPage() {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
+                      const userId = selectedUserDetails?.id || selectedUser.id;
                       console.log(
                         "Edit User clicked, navigating to billing page for userId:",
-                        selectedUserDetails?.id || selectedUser.id
+                        userId
                       );
 
                       // Close the modal
                       setShowUserModal(false);
 
-                      // Navigate to billing page
-                      router.push("/dashboard/billing");
+                      // Navigate to billing page with user ID
+                      router.push(`/dashboard/billing?userId=${userId}`);
                     }}
                     leftIcon={<Edit className="h-3 w-3" />}
                   >
@@ -3052,16 +3065,17 @@ export default function UsersPage() {
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    const userId = selectedUserDetail.id;
                     console.log(
                       "Edit User clicked, navigating to billing page for userId:",
-                      selectedUserDetail.id
+                      userId
                     );
 
                     // Close the detail modal
                     setShowUserDetailModal(false);
 
-                    // Navigate to billing page
-                    router.push("/dashboard/billing");
+                    // Navigate to billing page with user ID
+                    router.push(`/dashboard/billing?userId=${userId}`);
                   }}
                   leftIcon={<Edit className="h-3 w-3" />}
                 >

@@ -45,7 +45,9 @@ const saveNotifiedJobs = (notifiedJobs: Map<string, Set<string>>): void => {
         notifiedJobs.forEach((events, jobId) => {
             obj[jobId] = Array.from(events);
         });
-        localStorage.setItem(NOTIFIED_JOBS_KEY, JSON.stringify(obj));
+        const jsonString = JSON.stringify(obj);
+        localStorage.setItem(NOTIFIED_JOBS_KEY, jsonString);
+        console.log('💾 Saved to localStorage:', jsonString);
     } catch (error) {
         console.error('Error saving notified jobs:', error);
     }
@@ -74,10 +76,12 @@ export function useExportNotifications({
     // Track which jobs have been notified to prevent duplicates
     // Load from localStorage on mount - use lazy initialization
     const notifiedJobsRef = useRef<Map<string, Set<string>> | null>(null);
+    const hasInitializedRef = useRef<boolean>(false);
 
-    // Initialize on first render only
-    if (notifiedJobsRef.current === null) {
+    // Initialize on first render only, and reload from localStorage to ensure we have latest data
+    if (!hasInitializedRef.current) {
         notifiedJobsRef.current = loadNotifiedJobs();
+        hasInitializedRef.current = true;
         console.log('🔄 Initialized notified jobs from localStorage:',
             Array.from(notifiedJobsRef.current.entries()).map(([id, events]) => ({
                 jobId: id,
@@ -87,7 +91,26 @@ export function useExportNotifications({
     }
 
     useEffect(() => {
+        // Skip if still loading to avoid showing notifications for stale data
+        if (isLoading) {
+            return;
+        }
+
+        // Reload from localStorage at the start of each effect to ensure we have the latest persisted data
+        // This is important because the component might remount and we need fresh data
+        const latestNotifiedJobs = loadNotifiedJobs();
         const notifiedJobs = notifiedJobsRef.current!;
+        
+        // Merge latest data from localStorage into the ref
+        latestNotifiedJobs.forEach((events, jobId) => {
+            if (!notifiedJobs.has(jobId)) {
+                notifiedJobs.set(jobId, new Set(events));
+            } else {
+                // Merge events from localStorage with current ref (union)
+                const currentEvents = notifiedJobs.get(jobId)!;
+                events.forEach(event => currentEvents.add(event));
+            }
+        });
 
         // Debug: Log loaded notification state
         console.log('📋 Loaded notified jobs:', Array.from(notifiedJobs.entries()).map(([id, events]) => ({
@@ -179,7 +202,8 @@ export function useExportNotifications({
             }
 
             // Notification for job expiration (Requirement 4.5, 4.6)
-            // Trigger when job status changes to expired
+            // Only trigger if job is expired AND we haven't notified about it yet
+            // This prevents showing the notification every time the page loads for already-expired jobs
             if (job.status === 'expired' && !notifiedEvents.has('expired')) {
                 console.log(`🔔 Showing expiration notification for job ${jobId}`);
                 addNotification({
@@ -192,6 +216,8 @@ export function useExportNotifications({
                 notifiedEvents.add('expired');
                 saveNotifiedJobs(notifiedJobs); // Save immediately after adding
                 console.log(`✅ Notification sent: Job ${jobId} expired`);
+            } else if (job.status === 'expired' && notifiedEvents.has('expired')) {
+                console.log(`⏭️ Skipping expiration notification for job ${jobId} - already notified`);
             }
         });
 

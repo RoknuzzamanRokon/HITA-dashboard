@@ -21,12 +21,14 @@ interface QuickActionsProps {
   onRefreshData?: () => void;
   isLoading?: boolean;
   compact?: boolean;
+  onCreateUser?: () => void;
 }
 
 export const QuickActions: React.FC<QuickActionsProps> = ({
   onRefreshData,
   isLoading = false,
   compact = false,
+  onCreateUser,
 }) => {
   const actions = [
     {
@@ -35,8 +37,12 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
       icon: <UserPlus className="w-5 h-5" />,
       color: "bg-blue-500",
       onClick: () => {
-        // Navigate to user creation
-        window.location.href = "/dashboard/users/create";
+        if (onCreateUser) {
+          onCreateUser();
+        } else {
+          // Navigate to user creation with query param to open modal
+          window.location.href = "/dashboard/users?create=true";
+        }
       },
     },
     {

@@ -5,7 +5,7 @@
 "use client";
 
 import React from "react";
-import { User, Lock, AlertCircle } from "lucide-react";
+import { User, Lock, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { useLoginForm } from "@/lib/hooks/use-auth";
 
 export interface LoginFormProps {
@@ -18,9 +18,11 @@ export function LoginForm({ onSuccess, onFailure, className }: LoginFormProps) {
   const { formData, formErrors, isLoading, handleChange, handleSubmit } =
     useLoginForm();
   const [loginAttempts, setLoginAttempts] = React.useState(0);
+  const [rememberMe, setRememberMe] = React.useState(false);
+  const [showPassword, setShowPassword] = React.useState(false);
 
   const onSubmit = async (e: React.FormEvent) => {
-    const success = await handleSubmit(e);
+    const success = await handleSubmit(e, rememberMe);
     if (success && onSuccess) {
       setLoginAttempts(0); // Reset attempts on success
       onSuccess();
@@ -105,19 +107,37 @@ export function LoginForm({ onSuccess, onFailure, className }: LoginFormProps) {
               <input
                 id="password"
                 name="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
                 value={formData.password}
                 onChange={(e) => handleChange("password", e.target.value)}
                 required
                 autoComplete="current-password"
                 disabled={isLoading}
-                className={`block w-full pl-10 pr-3 py-3 border rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                className={`block w-full pl-10 pr-10 py-3 border rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                   formErrors.password
                     ? "border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500"
                     : "border-gray-300 text-gray-900"
                 } ${isLoading ? "bg-gray-50 cursor-not-allowed" : "bg-white"}`}
               />
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowPassword(!showPassword);
+                }}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center justify-center text-gray-400 hover:text-gray-700 focus:outline-none focus:text-gray-700 transition-colors z-10 cursor-pointer"
+                tabIndex={0}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                disabled={isLoading}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
             </div>
             {formErrors.password && (
               <p className="mt-2 text-sm text-red-600">{formErrors.password}</p>
@@ -132,11 +152,13 @@ export function LoginForm({ onSuccess, onFailure, className }: LoginFormProps) {
               id="remember-me"
               name="remember-me"
               type="checkbox"
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
             />
             <label
               htmlFor="remember-me"
-              className="ml-2 block text-sm text-gray-700"
+              className="ml-2 block text-sm text-gray-700 cursor-pointer select-none"
             >
               Remember me
             </label>

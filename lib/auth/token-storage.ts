@@ -9,14 +9,24 @@ export class TokenStorage {
 
     /**
      * Store authentication token
+     * @param token - The authentication token to store
+     * @param rememberMe - If true, store in localStorage (persistent). If false, store in sessionStorage (session-only)
      */
-    static setToken(token: string): void {
+    static setToken(token: string, rememberMe: boolean = true): void {
         if (!this.isClient) return;
 
         try {
-            localStorage.setItem(config.auth.tokenKey, token);
-            // Also store in sessionStorage as backup
-            sessionStorage.setItem(config.auth.tokenKey, token);
+            if (rememberMe) {
+                // Store in localStorage for persistent sessions
+                localStorage.setItem(config.auth.tokenKey, token);
+                // Also store in sessionStorage as backup
+                sessionStorage.setItem(config.auth.tokenKey, token);
+            } else {
+                // Store only in sessionStorage for session-only sessions
+                sessionStorage.setItem(config.auth.tokenKey, token);
+                // Remove from localStorage if it exists
+                localStorage.removeItem(config.auth.tokenKey);
+            }
         } catch (error) {
             console.error('Failed to store token:', error);
         }
@@ -47,14 +57,24 @@ export class TokenStorage {
 
     /**
      * Store refresh token
+     * @param refreshToken - The refresh token to store
+     * @param rememberMe - If true, store in localStorage (persistent). If false, store in sessionStorage (session-only)
      */
-    static setRefreshToken(refreshToken: string): void {
+    static setRefreshToken(refreshToken: string, rememberMe: boolean = true): void {
         if (!this.isClient) return;
 
         try {
-            localStorage.setItem(config.auth.refreshTokenKey, refreshToken);
-            // Also store in sessionStorage as backup
-            sessionStorage.setItem(config.auth.refreshTokenKey, refreshToken);
+            if (rememberMe) {
+                // Store in localStorage for persistent sessions
+                localStorage.setItem(config.auth.refreshTokenKey, refreshToken);
+                // Also store in sessionStorage as backup
+                sessionStorage.setItem(config.auth.refreshTokenKey, refreshToken);
+            } else {
+                // Store only in sessionStorage for session-only sessions
+                sessionStorage.setItem(config.auth.refreshTokenKey, refreshToken);
+                // Remove from localStorage if it exists
+                localStorage.removeItem(config.auth.refreshTokenKey);
+            }
         } catch (error) {
             console.error('Failed to store refresh token:', error);
         }

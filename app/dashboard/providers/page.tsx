@@ -803,48 +803,13 @@ export default function ProviderUpdatePage() {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Provider Updates
-            </h1>
-            <p className="text-gray-600">
-              Manage hotel mappings and track provider updates
-            </p>
-          </div>
-
-          {/* Memory Management Panel */}
-          <div className="bg-gray-50 rounded-lg p-4 min-w-64">
-            <h3 className="text-sm font-medium text-gray-900 mb-2">
-              Memory Management
-            </h3>
-            <div className="space-y-2 text-xs text-gray-600">
-              <div className="flex justify-between">
-                <span>Display limit:</span>
-                <span className={isLowMemory ? "text-red-600 font-medium" : ""}>
-                  {maxDisplayItems.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Items per page:</span>
-                <span>{itemsPerPage}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Status:</span>
-                <span
-                  className={isLowMemory ? "text-red-600" : "text-green-600"}
-                >
-                  {isLowMemory ? "Low Memory" : "Normal"}
-                </span>
-              </div>
-            </div>
-            <button
-              onClick={clearMemory}
-              className="mt-3 w-full px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-xs"
-            >
-              Clear Memory
-            </button>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Provider Updates
+          </h1>
+          <p className="text-gray-600">
+            Manage hotel mappings and track provider updates
+          </p>
         </div>
       </div>
 

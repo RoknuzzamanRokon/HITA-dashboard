@@ -71,8 +71,10 @@ export class AuthService {
 
     /**
      * Login user with credentials - ONLY uses real API
+     * @param credentials - Login credentials (username and password)
+     * @param rememberMe - If true, tokens are stored in localStorage (persistent). If false, stored in sessionStorage (session-only)
      */
-    static async login(credentials: LoginCredentials): Promise<ApiResponse<AuthResponse>> {
+    static async login(credentials: LoginCredentials, rememberMe: boolean = true): Promise<ApiResponse<AuthResponse>> {
         console.log("🔐 AuthService.login called with:", { username: credentials.username });
         console.log("🌐 Using ONLY real API - no mock fallback");
 
@@ -106,10 +108,10 @@ export class AuthService {
                 console.log("🔍 Raw token:", response.data.access_token.substring(0, 50) + "...");
 
                 // Store tokens immediately (don't fail on validation)
-                console.log("💾 Storing API tokens...");
-                TokenStorage.setToken(response.data.access_token);
+                console.log("💾 Storing API tokens...", { rememberMe });
+                TokenStorage.setToken(response.data.access_token, rememberMe);
                 if (response.data.refresh_token) {
-                    TokenStorage.setRefreshToken(response.data.refresh_token);
+                    TokenStorage.setRefreshToken(response.data.refresh_token, rememberMe);
                 }
                 console.log("✅ API tokens stored successfully");
 
