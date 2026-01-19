@@ -1298,12 +1298,57 @@ erformance Optimizations */
 }
 
 
-svg{
-display: inline
+svg {
+    display: inline
 }
 
 /* Next.js Portal positioning fixes */
 nextjs-portal {
     left: unset !important;
     top: unset !important;
+}
+
+/* Hide amber and blue cache status sections in profile page */
+.hide-amber-sections .bg-amber-50,
+.hide-amber-sections [class*="bg-amber-50"],
+.hide-amber-sections .dark\:bg-amber-900\/20,
+.hide-amber-sections [class*="dark:bg-amber-900/20"],
+.hide-amber-sections .bg-blue-50,
+.hide-amber-sections [class*="bg-blue-50"],
+.hide-amber-sections .dark\:bg-blue-900\/20,
+.hide-amber-sections [class*="dark:bg-blue-900/20"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+/* More specific selectors for stubborn elements */
+.hide-amber-sections div[class*="bg-amber"],
+.hide-amber-sections div[class*="bg-blue-50"],
+.hide-amber-sections div[class*="border-amber"],
+.hide-amber-sections div[class*="border-blue-200"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Additional aggressive hiding for status sections */
+.hide-status-sections>div[class*="amber"],
+.hide-status-sections>div[class*="blue-50"],
+.hide-status-sections div[class*="Offline Mode"],
+.hide-status-sections div[class*="cached data"],
+.hide-status-sections div:has(> *:contains("Offline Mode")),
+.hide-status-sections div:has(> *:contains("cached data")) {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
 }

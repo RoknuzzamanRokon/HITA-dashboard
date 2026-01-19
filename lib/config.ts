@@ -45,7 +45,7 @@ export const apiEndpoints = {
 
     // User Management
     users: {
-        list: '/user',
+        list: '/user/list',
         create: '/user',
         update: (id: string) => `/user/${id}`,
         delete: (id: string) => `/user/${id}`,

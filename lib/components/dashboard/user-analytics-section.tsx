@@ -24,6 +24,7 @@ import {
   Clock as ClockIcon,
 } from "lucide-react";
 import { fetchMyActivity, type MyActivityResponse } from "@/lib/api/audit";
+import { useCachedUserAnalytics } from "@/lib/hooks/use-cached-user-analytics";
 
 interface UserAnalytics {
   totalLogins: number;
@@ -44,57 +45,55 @@ interface ActivityItem {
 
 export function UserAnalyticsSection() {
   const [analytics, setAnalytics] = useState<UserAnalytics | null>(null);
-  const [apiData, setApiData] = useState<MyActivityResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+
+  // Use cached user analytics data
+  const {
+    data: apiData,
+    isLoading: loading,
+    error: queryError,
+    isUsingCachedData,
+    cacheAge,
+    forceRefresh,
+  } = useCachedUserAnalytics(30);
+
   const [error, setError] = useState<string | null>(null);
 
+  // Update analytics when cached data changes
   useEffect(() => {
-    const loadAnalytics = async () => {
-      try {
-        setLoading(true);
-        const response = await fetchMyActivity(30);
+    if (apiData) {
+      // Map API response to analytics format
+      const mappedData: UserAnalytics = {
+        totalLogins: apiData.authentication.successful_logins,
+        apiCalls: apiData.summary.total_endpoint_calls,
+        failedAttempts: apiData.authentication.failed_logins,
+        lastLogin: apiData.user.account_created,
+        securityScore: apiData.authentication.success_rate,
+        recentActivities: apiData.recent_activities
+          .slice(0, 4)
+          .map((activity: any) => ({
+            id: activity.id.toString(),
+            type: activity.action,
+            description: `${activity.action_label}${
+              activity.endpoint ? ` - ${activity.endpoint}` : ""
+            }`,
+            timestamp: activity.created_at,
+            status:
+              activity.details?.success === false
+                ? "error"
+                : ("success" as "success" | "warning" | "error"),
+          })),
+      };
 
-        if (response.success && response.data) {
-          setApiData(response.data);
-
-          // Map API response to analytics format
-          const mappedData: UserAnalytics = {
-            totalLogins: response.data.authentication.successful_logins,
-            apiCalls: response.data.summary.total_endpoint_calls,
-            failedAttempts: response.data.authentication.failed_logins,
-            lastLogin: response.data.user.account_created,
-            securityScore: response.data.authentication.success_rate,
-            recentActivities: response.data.recent_activities
-              .slice(0, 4)
-              .map((activity) => ({
-                id: activity.id.toString(),
-                type: activity.action,
-                description: `${activity.action_label}${
-                  activity.endpoint ? ` - ${activity.endpoint}` : ""
-                }`,
-                timestamp: activity.created_at,
-                status:
-                  activity.details?.success === false
-                    ? "error"
-                    : ("success" as "success" | "warning" | "error"),
-              })),
-          };
-
-          setAnalytics(mappedData);
-          setError(null);
-        } else {
-          setError(response.error?.message || "Failed to load analytics");
-        }
-      } catch (err) {
-        console.error("Error loading analytics:", err);
-        setError("Failed to load analytics data");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadAnalytics();
-  }, []);
+      setAnalytics(mappedData);
+      setError(null);
+    } else if (queryError) {
+      setError(
+        queryError instanceof Error
+          ? queryError.message
+          : "Failed to load analytics",
+      );
+    }
+  }, [apiData, queryError]);
 
   const getIconForActivity = (type: string) => {
     switch (type) {
@@ -148,7 +147,21 @@ export function UserAnalyticsSection() {
           <h3 className="text-lg font-semibold text-[rgb(var(--text-primary))] mb-2">
             Unable to Load Analytics
           </h3>
-          <p className="text-sm text-[rgb(var(--text-secondary))]">{error}</p>
+          <p className="text-sm text-[rgb(var(--text-secondary))] mb-4">
+            {error}
+          </p>
+          {isUsingCachedData && (
+            <div className="mb-4 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded text-sm text-blue-700 dark:text-blue-300">
+              ⚡ Showing cached data (
+              {cacheAge ? Math.round(cacheAge / 1000) : 0}s old)
+            </div>
+          )}
+          <button
+            onClick={() => forceRefresh()}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
+            Retry
+          </button>
         </div>
       </Card>
     );
@@ -164,12 +177,25 @@ export function UserAnalyticsSection() {
           <h2 className="text-2xl font-bold text-[rgb(var(--text-primary))] flex items-center gap-2">
             <TrendingUp className="w-6 h-6 text-primary-color" />
             Your Activity Analytics
+            {isUsingCachedData && (
+              <span className="text-sm font-normal text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                ⚡ Cached ({cacheAge ? Math.round(cacheAge / 1000) : 0}s)
+              </span>
+            )}
           </h2>
           <p className="text-sm text-[rgb(var(--text-secondary))] mt-1">
             Track your usage patterns and security status{" "}
             {apiData && `(Last ${apiData.period.days} days)`}
           </p>
         </div>
+        {isUsingCachedData && (
+          <button
+            onClick={() => forceRefresh()}
+            className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+          >
+            Refresh
+          </button>
+        )}
       </div>
 
       {/* Quick Stats Cards */}
@@ -233,8 +259,8 @@ export function UserAnalyticsSection() {
                   {analytics.securityScore >= 95
                     ? "Excellent"
                     : analytics.securityScore >= 80
-                    ? "Good"
-                    : "Fair"}
+                      ? "Good"
+                      : "Fair"}
                 </p>
               </div>
             </div>
@@ -305,14 +331,14 @@ export function UserAnalyticsSection() {
 
         <div className="space-y-4">
           {analytics.recentActivities.length > 0 ? (
-            analytics.recentActivities.map((activity, index) => (
+            analytics.recentActivities.map((activity, index: number) => (
               <div
                 key={activity.id}
                 className="flex items-start gap-4 pb-4 border-b border-[rgb(var(--border-primary))] last:border-b-0 last:pb-0"
               >
                 <div
                   className={`p-2 rounded-lg ${getStatusColor(
-                    activity.status
+                    activity.status,
                   )}`}
                 >
                   {getIconForActivity(activity.type)}
@@ -330,8 +356,8 @@ export function UserAnalyticsSection() {
                     activity.status === "success"
                       ? "success"
                       : activity.status === "warning"
-                      ? "warning"
-                      : "error"
+                        ? "warning"
+                        : "error"
                   }
                   size="sm"
                 >
@@ -367,7 +393,7 @@ export function UserAnalyticsSection() {
             <div className="space-y-4">
               {apiData.endpoint_usage?.top_endpoints
                 ?.slice(0, 5)
-                .map((endpoint, idx) => (
+                .map((endpoint: any, idx: number) => (
                   <div key={idx}>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium text-[rgb(var(--text-primary))]">
@@ -404,26 +430,28 @@ export function UserAnalyticsSection() {
             </div>
 
             <div className="space-y-4">
-              {apiData?.activity_breakdown?.map((activity, idx) => (
-                <div key={idx} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      {getIconForActivity(activity.action)}
+              {apiData?.activity_breakdown?.map(
+                (activity: any, idx: number) => (
+                  <div key={idx} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        {getIconForActivity(activity.action)}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-[rgb(var(--text-primary))]">
+                          {activity.action_label}
+                        </p>
+                        <p className="text-xs text-[rgb(var(--text-secondary))]">
+                          {activity.percentage.toFixed(1)}%
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-[rgb(var(--text-primary))]">
-                        {activity.action_label}
-                      </p>
-                      <p className="text-xs text-[rgb(var(--text-secondary))]">
-                        {activity.percentage.toFixed(1)}%
-                      </p>
-                    </div>
+                    <span className="text-lg font-bold text-blue-600">
+                      {activity.count}
+                    </span>
                   </div>
-                  <span className="text-lg font-bold text-blue-600">
-                    {activity.count}
-                  </span>
-                </div>
-              )) || []}
+                ),
+              ) || []}
               {(!apiData?.activity_breakdown ||
                 apiData.activity_breakdown.length === 0) && (
                 <p className="text-sm text-[rgb(var(--text-secondary))] text-center py-4">
@@ -448,26 +476,30 @@ export function UserAnalyticsSection() {
             </div>
 
             <div className="space-y-4">
-              {apiData?.http_methods?.breakdown?.map((method, idx) => (
-                <div key={idx} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-purple-100 rounded-lg">
-                      <span className="text-sm font-bold text-purple-600">{method.method}</span>
+              {apiData?.http_methods?.breakdown?.map(
+                (method: any, idx: number) => (
+                  <div key={idx} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-purple-100 rounded-lg">
+                        <span className="text-sm font-bold text-purple-600">
+                          {method.method}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-[rgb(var(--text-primary))]">
+                          {method.method} Requests
+                        </p>
+                        <p className="text-xs text-[rgb(var(--text-secondary))]">
+                          {method.percentage.toFixed(1)}% of total
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-[rgb(var(--text-primary))]">
-                        {method.method} Requests
-                      </p>
-                      <p className="text-xs text-[rgb(var(--text-secondary))]">
-                        {method.percentage.toFixed(1)}% of total
-                      </p>
-                    </div>
+                    <span className="text-lg font-bold text-purple-600">
+                      {method.count}
+                    </span>
                   </div>
-                  <span className="text-lg font-bold text-purple-600">
-                    {method.count}
-                  </span>
-                </div>
-              )) || []}
+                ),
+              ) || []}
               {(!apiData?.http_methods?.breakdown ||
                 apiData.http_methods.breakdown.length === 0) && (
                 <p className="text-sm text-[rgb(var(--text-secondary))] text-center py-4">
@@ -487,28 +519,34 @@ export function UserAnalyticsSection() {
             </div>
 
             <div className="space-y-4">
-              {apiData?.status_codes?.breakdown?.map((status, idx) => (
-                <div key={idx} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${status.status_code === 200 ? 'bg-green-100' : 'bg-yellow-100'}`}>
-                      <span className={`text-sm font-bold ${status.status_code === 200 ? 'text-green-600' : 'text-yellow-600'}`}>
-                        {status.status_code}
-                      </span>
+              {apiData?.status_codes?.breakdown?.map(
+                (status: any, idx: number) => (
+                  <div key={idx} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`p-2 rounded-lg ${status.status_code === 200 ? "bg-green-100" : "bg-yellow-100"}`}
+                      >
+                        <span
+                          className={`text-sm font-bold ${status.status_code === 200 ? "text-green-600" : "text-yellow-600"}`}
+                        >
+                          {status.status_code}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-[rgb(var(--text-primary))]">
+                          {status.status_code === 200 ? "Success" : "Errors"}
+                        </p>
+                        <p className="text-xs text-[rgb(var(--text-secondary))]">
+                          {status.percentage.toFixed(1)}% of responses
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-[rgb(var(--text-primary))]">
-                        {status.status_code === 200 ? 'Success' : 'Errors'}
-                      </p>
-                      <p className="text-xs text-[rgb(var(--text-secondary))]">
-                        {status.percentage.toFixed(1)}% of responses
-                      </p>
-                    </div>
+                    <span className="text-lg font-bold text-[rgb(var(--text-primary))]">
+                      {status.count}
+                    </span>
                   </div>
-                  <span className="text-lg font-bold text-[rgb(var(--text-primary))]">
-                    {status.count}
-                  </span>
-                </div>
-              )) || []}
+                ),
+              ) || []}
               {(!apiData?.status_codes?.breakdown ||
                 apiData.status_codes.breakdown.length === 0) && (
                 <p className="text-sm text-[rgb(var(--text-secondary))] text-center py-4">
@@ -534,9 +572,9 @@ export function UserAnalyticsSection() {
 
             <div className="space-y-4">
               {apiData?.patterns?.hourly_distribution
-                ?.sort((a, b) => b.count - a.count)
+                ?.sort((a: any, b: any) => b.count - a.count)
                 ?.slice(0, 3)
-                ?.map((hour, idx) => (
+                ?.map((hour: any, idx: number) => (
                   <div key={idx} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-blue-100 rounded-lg">
@@ -547,7 +585,15 @@ export function UserAnalyticsSection() {
                           {hour.hour_label}
                         </p>
                         <p className="text-xs text-[rgb(var(--text-secondary))]">
-                          {Math.round((hour.count / (apiData?.patterns?.hourly_distribution?.reduce((sum, h) => sum + h.count, 0) || 1)) * 100)}% of activity
+                          {Math.round(
+                            (hour.count /
+                              (apiData?.patterns?.hourly_distribution?.reduce(
+                                (sum: number, h: any) => sum + h.count,
+                                0,
+                              ) || 1)) *
+                              100,
+                          )}
+                          % of activity
                         </p>
                       </div>
                     </div>
@@ -576,9 +622,9 @@ export function UserAnalyticsSection() {
 
             <div className="space-y-4">
               {apiData?.patterns?.day_of_week_distribution
-                ?.sort((a, b) => b.count - a.count)
+                ?.sort((a: any, b: any) => b.count - a.count)
                 ?.slice(0, 3)
-                ?.map((day, idx) => (
+                ?.map((day: any, idx: number) => (
                   <div key={idx} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-green-100 rounded-lg">

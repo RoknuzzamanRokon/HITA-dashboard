@@ -8,6 +8,7 @@ import { ToastProvider } from "@/lib/components/ui/toast";
 import { NotificationProvider } from "@/lib/components/notifications/notification-provider";
 import { NotificationContainerLazy } from "@/lib/components/notifications/notification-container-lazy";
 import { ChunkErrorHandler } from "@/lib/components/error/chunk-error-handler";
+import { ServiceWorkerInitializer } from "@/lib/components/service-worker-initializer";
 
 export const metadata: Metadata = {
   title: config.app.name,
@@ -29,6 +30,7 @@ export default function RootLayout({
                 <ToastProvider>{children}</ToastProvider>
                 <NotificationContainerLazy />
                 <ChunkErrorHandler />
+                <ServiceWorkerInitializer />
               </NotificationProvider>
             </AuthProvider>
           </QueryProvider>

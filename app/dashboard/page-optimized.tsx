@@ -18,16 +18,23 @@ import {
   ChartSkeleton,
 } from "@/lib/components/ui/skeletons";
 import { FallbackNotice } from "@/lib/components/ui/fallback-notice";
+import { CacheStatus } from "@/lib/components/ui/cache-status";
 
-// Optimized hooks
+// Optimized hooks with caching
 import {
   useDashboardStats,
   usePointsSummary,
   useDashboardRefresh,
+  useCachedPointsSummary,
 } from "@/lib/hooks/use-dashboard-data";
-import { useDashboardCharts } from "@/lib/hooks/use-dashboard-charts";
+import {
+  useDashboardCharts,
+  useCachedDashboardCharts,
+} from "@/lib/hooks/use-dashboard-charts";
 import { useSmartRealtime } from "@/lib/hooks/use-smart-realtime";
 import { useOptimizedDashboard } from "@/lib/hooks/use-dashboard-optimized";
+import { useCachedDashboard } from "@/lib/hooks/use-cached-dashboard";
+import { useCachedUserAnalytics } from "@/lib/hooks/use-cached-user-analytics";
 
 // Optimized section components
 import {
@@ -42,7 +49,9 @@ import {
 // Enhanced loading skeleton with instant perception
 function InstantSectionSkeleton({ height = "h-64" }: { height?: string }) {
   return (
-    <div className={`animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800 ${height}`}>
+    <div
+      className={`animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800 ${height}`}
+    >
       <div className="h-full w-full bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent opacity-50"></div>
     </div>
   );
@@ -55,6 +64,13 @@ function EnhancedSectionSkeleton({ height = "h-64" }: { height?: string }) {
 export default function OptimizedDashboardPage() {
   const { isAuthenticated, isLoading } = useRequireAuth();
   const { user } = useAuth();
+
+  // Initialize cache system
+  React.useEffect(() => {
+    if (isAuthenticated && user) {
+      console.log("🚀 Dashboard: User authenticated, cache system ready");
+    }
+  }, [isAuthenticated, user]);
 
   // Local state
   const [apiStatus, setApiStatus] = useState<
@@ -80,23 +96,85 @@ export default function OptimizedDashboardPage() {
     pauseWhenHidden: true, // Pause when tab is not visible
   });
 
-  // Optimized data fetching with React Query - parallel loading
+  // Optimized data fetching with React Query - parallel loading with caching
+  const {
+    data: cachedStats,
+    isLoading: cachedStatsLoading,
+    error: cachedStatsError,
+    isUsingCachedData: statsUsingCache,
+    cacheAge: statsCacheAge,
+    forceRefresh: forceRefreshCachedStats,
+  } = useCachedDashboard();
+
+  // Fallback to original hook if needed
   const {
     data: stats,
     isLoading: statsLoading,
     error: statsError,
     dataUpdatedAt: statsLastFetch,
-  } = useDashboardStats(realTimeEnabled);
+  } = useDashboardStats(realTimeEnabled, {
+    enabled: !cachedStats, // Only fetch if no cached data
+  });
 
-  const { data: pointsData, isLoading: pointsLoading } =
-    usePointsSummary(realTimeEnabled);
+  // Use cached data if available, otherwise use regular data
+  const finalStats = cachedStats || stats;
+  const finalStatsLoading = cachedStatsLoading && statsLoading;
+  const finalStatsError = cachedStatsError || statsError;
 
+  // Cached points data
+  const {
+    data: cachedPointsData,
+    isLoading: cachedPointsLoading,
+    isUsingCachedData: pointsUsingCache,
+    cacheAge: pointsCacheAge,
+    forceRefresh: forceRefreshCachedPoints,
+  } = useCachedPointsSummary();
+
+  // Fallback points data
+  const { data: pointsData, isLoading: pointsLoading } = usePointsSummary(
+    realTimeEnabled,
+    {
+      enabled: !cachedPointsData, // Only fetch if no cached data
+    },
+  );
+
+  // Use cached data if available
+  const finalPointsData = cachedPointsData || pointsData;
+  const finalPointsLoading = cachedPointsLoading && pointsLoading;
+
+  // Cached charts data
+  const {
+    chartsData: cachedChartsData,
+    loading: cachedChartsLoading,
+    error: cachedChartsError,
+    isRefreshing: cachedChartsRefreshing,
+    isUsingCachedData: chartsUsingCache,
+    cacheAge: chartsCacheAge,
+    forceRefresh: forceRefreshCachedCharts,
+  } = useCachedDashboardCharts();
+
+  // Fallback charts data
   const {
     chartsData,
     loading: chartsLoading,
     error: chartsError,
     isRefreshing: chartsRefreshing,
   } = useDashboardCharts(realtimeInterval, user?.role);
+
+  // Use cached data if available
+  const finalChartsData = cachedChartsData || chartsData;
+  const finalChartsLoading = cachedChartsLoading && chartsLoading;
+  const finalChartsError = cachedChartsError || chartsError;
+  const finalChartsRefreshing = cachedChartsRefreshing || chartsRefreshing;
+
+  // Cached user analytics data
+  const {
+    data: cachedUserAnalytics,
+    isLoading: cachedUserAnalyticsLoading,
+    isUsingCachedData: userAnalyticsUsingCache,
+    cacheAge: userAnalyticsCacheAge,
+    forceRefresh: forceRefreshCachedUserAnalytics,
+  } = useCachedUserAnalytics(30);
 
   const { refreshAll } = useDashboardRefresh();
 
@@ -150,7 +228,25 @@ export default function OptimizedDashboardPage() {
   };
 
   const handleRefreshStats = async () => {
-    await refreshAll();
+    console.log("🔄 Refreshing all cached dashboard data...");
+
+    // Force refresh all cached data
+    await Promise.all([
+      forceRefreshCachedStats(),
+      forceRefreshCachedPoints(),
+      forceRefreshCachedCharts(),
+      forceRefreshCachedUserAnalytics(),
+    ]);
+
+    // Also refresh fallback data if needed
+    if (
+      !statsUsingCache ||
+      !pointsUsingCache ||
+      !chartsUsingCache ||
+      !userAnalyticsUsingCache
+    ) {
+      await refreshAll();
+    }
   };
 
   const handleCheckToken = () => {
@@ -197,8 +293,41 @@ export default function OptimizedDashboardPage() {
   }
 
   const lastFetch = statsLastFetch ? new Date(statsLastFetch) : null;
-  const isAnyLoading = statsLoading || pointsLoading || chartsLoading;
+  const isAnyLoading =
+    finalStatsLoading ||
+    finalPointsLoading ||
+    finalChartsLoading ||
+    cachedUserAnalyticsLoading;
   const isReady = isOptimized && !isAnyLoading;
+
+  // Cache status for debugging
+  const cacheStatus = {
+    stats: {
+      isUsingCached: statsUsingCache,
+      cacheAge: statsCacheAge ? Math.round(statsCacheAge / 1000) : null,
+    },
+    points: {
+      isUsingCached: pointsUsingCache,
+      cacheAge: pointsCacheAge ? Math.round(pointsCacheAge / 1000) : null,
+    },
+    charts: {
+      isUsingCached: chartsUsingCache,
+      cacheAge: chartsCacheAge ? Math.round(chartsCacheAge / 1000) : null,
+    },
+    userAnalytics: {
+      isUsingCached: userAnalyticsUsingCache,
+      cacheAge: userAnalyticsCacheAge
+        ? Math.round(userAnalyticsCacheAge / 1000)
+        : null,
+    },
+    lastUpdate: lastFetch,
+  };
+
+  const isUsingAnyCachedData =
+    statsUsingCache ||
+    pointsUsingCache ||
+    chartsUsingCache ||
+    userAnalyticsUsingCache;
 
   return (
     <div className="mx-auto">
@@ -220,10 +349,37 @@ export default function OptimizedDashboardPage() {
 
       {/* Fallback Notice - Show when using cached data */}
       <FallbackNotice
-        isVisible={isUsingFallback}
+        isVisible={isUsingFallback || isUsingAnyCachedData}
         onRetry={handleRefreshStats}
         isRetrying={isAnyLoading}
       />
+
+      {/* Cache Status Debug Info (only in development)
+      {process.env.NODE_ENV === "development" && isUsingAnyCachedData && (
+        <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300">
+            <span>⚡ Using cached data:</span>
+            {cacheStatus.stats.isUsingCached && (
+              <span>Stats ({cacheStatus.stats.cacheAge}s)</span>
+            )}
+            {cacheStatus.points.isUsingCached && (
+              <span>Points ({cacheStatus.points.cacheAge}s)</span>
+            )}
+            {cacheStatus.charts.isUsingCached && (
+              <span>Charts ({cacheStatus.charts.cacheAge}s)</span>
+            )}
+            {cacheStatus.userAnalytics.isUsingCached && (
+              <span>Analytics ({cacheStatus.userAnalytics.cacheAge}s)</span>
+            )}
+            <button
+              onClick={handleRefreshStats}
+              className="ml-auto px-2 py-1 bg-blue-100 dark:bg-blue-800 rounded text-xs hover:bg-blue-200 dark:hover:bg-blue-700"
+            >
+              Refresh All
+            </button>
+          </div>
+        </div>
+      )} */}
 
       {/* Welcome Section - Optimized loading */}
       <div className="mb-8">
@@ -250,8 +406,11 @@ export default function OptimizedDashboardPage() {
       </div>
 
       {/* Main Charts Section - Lazy loaded with aggressive prefetching */}
-      <LazySection fallback={<ChartSkeleton height="h-96" />} rootMargin="200px">
-        <ChartsSection statsLoading={statsLoading} stats={stats} />
+      <LazySection
+        fallback={<ChartSkeleton height="h-96" />}
+        rootMargin="200px"
+      >
+        <ChartsSection statsLoading={finalStatsLoading} stats={finalStats} />
       </LazySection>
 
       {/* Advanced Analytics Section - Lazy loaded with aggressive prefetching */}
@@ -260,9 +419,9 @@ export default function OptimizedDashboardPage() {
         rootMargin="300px"
       >
         <AnalyticsSection
-          chartsData={chartsData}
-          chartsLoading={chartsLoading}
-          chartsRefreshing={chartsRefreshing}
+          chartsData={finalChartsData}
+          chartsLoading={finalChartsLoading}
+          chartsRefreshing={finalChartsRefreshing}
         />
       </LazySection>
 
@@ -270,6 +429,9 @@ export default function OptimizedDashboardPage() {
       <LazySection fallback={<EnhancedSectionSkeleton height="h-40" />}>
         <NavigationSection />
       </LazySection>
+
+      {/* Cache Status (Development Only) */}
+      <CacheStatus />
     </div>
   );
 }

@@ -105,6 +105,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Cache for refreshUser to prevent duplicate calls
   const refreshUserCache = useRef({ lastRefreshTime: 0 });
 
+  // Cache initialization flag
+  const cacheInitialized = useRef(false);
+
   // Initialize authentication state on mount
   useEffect(() => {
     // Initialize session tracking
@@ -308,6 +311,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
           username: user.username,
         });
 
+        // Initialize cache system for the user
+        console.log("🚀 Initializing cache system after login...");
+        try {
+          // Set current user ID for cache management
+          localStorage.setItem("current-cache-user-id", user.id);
+
+          // Mark cache as needing initialization
+          cacheInitialized.current = false;
+
+          console.log("✅ Cache system marked for initialization");
+        } catch (cacheError) {
+          console.warn("⚠️ Cache initialization setup failed:", cacheError);
+        }
+
         console.log("✅ Login process completed successfully");
         console.log("🔍 Final auth state after login:", {
           isAuthenticated: true,
@@ -347,6 +364,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Clear tokens from storage first (immediate local logout)
       console.log("🧹 AuthContext: Clearing tokens and session...");
       SessionPersistence.clearSession();
+
+      // Clear cache for the user
+      if (state.user) {
+        try {
+          console.log("🧹 AuthContext: Clearing user cache...");
+
+          // Clear all cache entries for this user
+          const keysToRemove: string[] = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(`cache_${state.user.id}_`)) {
+              keysToRemove.push(key);
+            }
+          }
+          keysToRemove.forEach((key) => localStorage.removeItem(key));
+
+          // Remove current user ID
+          localStorage.removeItem("current-cache-user-id");
+
+          console.log("✅ AuthContext: User cache cleared");
+        } catch (cacheError) {
+          console.warn("⚠️ AuthContext: Failed to clear cache:", cacheError);
+        }
+      }
 
       // Update state immediately
       console.log("🔄 AuthContext: Updating state...");

@@ -21,7 +21,8 @@ export function FallbackNotice({
   onRetry,
   isRetrying = false,
 }: FallbackNoticeProps) {
-  if (!isVisible) return null;
+  // Don't show fallback notice anywhere
+  return null;
 
   return (
     <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6">

@@ -6,6 +6,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { usePersistentCache, CACHE_CONFIGS } from './use-persistent-cache';
 import { apiClient } from "@/lib/api/client";
 import { apiEndpoints } from "@/lib/config";
 import { useAuth } from "@/lib/contexts/auth-context";
@@ -94,6 +95,93 @@ async function fetchPointsSummary() {
     return response.data;
 }
 
+// Cached points summary hook
+export function useCachedPointsSummary() {
+    const { user } = useAuth();
+    const queryClient = useQueryClient();
+    const cache = usePersistentCache(CACHE_CONFIGS.pointsSummary);
+
+    // User-specific query key
+    const queryKey = user ? [user.id, 'points-summary'] : ['points-summary'];
+
+    const query = useQuery({
+        queryKey,
+        queryFn: async () => {
+            const freshData = await fetchPointsSummary();
+
+            // Save to persistent cache after successful fetch
+            cache.saveToCache('points-summary', freshData);
+
+            return freshData;
+        },
+        enabled: !!user,
+        staleTime: 10 * 60 * 1000, // 10 minutes
+        gcTime: 30 * 60 * 1000, // 30 minutes in memory
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: true,
+        retry: (failureCount, error: any) => {
+            // Don't retry if we have cached data
+            const cachedData = cache.loadFromCache('points-summary');
+            if (cachedData) return false;
+
+            return failureCount < 3 && (error?.response?.status >= 500 || !error?.response);
+        },
+        // Use cached data as initial data for instant loading
+        initialData: () => {
+            if (!user) return undefined;
+
+            const cachedData = cache.loadFromCache('points-summary');
+            if (cachedData) {
+                console.log('⚡ Using cached points summary data for instant loading');
+                return cachedData;
+            }
+            return undefined;
+        },
+        // Always show cached data immediately, then update in background
+        placeholderData: (previousData) => {
+            if (previousData) return previousData;
+
+            if (!user) return undefined;
+
+            const cachedData = cache.loadFromCache('points-summary');
+            if (cachedData) {
+                console.log('⚡ Using cached points summary data as placeholder');
+                return cachedData;
+            }
+            return undefined;
+        }
+    });
+
+    // Force refresh function
+    const forceRefresh = async () => {
+        console.log('🔄 Force refreshing points summary data...');
+        cache.clearCache('points-summary');
+        await queryClient.invalidateQueries({ queryKey });
+    };
+
+    // Check if using cached data
+    const isUsingCachedData = !query.isFetching && !cache.isCacheStale('points-summary');
+
+    return {
+        ...query,
+        forceRefresh,
+        isUsingCachedData,
+        cacheAge: user ? (() => {
+            try {
+                const cacheKey = `cache_${user.id}_points-summary`;
+                const cached = localStorage.getItem(cacheKey);
+                if (cached) {
+                    const { timestamp } = JSON.parse(cached);
+                    return Date.now() - timestamp;
+                }
+            } catch (error) {
+                // Ignore errors
+            }
+            return null;
+        })() : null
+    };
+}
+
 // Hook for dashboard stats with caching and resilience
 export function useDashboardStats(realTimeEnabled = false, config: any = {}) {
     const { user } = useAuth();
@@ -139,44 +227,21 @@ export function useDashboardStats(realTimeEnabled = false, config: any = {}) {
     });
 }
 
-// Hook for points summary with caching and resilience
+// Hook for points summary with caching and resilience (legacy compatibility)
 export function usePointsSummary(realTimeEnabled = false, config: any = {}) {
-    const { user } = useAuth();
-    const { handleApiError, handleApiSuccess, getFallbackData, isUsingFallback } = useResilientData();
+    const cachedResult = useCachedPointsSummary();
 
-    return useQuery({
-        queryKey: DASHBOARD_QUERY_KEYS.pointsSummary,
-        queryFn: async () => {
-            try {
-                const data = await fetchPointsSummary();
-                handleApiSuccess('points-summary');
-                return data;
-            } catch (error) {
-                const useFallback = handleApiError(error, 'points-summary');
-                if (useFallback) {
-                    console.log('📊 Using fallback points summary data');
-                    return getFallbackData('pointsSummary');
-                }
-                throw error;
-            }
-        },
-        enabled: !!user && config.enabled !== false,
-        refetchInterval: realTimeEnabled ? 30000 : false,
-        refetchIntervalInBackground: true,
-        notifyOnChangeProps: ['data', 'error'],
-        // Retry configuration
-        retry: (failureCount, error: any) => {
-            if (isUsingFallback) return false;
-            return failureCount < 3 && (error?.response?.status >= 500 || !error?.response);
-        },
-        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-        // Optimize caching for instant perception
-        staleTime: config.staleTime || 5 * 60 * 1000, // 5 minutes - data is considered fresh
-        gcTime: config.gcTime || 30 * 60 * 1000, // 30 minutes - how long data stays in cache (garbage collection time)
-        refetchOnWindowFocus: config.refetchOnWindowFocus !== undefined ? config.refetchOnWindowFocus : false, // Don't refetch when window regains focus
-        refetchOnReconnect: config.refetchOnReconnect !== undefined ? config.refetchOnReconnect : true, // Refetch when network reconnects
-        refetchOnMount: config.refetchOnMount !== undefined ? config.refetchOnMount : true, // Refetch on mount by default
-    });
+    // For backward compatibility, return the same interface
+    return {
+        data: cachedResult.data,
+        isLoading: cachedResult.isLoading,
+        error: cachedResult.error,
+        dataUpdatedAt: cachedResult.dataUpdatedAt,
+        // Add cached-specific properties
+        forceRefresh: cachedResult.forceRefresh,
+        isUsingCachedData: cachedResult.isUsingCachedData,
+        cacheAge: cachedResult.cacheAge
+    };
 }
 
 // Hook to manually refresh all dashboard data
@@ -190,6 +255,17 @@ export function useDashboardRefresh() {
         await Promise.all([
             queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEYS.stats }),
             queryClient.invalidateQueries({ queryKey: DASHBOARD_QUERY_KEYS.pointsSummary }),
+            // Also refresh cached versions
+            queryClient.invalidateQueries({
+                predicate: (query) => {
+                    const key = query.queryKey;
+                    return Array.isArray(key) && (
+                        key.includes('dashboard') ||
+                        key.includes('dashboard-charts') ||
+                        key.includes('points-summary')
+                    );
+                }
+            })
         ]);
     };
 
