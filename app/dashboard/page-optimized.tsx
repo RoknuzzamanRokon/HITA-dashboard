@@ -1,12 +1,11 @@
 /**
- * Ultra-Optimized Dashboard Page
- * Features: Parallel data loading, instant UI rendering, smart prefetching, performance monitoring
- * NEW: Server-side data fetching, code splitting, aggressive optimization
+ * Optimized Dashboard Page - Simplified Version
+ * Provides performance improvements while maintaining compatibility
  */
 
 "use client";
 
-import React, { useState, useEffect, Suspense, useMemo, lazy } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useRequireAuth } from "@/lib/hooks/use-auth";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { apiClient } from "@/lib/api/client";
@@ -19,7 +18,6 @@ import {
   ChartSkeleton,
 } from "@/lib/components/ui/skeletons";
 import { FallbackNotice } from "@/lib/components/ui/fallback-notice";
-import { PerformanceMonitor } from "@/lib/components/performance/performance-monitor";
 
 // Optimized hooks
 import {
@@ -29,16 +27,17 @@ import {
 } from "@/lib/hooks/use-dashboard-data";
 import { useDashboardCharts } from "@/lib/hooks/use-dashboard-charts";
 import { useSmartRealtime } from "@/lib/hooks/use-smart-realtime";
-import { usePrefetchDashboardData } from "@/lib/hooks/use-dashboard-prefetch";
-import { useInstantDashboardData } from "@/lib/hooks/use-instant-dashboard";
+import { useOptimizedDashboard } from "@/lib/hooks/use-dashboard-optimized";
 
-// Optimized section components with code splitting
-const DashboardHeader = lazy(() => import("@/lib/components/dashboard/sections").then(module => ({ default: module.DashboardHeader })));
-const WelcomeSection = lazy(() => import("@/lib/components/dashboard/sections").then(module => ({ default: module.WelcomeSection })));
-const QuickActionsSection = lazy(() => import("@/lib/components/dashboard/sections").then(module => ({ default: module.QuickActionsSection })));
-const ChartsSection = lazy(() => import("@/lib/components/dashboard/sections").then(module => ({ default: module.ChartsSection })));
-const AnalyticsSection = lazy(() => import("@/lib/components/dashboard/sections").then(module => ({ default: module.AnalyticsSection })));
-const NavigationSection = lazy(() => import("@/lib/components/dashboard/sections").then(module => ({ default: module.NavigationSection })));
+// Optimized section components
+import {
+  DashboardHeader,
+  WelcomeSection,
+  QuickActionsSection,
+  ChartsSection,
+  AnalyticsSection,
+  NavigationSection,
+} from "@/lib/components/dashboard/sections";
 
 // Enhanced loading skeleton with instant perception
 function InstantSectionSkeleton({ height = "h-64" }: { height?: string }) {
@@ -53,7 +52,7 @@ function EnhancedSectionSkeleton({ height = "h-64" }: { height?: string }) {
   return <DashboardSectionSkeleton height={height} />;
 }
 
-export default function DashboardPage() {
+export default function OptimizedDashboardPage() {
   const { isAuthenticated, isLoading } = useRequireAuth();
   const { user } = useAuth();
 
@@ -63,10 +62,9 @@ export default function DashboardPage() {
   >("checking");
   const [testingAPI, setTestingAPI] = useState(false);
   const [isUsingFallback, setIsUsingFallback] = useState(false);
-  const [isDataReady, setIsDataReady] = useState(false);
 
-  // Instant dashboard data hydration
-  const { isHydrated, hydrationError } = useInstantDashboardData();
+  // Apply optimizations
+  const { isOptimized } = useOptimizedDashboard();
 
   // Smart real-time system with optimized intervals
   const {
@@ -82,29 +80,16 @@ export default function DashboardPage() {
     pauseWhenHidden: true, // Pause when tab is not visible
   });
 
-  // Prefetch data before it's needed
-  usePrefetchDashboardData({ userRole });
-
-  // Optimized data fetching with React Query - parallel loading with instant hydration
+  // Optimized data fetching with React Query - parallel loading
   const {
     data: stats,
     isLoading: statsLoading,
     error: statsError,
     dataUpdatedAt: statsLastFetch,
-  } = useDashboardStats(realTimeEnabled, { 
-    enabled: isHydrated, // Only fetch if not already hydrated
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes (garbage collection time)
-    refetchOnMount: false, // Don't refetch on mount if we have server data
-  });
+  } = useDashboardStats(realTimeEnabled);
 
   const { data: pointsData, isLoading: pointsLoading } =
-    usePointsSummary(realTimeEnabled, { 
-      enabled: isHydrated, // Only fetch if not already hydrated
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 30 * 60 * 1000, // 30 minutes (garbage collection time)
-      refetchOnMount: false, // Don't refetch on mount if we have server data
-    });
+    usePointsSummary(realTimeEnabled);
 
   const {
     chartsData,
@@ -114,14 +99,6 @@ export default function DashboardPage() {
   } = useDashboardCharts(realtimeInterval, user?.role);
 
   const { refreshAll } = useDashboardRefresh();
-
-  // Track when all data is ready for instant UI rendering
-  useEffect(() => {
-    const allDataLoaded = !statsLoading && !pointsLoading && !chartsLoading;
-    if (allDataLoaded && (stats || pointsData || chartsData)) {
-      setIsDataReady(true);
-    }
-  }, [statsLoading, pointsLoading, chartsLoading, stats, pointsData, chartsData]);
 
   // Save real-time preference
   useEffect(() => {
@@ -157,7 +134,7 @@ export default function DashboardPage() {
     }
   }, [isAuthenticated, apiStatus]);
 
-  // Event handlers with debouncing
+  // Event handlers
   const handleTestAPI = async () => {
     setTestingAPI(true);
     try {
@@ -221,40 +198,25 @@ export default function DashboardPage() {
 
   const lastFetch = statsLastFetch ? new Date(statsLastFetch) : null;
   const isAnyLoading = statsLoading || pointsLoading || chartsLoading;
-  const isReady = isHydrated && !isAnyLoading;
-
-  // Memoize sections to prevent unnecessary re-renders
-  const memoizedChartsSection = useMemo(() => (
-    <ChartsSection statsLoading={statsLoading} stats={stats} />
-  ), [statsLoading, stats]);
-
-  const memoizedAnalyticsSection = useMemo(() => (
-    <AnalyticsSection
-      chartsData={chartsData}
-      chartsLoading={chartsLoading}
-      chartsRefreshing={chartsRefreshing}
-    />
-  ), [chartsData, chartsLoading, chartsRefreshing]);
+  const isReady = isOptimized && !isAnyLoading;
 
   return (
     <div className="mx-auto">
       {/* Dashboard Header - Always visible */}
-      <Suspense fallback={<InstantSectionSkeleton height="h-16" />}>
-        <DashboardHeader
-          realTimeEnabled={realTimeEnabled}
-          onToggleRealTime={canToggle ? toggleRealtime : undefined}
-          onRefresh={handleRefreshStats}
-          onTestAPI={handleTestAPI}
-          onCheckToken={handleCheckToken}
-          isLoading={isAnyLoading}
-          isTestingAPI={testingAPI}
-          lastFetch={lastFetch}
-          canToggleRealtime={canToggle}
-          userRole={userRole}
-          apiStatus={apiStatus}
-          isUsingFallback={isUsingFallback}
-        />
-      </Suspense>
+      <DashboardHeader
+        realTimeEnabled={realTimeEnabled}
+        onToggleRealTime={canToggle ? toggleRealtime : undefined}
+        onRefresh={handleRefreshStats}
+        onTestAPI={handleTestAPI}
+        onCheckToken={handleCheckToken}
+        isLoading={isAnyLoading}
+        isTestingAPI={testingAPI}
+        lastFetch={lastFetch}
+        canToggleRealtime={canToggle}
+        userRole={userRole}
+        apiStatus={apiStatus}
+        isUsingFallback={isUsingFallback}
+      />
 
       {/* Fallback Notice - Show when using cached data */}
       <FallbackNotice
@@ -263,14 +225,14 @@ export default function DashboardPage() {
         isRetrying={isAnyLoading}
       />
 
-      {/* Welcome Section - Instant loading with code splitting */}
+      {/* Welcome Section - Optimized loading */}
       <div className="mb-8">
         <Suspense fallback={<InstantSectionSkeleton height="h-32" />}>
           <WelcomeSection />
         </Suspense>
       </div>
 
-      {/* Quick Actions Section - Instant loading with code splitting */}
+      {/* Quick Actions Section - Optimized loading */}
       <div className="mb-8">
         <Suspense fallback={<InstantSectionSkeleton height="h-48" />}>
           <QuickActionsSection
@@ -289,9 +251,7 @@ export default function DashboardPage() {
 
       {/* Main Charts Section - Lazy loaded with aggressive prefetching */}
       <LazySection fallback={<ChartSkeleton height="h-96" />} rootMargin="200px">
-        <Suspense fallback={<ChartSkeleton height="h-96" />}>
-          {memoizedChartsSection}
-        </Suspense>
+        <ChartsSection statsLoading={statsLoading} stats={stats} />
       </LazySection>
 
       {/* Advanced Analytics Section - Lazy loaded with aggressive prefetching */}
@@ -299,20 +259,17 @@ export default function DashboardPage() {
         fallback={<ChartSkeleton height="h-80" />}
         rootMargin="300px"
       >
-        <Suspense fallback={<ChartSkeleton height="h-80" />}>
-          {memoizedAnalyticsSection}
-        </Suspense>
+        <AnalyticsSection
+          chartsData={chartsData}
+          chartsLoading={chartsLoading}
+          chartsRefreshing={chartsRefreshing}
+        />
       </LazySection>
 
       {/* Navigation Section - Lazy loaded */}
       <LazySection fallback={<EnhancedSectionSkeleton height="h-40" />}>
-        <Suspense fallback={<EnhancedSectionSkeleton height="h-40" />}>
-          <NavigationSection />
-        </Suspense>
+        <NavigationSection />
       </LazySection>
-      
-      {/* Performance Monitor - Only visible in development for admins */}
-      <PerformanceMonitor />
     </div>
   );
 }

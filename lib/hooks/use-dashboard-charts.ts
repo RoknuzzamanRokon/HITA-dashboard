@@ -174,7 +174,7 @@ export const useDashboardCharts = (
             const useFallback = handleApiError(err, 'dashboard-charts');
             if (useFallback) {
                 console.log('📊 Using fallback charts data');
-                const fallbackData = getFallbackData('chartsData');
+                const fallbackData = getFallbackData('chartsData') as DashboardChartsData;
                 setChartsData(fallbackData);
                 setLastFetch(new Date());
                 setError(null); // Clear error when using fallback

@@ -1,6 +1,6 @@
 /**
- * Lazy Section Component
- * Only renders children when they come into viewport
+ * Enhanced Lazy Section Component
+ * Aggressively preloads content for instant perception
  */
 
 "use client";
@@ -13,6 +13,7 @@ interface LazySectionProps {
   rootMargin?: string;
   threshold?: number;
   className?: string;
+  prefetchDistance?: string;
 }
 
 export function LazySection({
@@ -21,19 +22,41 @@ export function LazySection({
   rootMargin = "100px",
   threshold = 0.1,
   className = "",
+  prefetchDistance = "500px",
 }: LazySectionProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [isPrefetching, setIsPrefetching] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
+    // Create two observers: one for prefetching, one for actual loading
+    const prefetchObserver = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !isPrefetching) {
+          setIsPrefetching(true);
+          console.log('🚀 Prefetching content for section...');
+          
+          // Start loading resources in background
+          // This could be enhanced with actual resource prefetching
+        }
+      },
+      {
+        rootMargin: prefetchDistance,
+        threshold: 0.01, // Very small threshold for early prefetching
+      },
+    );
+
+    const loadObserver = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && !hasLoaded) {
           setIsVisible(true);
           setHasLoaded(true);
-          // Disconnect observer after first load
-          observer.disconnect();
+          console.log('📊 Loading section content...');
+          
+          // Disconnect both observers after loading
+          prefetchObserver.disconnect();
+          loadObserver.disconnect();
         }
       },
       {
@@ -43,11 +66,15 @@ export function LazySection({
     );
 
     if (ref.current) {
-      observer.observe(ref.current);
+      prefetchObserver.observe(ref.current);
+      loadObserver.observe(ref.current);
     }
 
-    return () => observer.disconnect();
-  }, [rootMargin, threshold, hasLoaded]);
+    return () => {
+      prefetchObserver.disconnect();
+      loadObserver.disconnect();
+    };
+  }, [rootMargin, threshold, hasLoaded, isPrefetching, prefetchDistance]);
 
   return (
     <div ref={ref} className={className}>

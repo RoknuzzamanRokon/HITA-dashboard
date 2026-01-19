@@ -95,7 +95,7 @@ async function fetchPointsSummary() {
 }
 
 // Hook for dashboard stats with caching and resilience
-export function useDashboardStats(realTimeEnabled = false) {
+export function useDashboardStats(realTimeEnabled = false, config: any = {}) {
     const { user } = useAuth();
     const { handleApiError, handleApiSuccess, getFallbackData, isUsingFallback } = useResilientData();
 
@@ -115,7 +115,7 @@ export function useDashboardStats(realTimeEnabled = false) {
                 throw error;
             }
         },
-        enabled: !!user,
+        enabled: !!user && config.enabled !== false,
         // Refetch every 30 seconds if real-time is enabled
         refetchInterval: realTimeEnabled ? 30000 : false,
         // Show cached data while refetching in background
@@ -130,11 +130,17 @@ export function useDashboardStats(realTimeEnabled = false) {
             return failureCount < 3 && (error?.response?.status >= 500 || !error?.response);
         },
         retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+        // Optimize caching for instant perception
+        staleTime: config.staleTime || 5 * 60 * 1000, // 5 minutes - data is considered fresh
+        gcTime: config.gcTime || 30 * 60 * 1000, // 30 minutes - how long data stays in cache (garbage collection time)
+        refetchOnWindowFocus: config.refetchOnWindowFocus !== undefined ? config.refetchOnWindowFocus : false, // Don't refetch when window regains focus
+        refetchOnReconnect: config.refetchOnReconnect !== undefined ? config.refetchOnReconnect : true, // Refetch when network reconnects
+        refetchOnMount: config.refetchOnMount !== undefined ? config.refetchOnMount : true, // Refetch on mount by default
     });
 }
 
 // Hook for points summary with caching and resilience
-export function usePointsSummary(realTimeEnabled = false) {
+export function usePointsSummary(realTimeEnabled = false, config: any = {}) {
     const { user } = useAuth();
     const { handleApiError, handleApiSuccess, getFallbackData, isUsingFallback } = useResilientData();
 
@@ -154,7 +160,7 @@ export function usePointsSummary(realTimeEnabled = false) {
                 throw error;
             }
         },
-        enabled: !!user,
+        enabled: !!user && config.enabled !== false,
         refetchInterval: realTimeEnabled ? 30000 : false,
         refetchIntervalInBackground: true,
         notifyOnChangeProps: ['data', 'error'],
@@ -164,6 +170,12 @@ export function usePointsSummary(realTimeEnabled = false) {
             return failureCount < 3 && (error?.response?.status >= 500 || !error?.response);
         },
         retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+        // Optimize caching for instant perception
+        staleTime: config.staleTime || 5 * 60 * 1000, // 5 minutes - data is considered fresh
+        gcTime: config.gcTime || 30 * 60 * 1000, // 30 minutes - how long data stays in cache (garbage collection time)
+        refetchOnWindowFocus: config.refetchOnWindowFocus !== undefined ? config.refetchOnWindowFocus : false, // Don't refetch when window regains focus
+        refetchOnReconnect: config.refetchOnReconnect !== undefined ? config.refetchOnReconnect : true, // Refetch when network reconnects
+        refetchOnMount: config.refetchOnMount !== undefined ? config.refetchOnMount : true, // Refetch on mount by default
     });
 }
 
