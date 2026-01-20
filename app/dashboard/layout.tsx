@@ -6,7 +6,7 @@
 "use client";
 
 import React from "react";
-import { RootLayout } from "@/lib/components/layout/root-layout";
+import { RootLayout } from "@/lib/components/layout";
 import { LayoutProvider } from "@/lib/contexts/layout-context";
 
 interface DashboardLayoutProps {

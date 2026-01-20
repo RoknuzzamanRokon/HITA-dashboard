@@ -2,6 +2,8 @@ const withBundleAnalyzer = require("@next/bundle-analyzer")({
   enabled: process.env.ANALYZE === "true",
 });
 
+const path = require("path");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Allow cross-origin requests from network IP during development
@@ -9,6 +11,12 @@ const nextConfig = {
 
   // Webpack configuration for better chunk handling (only when not using Turbopack)
   webpack: (config, { dev, isServer }) => {
+    // Add path aliases
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "@": path.resolve(__dirname),
+    };
+
     // Only apply webpack config when not using Turbopack
     if (!process.env.TURBOPACK && !isServer) {
       // Improve chunk loading reliability
