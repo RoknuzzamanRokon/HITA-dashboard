@@ -203,6 +203,8 @@ export default function OptimizedDashboardPage() {
         clearTimeout(timeoutId);
         setApiStatus(response.success ? "connected" : "error");
       } catch (error) {
+        // Don't log API connection errors to console - they're expected when backend is down
+        console.log("ℹ️ Backend API not available - using cached/mock data");
         setApiStatus("error");
       }
     };
@@ -216,12 +218,14 @@ export default function OptimizedDashboardPage() {
   const handleTestAPI = async () => {
     setTestingAPI(true);
     try {
+      console.log("🧪 Manual API test initiated by user");
       await testDashboardStatsAPI();
       alert("✅ API test successful! Check console for details.");
     } catch (error) {
-      alert(
-        `❌ API test failed: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      console.log("❌ Manual API test failed:", errorMessage);
+      alert(`❌ API test failed: ${errorMessage}`);
     } finally {
       setTestingAPI(false);
     }

@@ -9,18 +9,29 @@ interface RealTimeTimestampProps {
 }
 
 const formatTimeAgo = (dateString: string) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  try {
+    const date = new Date(dateString);
 
-  if (diffInSeconds < 10) return "Just now";
-  if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-  if (diffInSeconds < 604800)
-    return `${Math.floor(diffInSeconds / 86400)}d ago`;
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return "Invalid date";
+    }
 
-  return date.toLocaleDateString();
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (diffInSeconds < 10) return "Just now";
+    if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400)
+      return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    if (diffInSeconds < 604800)
+      return `${Math.floor(diffInSeconds / 86400)}d ago`;
+
+    return date.toLocaleDateString();
+  } catch (error) {
+    return "Error";
+  }
 };
 
 export const RealTimeTimestamp: React.FC<RealTimeTimestampProps> = ({
@@ -36,10 +47,13 @@ export const RealTimeTimestamp: React.FC<RealTimeTimestampProps> = ({
 
     // Set up interval to update regularly
     const interval = setInterval(() => {
-      setTimeAgo(formatTimeAgo(dateString));
+      const newTimeAgo = formatTimeAgo(dateString);
+      setTimeAgo(newTimeAgo);
     }, updateInterval);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+    };
   }, [dateString, updateInterval]);
 
   return (

@@ -1047,38 +1047,38 @@ export class HotelService {
     /**
      * Autocomplete all - returns hotel suggestions based on query
      */
-    static async autocompleteAll(query: string): Promise<ApiResponse<AutocompleteResult[]>> {
-        try {
-            const response = await apiClient.get<{
-                results: Array<{
-                    name: string;
-                    country_code: string;
-                    longitude: string;
-                    latitude: string;
-                    city: string;
-                    country: string;
-                }>;
-            }>(`/content/autocomplete-all?query=${encodeURIComponent(query)}`);
+    // static async autocompleteAll(query: string): Promise<ApiResponse<AutocompleteResult[]>> {
+    //     try {
+    //         const response = await apiClient.get<{
+    //             results: Array<{
+    //                 name: string;
+    //                 country_code: string;
+    //                 longitude: string;
+    //                 latitude: string;
+    //                 city: string;
+    //                 country: string;
+    //             }>;
+    //         }>(`/content/autocomplete-all?query=${encodeURIComponent(query)}`);
 
-            if (response.success && response.data) {
-                return {
-                    success: true,
-                    data: response.data.results
-                };
-            }
+    //         if (response.success && response.data) {
+    //             return {
+    //                 success: true,
+    //                 data: response.data.results
+    //             };
+    //         }
 
-            return response as any;
-        } catch (error) {
-            return {
-                success: false,
-                error: {
-                    status: 0,
-                    message: 'Failed to fetch autocomplete results',
-                    details: error
-                }
-            };
-        }
-    }
+    //         return response as any;
+    //     } catch (error) {
+    //         return {
+    //             success: false,
+    //             error: {
+    //                 status: 0,
+    //                 message: 'Failed to fetch autocomplete results',
+    //                 details: error
+    //             }
+    //         };
+    //     }
+    // }
 
     /**
      * Search hotels by location - returns nearby hotels based on coordinates

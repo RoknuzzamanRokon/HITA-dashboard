@@ -7,6 +7,7 @@
 
 import React, { useState, useEffect } from "react";
 import { apiClient } from "@/lib/api/client";
+import { RealTimeTimestamp } from "../ui/real-time-timestamp";
 import {
   CreditCard,
   Users,
@@ -44,6 +45,30 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadTransactions = async () => {
+      setLoading(true);
+      try {
+        // Simulate API call delay
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        // For now, use mock data
+        const mockTransactions = getMockTransactions();
+        setTransactions(mockTransactions.slice(0, limit));
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to load transactions",
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (isEnabled) {
+      loadTransactions();
+    }
+  }, [isEnabled, limit]);
 
   const getMockTransactions = (): Transaction[] => {
     const now = new Date();
@@ -179,20 +204,6 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({
     }
   };
 
-  const formatTimeAgo = (timestamp: string) => {
-    const now = new Date();
-    const time = new Date(timestamp);
-    const diffMs = now.getTime() - time.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return `${diffDays}d ago`;
-  };
-
   if (!isEnabled) return null;
 
   return (
@@ -255,7 +266,7 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                     {/* Icon */}
                     <div
                       className={`w-10 h-10 rounded-lg flex items-center justify-center ${getTypeColor(
-                        transaction.type
+                        transaction.type,
                       )}`}
                     >
                       {getTransactionIcon(transaction.type)}
@@ -315,7 +326,11 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                       </div>
                     )}
                     <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {formatTimeAgo(transaction.timestamp)}
+                      <RealTimeTimestamp
+                        dateString={transaction.timestamp}
+                        className="text-xs text-gray-500 dark:text-gray-400"
+                        updateInterval={30000}
+                      />
                     </span>
                   </div>
                 </div>

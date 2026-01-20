@@ -444,12 +444,8 @@ export default function NotificationsPage() {
                                 <RealTimeTimestamp
                                   dateString={notification.meta_data.sent_at}
                                   className="text-xs"
-                                />{" "}
-                                (
-                                {new Date(
-                                  notification.meta_data.sent_at,
-                                ).toLocaleString()}
-                                )
+                                  updateInterval={30000}
+                                />
                               </span>
                             </div>
                           )}
@@ -493,12 +489,8 @@ export default function NotificationsPage() {
                                     notification.meta_data.change_time
                                   }
                                   className="text-xs"
-                                />{" "}
-                                (
-                                {new Date(
-                                  notification.meta_data.change_time,
-                                ).toLocaleString()}
-                                )
+                                  updateInterval={30000}
+                                />
                               </span>
                             </div>
                           )}
