@@ -1345,8 +1345,8 @@ nextjs-portal {
 .hide-status-sections>div[class*="blue-50"],
 .hide-status-sections div[class*="Offline Mode"],
 .hide-status-sections div[class*="cached data"],
-.hide-status-sections div:has(> *:contains("Offline Mode")),
-.hide-status-sections div:has(> *:contains("cached data")) {
+.hide-status-sections div[class*="offline"],
+.hide-status-sections div[class*="cache"] {
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
