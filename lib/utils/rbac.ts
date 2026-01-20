@@ -113,7 +113,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     [UserRole.GENERAL_USER]: [
         // General users have very limited permissions
         Permission.VIEW_DASHBOARD_STATS, // Can see basic dashboard
-        Permission.VIEW_ANALYTICS, // Can see their own analytics/charts
+        // Note: Cannot view analytics - restricted to admin/super users only
         // Note: Cannot view all users, only their own profile
         // Cannot create/edit/delete users
         // Cannot manage hotels, content, providers
@@ -171,6 +171,7 @@ export function canAccessRoute(user: User | null, route: string): boolean {
         '/dashboard/hotels': [Permission.VIEW_ALL_HOTELS],
         '/dashboard/analytics': [Permission.VIEW_ANALYTICS],
         '/dashboard/providers': [Permission.VIEW_ALL_PROVIDERS],
+        '/dashboard/exports': [Permission.EXPORT_DATA],
         '/dashboard/settings': [Permission.VIEW_SYSTEM_SETTINGS],
     };
 

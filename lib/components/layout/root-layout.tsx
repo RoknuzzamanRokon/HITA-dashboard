@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import { Navbar } from "./navbar";
 import { Sidebar } from "./sidebar";
+import { useLayout } from "@/lib/contexts/layout-context";
 
 interface RootLayoutProps {
   children: React.ReactNode;
@@ -17,7 +18,7 @@ interface RootLayoutProps {
 
 export function RootLayout({ children }: RootLayoutProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const { sidebarOpen, setSidebarOpen, toggleSidebar } = useLayout();
   const [mounted, setMounted] = useState(false);
 
   // Handle initial client-side rendering
@@ -49,7 +50,7 @@ export function RootLayout({ children }: RootLayoutProps) {
       {/* Navbar */}
       <Navbar
         user={user}
-        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        onToggleSidebar={toggleSidebar}
       />
 
       <div className="flex">
@@ -57,7 +58,7 @@ export function RootLayout({ children }: RootLayoutProps) {
         <Sidebar
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
-          onToggle={() => setSidebarOpen(!sidebarOpen)}
+          onToggle={toggleSidebar}
           userRole={user.role}
         />
 

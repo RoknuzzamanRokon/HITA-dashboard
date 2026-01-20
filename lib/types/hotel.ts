@@ -108,3 +108,37 @@ export interface HotelSearchResult {
     totalPages: number;
     resumeKey?: string;
 }
+
+export interface AutocompleteResult {
+    name: string;
+    country_code: string;
+    longitude: string;
+    latitude: string;
+    city: string;
+    country: string;
+}
+
+export interface LocationSearchParams {
+    latitude: string;
+    longitude: string;
+    countryCode: string;
+    radius?: string;
+    suppliers?: string[];
+}
+
+export interface LocationSearchResult {
+    totalHotels: number;
+    hotels: LocationHotel[];
+}
+
+export interface LocationHotel {
+    latitude: number;
+    longitude: number;
+    name: string;
+    address: string;
+    type: string;
+    photo: string;
+    starRating: number;
+    ittid: string; // ITT mapping ID for fetching full details
+    suppliers: string[];
+}

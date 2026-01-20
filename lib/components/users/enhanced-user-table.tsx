@@ -238,7 +238,19 @@ export function EnhancedUserTable({
           icon: Settings,
           color: "text-blue-600 bg-blue-100",
         };
+      case UserRole.USER:
+        return {
+          label: "User",
+          icon: User,
+          color: "text-green-600 bg-green-100",
+        };
       case UserRole.GENERAL_USER:
+        return {
+          label: "User",
+          icon: User,
+          color: "text-green-600 bg-green-100",
+        };
+      default:
         return {
           label: "User",
           icon: User,
@@ -490,7 +502,7 @@ export function EnhancedUserTable({
                       <Badge
                         className={cn(
                           user.isActive
-                            ? "bg-green-100 text-green-800 border-green-200"
+                            ? "bg-green-100 text-gray-900 border-green-200"
                             : "bg-red-100 text-red-800 border-red-200"
                         )}
                       >

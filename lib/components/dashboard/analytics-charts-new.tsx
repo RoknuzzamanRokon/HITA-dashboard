@@ -30,6 +30,10 @@ import {
   TimeSeriesChartData,
   PackageChartData,
 } from "@/lib/utils/chart-data-transformers";
+import {
+  fetchSupplierInfo,
+  type SupplierInfoResponse,
+} from "@/lib/api/dashboard";
 
 // ============================================================================
 // Responsive Utilities
@@ -106,6 +110,9 @@ const SupplierTooltip: React.FC<SupplierTooltipProps> = ({
             day: "numeric",
             year: "numeric",
           })}
+        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          Status: <span className="capitalize">{data.availabilityStatus}</span>
         </p>
       </div>
     );
@@ -281,7 +288,7 @@ const FreshnessTooltip: React.FC<FreshnessTooltipProps> = ({
 // ============================================================================
 
 export interface SupplierHotelCountsChartProps {
-  suppliers: SupplierChartData[];
+  suppliers?: SupplierChartData[];
   loading?: boolean;
   height?: number;
   isRefreshing?: boolean;
@@ -289,30 +296,90 @@ export interface SupplierHotelCountsChartProps {
 
 /**
  * SupplierHotelCountsChart
- * Displays a horizontal bar chart of hotel counts per supplier
- * Sorted by hotel count in descending order with color gradient
+ * Beautiful redesigned chart showing hotel inventory by supplier
+ * Features: Gradient cards, statistics, color-coded bars, freshness indicators
  */
 export const SupplierHotelCountsChart: React.FC<
   SupplierHotelCountsChartProps
-> = ({ suppliers, loading = false, height = 350, isRefreshing = false }) => {
+> = ({
+  suppliers: externalSuppliers,
+  loading: externalLoading = false,
+  height = 500,
+  isRefreshing = false,
+}) => {
   const [animationKey, setAnimationKey] = useState(0);
   const { isMobile, isTablet } = useResponsiveChart();
+  const [apiData, setApiData] = useState<SupplierInfoResponse | null>(null);
+  const [internalLoading, setInternalLoading] = useState(true);
 
   useEffect(() => {
-    if (!loading && !isRefreshing) {
-      setAnimationKey((prev) => prev + 1);
-    }
-  }, [loading, isRefreshing, suppliers]);
+    const loadData = async () => {
+      try {
+        setInternalLoading(true);
+        const response = await fetchSupplierInfo();
+
+        if (response.success && response.data) {
+          setApiData(response.data);
+          setAnimationKey((prev) => prev + 1);
+        }
+      } catch (err) {
+        console.error("Error loading supplier data:", err);
+      } finally {
+        setInternalLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const loading = externalLoading || internalLoading;
+
+  // Transform API data to chart format, sorted by hotel count descending
+  const suppliers =
+    apiData?.accessibleSuppliers
+      ?.map((supplier) => ({
+        name: supplier.supplierName,
+        hotelCount: supplier.totalHotels,
+        lastUpdated: supplier.lastUpdated,
+        availabilityStatus: supplier.availabilityStatus,
+        // Calculate days since update for freshness
+        daysSinceUpdate: Math.floor(
+          (new Date().getTime() - new Date(supplier.lastUpdated).getTime()) /
+            (1000 * 60 * 60 * 24)
+        ),
+        // Color code by freshness
+        freshnessColor: (() => {
+          const days = Math.floor(
+            (new Date().getTime() - new Date(supplier.lastUpdated).getTime()) /
+              (1000 * 60 * 60 * 24)
+          );
+          if (days < 7) return "#10b981"; // Green - fresh
+          if (days < 30) return "#f59e0b"; // Yellow - moderate
+          return "#ef4444"; // Red - stale
+        })(),
+      }))
+      .sort((a, b) => b.hotelCount - a.hotelCount) || [];
 
   // Check for empty data
-  const isEmpty = !loading && (!suppliers || suppliers.length === 0);
+  const isEmpty = !loading && suppliers.length === 0;
 
-  // Generate color gradient based on hotel count magnitude
-  const getBarColor = (hotelCount: number, maxCount: number): string => {
+  // Enhanced color gradient with vibrant colors
+  const getBarGradient = (
+    hotelCount: number,
+    maxCount: number,
+    index: number
+  ): string => {
     const ratio = hotelCount / maxCount;
-    if (ratio > 0.7) return "#8884d8"; // Strong blue for high counts
-    if (ratio > 0.4) return "#82ca9d"; // Green for medium counts
-    return "#ffc658"; // Yellow for lower counts
+    // Use array of vibrant colors and rotate through them
+    const colors = [
+      "#8b5cf6", // Purple
+      "#3b82f6", // Blue
+      "#10b981", // Green
+      "#f59e0b", // Orange
+      "#ec4899", // Pink
+      "#06b6d4", // Cyan
+    ];
+    return colors[index % colors.length];
   };
 
   const maxCount =
@@ -320,70 +387,209 @@ export const SupplierHotelCountsChart: React.FC<
       ? Math.max(...suppliers.map((s) => s.hotelCount), 1)
       : 1;
 
+  // Calculate statistics
+  const totalHotels = suppliers.reduce((sum, s) => sum + s.hotelCount, 0);
+  const avgHotels =
+    suppliers.length > 0 ? Math.round(totalHotels / suppliers.length) : 0;
+  const freshSuppliers = suppliers.filter((s) => s.daysSinceUpdate < 7).length;
+
   // Responsive dimensions
-  const responsiveHeight = isMobile ? 300 : isTablet ? 320 : height;
+  const responsiveHeight = isMobile ? 400 : isTablet ? 450 : height;
   const fontSize = isMobile ? 10 : 12;
-  const yAxisWidth = isMobile ? 70 : isTablet ? 85 : 100;
+  const yAxisWidth = isMobile ? 90 : isTablet ? 110 : 130;
+
+  if (loading) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-4"></div>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+            <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+            <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+          </div>
+          <div className="h-96 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isEmpty) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-12 text-center">
+        <p className="text-gray-500 dark:text-gray-400">
+          No supplier data available
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <ChartWrapper
-      title="Supplier Hotel Inventory"
-      subtitle="Hotel counts by supplier"
-      loading={loading}
-      height={responsiveHeight}
-      isRefreshing={isRefreshing}
-      isEmpty={isEmpty}
-    >
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          data={suppliers}
-          layout="horizontal"
-          key={animationKey}
-          margin={{
-            top: 5,
-            right: isMobile ? 10 : 30,
-            left: isMobile ? 5 : 20,
-            bottom: 5,
-          }}
-          aria-label="Bar chart showing hotel counts by supplier"
-          role="img"
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-          <XAxis
-            type="number"
-            stroke="#666"
-            fontSize={fontSize}
-            tickLine={false}
-            tickFormatter={(value) => value.toLocaleString()}
-            aria-label="Hotel count axis"
-          />
-          <YAxis
-            type="category"
-            dataKey="name"
-            stroke="#666"
-            fontSize={fontSize}
-            tickLine={false}
-            width={yAxisWidth}
-            aria-label="Supplier name axis"
-          />
-          <Tooltip content={<SupplierTooltip />} />
-          <Bar
-            dataKey="hotelCount"
-            radius={[0, 4, 4, 0]}
-            animationDuration={1200}
-            animationBegin={0}
-            aria-label="Hotel count bars"
+    <div className="bg-gradient-to-br from-white via-blue-50/30 to-purple-50/30 dark:from-gray-800 dark:via-gray-800 dark:to-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-all duration-300">
+      {/* Header */}
+      <div className="mb-6">
+        <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+          🏨 Supplier Hotel Inventory
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Real-time hotel distribution across{" "}
+          {apiData?.supplierAnalytics.activeSuppliers || 0} active suppliers
+        </p>
+      </div>
+
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {/* Total Hotels Card */}
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white shadow-lg transform transition-transform">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-blue-100 text-sm font-medium">
+              Total Hotels
+            </span>
+            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+              <span className="text-2xl">🏨</span>
+            </div>
+          </div>
+          <p className="text-3xl font-bold">{totalHotels.toLocaleString()}</p>
+          <p className="text-blue-100 text-xs mt-1">Across all suppliers</p>
+        </div>
+
+        {/* Average per Supplier Card */}
+        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white shadow-lg transform transition-transform">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-purple-100 text-sm font-medium">
+              Avg per Supplier
+            </span>
+            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+              <span className="text-2xl">📊</span>
+            </div>
+          </div>
+          <p className="text-3xl font-bold">{avgHotels.toLocaleString()}</p>
+          <p className="text-purple-100 text-xs mt-1">Mean hotel count</p>
+        </div>
+
+        {/* Fresh Data Card */}
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-4 text-white shadow-lg transform transition-transform">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-green-100 text-sm font-medium">
+              Fresh Data
+            </span>
+            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+              <span className="text-2xl">✨</span>
+            </div>
+          </div>
+          <p className="text-3xl font-bold">
+            {freshSuppliers}/{suppliers.length}
+          </p>
+          <p className="text-green-100 text-xs mt-1">Updated within 7 days</p>
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="flex flex-wrap items-center gap-4 mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+          Data Freshness:
+        </span>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-green-500"></div>
+          <span className="text-xs text-gray-600 dark:text-gray-400">
+            Fresh ({"<"}7d)
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+          <span className="text-xs text-gray-600 dark:text-gray-400">
+            Moderate (7-30d)
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 rounded-full bg-red-500"></div>
+          <span className="text-xs text-gray-600 dark:text-gray-400">
+            Stale ({">"}30d)
+          </span>
+        </div>
+      </div>
+
+      {/* Chart */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-inner border border-gray-100 dark:border-gray-700">
+        <ResponsiveContainer width="100%" height={responsiveHeight - 300}>
+          <BarChart
+            data={suppliers}
+            layout="horizontal"
+            key={animationKey}
+            margin={{
+              top: 10,
+              right: isMobile ? 15 : 40,
+              left: isMobile ? 10 : 25,
+              bottom: 10,
+            }}
+            aria-label="Bar chart showing hotel counts by supplier"
+            role="img"
           >
-            {suppliers.map((entry, index) => (
-              <Cell
-                key={`cell-${index}`}
-                fill={getBarColor(entry.hotelCount, maxCount)}
-              />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </ChartWrapper>
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="#e5e7eb"
+              opacity={0.5}
+            />
+            <XAxis
+              type="number"
+              stroke="#6b7280"
+              fontSize={fontSize}
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={(value) => {
+                if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+                if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
+                return value.toString();
+              }}
+              aria-label="Hotel count axis"
+            />
+            <YAxis
+              type="category"
+              dataKey="name"
+              stroke="#6b7280"
+              fontSize={fontSize}
+              tickLine={false}
+              axisLine={false}
+              width={yAxisWidth}
+              aria-label="Supplier name axis"
+            />
+            <Tooltip
+              content={<SupplierTooltip />}
+              cursor={{ fill: "rgba(59, 130, 246, 0.1)" }}
+            />
+            <Bar
+              dataKey="hotelCount"
+              radius={[0, 8, 8, 0]}
+              animationDuration={1500}
+              animationBegin={0}
+              aria-label="Hotel count bars"
+            >
+              {suppliers.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={getBarGradient(entry.hotelCount, maxCount, index)}
+                  opacity={0.9}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Footer */}
+      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+        <span>
+          Last updated:{" "}
+          {apiData?.responseMetadata.generatedAt
+            ? new Date(apiData.responseMetadata.generatedAt).toLocaleString()
+            : "N/A"}
+        </span>
+        <span className="flex items-center gap-1">
+          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+          Live Data
+        </span>
+      </div>
+    </div>
   );
 };
 
@@ -891,29 +1097,28 @@ export const PackagePointComparisonChart: React.FC<
   // Check for empty data
   const isEmpty = !loading && (!packages || packages.length === 0);
 
-  // Color coding by package tier based on point value
-  const getPackageColor = (points: number, maxPoints: number): string => {
-    const ratio = points / maxPoints;
-    if (ratio > 0.7) return "#8b5cf6"; // Purple for premium packages
-    if (ratio > 0.4) return "#3b82f6"; // Blue for mid-tier packages
-    if (ratio > 0.2) return "#10b981"; // Green for standard packages
-    return "#f59e0b"; // Orange for basic packages
+  // Sort packages by points in descending order
+  const sortedPackages = [...(packages || [])].sort(
+    (a, b) => b.points - a.points
+  );
+
+  // Color coding by tier
+  const getBarColor = (points: number, index: number): string => {
+    if (points >= 10000) return "#10b981"; // Green - Premium
+    if (points >= 5000) return "#3b82f6"; // Blue - Standard
+    if (points >= 1000) return "#f59e0b"; // Orange - Basic
+    return "#6b7280"; // Gray - Minimal
   };
 
-  const maxPoints =
-    packages && packages.length > 0
-      ? Math.max(...packages.map((p) => p.points), 1)
-      : 1;
-
   // Responsive dimensions
-  const responsiveHeight = isMobile ? 300 : isTablet ? 320 : height;
+  const responsiveHeight = isMobile ? 280 : isTablet ? 320 : height;
   const fontSize = isMobile ? 10 : 12;
-  const yAxisWidth = isMobile ? 100 : isTablet ? 125 : 150;
+  const yAxisWidth = isMobile ? 80 : isTablet ? 100 : 120;
 
   return (
     <ChartWrapper
-      title="Package Point Allocations"
-      subtitle="Point values by package type"
+      title="Package Point Comparison"
+      subtitle="Point allocations by package type"
       loading={loading}
       height={responsiveHeight}
       isRefreshing={isRefreshing}
@@ -921,53 +1126,55 @@ export const PackagePointComparisonChart: React.FC<
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
-          data={packages}
+          data={sortedPackages}
           layout="horizontal"
           key={animationKey}
           margin={{
-            top: 5,
-            right: isMobile ? 10 : 30,
-            left: isMobile ? 5 : 20,
-            bottom: 5,
+            top: 10,
+            right: isMobile ? 15 : 40,
+            left: isMobile ? 10 : 25,
+            bottom: 10,
           }}
-          aria-label="Bar chart showing package point allocations by type"
+          aria-label="Horizontal bar chart showing package point allocations"
           role="img"
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} />
           <XAxis
             type="number"
-            stroke="#666"
+            stroke="#6b7280"
             fontSize={fontSize}
             tickLine={false}
+            axisLine={false}
             tickFormatter={(value) => {
-              // Format with K/M suffixes
               if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
-              if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+              if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
               return value.toString();
             }}
-            aria-label="Point value axis"
+            aria-label="Points axis"
           />
           <YAxis
             type="category"
             dataKey="type"
-            stroke="#666"
+            stroke="#6b7280"
             fontSize={fontSize}
             tickLine={false}
+            axisLine={false}
             width={yAxisWidth}
             aria-label="Package type axis"
           />
           <Tooltip content={<PackageTooltip />} />
           <Bar
             dataKey="points"
-            radius={[0, 4, 4, 0]}
-            animationDuration={1200}
+            radius={[0, 8, 8, 0]}
+            animationDuration={1500}
             animationBegin={0}
-            aria-label="Package point bars"
+            aria-label="Package points bars"
           >
-            {packages.map((entry, index) => (
+            {sortedPackages.map((entry, index) => (
               <Cell
                 key={`cell-${index}`}
-                fill={getPackageColor(entry.points, maxPoints)}
+                fill={getBarColor(entry.points, index)}
+                opacity={0.9}
               />
             ))}
           </Bar>
@@ -1143,7 +1350,7 @@ export const CombinedActivityChart: React.FC<CombinedActivityChartProps> = ({
                 handleLegendClick(item.key);
               }
             }}
-            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded px-2 py-1"
+            className="flex items-center gap-2 cursor-pointer transition-opacity focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded px-2 py-1"
             style={{
               opacity: visibleLines[item.key] ? 1 : 0.4,
             }}

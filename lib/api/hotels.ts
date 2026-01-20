@@ -9,7 +9,10 @@ import type {
     HotelDetails,
     HotelSearchParams,
     HotelSearchResult,
-    HotelStats
+    HotelStats,
+    AutocompleteResult,
+    LocationSearchParams,
+    LocationSearchResult
 } from '@/lib/types/hotel';
 
 export class HotelService {
@@ -533,6 +536,54 @@ export class HotelService {
     }
 
     /**
+     * Check active my supplier - returns active/inactive supplier counts
+     */
+    static async checkActiveMySupplier(): Promise<ApiResponse<{
+        active_supplier: number;
+        total_on_supplier: number;
+        total_off_supplier: number;
+        off_supplier_list: string[];
+        on_supplier_list: string[];
+    }>> {
+        try {
+            return await apiClient.get('/user/check-active-my-supplier');
+        } catch (error) {
+            return {
+                success: false,
+                error: {
+                    status: 0,
+                    message: 'Failed to fetch active supplier count',
+                    details: error,
+                },
+            };
+        }
+    }
+
+    /**
+     * Check active my supplier (DEMO) - returns demo active/inactive supplier counts for users with no points
+     */
+    static async checkActiveDemoSupplier(): Promise<ApiResponse<{
+        active_supplier: number;
+        total_on_supplier: number;
+        total_off_supplier: number;
+        off_supplier_list: string[];
+        on_supplier_list: string[];
+    }>> {
+        try {
+            return await apiClient.get('/demo/check-active-my-supplier', true);
+        } catch (error) {
+            return {
+                success: false,
+                error: {
+                    status: 0,
+                    message: 'Failed to fetch demo active supplier count',
+                    details: error,
+                },
+            };
+        }
+    }
+
+    /**
      * Autocomplete hotel search - suggests hotel names based on query
      */
     static async autocompleteHotel(query: string): Promise<ApiResponse<Array<{
@@ -762,6 +813,352 @@ export class HotelService {
             return {
                 success: true,
                 data: basicMockData
+            };
+        }
+    }
+
+    /**
+     * Get full hotel details by ITTID
+     * Fetches comprehensive hotel information including provider mappings, rooms, facilities, policies, and photos
+     * Implements retry logic with exponential backoff for resilient error handling
+     * 
+     * @param ittid - Hotel ITT mapping ID
+     * @param abortSignal - Optional AbortSignal for request cancellation
+     * @returns Full hotel details with all provider information
+     */
+    static async getFullHotelDetails(
+        ittid: string,
+        abortSignal?: AbortSignal
+    ): Promise<ApiResponse<import('@/lib/types/full-hotel-details').FullHotelDetailsResponse>> {
+        try {
+            console.log(`🏨 Fetching full hotel details for ittid: ${ittid}`);
+
+            // Check if request was cancelled before starting
+            if (abortSignal?.aborted) {
+                return {
+                    success: false,
+                    error: {
+                        status: 0,
+                        message: 'Request cancelled',
+                        details: 'Request was cancelled before it started'
+                    }
+                };
+            }
+
+            // Make API request with retry logic (2 retries with exponential backoff)
+            // The apiClient.get method already implements retry logic with exponential backoff
+            const response = await apiClient.get<import('@/lib/types/full-hotel-details').FullHotelDetailsResponse>(
+                `/content/get-full-hotel-with-itt-mapping-id/${ittid}`,
+                true, // requiresAuth
+                2 // maxRetries - will retry with 500ms, then 1500ms delays (exponential backoff)
+            );
+
+            // Check if request was cancelled after API call
+            if (abortSignal?.aborted) {
+                return {
+                    success: false,
+                    error: {
+                        status: 0,
+                        message: 'Request cancelled',
+                        details: 'Request was cancelled after API call'
+                    }
+                };
+            }
+
+            if (response.success && response.data) {
+                console.log(`✅ Successfully fetched full hotel details for ${ittid}`);
+                return response;
+            }
+
+            // Handle different error types
+            if (response.error) {
+                const { status, message } = response.error;
+
+                // Network errors (status: 0)
+                if (status === 0) {
+                    return {
+                        success: false,
+                        error: {
+                            status: 0,
+                            message: 'No connection. Please check your network.',
+                            details: response.error.details
+                        }
+                    };
+                }
+
+                // Authentication errors (status: 401)
+                if (status === 401) {
+                    return {
+                        success: false,
+                        error: {
+                            status: 401,
+                            message: 'Session expired. Please log in again.',
+                            details: response.error.details
+                        }
+                    };
+                }
+
+                // Permission errors (status: 403)
+                if (status === 403) {
+                    return {
+                        success: false,
+                        error: {
+                            status: 403,
+                            message: "You don't have permission to view this hotel.",
+                            details: response.error.details
+                        }
+                    };
+                }
+
+                // Not found errors (status: 404)
+                if (status === 404) {
+                    return {
+                        success: false,
+                        error: {
+                            status: 404,
+                            message: 'Hotel details not found.',
+                            details: response.error.details
+                        }
+                    };
+                }
+
+                // Server errors (status: 500-599)
+                if (status >= 500 && status < 600) {
+                    return {
+                        success: false,
+                        error: {
+                            status,
+                            message: 'Server error. Please try again later.',
+                            details: response.error.details
+                        }
+                    };
+                }
+            }
+
+            console.warn(`⚠️ Failed to fetch full hotel details for ${ittid}:`, response.error);
+            return response;
+
+        } catch (error) {
+            console.error(`❌ Error fetching full hotel details for ${ittid}:`, error);
+
+            // Handle abort errors
+            if (error instanceof Error && error.name === 'AbortError') {
+                return {
+                    success: false,
+                    error: {
+                        status: 0,
+                        message: 'Request cancelled',
+                        details: error
+                    }
+                };
+            }
+
+            return {
+                success: false,
+                error: {
+                    status: 0,
+                    message: 'Failed to fetch hotel details',
+                    details: error
+                }
+            };
+        }
+    }
+
+    /**
+     * Get full hotel details by ITTID (DEMO VERSION for users with no points)
+     * Fetches comprehensive hotel information from demo endpoint
+     * 
+     * @param ittid - Hotel ITT mapping ID
+     * @param abortSignal - Optional AbortSignal for request cancellation
+     * @returns Full hotel details with all provider information
+     */
+    static async getDemoFullHotelDetails(
+        ittid: string,
+        abortSignal?: AbortSignal
+    ): Promise<ApiResponse<import('@/lib/types/full-hotel-details').FullHotelDetailsResponse>> {
+        try {
+            console.log(`🏨 Fetching DEMO full hotel details for ittid: ${ittid}`);
+
+            // Check if request was cancelled before starting
+            if (abortSignal?.aborted) {
+                return {
+                    success: false,
+                    error: {
+                        status: 0,
+                        message: 'Request cancelled',
+                        details: 'Request was cancelled before it started'
+                    }
+                };
+            }
+
+            // Make API request to demo endpoint
+            const response = await apiClient.get<import('@/lib/types/full-hotel-details').FullHotelDetailsResponse>(
+                `/demo/content/get-full-hotel-with-itt-mapping-id/${ittid}`,
+                true, // requiresAuth
+                2 // maxRetries
+            );
+
+            // Check if request was cancelled after API call
+            if (abortSignal?.aborted) {
+                return {
+                    success: false,
+                    error: {
+                        status: 0,
+                        message: 'Request cancelled',
+                        details: 'Request was cancelled after API call'
+                    }
+                };
+            }
+
+            if (response.success && response.data) {
+                console.log(`✅ Successfully fetched DEMO full hotel details for ${ittid}`);
+                return response;
+            }
+
+            console.warn(`⚠️ Failed to fetch DEMO full hotel details for ${ittid}:`, response.error);
+            return response;
+
+        } catch (error) {
+            console.error(`❌ Error fetching DEMO full hotel details for ${ittid}:`, error);
+
+            // Handle abort errors
+            if (error instanceof Error && error.name === 'AbortError') {
+                return {
+                    success: false,
+                    error: {
+                        status: 0,
+                        message: 'Request cancelled',
+                        details: error
+                    }
+                };
+            }
+
+            return {
+                success: false,
+                error: {
+                    status: 0,
+                    message: 'Failed to fetch demo hotel details',
+                    details: error
+                }
+            };
+        }
+    }
+
+    /**
+     * Autocomplete all - returns hotel suggestions based on query
+     */
+    static async autocompleteAll(query: string): Promise<ApiResponse<AutocompleteResult[]>> {
+        try {
+            const response = await apiClient.get<{
+                results: Array<{
+                    name: string;
+                    country_code: string;
+                    longitude: string;
+                    latitude: string;
+                    city: string;
+                    country: string;
+                }>;
+            }>(`/content/autocomplete-all?query=${encodeURIComponent(query)}`);
+
+            if (response.success && response.data) {
+                return {
+                    success: true,
+                    data: response.data.results
+                };
+            }
+
+            return response as any;
+        } catch (error) {
+            return {
+                success: false,
+                error: {
+                    status: 0,
+                    message: 'Failed to fetch autocomplete results',
+                    details: error
+                }
+            };
+        }
+    }
+
+    /**
+     * Search hotels by location - returns nearby hotels based on coordinates
+     */
+    static async searchHotelsByLocation(params: LocationSearchParams): Promise<ApiResponse<LocationSearchResult>> {
+        try {
+            const payload = {
+                lat: params.latitude,
+                lon: params.longitude,
+                radius: params.radius || "10",
+                supplier: params.suppliers || [
+                    "goglobal",
+                    "hotelbeds",
+                    "paximumhotel",
+                    "itt",
+                    "ean",
+                    "juniperhotel",
+                    "hyperguestdirect",
+                    "letsflyhotel",
+                    "hotelston",
+                    "kiwihotel",
+                    "dotw",
+                    "agoda",
+                    "stuba",
+                    "mgholiday",
+                    "ratehawkhotel",
+                    "grnconnect",
+                    "innstanttravel",
+                    "restel",
+                    "illusionshotel",
+                    "roomerang",
+                    "tbohotel"
+                ],
+                country_code: params.countryCode
+            };
+
+            const response = await apiClient.post<{
+                total_hotels: number;
+                hotels: Array<{
+                    a: number;
+                    b: number;
+                    name: string;
+                    addr: string;
+                    type: string;
+                    photo: string;
+                    star: number;
+                    ittid: string;
+                    goglobal?: string[];
+                }>;
+            }>('/locations/search-hotel-with-location', payload);
+
+            if (response.success && response.data) {
+                return {
+                    success: true,
+                    data: {
+                        totalHotels: response.data.total_hotels,
+                        hotels: response.data.hotels.map(h => ({
+                            latitude: h.a,
+                            longitude: h.b,
+                            name: h.name,
+                            address: h.addr,
+                            type: h.type,
+                            photo: h.photo,
+                            starRating: h.star,
+                            ittid: h.ittid,
+                            suppliers: h.goglobal || []
+                        }))
+                    }
+                };
+            }
+
+            return response as any;
+        } catch (error) {
+            return {
+                success: false,
+                error: {
+                    status: 0,
+                    message: 'Failed to search hotels by location',
+                    details: error
+                }
             };
         }
     }

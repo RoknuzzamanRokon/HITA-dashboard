@@ -71,8 +71,10 @@ export class AuthService {
 
     /**
      * Login user with credentials - ONLY uses real API
+     * @param credentials - Login credentials (username and password)
+     * @param rememberMe - If true, tokens are stored in localStorage (persistent). If false, stored in sessionStorage (session-only)
      */
-    static async login(credentials: LoginCredentials): Promise<ApiResponse<AuthResponse>> {
+    static async login(credentials: LoginCredentials, rememberMe: boolean = true): Promise<ApiResponse<AuthResponse>> {
         console.log("🔐 AuthService.login called with:", { username: credentials.username });
         console.log("🌐 Using ONLY real API - no mock fallback");
 
@@ -106,10 +108,10 @@ export class AuthService {
                 console.log("🔍 Raw token:", response.data.access_token.substring(0, 50) + "...");
 
                 // Store tokens immediately (don't fail on validation)
-                console.log("💾 Storing API tokens...");
-                TokenStorage.setToken(response.data.access_token);
+                console.log("💾 Storing API tokens...", { rememberMe });
+                TokenStorage.setToken(response.data.access_token, rememberMe);
                 if (response.data.refresh_token) {
-                    TokenStorage.setRefreshToken(response.data.refresh_token);
+                    TokenStorage.setRefreshToken(response.data.refresh_token, rememberMe);
                 }
                 console.log("✅ API tokens stored successfully");
 
@@ -147,6 +149,19 @@ export class AuthService {
         try {
             console.log("🚪 AuthService: Logging out user...");
 
+            // Call logout endpoint first
+            try {
+                console.log("🔄 AuthService: Calling logout API...");
+                const response = await apiClient.post(apiEndpoints.auth.logout, {}, true, 0); // No retries for logout
+                if (response.success) {
+                    console.log("✅ AuthService: Logout API call successful");
+                } else {
+                    console.warn("⚠️ AuthService: Logout API returned error:", response.error);
+                }
+            } catch (apiError) {
+                console.warn("⚠️ AuthService: Logout API call failed, continuing with local logout:", apiError);
+            }
+
             // Clear tokens from storage
             console.log("🧹 AuthService: Clearing tokens from storage...");
             TokenStorage.clearTokens();
@@ -156,9 +171,6 @@ export class AuthService {
             const refreshTokenAfter = TokenStorage.getRefreshToken();
             console.log("🔍 AuthService: Token after clear:", tokenAfter ? "STILL EXISTS" : "CLEARED");
             console.log("🔍 AuthService: Refresh token after clear:", refreshTokenAfter ? "STILL EXISTS" : "CLEARED");
-
-            // Optional: Call logout endpoint if it exists
-            // await apiClient.post('/auth/logout');
 
             console.log("✅ AuthService: Logout completed");
         } catch (error) {

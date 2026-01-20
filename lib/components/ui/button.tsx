@@ -47,7 +47,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
           "disabled:pointer-events-none disabled:opacity-50",
           "relative overflow-hidden group",
-          "transform hover:scale-105 active:scale-95",
+          "transform active:scale-95",
 
           // Size variants
           {

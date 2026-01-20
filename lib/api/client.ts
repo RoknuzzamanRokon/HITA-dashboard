@@ -25,6 +25,7 @@ export interface ApiResponse<T = any> {
 
 export class ApiClient {
   private baseUrl: string;
+  private activeRequests: Map<string, AbortController> = new Map();
 
   constructor(baseUrl?: string) {
     // Use the full API URL with version, not just the base URL
@@ -32,7 +33,12 @@ export class ApiClient {
     const apiVersion = process.env.NEXT_PUBLIC_API_VERSION || 'v1.0';
 
     if (apiBaseUrl) {
-      this.baseUrl = `${apiBaseUrl}/${apiVersion}`;
+      // Check if apiBaseUrl already contains the version to avoid double prefixing
+      if (apiBaseUrl.endsWith(apiVersion) || apiBaseUrl.endsWith(`${apiVersion}/`)) {
+        this.baseUrl = apiBaseUrl;
+      } else {
+        this.baseUrl = `${apiBaseUrl}/${apiVersion}`;
+      }
     } else if (process.env.NODE_ENV === 'development') {
       this.baseUrl = 'http://localhost:8001/v1.0';
       console.warn('API URL not set, using fallback:', this.baseUrl);
@@ -60,6 +66,24 @@ export class ApiClient {
       retryCount = 0,
       retryDelay = 1000
     } = options;
+
+    // Create a unique request ID for tracking
+    const requestId = `${method}-${endpoint}-${Date.now()}`;
+
+    // Don't automatically cancel existing requests - allow concurrent requests
+    // This prevents the "Request was cancelled" errors when navigating between pages
+
+    // Create new abort controller for this request
+    const abortController = new AbortController();
+    const requestKey = `${requestId}`;
+    this.activeRequests.set(requestKey, abortController);
+
+    // Clean up the request tracking when done
+    const cleanup = () => {
+      this.activeRequests.delete(requestKey);
+    };
+
+    console.log('🚀 API Request:', method, endpoint);
 
     // In development, return realistic mock responses for known endpoints when explicitly enabled
     if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_MOCKS === 'true') {
@@ -101,6 +125,32 @@ export class ApiClient {
       const token = typeof localStorage !== 'undefined' ? localStorage.getItem('admin_auth_token') : null;
       if (token) {
         requestHeaders['Authorization'] = `Bearer ${token}`;
+        console.log('✅ Token added to headers');
+      } else {
+        console.warn('⚠️ No auth token found in localStorage');
+        // For authenticated endpoints without token, return early with auth error
+        return {
+          success: false,
+          error: {
+            status: 401,
+            message: 'Authentication required. Please log in to continue.',
+            details: { reason: 'no_token' }
+          }
+        };
+      }
+
+      // Add X-API-Key header if available (required for export endpoints)
+      const isExportEndpoint = endpoint.includes('/export') ||
+        endpoint.includes('/download') ||
+        endpoint.includes('/content/export');
+      if (isExportEndpoint) {
+        const apiKey = typeof localStorage !== 'undefined' ? localStorage.getItem('user_api_key') : null;
+        if (apiKey) {
+          requestHeaders['X-API-Key'] = apiKey;
+          console.log('✅ API Key added to headers for export endpoint:', apiKey.substring(0, 10) + '...');
+        } else {
+          console.warn('⚠️ No API key found in localStorage for export endpoint:', endpoint);
+        }
       }
     }
 
@@ -109,18 +159,23 @@ export class ApiClient {
       headers: requestHeaders,
       mode: 'cors',
       credentials: 'omit', // Changed from 'include' to avoid CORS issues
+      // Use the abort controller for better connection handling
+      signal: abortController.signal,
     };
 
     if (body && method !== 'GET') {
       if (body instanceof FormData) {
         delete requestHeaders['Content-Type'];
         requestConfig.body = body;
+        console.log('📦 Request body: FormData');
       } else if (typeof body === 'string') {
         // If body is already a string (like URL-encoded form data), use it directly
         requestConfig.body = body;
+        console.log('📦 Request body (string):', body);
       } else {
         // Otherwise, JSON stringify it
         requestConfig.body = JSON.stringify(body);
+        console.log('📦 Request body (JSON):', JSON.stringify(body, null, 2));
       }
     }
 
@@ -137,23 +192,31 @@ export class ApiClient {
       const result = await this.handleResponse<T>(response);
 
       // Handle authentication errors (401)
+      // Requirement 6.3: Detect 401 errors, clear auth token, redirect to login, show "Session expired" message
       if (!result.success && result.error?.status === 401) {
         console.warn('🔒 Authentication error detected - redirecting to login');
         if (typeof window !== 'undefined') {
+          // Clear auth token from localStorage (Requirement 6.3)
           localStorage.removeItem('admin_auth_token');
+
+          // Store session expired message to show on login page (Requirement 6.3)
+          sessionStorage.setItem('auth_error_message', 'Your session has expired. Please log in again.');
+
+          // Redirect to login page (Requirement 6.3)
           window.location.href = '/login';
         }
         return result;
       }
 
       // Handle permission errors (403)
+      // Requirement 6.4: Detect 403 errors, show "Permission denied" notification, suggest contacting administrator
       if (!result.success && result.error?.status === 403) {
         console.warn('🚫 Permission denied');
         return {
           success: false,
           error: {
             status: 403,
-            message: "You don't have permission to perform this action",
+            message: "You don't have permission to perform this action. Please contact your administrator for access.",
             details: result.error?.details
           }
         };
@@ -176,6 +239,7 @@ export class ApiClient {
         }
       }
 
+      cleanup();
       return result;
     } catch (err) {
       console.error('API request failed:', err);
@@ -185,19 +249,31 @@ export class ApiClient {
       let errorMessage = 'Network error';
       let errorStatus = 0;
 
-      // Check if this is a CORS error
-      if (err instanceof TypeError && err.message.includes('fetch')) {
+      // Handle different types of errors
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        console.warn('🚫 Request was cancelled or timed out');
+        cleanup();
+        errorMessage = 'Request was cancelled. Please try again.';
+        errorStatus = 408; // Request Timeout
+      } else if (err instanceof TypeError && err.message.includes('fetch')) {
         console.error('🚨 CORS Error detected - this is likely a backend CORS configuration issue');
         console.error('💡 Your backend needs to allow requests from http://localhost:3000');
 
         errorMessage = `Cannot connect to backend API at ${this.baseUrl}. Please ensure:\n1. Backend server is running at ${this.baseUrl}\n2. CORS is configured to allow requests from ${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}`;
         errorStatus = 0;
       } else if (err instanceof Error) {
-        errorMessage = err.message;
+        // Handle connection reset errors more gracefully
+        if (err.message.includes('connection') || err.message.includes('network')) {
+          console.warn('🔌 Connection issue detected - this is usually temporary');
+          errorMessage = 'Connection interrupted. Please try again.';
+          errorStatus = 0;
+        } else {
+          errorMessage = err.message;
+        }
       }
 
-      // Retry on network errors
-      if (retryCount > 0) {
+      // Retry on network errors (but not on abort errors to avoid infinite loops)
+      if (retryCount > 0 && !(err instanceof DOMException && err.name === 'AbortError')) {
         console.log(`🔄 Retrying request after error (${retryCount} attempts remaining)...`);
         await this.delay(retryDelay);
         return this.request<T>(endpoint, {
@@ -207,6 +283,7 @@ export class ApiClient {
         });
       }
 
+      cleanup();
       return {
         success: false,
         error: {
@@ -221,6 +298,17 @@ export class ApiClient {
   // Delay helper for retry logic
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // Cancel all active requests (only used on page unload now)
+  public cancelAllRequests(): void {
+    if (this.activeRequests.size > 0) {
+      console.log(`🔄 Cancelling ${this.activeRequests.size} active requests due to page unload`);
+      for (const [requestKey, controller] of this.activeRequests) {
+        controller.abort();
+      }
+      this.activeRequests.clear();
+    }
   }
 
   // Parse and normalize responses
@@ -250,13 +338,36 @@ export class ApiClient {
     }
 
     if (!response.ok) {
-      console.log(`📡 Error response - Status: ${response.status}, Data:`, data);
+      // Only log unexpected errors to console
+      // 400 (validation/user errors), 403 (permission), 404 (not found) are expected and should be treated as info
+      const isExpectedError = response.status === 400 || response.status === 403 || response.status === 404;
+
+      if (!isExpectedError) {
+        console.error(`❌ Error response - Status: ${response.status}`);
+        console.error(`❌ Error data:`, JSON.stringify(data, null, 2));
+      } else {
+        // Just log as info for expected errors
+        console.log(`ℹ️ Expected error response - Status: ${response.status}`, data?.message || data?.error || 'No message');
+      }
+
+      // For 422 validation errors, show detailed field errors
+      if (response.status === 422 && data && data.detail) {
+        console.error('❌ Validation errors:');
+        if (Array.isArray(data.detail)) {
+          data.detail.forEach((err: any) => {
+            console.error(`  - Field: ${err.loc?.join('.')} | Error: ${err.msg} | Type: ${err.type}`);
+          });
+        } else {
+          console.error('  -', data.detail);
+        }
+      }
+
       return {
         success: false,
         error: {
           status: response.status,
-          message: (data && (data.message || data.error)) || response.statusText || 'Unknown error',
-          details: data && (data.details || data.errors),
+          message: (data && (data.message || data.error || data.detail)) || response.statusText || 'Unknown error',
+          details: data && (data.details || data.errors || data.detail),
         },
       };
     }
@@ -310,4 +421,17 @@ export class ApiClient {
 }
 
 export const apiClient = new ApiClient();
+
+// Add global cleanup to prevent connection reset errors
+if (typeof window !== 'undefined') {
+  // Only cancel requests when the page is actually being unloaded (user navigating away permanently)
+  window.addEventListener('beforeunload', () => {
+    console.log('🔄 Page unloading, cancelling active requests');
+    apiClient.cancelAllRequests();
+  });
+
+  // Remove the aggressive visibility change cancellation
+  // Users should be able to switch tabs/workstations without losing their requests
+}
+
 export default apiClient;

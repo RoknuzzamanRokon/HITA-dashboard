@@ -21,29 +21,35 @@ interface QuickActionsProps {
   onRefreshData?: () => void;
   isLoading?: boolean;
   compact?: boolean;
+  onCreateUser?: () => void;
 }
 
 export const QuickActions: React.FC<QuickActionsProps> = ({
   onRefreshData,
   isLoading = false,
   compact = false,
+  onCreateUser,
 }) => {
   const actions = [
     {
       id: "create-user",
       label: "Create User",
       icon: <UserPlus className="w-5 h-5" />,
-      color: "bg-blue-500 hover:bg-blue-600",
+      color: "bg-blue-500",
       onClick: () => {
-        // Navigate to user creation
-        window.location.href = "/dashboard/users/create";
+        if (onCreateUser) {
+          onCreateUser();
+        } else {
+          // Navigate to user creation with query param to open modal
+          window.location.href = "/dashboard/users?create=true";
+        }
       },
     },
     {
       id: "manage-users",
       label: "Manage Users",
       icon: <Users className="w-5 h-5" />,
-      color: "bg-green-500 hover:bg-green-600",
+      color: "bg-green-500",
       onClick: () => {
         // Navigate to user management
         window.location.href = "/dashboard/users";
@@ -53,7 +59,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
       id: "system-settings",
       label: "Settings",
       icon: <Settings className="w-5 h-5" />,
-      color: "bg-purple-500 hover:bg-purple-600",
+      color: "bg-purple-500",
       onClick: () => {
         alert("Settings panel coming soon!");
       },
@@ -62,7 +68,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
       id: "export-data",
       label: "Export Data",
       icon: <Download className="w-5 h-5" />,
-      color: "bg-orange-500 hover:bg-orange-600",
+      color: "bg-orange-500",
       onClick: () => {
         // Simulate data export
         const data = {
@@ -88,7 +94,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
       id: "import-data",
       label: "Import Data",
       icon: <Upload className="w-5 h-5" />,
-      color: "bg-teal-500 hover:bg-teal-600",
+      color: "bg-teal-500",
       onClick: () => {
         const input = document.createElement("input");
         input.type = "file";
@@ -108,16 +114,16 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
       id: "analytics",
       label: "Analytics",
       icon: <BarChart3 className="w-5 h-5" />,
-      color: "bg-indigo-500 hover:bg-indigo-600",
+      color: "bg-indigo-500",
       onClick: () => {
-        alert("Advanced analytics panel coming soon!");
+        window.location.href = "/dashboard/analytics";
       },
     },
     {
       id: "database",
       label: "Database",
       icon: <Database className="w-5 h-5" />,
-      color: "bg-gray-500 hover:bg-gray-600",
+      color: "bg-gray-500",
       onClick: () => {
         alert("Database management panel coming soon!");
       },
@@ -128,7 +134,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
       icon: (
         <RefreshCw className={`w-5 h-5 ${isLoading ? "animate-spin" : ""}`} />
       ),
-      color: "bg-red-500 hover:bg-red-600",
+      color: "bg-red-500",
       onClick: onRefreshData,
     },
   ];
@@ -147,7 +153,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
             disabled={isLoading && action.id === "refresh"}
             className={`
               ${action.color} text-white p-4 rounded-lg transition-all duration-200 
-              transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
+              transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
               flex flex-col items-center space-y-2 min-h-[80px] justify-center
             `}
           >

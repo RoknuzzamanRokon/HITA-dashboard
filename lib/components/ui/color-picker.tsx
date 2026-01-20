@@ -94,8 +94,8 @@ export function ColorPicker({
             className={clsx(
               "relative w-12 h-12 rounded-xl transition-all duration-300 ease-out",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-              "focus-visible:ring-blue-500 hover:scale-110 active:scale-95",
-              "group overflow-hidden shadow-lg hover:shadow-xl",
+              "focus-visible:ring-blue-500 active:scale-95",
+              "group overflow-hidden shadow-lg",
               {
                 "ring-2 ring-gray-900 dark:ring-white ring-offset-2":
                   value === option.value,
@@ -113,9 +113,6 @@ export function ColorPicker({
                 )}
               />
             )}
-
-            {/* Hover effect */}
-            <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
             {/* Selected indicator */}
             {value === option.value && (

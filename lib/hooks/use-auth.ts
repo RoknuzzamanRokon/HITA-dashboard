@@ -162,14 +162,14 @@ export function useLoginForm() {
     /**
      * Handle form submission
      */
-    const handleSubmit = async (e: React.FormEvent): Promise<boolean> => {
+    const handleSubmit = async (e: React.FormEvent, rememberMe: boolean = false): Promise<boolean> => {
         e.preventDefault();
 
         if (!validateForm()) {
             return false;
         }
 
-        const result = await login(formData);
+        const result = await login(formData, rememberMe);
 
         if (!result.success && result.error) {
             setFormErrors({ general: result.error });

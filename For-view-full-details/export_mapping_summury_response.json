@@ -1,0 +1,8 @@
+{
+  "job_id": "exp_07e4260c3cea40a1",
+  "status": "processing",
+  "estimated_records": 1000,
+  "estimated_completion_time": "1 seconds",
+  "created_at": "2025-11-17T10:47:43",
+  "message": "Mapping export job created successfully. Use the job_id to check status and download when complete."
+}

@@ -210,7 +210,7 @@ export function UserEditModal({
    */
   const getStatusBadge = (isActive: boolean) => {
     return isActive ? (
-      <Badge className="bg-green-100 text-green-800 border-green-200">
+      <Badge className="bg-green-100 text-gray-900 border-green-200">
         <CheckCircle className="h-3 w-3 mr-1" />
         Active
       </Badge>
@@ -232,7 +232,7 @@ export function UserEditModal({
       case "admin_user":
         return "bg-blue-100 text-blue-800 border-blue-200";
       case "general_user":
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-green-100 text-gray-900 border-green-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
@@ -626,7 +626,7 @@ export function UserEditModal({
                             {displayDetails.active_suppliers.map((supplier) => (
                               <Badge
                                 key={supplier}
-                                className="bg-green-100 text-green-800 border-green-200"
+                                className="bg-green-100 text-gray-900 border-green-200"
                               >
                                 {supplier}
                               </Badge>

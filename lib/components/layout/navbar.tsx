@@ -6,6 +6,10 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useNotifications } from "@/lib/hooks/use-notifications";
+import { RealTimeTimestamp } from "@/lib/components/ui/real-time-timestamp";
 import {
   Menu,
   Bell,
@@ -14,14 +18,13 @@ import {
   Settings,
   ChevronDown,
   Search,
-  Sun,
-  Moon,
   Palette,
   HelpCircle,
   Shield,
   MessageSquare,
   Home,
 } from "lucide-react";
+import { ColorThemeButton } from "@/lib/components/ui/ColorThemeButton";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { useTheme } from "@/lib/contexts/theme-context";
 import { User as UserType } from "@/lib/types/auth";
@@ -35,6 +38,27 @@ interface NavbarProps {
 export function Navbar({ user, onToggleSidebar }: NavbarProps) {
   const { logout } = useAuth();
   const { theme, setTheme } = useTheme();
+  const router = useRouter();
+  const { notifications, unreadCount, markAsRead } = useNotifications({
+    autoRefresh: true,
+    refreshInterval: 30000, // 30 seconds
+  });
+
+  // Calculate actual unread count from notifications (same as notifications page)
+  const actualUnreadCount = notifications.filter(
+    (n) => n.status === "unread"
+  ).length;
+
+  // Debug logging for count mismatch
+  useEffect(() => {
+    if (actualUnreadCount !== unreadCount) {
+      console.log("🔍 Navbar count mismatch:");
+      console.log("  - API count:", unreadCount);
+      console.log("  - Actual count:", actualUnreadCount);
+      console.log("  - Total notifications loaded:", notifications.length);
+    }
+  }, [actualUnreadCount, unreadCount, notifications.length]);
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -43,32 +67,34 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
   const notificationRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
-  // Mock notifications data
-  const notifications = [
-    {
-      id: 1,
-      title: "New user registered",
-      message: "John Doe just signed up",
-      time: "2 min ago",
-      unread: true,
-    },
-    {
-      id: 2,
-      title: "System update",
-      message: "Security patch applied successfully",
-      time: "1 hour ago",
-      unread: true,
-    },
-    {
-      id: 3,
-      title: "Backup completed",
-      message: "Daily backup finished",
-      time: "3 hours ago",
-      unread: false,
-    },
-  ];
+  // Get recent unread notifications (max 5 for dropdown)
+  // Filter to show only unread notifications, so they disappear when marked as read
+  const recentNotifications = notifications
+    .filter(n => n.status === "unread")
+    .slice(0, 5);
 
-  const unreadCount = notifications.filter((n) => n.unread).length;
+  // Handle notification click
+  const handleNotificationClick = async (notificationId: number) => {
+    try {
+      // Mark notification as read
+      await markAsRead(notificationId);
+      // Close the notification dropdown
+      setNotificationOpen(false);
+      // Navigate to notifications page
+      router.push("/dashboard/notifications");
+    } catch (err) {
+      console.error("Failed to mark notification as read:", err);
+      // Still navigate even if marking as read fails
+      setNotificationOpen(false);
+      router.push("/dashboard/notifications");
+    }
+  };
+
+  // Handle view all notifications
+  const handleViewAllNotifications = () => {
+    setNotificationOpen(false);
+    router.push("/dashboard/notifications");
+  };
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -125,6 +151,11 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
     }
   };
 
+  const capitalizeFirstLetter = (str: string) => {
+    if (!str) return str;
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  };
+
   return (
     <nav
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-[rgba(var(--bg-primary),0.95)] backdrop-blur-xl border-b border-[rgb(var(--border-primary))]"
@@ -164,7 +195,7 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
                 <Shield className="h-4 w-4 text-white" />
               </div>
               <h1 className="text-xl font-bold text-[rgb(var(--text-primary))] tracking-tight">
-                Admin Panel
+                {user.role === "general_user" ? "User Panel" : "Admin Panel"}
               </h1>
             </div>
           </div>
@@ -198,9 +229,9 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
                 <Bell className="h-5 w-5 relative z-10" />
-                {unreadCount > 0 && (
+                {actualUnreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-pink-500 text-xs font-bold text-white shadow-lg animate-pulse">
-                    {unreadCount}
+                    {actualUnreadCount}
                   </span>
                 )}
               </button>
@@ -220,48 +251,67 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
                       <h3 className="text-lg font-semibold text-gray-900">
                         Notifications
                       </h3>
-                      {unreadCount > 0 && (
+                      {actualUnreadCount > 0 && (
                         <span className="px-2 py-1 text-xs font-medium bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full">
-                          {unreadCount} new
+                          {actualUnreadCount} new
                         </span>
                       )}
                     </div>
                   </div>
                   <div className="max-h-96 overflow-y-auto">
-                    {notifications.map((notification) => (
-                      <div
-                        key={notification.id}
-                        className={cn(
-                          "p-4 border-b border-white/10 hover:bg-white/20 transition-colors duration-200 cursor-pointer",
-                          notification.unread && "bg-blue-50/50"
-                        )}
-                      >
-                        <div className="flex items-start space-x-3">
-                          <div
-                            className={cn(
-                              "w-2 h-2 rounded-full mt-2 flex-shrink-0",
-                              notification.unread
-                                ? "bg-blue-500"
-                                : "bg-gray-300"
-                            )}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
-                              {notification.title}
-                            </p>
-                            <p className="text-sm text-gray-600 mt-1">
-                              {notification.message}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {notification.time}
-                            </p>
+                    {recentNotifications.length === 0 ? (
+                      <div className="p-8 text-center">
+                        <Bell className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-600">
+                          No notifications yet
+                        </p>
+                      </div>
+                    ) : (
+                      recentNotifications.map((notification) => (
+                        <div
+                          key={notification.id}
+                          onClick={() =>
+                            handleNotificationClick(notification.id)
+                          }
+                          className={cn(
+                            "p-4 border-b border-white/10 hover:bg-white/20 transition-colors duration-200 cursor-pointer",
+                            notification.status === "unread" && "bg-blue-50/50"
+                          )}
+                        >
+                          <div className="flex items-start space-x-3">
+                            <div
+                              className={cn(
+                                "w-2 h-2 rounded-full mt-2 flex-shrink-0",
+                                notification.status === "unread"
+                                  ? "bg-blue-500"
+                                  : "bg-gray-300"
+                              )}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {notification.title}
+                              </p>
+                              <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                                {notification.message}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                <RealTimeTimestamp
+                                  dateString={notification.created_at}
+                                  className="text-xs text-gray-500"
+                                  updateInterval={5000}
+                                />
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                   <div className="p-4 border-t border-white/20">
-                    <button className="w-full text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200">
+                    <button
+                      onClick={handleViewAllNotifications}
+                      className="w-full text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
+                    >
                       View all notifications
                     </button>
                   </div>
@@ -269,26 +319,8 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
               )}
             </div>
 
-            {/* Theme Toggle Button */}
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className={cn(
-                "p-2 rounded-xl transition-all duration-300 relative overflow-hidden",
-                theme === "dark"
-                  ? "text-gray-300 hover:text-white hover:bg-gray-700/40"
-                  : "text-gray-600 hover:text-gray-900 hover:bg-white/40",
-                "hover:backdrop-blur-sm hover:shadow-lg hover:scale-110",
-                "focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-              )}
-              aria-label="Toggle theme"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
-              {theme === "dark" ? (
-                <Sun className="h-5 w-5 relative z-10" />
-              ) : (
-                <Moon className="h-5 w-5 relative z-10" />
-              )}
-            </button>
+            {/* Color Theme Selector */}
+            <ColorThemeButton />
 
             {/* User dropdown */}
             <div className="relative" ref={dropdownRef}>
@@ -308,7 +340,7 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
                   </div>
                   <div className="hidden md:block text-left">
                     <div className="text-sm font-semibold text-gray-900">
-                      {user.username}
+                      {capitalizeFirstLetter(user.username)}
                     </div>
                     <div className="text-xs text-gray-600 font-medium">
                       {getRoleDisplayName(user.role)}
@@ -342,7 +374,7 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
                         </div>
                         <div>
                           <div className="text-sm font-semibold text-gray-900">
-                            {user.username}
+                            {capitalizeFirstLetter(user.username)}
                           </div>
                           <div className="text-sm text-gray-600">
                             {user.email}
@@ -358,7 +390,10 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
                     <div className="py-2">
                       <button
                         className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-white/40 hover:text-gray-900 transition-all duration-200 group"
-                        onClick={() => setDropdownOpen(false)}
+                        onClick={() => {
+                          setDropdownOpen(false);
+                          router.push("/dashboard/profile");
+                        }}
                       >
                         <User className="h-4 w-4 mr-3 text-gray-500 group-hover:text-blue-500 transition-colors duration-200" />
                         <span className="font-medium">Profile</span>
@@ -366,7 +401,10 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
 
                       <button
                         className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-white/40 hover:text-gray-900 transition-all duration-200 group"
-                        onClick={() => setDropdownOpen(false)}
+                        onClick={() => {
+                          setDropdownOpen(false);
+                          router.push("/dashboard/settings");
+                        }}
                       >
                         <Settings className="h-4 w-4 mr-3 text-gray-500 group-hover:text-blue-500 transition-colors duration-200" />
                         <span className="font-medium">Settings</span>
@@ -382,7 +420,10 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
 
                       <button
                         className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-white/40 hover:text-gray-900 transition-all duration-200 group"
-                        onClick={() => setDropdownOpen(false)}
+                        onClick={() => {
+                          setDropdownOpen(false);
+                          router.push("/dashboard/issues");
+                        }}
                       >
                         <HelpCircle className="h-4 w-4 mr-3 text-gray-500 group-hover:text-blue-500 transition-colors duration-200" />
                         <span className="font-medium">Help & Support</span>

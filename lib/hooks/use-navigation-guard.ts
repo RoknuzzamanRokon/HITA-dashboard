@@ -41,7 +41,11 @@ const routeConfigs: RouteConfig[] = [
         requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER, UserRole.GENERAL_USER],
     },
     {
-        path: "/exports",
+        path: "/dashboard/exports",
+        requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER, UserRole.GENERAL_USER],
+    },
+    {
+        path: "/dashboard/documentation",
         requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER, UserRole.GENERAL_USER],
     },
     {
@@ -55,7 +59,7 @@ const routeConfigs: RouteConfig[] = [
         redirectTo: "/dashboard",
     },
     {
-        path: "/issues",
+        path: "/dashboard/issues",
         requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER, UserRole.GENERAL_USER],
     },
     {

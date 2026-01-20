@@ -47,28 +47,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Update resolved theme based on settings and system preference
+  // Always use light theme (dark mode removed)
   useEffect(() => {
-    const updateResolvedTheme = () => {
-      if (settings.theme === "system") {
-        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-          .matches
-          ? "dark"
-          : "light";
-        setResolvedTheme(systemTheme);
-      } else {
-        setResolvedTheme(settings.theme);
-      }
-    };
-
-    updateResolvedTheme();
-
-    // Listen for system theme changes
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    mediaQuery.addEventListener("change", updateResolvedTheme);
-
-    return () => mediaQuery.removeEventListener("change", updateResolvedTheme);
-  }, [settings.theme]);
+    setResolvedTheme("light");
+  }, []);
 
   // Apply theme to document (only after mount to avoid hydration issues)
   useEffect(() => {
@@ -76,12 +58,127 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     const root = document.documentElement;
 
-    // Apply theme class
+    // Always apply light theme
     root.classList.remove("light", "dark");
-    root.classList.add(resolvedTheme);
+    root.classList.add("light");
 
-    // Apply accent color
+    // Apply accent color with full color theme
     root.style.setProperty("--accent-color", settings.accentColor);
+
+    // Apply color theme variables
+    const colorThemes: Record<
+      string,
+      { primary: string; primaryRgb: string; hover: string; light: string }
+    > = {
+      blue: {
+        primary: "#3b82f6",
+        primaryRgb: "59, 130, 246",
+        hover: "#2563eb",
+        light: "#dbeafe",
+      },
+      red: {
+        primary: "#ef4444",
+        primaryRgb: "239, 68, 68",
+        hover: "#dc2626",
+        light: "#fee2e2",
+      },
+      green: {
+        primary: "#10b981",
+        primaryRgb: "16, 185, 129",
+        hover: "#059669",
+        light: "#d1fae5",
+      },
+      purple: {
+        primary: "#8b5cf6",
+        primaryRgb: "139, 92, 246",
+        hover: "#7c3aed",
+        light: "#ede9fe",
+      },
+      orange: {
+        primary: "#f97316",
+        primaryRgb: "249, 115, 22",
+        hover: "#ea580c",
+        light: "#ffedd5",
+      },
+      pink: {
+        primary: "#ec4899",
+        primaryRgb: "236, 72, 153",
+        hover: "#db2777",
+        light: "#fce7f3",
+      },
+      teal: {
+        primary: "#14b8a6",
+        primaryRgb: "20, 184, 166",
+        hover: "#0d9488",
+        light: "#ccfbf1",
+      },
+      indigo: {
+        primary: "#6366f1",
+        primaryRgb: "99, 102, 241",
+        hover: "#4f46e5",
+        light: "#e0e7ff",
+      },
+      black: {
+        primary: "#1f2937",
+        primaryRgb: "31, 41, 55",
+        hover: "#111827",
+        light: "#f3f4f6",
+      },
+      yellow: {
+        primary: "#eab308",
+        primaryRgb: "234, 179, 8",
+        hover: "#ca8a04",
+        light: "#fef9c3",
+      },
+      cyan: {
+        primary: "#06b6d4",
+        primaryRgb: "6, 182, 212",
+        hover: "#0891b2",
+        light: "#cffafe",
+      },
+      lime: {
+        primary: "#84cc16",
+        primaryRgb: "132, 204, 22",
+        hover: "#65a30d",
+        light: "#ecfccb",
+      },
+      rose: {
+        primary: "#f43f5e",
+        primaryRgb: "244, 63, 94",
+        hover: "#e11d48",
+        light: "#ffe4e6",
+      },
+      amber: {
+        primary: "#f59e0b",
+        primaryRgb: "245, 158, 11",
+        hover: "#d97706",
+        light: "#fef3c7",
+      },
+      emerald: {
+        primary: "#10b981",
+        primaryRgb: "16, 185, 129",
+        hover: "#059669",
+        light: "#d1fae5",
+      },
+      violet: {
+        primary: "#7c3aed",
+        primaryRgb: "124, 58, 237",
+        hover: "#6d28d9",
+        light: "#ede9fe",
+      },
+      sky: {
+        primary: "#0ea5e9",
+        primaryRgb: "14, 165, 233",
+        hover: "#0284c7",
+        light: "#e0f2fe",
+      },
+    };
+
+    const theme = colorThemes[settings.accentColor] || colorThemes.blue;
+    root.style.setProperty("--primary-color", theme.primary);
+    root.style.setProperty("--primary-rgb", theme.primaryRgb);
+    root.style.setProperty("--primary-hover", theme.hover);
+    root.style.setProperty("--primary-light", theme.light);
 
     // Apply border radius
     const radiusMap = {

@@ -23,6 +23,7 @@ import {
   Activity,
   Home,
   UserCog,
+  Download,
 } from "lucide-react";
 
 interface NavItem {
@@ -75,6 +76,13 @@ const navigationItems: NavItem[] = [
     icon: UserCog,
     permission: Permission.VIEW_ALL_PROVIDERS,
     description: "Manage service providers",
+  },
+  {
+    name: "Exports",
+    href: "/dashboard/exports",
+    icon: Download,
+    permission: Permission.EXPORT_DATA,
+    description: "Export hotel and mapping data",
   },
   {
     name: "Points & Transactions",

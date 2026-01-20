@@ -1,0 +1,39 @@
+import requests
+import json
+
+url = "http://127.0.0.1:8001/v1.0/export/hotels"
+
+payload = json.dumps({
+  "filters": {
+    "suppliers": [
+      "tbohotel"
+    ],
+    "country_codes": "All",
+    "min_rating": 4,
+    "max_rating": 5,
+    "date_from": "2025-06-01T00:00:00",
+    "date_to": "2025-11-13T23:59:59",
+    "ittids": "All",
+    "property_types": [
+      "Hotel",
+      "Apartment",
+      "Resort"
+    ],
+    "page": 1,
+    "page_size": 2000,
+    "max_records": 25000
+  },
+  "format": "json",
+  "include_locations": True,
+  "include_contacts": True,
+  "include_mappings": True
+})
+headers = {
+  'Content-Type': 'application/json',
+  'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyb21hbiIsInVzZXJfaWQiOiI1Nzc5MzU2MDgxIiwicm9sZSI6ImdlbmVyYWxfdXNlciIsImV4cCI6MTc2NTE3NDAwOCwidHlwZSI6ImFjY2VzcyIsImlhdCI6MTc2MzM3NDAwOH0.CVwB6hQWEU2jDL19tf8Vhoku-PsSOXUVMzGGoe57GbQ',
+  '': ''
+}
+
+response = requests.request("POST", url, headers=headers, data=payload)
+
+print(response.text)

@@ -135,7 +135,10 @@ export default function UserProfilePage() {
    * Get role display information
    */
   const getRoleInfo = (role: UserRole) => {
-    const roleConfig = {
+    const roleConfig: Record<
+      string,
+      { label: string; color: string; icon: any }
+    > = {
       super_user: {
         label: "Super User",
         color: "bg-purple-100 text-purple-800",
@@ -146,9 +149,14 @@ export default function UserProfilePage() {
         color: "bg-blue-100 text-blue-800",
         icon: Shield,
       },
+      user: {
+        label: "User",
+        color: "bg-green-100 text-gray-900",
+        icon: UserCheck,
+      },
       general_user: {
         label: "General User",
-        color: "bg-green-100 text-green-800",
+        color: "bg-green-100 text-gray-900",
         icon: UserCheck,
       },
     };
@@ -352,7 +360,7 @@ export default function UserProfilePage() {
                     variant={user.isActive ? "success" : "outline"}
                     className={
                       user.isActive
-                        ? "bg-green-100 text-green-800"
+                        ? "bg-green-100 text-gray-900"
                         : "text-gray-600"
                     }
                   >

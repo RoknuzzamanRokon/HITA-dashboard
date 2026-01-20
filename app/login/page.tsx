@@ -16,12 +16,18 @@ import { Suspense } from "react";
 
 // Security headers component
 function SecurityHeaders() {
+  // In development, we need 'unsafe-eval' for React Refresh (Hot Module Replacement)
+  const isDevelopment = process.env.NODE_ENV === "development";
+  const scriptSrc = isDevelopment
+    ? "'self' 'unsafe-inline' 'unsafe-eval'"
+    : "'self' 'unsafe-inline'";
+
   return (
     <>
       <meta name="robots" content="noindex, nofollow" />
       <meta
         httpEquiv="Content-Security-Policy"
-        content="default-src 'self'; connect-src 'self' http://127.0.0.1:8001 http://localhost:8001 https://*.innovatedemo.com; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
+        content={`default-src 'self'; connect-src 'self' http://127.0.0.1:8001 http://localhost:8001 https://*.innovatedemo.com; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline';`}
       />
     </>
   );
@@ -33,27 +39,45 @@ function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loginAttempts, setLoginAttempts] = useState(0);
+  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
 
   // Get redirect URL from query params or default to dashboard
   const redirectTo = searchParams.get("redirect") || "/dashboard";
   const returnUrl = searchParams.get("returnUrl");
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated (only once)
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      const targetUrl = returnUrl || redirectTo;
-      router.push(targetUrl);
+    if (!isLoading && !hasCheckedAuth) {
+      setHasCheckedAuth(true);
+
+      if (isAuthenticated) {
+        console.log("✅ User is authenticated, redirecting from login page");
+        const targetUrl = returnUrl || redirectTo;
+        console.log("🔄 Redirecting to:", targetUrl);
+
+        // Use replace instead of push to prevent back button issues
+        router.replace(targetUrl);
+      } else {
+        console.log("❌ User is not authenticated, staying on login page");
+      }
     }
-  }, [isAuthenticated, isLoading, router, redirectTo, returnUrl]);
+  }, [
+    isAuthenticated,
+    isLoading,
+    router,
+    redirectTo,
+    returnUrl,
+    hasCheckedAuth,
+  ]);
 
   // Show loading while checking authentication
   if (isLoading) {
     return <LoadingScreen message="Verifying session..." />;
   }
 
-  // Don't render login form if already authenticated
+  // Don't render login form if already authenticated (prevents flash)
   if (isAuthenticated) {
-    return null;
+    return <LoadingScreen message="Redirecting..." />;
   }
 
   const handleLoginSuccess = () => {

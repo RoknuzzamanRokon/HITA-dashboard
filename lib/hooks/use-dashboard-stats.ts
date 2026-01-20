@@ -57,6 +57,12 @@ export const useDashboardStats = (realTimeInterval?: number): UseDashboardStatsR
     const [lastFetch, setLastFetch] = useState<Date | null>(null);
 
     const fetchStats = async (isBackground = false) => {
+        // Prevent duplicate calls within 5 seconds
+        if (lastFetch && Date.now() - lastFetch.getTime() < 5000 && !isBackground) {
+            console.log('🚫 Skipping duplicate dashboard stats API call - too recent');
+            return;
+        }
+
         try {
             if (!isBackground) {
                 setLoading(true);
@@ -69,11 +75,20 @@ export const useDashboardStats = (realTimeInterval?: number): UseDashboardStatsR
                 throw new Error('You must be logged in to view dashboard statistics.');
             }
 
-            // Note: All authenticated users can now view dashboard stats
-            // The backend should filter data based on user role:
+            // Check if user has permission to view dashboard stats
+            // Only admin and super_admin can access dashboard stats
+            const userRole = user.role as string;
+            if (userRole === 'general_user' || userRole === 'user') {
+                console.log('ℹ️ General user - skipping dashboard stats');
+                setStats(null);
+                setLoading(false);
+                return;
+            }
+
+            // Note: Admin and super admin users can view dashboard stats
+            // The backend filters data based on user role:
             // - super_user: sees all platform data
             // - admin_user: sees organization data
-            // - user/general_user: sees only their own data
             console.log('✅ User authenticated:', {
                 username: user.username,
                 role: user.role
@@ -130,6 +145,42 @@ export const useDashboardStats = (realTimeInterval?: number): UseDashboardStatsR
                 }>(apiEndpoints.users.dashboardStats, true); // Requires authentication
             } catch (authError) {
                 console.warn('⚠️ Authenticated request failed:', authError);
+
+                // Check if this is a 403 permission error for general users
+                const errorMessage = authError instanceof Error ? authError.message : String(authError);
+                if (errorMessage.includes('403') || errorMessage.includes('Access denied') || errorMessage.includes('admin')) {
+                    console.log('🔒 User does not have permission to access dashboard stats');
+                    console.log('💡 This is expected for general users - backend needs to be updated to allow filtered access');
+
+                    // Return user-specific mock data for general users
+                    if (user.role === 'general_user' || user.role === 'user') {
+                        console.log('📊 Returning user-specific stats for general user');
+                        const userStats: DashboardStats = {
+                            totalUsers: 1,
+                            superUsers: 0,
+                            adminUsers: 0,
+                            generalUsers: 1,
+                            activeUsers: 1,
+                            inactiveUsers: 0,
+                            totalPointsDistributed: user.pointBalance || 0,
+                            currentPointsBalance: user.pointBalance || 0,
+                            recentSignups: 0,
+                            lastUpdated: new Date().toISOString(),
+                            pointDistribution: [
+                                { role: "general_user", total_points: (user.pointBalance || 0).toString(), user_count: 1 },
+                            ],
+                            activityTrends: [],
+                            topActiveUsers: [
+                                { id: user.id, username: user.username, email: user.email, transaction_count: 0 },
+                            ],
+                        };
+                        setStats(userStats);
+                        setLastFetch(new Date());
+                        setLoading(false);
+                        return;
+                    }
+                }
+
                 throw authError; // Dashboard stats require authentication, don't try without auth
             }
 

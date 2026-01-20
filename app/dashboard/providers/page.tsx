@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   Search,
   Calendar,
@@ -20,6 +21,7 @@ import type {
   UpdatedProvider,
   ProviderIdentityRequest,
   ProviderMappingResponse,
+  ProviderAllIdsResponse,
 } from "@/lib/api/provider-updates";
 import { useMemoryMonitor } from "@/lib/hooks/use-memory-monitor";
 import { apiClient } from "@/lib/api/client";
@@ -94,6 +96,18 @@ export default function ProviderUpdatePage() {
   const [providerMappingResult, setProviderMappingResult] =
     useState<ProviderMappingResponse | null>(null);
 
+  // Provider All IDs states
+  const [providerAllIdsProvider, setProviderAllIdsProvider] =
+    useState("kiwihotel");
+  const [providerAllIdsLimitPerPage, setProviderAllIdsLimitPerPage] =
+    useState("1000");
+  const [providerAllIdsResult, setProviderAllIdsResult] = useState<any>(null);
+  const [providerAllIdsCurrentPage, setProviderAllIdsCurrentPage] = useState(1);
+  const [providerAllIdsTotalPages, setProviderAllIdsTotalPages] = useState(1);
+  const [providerAllIdsResumeKey, setProviderAllIdsResumeKey] = useState<
+    string | null
+  >(null);
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(100); // Start with smaller chunks
@@ -106,6 +120,7 @@ export default function ProviderUpdatePage() {
     | "mapping"
     | "provider-identity"
     | "provider-mapping"
+    | "provider-all-ids"
   >("provider-identity");
 
   useEffect(() => {
@@ -156,10 +171,20 @@ export default function ProviderUpdatePage() {
   const fetchActiveSuppliers = async () => {
     setSuppliersLoading(true);
     try {
-      const response = await apiClient.get<any>(
-        "/user/check-active-my-supplier"
-      );
-      console.log("🔍 Active suppliers response:", response);
+      let response;
+      // Check if user should use demo endpoint - super users and admin users get full access
+      const isDemoUser =
+        user?.role !== "super_user" &&
+        user?.role !== "admin_user" &&
+        (!user?.pointBalance || user.pointBalance <= 0);
+
+      if (isDemoUser) {
+        console.log("📞 Calling demo active suppliers endpoint");
+        response = await apiClient.get<any>("/demo/check-active-my-supplier");
+      } else {
+        console.log("📞 Calling standard active suppliers endpoint");
+        response = await apiClient.get<any>("/user/check-active-my-supplier");
+      }
 
       if (response.success && response.data) {
         const suppliers = response.data.on_supplier_list || [];
@@ -170,19 +195,17 @@ export default function ProviderUpdatePage() {
           setSelectedSupplier(suppliers[0]);
         }
 
-        console.log(
-          `✅ Loaded ${suppliers.length} active suppliers:`,
-          suppliers
-        );
+        // Also update providerIdentityName if it's not in the active suppliers list
+        if (suppliers.length > 0 && !suppliers.includes(providerIdentityName)) {
+          setProviderIdentityName(suppliers[0]);
+        }
       } else {
-        console.warn("⚠️ Failed to fetch active suppliers:", response.error);
         // Fallback to default suppliers if API fails
-        setActiveSuppliers(["restel", "booking", "expedia"]);
+        setActiveSuppliers(["restel", "expedia"]);
       }
     } catch (error) {
-      console.error("❌ Error fetching active suppliers:", error);
       // Fallback to default suppliers if API fails
-      setActiveSuppliers(["restel", "booking", "expedia"]);
+      setActiveSuppliers(["restel", "expedia"]);
     } finally {
       setSuppliersLoading(false);
     }
@@ -196,16 +219,28 @@ export default function ProviderUpdatePage() {
     const targetPage = pageToFetch || currentPage;
 
     try {
-      const response = await ProviderUpdatesApi.getAllIttids({
-        page: targetPage,
-      });
+      let response;
+      // Check if user should use demo endpoint - super users and admin users get full access
+      const isDemoUser =
+        user?.role !== "super_user" &&
+        user?.role !== "admin_user" &&
+        (!user?.pointBalance || user.pointBalance <= 0);
+
+      if (isDemoUser) {
+        response = await ProviderUpdatesApi.getAllDemoIds();
+      } else {
+        response = await ProviderUpdatesApi.getAllIttids({
+          page: targetPage,
+        });
+      }
 
       if (response.success && response.data) {
-        console.log("🔍 Backend response:", response.data);
-
         // Backend returns AllIttidResponse with ittid_list, convert to HotelMapping format
-        const ittidList = response.data.ittid_list || [];
-        const totalItems = response.data.total_ittid || ittidList.length;
+        const responseData = response.data as any;
+        const ittidList =
+          responseData.ittid_list || responseData.hotel_ids || [];
+        const totalItems =
+          responseData.total_ittid || responseData.count || ittidList.length;
 
         // Memory safety check
         if (!checkMemoryForOperation(ittidList.length)) {
@@ -238,7 +273,7 @@ export default function ProviderUpdatePage() {
 
         setAllIttids(hotelMappings);
         setIttidStats({
-          totalSuppliers: response.data.total_supplier || 0,
+          totalSuppliers: responseData.total_supplier || 0,
           totalIttids: totalItems,
         });
 
@@ -263,15 +298,13 @@ export default function ProviderUpdatePage() {
           setMemoryWarning(
             `Page ${targetPage} of ${calculatedTotalPages} • Showing ${
               limitedList.length
-            } items • Total: ${totalItems.toLocaleString()} items from ${
-              response.data.total_supplier
-            } suppliers`
+            } items • Total: ${totalItems.toLocaleString()} items${
+              responseData.total_supplier
+                ? ` from ${responseData.total_supplier} suppliers`
+                : ""
+            }`
           );
         }
-
-        console.log(
-          `✅ Loaded ${limitedList.length} ITTIDs from ${response.data.total_supplier} suppliers (limited: ${isMemoryLimited})`
-        );
 
         // Memory monitoring is handled by the hook
       } else {
@@ -310,8 +343,6 @@ export default function ProviderUpdatePage() {
       });
 
       if (response.success && response.data) {
-        console.log("🔍 Provider updates response:", response.data);
-
         // Handle the actual API response structure
         let updates: UpdatedProvider[] = [];
         if (
@@ -326,17 +357,8 @@ export default function ProviderUpdatePage() {
             details: mapping,
           }));
         } else {
-          console.warn(
-            "⚠️ No provider_mappings found in response:",
-            response.data
-          );
           updates = [];
         }
-
-        console.log(`✅ Setting ${updates.length} provider updates`);
-        console.log(
-          `📊 API Info: Page ${response.data.current_page} of ${response.data.total_page}, showing ${response.data.show_hotels_this_page} of ${response.data.total_hotel} total hotels`
-        );
 
         // Store API response info
         setProviderUpdateInfo({
@@ -358,7 +380,6 @@ export default function ProviderUpdatePage() {
 
         setUpdatedProviders(updates);
       } else {
-        console.error("❌ Provider updates request failed:", response.error);
         setError(
           response.error?.message || "Failed to fetch updated provider data"
         );
@@ -403,8 +424,6 @@ export default function ProviderUpdatePage() {
       });
 
       if (response.success && response.data) {
-        console.log("🔍 Country mapping response:", response.data);
-
         const hotelData = response.data.data || [];
         const totalHotels = response.data.total_hotel || hotelData.length;
 
@@ -491,10 +510,6 @@ export default function ProviderUpdatePage() {
             } hotels • Total: ${totalHotels.toLocaleString()} hotels in ${selectedCountry} from ${selectedSupplier}`
           );
         }
-
-        console.log(
-          `✅ Loaded ${limitedList.length} hotels from ${selectedSupplier} in ${selectedCountry} (limited: ${isMemoryLimited})`
-        );
       } else {
         setError(response.error?.message || "Failed to fetch mapping data");
       }
@@ -542,6 +557,10 @@ export default function ProviderUpdatePage() {
   // };
 
   const searchByProviderIdentity = async () => {
+    console.log("🔍 searchByProviderIdentity called");
+    console.log("👤 User:", user);
+    console.log("💰 Point Balance:", user?.pointBalance);
+
     if (!providerIdentityName || !providerIdentityId) {
       setError("Please enter both provider name and provider ID");
       return;
@@ -560,41 +579,41 @@ export default function ProviderUpdatePage() {
         ],
       };
 
-      console.log("🔍 Sending provider identity request:", request);
-      console.log(
-        `🔍 Provider: ${providerIdentityName}, ID: ${providerIdentityId}`
-      );
+      let response;
+      // Check if user should use demo endpoint - super users and admin users get full access
+      const isDemoUser =
+        user?.role !== "super_user" &&
+        user?.role !== "admin_user" &&
+        (!user?.pointBalance || user.pointBalance <= 0);
+      console.log("🎯 Is Demo User:", isDemoUser);
 
-      const response =
-        await ProviderUpdatesApi.getHotelMappingByProviderIdentity(request);
-
-      console.log("📡 Provider identity response:", response);
+      if (isDemoUser) {
+        console.log("📞 Calling demo provider identity endpoint");
+        response =
+          await ProviderUpdatesApi.getDemoHotelMappingByProviderIdentity(
+            request
+          );
+      } else {
+        console.log("📞 Calling standard provider identity endpoint");
+        response = await ProviderUpdatesApi.getHotelMappingByProviderIdentity(
+          request
+        );
+      }
 
       // Store the raw response for debugging
       setLastApiResponse(response);
 
       if (response.success) {
-        console.log("✅ API call successful, processing data...");
-
         if (response.data) {
           // The backend returns an array directly, so we need to handle it properly
           const responseData = Array.isArray(response.data)
             ? response.data[0]
             : response.data;
-          console.log("✅ Setting provider identity result:", responseData);
           setProviderIdentityResult(responseData);
         } else {
-          console.log("⚠️ API call successful but no data returned");
           setError("API call successful but no data was returned");
         }
       } else {
-        // console.error("❌ Provider identity request failed:", response);
-        // console.error("❌ Error details:", response.error);
-        // console.error(
-        //   "❌ Full response object:",
-        //   JSON.stringify(response, null, 2)
-        // );
-
         // Better error message handling
         let errorMessage = "Failed to fetch provider identity mapping";
 
@@ -617,7 +636,6 @@ export default function ProviderUpdatePage() {
         setError(errorMessage);
       }
     } catch (err) {
-      console.error("❌ Provider identity request error:", err);
       setError(
         err instanceof Error
           ? err.message
@@ -629,6 +647,10 @@ export default function ProviderUpdatePage() {
   };
 
   const searchProviderMapping = async () => {
+    console.log("🔍 searchProviderMapping called");
+    console.log("👤 User:", user);
+    console.log("💰 Point Balance:", user?.pointBalance);
+
     if (!providerMappingIttid) {
       setError("Please enter an ITTID");
       return;
@@ -639,32 +661,46 @@ export default function ProviderUpdatePage() {
     setProviderMappingResult(null);
 
     try {
-      console.log(
-        "🔍 Sending provider mapping request for ITTID:",
-        providerMappingIttid
-      );
+      let response;
+      // Check if user should use demo endpoint - super users and admin users get full access
+      const isDemoUser =
+        user?.role !== "super_user" &&
+        user?.role !== "admin_user" &&
+        (!user?.pointBalance || user.pointBalance <= 0);
+      console.log("🎯 Is Demo User:", isDemoUser);
 
-      const response = await ProviderUpdatesApi.getProviderMappingByIttid({
-        ittid: providerMappingIttid,
-      });
+      if (isDemoUser) {
+        console.log("📞 Calling demo API endpoint");
+        response = await ProviderUpdatesApi.getDemoProviderMapping({
+          ittid: providerMappingIttid,
+        });
+      } else {
+        console.log("📞 Calling standard API endpoint");
+        response = await ProviderUpdatesApi.getProviderMappingByIttid({
+          ittid: providerMappingIttid,
+        });
+      }
 
-      console.log("📡 Provider mapping response:", response);
+      console.log("✅ API Response:", response);
 
       if (response.success && response.data) {
-        console.log("✅ Setting provider mapping result:", response.data);
-        console.log("✅ Hotel data:", response.data.hotel);
-        console.log("✅ Provider mappings:", response.data.provider_mappings);
-        console.log("✅ Total suppliers:", response.data.total_supplier);
-        console.log("✅ Provider list:", response.data.provider_list);
         setProviderMappingResult(response.data);
       } else {
-        console.error("❌ Provider mapping request failed:", response.error);
-        setError(
-          response.error?.message || "Failed to fetch provider mapping data"
-        );
+        // Handle demo mode access restrictions
+        if (response.error?.status === 403) {
+          setError(
+            "Access denied: This item is not available in demo mode. Only the first 100 items are accessible."
+          );
+        } else if (response.error?.status === 404) {
+          setError("This hotel id not open for you.");
+        } else {
+          setError(
+            response.error?.message || "Failed to fetch provider mapping data"
+          );
+        }
       }
     } catch (err) {
-      console.error("❌ Provider mapping request error:", err);
+      console.error("❌ Error in searchProviderMapping:", err);
       setError(
         err instanceof Error
           ? err.message
@@ -672,6 +708,69 @@ export default function ProviderUpdatePage() {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchProviderAllIds = async (page: number = 1, resumeKey?: string) => {
+    console.log("🔍 fetchProviderAllIds called");
+    console.log("👤 User:", user);
+    console.log("💰 Point Balance:", user?.pointBalance);
+    console.log("📄 Page:", page);
+    console.log("🔑 Resume Key:", resumeKey);
+    console.log("📊 Limit Per Page:", providerAllIdsLimitPerPage);
+
+    if (!providerAllIdsProvider) {
+      setError("Please select a provider");
+      return;
+    }
+
+    const limitPerPageNum = parseInt(providerAllIdsLimitPerPage);
+    if (isNaN(limitPerPageNum) || limitPerPageNum <= 0) {
+      setError("Please enter a valid limit per page (positive number)");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await ProviderUpdatesApi.getProviderAllIds({
+        provider: providerAllIdsProvider,
+        limitPerPage: limitPerPageNum,
+        resumeKey: resumeKey || undefined,
+      });
+
+      console.log("✅ API Response:", response);
+
+      if (response.success && response.data) {
+        setProviderAllIdsResult(response.data);
+        setProviderAllIdsTotalPages(response.data.total_pages);
+        setProviderAllIdsCurrentPage(response.data.current_page);
+        setProviderAllIdsResumeKey(response.data.resume_key || null);
+      } else {
+        setError(
+          response.error?.message || "Failed to fetch provider all IDs data"
+        );
+      }
+    } catch (err) {
+      console.error("❌ Error in fetchProviderAllIds:", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to fetch provider all IDs data"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleProviderAllIdsPageChange = (newPage: number) => {
+    if (newPage === 1) {
+      // First page - no resume key needed
+      fetchProviderAllIds(1);
+    } else {
+      // Use resume key for subsequent pages
+      fetchProviderAllIds(newPage, providerAllIdsResumeKey || undefined);
     }
   };
 
@@ -691,7 +790,7 @@ export default function ProviderUpdatePage() {
   const getChangeTypeColor = (type: string) => {
     switch (type) {
       case "new":
-        return "bg-green-100 text-green-800";
+        return "bg-green-100 text-gray-900";
       case "updated":
         return "bg-blue-100 text-blue-800";
       case "deleted":
@@ -704,48 +803,13 @@ export default function ProviderUpdatePage() {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Provider Updates
-            </h1>
-            <p className="text-gray-600">
-              Manage hotel mappings and track provider updates
-            </p>
-          </div>
-
-          {/* Memory Management Panel */}
-          <div className="bg-gray-50 rounded-lg p-4 min-w-64">
-            <h3 className="text-sm font-medium text-gray-900 mb-2">
-              Memory Management
-            </h3>
-            <div className="space-y-2 text-xs text-gray-600">
-              <div className="flex justify-between">
-                <span>Display limit:</span>
-                <span className={isLowMemory ? "text-red-600 font-medium" : ""}>
-                  {maxDisplayItems.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Items per page:</span>
-                <span>{itemsPerPage}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Status:</span>
-                <span
-                  className={isLowMemory ? "text-red-600" : "text-green-600"}
-                >
-                  {isLowMemory ? "Low Memory" : "Normal"}
-                </span>
-              </div>
-            </div>
-            <button
-              onClick={clearMemory}
-              className="mt-3 w-full px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-xs"
-            >
-              Clear Memory
-            </button>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Provider Updates
+          </h1>
+          <p className="text-gray-600">
+            Manage hotel mappings and track provider updates
+          </p>
         </div>
       </div>
 
@@ -764,23 +828,49 @@ export default function ProviderUpdatePage() {
                 label: "Provider Mapping",
                 icon: Search,
               },
+              {
+                id: "provider-all-ids",
+                label: "Provider All IDs",
+                icon: Database,
+              },
               { id: "mapping", label: "Country Mapping", icon: MapPin },
               { id: "all-ittids", label: "All ITTIDs", icon: Database },
               { id: "updates", label: "Provider Updates", icon: RefreshCw },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === tab.id
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                <tab.icon className="h-4 w-4 mr-2" />
-                {tab.label}
-              </button>
-            ))}
+            ]
+              .filter((tab) => {
+                // Super users and admin users should see all tabs
+                if (
+                  user?.role === "super_user" ||
+                  user?.role === "admin_user"
+                ) {
+                  return true;
+                }
+                // For demo users (no points) or general users, only show specific tabs
+                if (!user?.pointBalance || user.pointBalance <= 0) {
+                  return [
+                    "provider-identity",
+                    "provider-mapping",
+                    "provider-all-ids",
+                    "all-ittids",
+                  ].includes(tab.id);
+                }
+                // For paid users, show all tabs
+                return true;
+              })
+              .map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`flex items-center py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === tab.id
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <tab.icon className="h-4 w-4 mr-2" />
+                  {tab.label}
+                </button>
+              ))}
           </nav>
         </div>
       </div>
@@ -910,7 +1000,6 @@ export default function ProviderUpdatePage() {
                   ) : (
                     <>
                       <option value="restel">Restel</option>
-                      <option value="booking">Booking.com</option>
                       <option value="expedia">Expedia</option>
                     </>
                   )}
@@ -1540,6 +1629,7 @@ export default function ProviderUpdatePage() {
               </div>
               <div className="flex gap-2">
                 <button
+                  type="button"
                   onClick={searchByProviderIdentity}
                   disabled={loading}
                   className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
@@ -1550,6 +1640,7 @@ export default function ProviderUpdatePage() {
                   {loading ? "Searching..." : "Search"}
                 </button>
                 <button
+                  type="button"
                   onClick={() => {
                     setProviderIdentityResult(null);
                     setProviderMappingResult(null);
@@ -1571,6 +1662,7 @@ export default function ProviderUpdatePage() {
                     Provider Name
                   </label>
                   <button
+                    type="button"
                     onClick={fetchActiveSuppliers}
                     disabled={suppliersLoading}
                     className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
@@ -1621,6 +1713,12 @@ export default function ProviderUpdatePage() {
                   placeholder="e.g., 1134459"
                   value={providerIdentityId}
                   onChange={(e) => setProviderIdentityId(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      searchByProviderIdentity();
+                    }
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <p className="text-xs text-gray-500 mt-1">
@@ -1659,6 +1757,9 @@ export default function ProviderUpdatePage() {
                               Provider ID
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Actions
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Created At
                             </th>
                           </tr>
@@ -1678,6 +1779,18 @@ export default function ProviderUpdatePage() {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                   {mapping.provider_id || providerIdentityId}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                  {mapping.ittid && mapping.ittid !== "N/A" ? (
+                                    <Link
+                                      href={`/dashboard/provider/details/${mapping.ittid}`}
+                                      className="inline-flex items-center px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                    >
+                                      See
+                                    </Link>
+                                  ) : (
+                                    <span className="text-gray-400">-</span>
+                                  )}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                   {mapping.created_at
@@ -1740,6 +1853,7 @@ export default function ProviderUpdatePage() {
                 </p>
               </div>
               <button
+                type="button"
                 onClick={searchProviderMapping}
                 disabled={loading}
                 className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
@@ -1760,6 +1874,12 @@ export default function ProviderUpdatePage() {
                 placeholder="e.g., 10000004"
                 value={providerMappingIttid}
                 onChange={(e) => setProviderMappingIttid(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    searchProviderMapping();
+                  }
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <p className="text-xs text-gray-500 mt-1">
@@ -1816,7 +1936,10 @@ export default function ProviderUpdatePage() {
                           Active Mappings
                         </p>
                         <p className="text-lg font-bold text-purple-700">
-                          {providerMappingResult.provider_mappings.length}
+                          {
+                            (providerMappingResult.provider_mappings || [])
+                              .length
+                          }
                         </p>
                       </div>
                     </div>
@@ -1829,15 +1952,21 @@ export default function ProviderUpdatePage() {
                     Available Providers:
                   </h4>
                   <div className="flex flex-wrap gap-2">
-                    {providerMappingResult.provider_list.map(
-                      (provider, index) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                        >
-                          {getSupplierDisplayName(provider)}
-                        </span>
+                    {(providerMappingResult.provider_list || []).length > 0 ? (
+                      (providerMappingResult.provider_list || []).map(
+                        (provider, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                          >
+                            {getSupplierDisplayName(provider)}
+                          </span>
+                        )
                       )
+                    ) : (
+                      <span className="text-xs text-gray-500">
+                        No providers listed
+                      </span>
                     )}
                   </div>
                 </div>
@@ -1889,17 +2018,6 @@ export default function ProviderUpdatePage() {
                             (hotel.property_type &&
                               hotel.property_type.trim()) ||
                             "Hotel";
-
-                          // Debug log
-                          if (index === 0) {
-                            console.log("First row data:", {
-                              hotelName,
-                              countryCode,
-                              propertyType,
-                              hotelObject: hotel,
-                              detailsObject: details,
-                            });
-                          }
 
                           return (
                             <tr key={index} className="hover:bg-gray-50">
@@ -1983,6 +2101,366 @@ export default function ProviderUpdatePage() {
                 <p className="text-sm">
                   Enter an ITTID to get comprehensive provider mapping
                   information
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Provider All IDs Tab */}
+      {activeTab === "provider-all-ids" && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Provider All IDs
+                </h2>
+                <p className="text-sm text-gray-600">
+                  Get all hotel IDs for a specific provider with pagination
+                  support
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => fetchProviderAllIds(1)}
+                disabled={loading}
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+              >
+                <Database
+                  className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+                />
+                {loading ? "Loading..." : "Fetch IDs"}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Provider Name
+                  </label>
+                  <button
+                    type="button"
+                    onClick={fetchActiveSuppliers}
+                    disabled={suppliersLoading}
+                    className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
+                    title="Refresh suppliers list"
+                  >
+                    <RefreshCw
+                      className={`h-3 w-3 ${
+                        suppliersLoading ? "animate-spin" : ""
+                      }`}
+                    />
+                  </button>
+                </div>
+                <select
+                  value={providerAllIdsProvider}
+                  onChange={(e) => setProviderAllIdsProvider(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={suppliersLoading}
+                >
+                  {suppliersLoading ? (
+                    <option value="">Loading suppliers...</option>
+                  ) : activeSuppliers.length > 0 ? (
+                    activeSuppliers.map((supplier) => (
+                      <option key={supplier} value={supplier}>
+                        {getSupplierDisplayName(supplier)}
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="agoda">Agoda</option>
+                      <option value="expedia">Expedia</option>
+                      <option value="restel">Restel</option>
+                      <option value="hotelbeds">Hotelbeds</option>
+                    </>
+                  )}
+                </select>
+                {activeSuppliers.length > 0 && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {activeSuppliers.length} active suppliers loaded
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Limit Per Page
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="10000"
+                  placeholder="e.g., 1000"
+                  value={providerAllIdsLimitPerPage}
+                  onChange={(e) =>
+                    setProviderAllIdsLimitPerPage(e.target.value)
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      fetchProviderAllIds(1);
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Number of hotel IDs to fetch per page (1-10000)
+                </p>
+              </div>
+            </div>
+
+            {/* Results Display */}
+            {providerAllIdsResult && (
+              <div className="mt-6 space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium text-gray-900">
+                    Provider All IDs Results
+                  </h3>
+                  <span className="text-sm text-gray-500">
+                    Provider: {providerAllIdsResult.provider_name} | Total:{" "}
+                    {providerAllIdsResult.total_hotel_ids.toLocaleString()} IDs
+                  </span>
+                </div>
+
+                {/* Summary Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center">
+                      <Database className="h-8 w-8 text-blue-600 mr-3" />
+                      <div>
+                        <p className="text-sm font-medium text-blue-900">
+                          Provider
+                        </p>
+                        <p className="text-lg font-bold text-blue-700">
+                          {providerAllIdsResult.provider_name}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-center">
+                      <UserCheck className="h-8 w-8 text-green-600 mr-3" />
+                      <div>
+                        <p className="text-sm font-medium text-green-900">
+                          Total Hotel IDs
+                        </p>
+                        <p className="text-lg font-bold text-green-700">
+                          {providerAllIdsResult.total_hotel_ids.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <div className="flex items-center">
+                      <MapPin className="h-8 w-8 text-purple-600 mr-3" />
+                      <div>
+                        <p className="text-sm font-medium text-purple-900">
+                          Current Page
+                        </p>
+                        <p className="text-lg font-bold text-purple-700">
+                          {providerAllIdsResult.current_page} /{" "}
+                          {providerAllIdsResult.total_pages}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                    <div className="flex items-center">
+                      <Clock className="h-8 w-8 text-orange-600 mr-3" />
+                      <div>
+                        <p className="text-sm font-medium text-orange-900">
+                          This Page
+                        </p>
+                        <p className="text-lg font-bold text-orange-700">
+                          {providerAllIdsResult.hotel_ids_this_page} IDs
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Hotel IDs Table */}
+                <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                  <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                    <h4 className="text-lg font-medium text-gray-900">
+                      Hotel IDs (Page {providerAllIdsResult.current_page})
+                    </h4>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            #
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Hotel ID
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {providerAllIdsResult.hotel_ids.map(
+                          (hotelId: string, index: number) => (
+                            <tr key={hotelId} className="hover:bg-gray-50">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {(providerAllIdsResult.current_page - 1) *
+                                  parseInt(providerAllIdsLimitPerPage) +
+                                  index +
+                                  1}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                <code className="bg-gray-100 px-2 py-1 rounded text-xs">
+                                  {hotelId}
+                                </code>
+                              </td>
+                            </tr>
+                          )
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Pagination */}
+                {providerAllIdsTotalPages > 1 && (
+                  <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+                    <div className="flex flex-1 justify-between sm:hidden">
+                      <button
+                        onClick={() =>
+                          handleProviderAllIdsPageChange(
+                            providerAllIdsCurrentPage - 1
+                          )
+                        }
+                        disabled={providerAllIdsCurrentPage <= 1 || loading}
+                        className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                      >
+                        Previous
+                      </button>
+                      <button
+                        onClick={() =>
+                          handleProviderAllIdsPageChange(
+                            providerAllIdsCurrentPage + 1
+                          )
+                        }
+                        disabled={
+                          providerAllIdsCurrentPage >=
+                            providerAllIdsTotalPages || loading
+                        }
+                        className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                      >
+                        Next
+                      </button>
+                    </div>
+                    <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-sm text-gray-700">
+                          Showing page{" "}
+                          <span className="font-medium">
+                            {providerAllIdsCurrentPage}
+                          </span>{" "}
+                          of{" "}
+                          <span className="font-medium">
+                            {providerAllIdsTotalPages}
+                          </span>
+                        </p>
+                      </div>
+                      <div>
+                        <nav
+                          className="isolate inline-flex -space-x-px rounded-md shadow-sm"
+                          aria-label="Pagination"
+                        >
+                          <button
+                            onClick={() =>
+                              handleProviderAllIdsPageChange(
+                                providerAllIdsCurrentPage - 1
+                              )
+                            }
+                            disabled={providerAllIdsCurrentPage <= 1 || loading}
+                            className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                          >
+                            <span className="sr-only">Previous</span>
+                            <svg
+                              className="h-5 w-5"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                              aria-hidden="true"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </button>
+
+                          {/* Page numbers */}
+                          {Array.from(
+                            { length: Math.min(5, providerAllIdsTotalPages) },
+                            (_, i) => {
+                              const pageNum = i + 1;
+                              return (
+                                <button
+                                  key={pageNum}
+                                  onClick={() =>
+                                    handleProviderAllIdsPageChange(pageNum)
+                                  }
+                                  disabled={loading}
+                                  className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                                    pageNum === providerAllIdsCurrentPage
+                                      ? "z-10 bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                                      : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                                  } disabled:opacity-50`}
+                                >
+                                  {pageNum}
+                                </button>
+                              );
+                            }
+                          )}
+
+                          <button
+                            onClick={() =>
+                              handleProviderAllIdsPageChange(
+                                providerAllIdsCurrentPage + 1
+                              )
+                            }
+                            disabled={
+                              providerAllIdsCurrentPage >=
+                                providerAllIdsTotalPages || loading
+                            }
+                            className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                          >
+                            <span className="sr-only">Next</span>
+                            <svg
+                              className="h-5 w-5"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                              aria-hidden="true"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </button>
+                        </nav>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!loading && !providerAllIdsResult && (
+              <div className="text-center py-8 text-gray-500">
+                <Database className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p className="text-lg font-medium">No results yet</p>
+                <p className="text-sm">
+                  Click "Fetch IDs" to get all hotel IDs for{" "}
+                  {providerAllIdsProvider}
                 </p>
               </div>
             )}

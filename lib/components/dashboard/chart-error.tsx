@@ -53,7 +53,7 @@ export default function ChartError({
       {onRetry && (
         <button
           onClick={onRetry}
-          className="inline-flex items-center gap-2 rounded-md bg-[rgb(var(--info))] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[rgb(var(--info))]/90 focus:outline-none focus:ring-2 focus:ring-[rgb(var(--border-focus))] focus:ring-offset-2"
+          className="inline-flex items-center gap-2 rounded-md bg-[rgb(var(--info))] px-4 py-2 text-sm font-medium text-white transition-colors focus:outline-none focus:ring-2 focus:ring-[rgb(var(--border-focus))] focus:ring-offset-2"
           aria-label="Retry loading chart data"
         >
           <svg

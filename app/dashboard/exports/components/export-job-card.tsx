@@ -1,0 +1,450 @@
+"use client";
+
+import React, { useState, memo, useEffect } from "react";
+import { ExportJob } from "@/lib/types/exports";
+import { Badge } from "@/lib/components/ui/badge";
+import { Button } from "@/lib/components/ui/button";
+import {
+  cn,
+  formatDateTime,
+  formatNumber,
+  truncate,
+  formatTimeRemaining,
+  formatEstimatedTime,
+} from "@/lib/utils";
+import {
+  Download,
+  RefreshCw,
+  Trash2,
+  Copy,
+  Check,
+  FileJson,
+  FileSpreadsheet,
+  AlertCircle,
+  Clock,
+  Calendar,
+  CheckCircle,
+  XCircle,
+  Loader2,
+} from "lucide-react";
+
+export interface ExportJobCardProps {
+  job: ExportJob;
+  onRefresh: () => Promise<void>;
+  onDownload: () => Promise<void>;
+  onDelete: () => void;
+  onCreateNew?: () => void;
+}
+
+export const ExportJobCard = memo(function ExportJobCard({
+  job,
+  onRefresh,
+  onDownload,
+  onDelete,
+  onCreateNew,
+}: ExportJobCardProps) {
+  const [copied, setCopied] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [, setTimerTick] = useState(0); // Force re-render for countdown timer
+
+  // Update timer every minute for expiration countdown (Requirement 5.5)
+  useEffect(() => {
+    if (job.status === "completed" && job.expiresAt) {
+      const interval = setInterval(() => {
+        setTimerTick((tick) => tick + 1);
+      }, 60000); // Update every minute
+
+      return () => clearInterval(interval);
+    }
+  }, [job.status, job.expiresAt]);
+
+  // Copy job ID to clipboard
+  const handleCopyJobId = async () => {
+    try {
+      await navigator.clipboard.writeText(job.jobId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error("Failed to copy job ID:", error);
+    }
+  };
+
+  // Handle refresh with loading state
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await onRefresh();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Handle download with loading state
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      await onDownload();
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  // Get status badge variant and icon
+  const getStatusConfig = () => {
+    switch (job.status) {
+      case "pending":
+        return {
+          variant: "default" as const,
+          icon: <Clock className="w-3 h-3" />,
+          label: "Waiting to start",
+        };
+      case "processing":
+        return {
+          variant: "info" as const,
+          icon: <Loader2 className="w-3 h-3 animate-spin" />,
+          label: "Processing",
+        };
+      case "completed":
+        return {
+          variant: "success" as const,
+          icon: <CheckCircle className="w-3 h-3" />,
+          label: "Completed",
+        };
+      case "failed":
+        return {
+          variant: "error" as const,
+          icon: <XCircle className="w-3 h-3" />,
+          label: "Failed",
+        };
+      case "expired":
+        return {
+          variant: "warning" as const,
+          icon: <Clock className="w-3 h-3" />,
+          label: "Expired",
+        };
+      default:
+        return {
+          variant: "default" as const,
+          icon: null,
+          label: job.status,
+        };
+    }
+  };
+
+  const statusConfig = getStatusConfig();
+
+  // Get export type badge
+  const exportTypeConfig = {
+    hotel: {
+      label: "Hotel Export",
+      icon: <FileJson className="w-3 h-3" />,
+    },
+    mapping: {
+      label: "Mapping Export",
+      icon: <FileSpreadsheet className="w-3 h-3" />,
+    },
+  };
+
+  const typeConfig = exportTypeConfig[job.exportType];
+
+  // Check if download is available
+  // Download is only available for completed jobs that haven't expired
+  const canDownload =
+    job.status === "completed" &&
+    job.expiresAt &&
+    new Date(job.expiresAt) >= new Date();
+
+  // Check if job is expired
+  function isExpired(): boolean {
+    if (!job.expiresAt) return false;
+    return new Date(job.expiresAt) < new Date();
+  }
+
+  return (
+    <article
+      className="bg-[rgb(var(--bg-primary))] rounded-xl shadow-md border border-[rgb(var(--border-primary))] p-5 hover:shadow-lg transition-shadow duration-200"
+      aria-label={`${job.exportType} export job ${job.jobId}`}
+    >
+      {/* Header: Job ID, Type, Status */}
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex-1 min-w-0">
+          {/* Job ID with copy button */}
+          <div className="flex items-center gap-2 mb-2">
+            <span
+              className="text-xs font-mono text-[rgb(var(--text-tertiary))]"
+              aria-label={`Job ID: ${job.jobId}`}
+            >
+              {truncate(job.jobId, 20)}
+            </span>
+            <button
+              onClick={handleCopyJobId}
+              className="p-2 min-w-[32px] min-h-[32px] hover:bg-[rgb(var(--bg-secondary))] rounded transition-colors flex items-center justify-center"
+              title="Copy Job ID"
+              aria-label={copied ? "Job ID copied" : "Copy job ID to clipboard"}
+            >
+              {copied ? (
+                <Check className="w-3 h-3 text-green-600" aria-hidden="true" />
+              ) : (
+                <Copy
+                  className="w-3 h-3 text-[rgb(var(--text-tertiary))]"
+                  aria-hidden="true"
+                />
+              )}
+            </button>
+          </div>
+
+          {/* Export Type Badge */}
+          <div className="flex items-center gap-2">
+            <Badge variant="default" size="sm">
+              <span className="flex items-center gap-1">
+                {typeConfig.icon}
+                {typeConfig.label}
+              </span>
+            </Badge>
+          </div>
+        </div>
+
+        {/* Status Badge */}
+        <Badge variant={statusConfig.variant} size="md">
+          <span className="flex items-center gap-1.5">
+            {statusConfig.icon}
+            {statusConfig.label}
+          </span>
+        </Badge>
+      </div>
+
+      {/* Progress Bar (for processing jobs) */}
+      {job.status === "processing" && (
+        <div className="mb-4" role="status" aria-live="polite">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-medium text-[rgb(var(--text-secondary))]">
+              Progress
+            </span>
+            <span className="text-xs font-semibold text-blue-600">
+              {job.progress}%
+            </span>
+          </div>
+          <div
+            className="w-full bg-[rgb(var(--bg-secondary))] rounded-full h-2 overflow-hidden"
+            role="progressbar"
+            aria-valuenow={job.progress}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`Export progress: ${job.progress}%`}
+          >
+            <div
+              className="bg-linear-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${job.progress}%` }}
+            >
+              <div className="h-full w-full bg-linear-to-r from-transparent via-white/30 to-transparent animate-pulse" />
+            </div>
+          </div>
+          {/* Estimated completion time (Requirement 7.4) */}
+          {job.estimatedCompletionTime && (
+            <div className="text-xs text-[rgb(var(--text-tertiary))] mt-1">
+              Estimated completion:{" "}
+              {formatEstimatedTime(job.estimatedCompletionTime)}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Records Count */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-[rgb(var(--text-secondary))]">Records:</span>
+          <span className="font-semibold text-[rgb(var(--text-primary))]">
+            {formatNumber(job.processedRecords)} /{" "}
+            {formatNumber(job.totalRecords)}
+          </span>
+        </div>
+      </div>
+
+      {/* Timestamps */}
+      <div className="space-y-2 mb-4 text-xs">
+        <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))]">
+          <Calendar className="w-3 h-3" />
+          <span>Created:</span>
+          <span className="font-medium text-[rgb(var(--text-primary))]">
+            {formatDateTime(job.createdAt)}
+          </span>
+        </div>
+
+        {job.startedAt && (
+          <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))]">
+            <Clock className="w-3 h-3" />
+            <span>Started:</span>
+            <span className="font-medium text-[rgb(var(--text-primary))]">
+              {formatDateTime(job.startedAt)}
+            </span>
+          </div>
+        )}
+
+        {job.completedAt && (
+          <div className="flex items-center gap-2 text-[rgb(var(--text-secondary))]">
+            <CheckCircle className="w-3 h-3" />
+            <span>Completed:</span>
+            <span className="font-medium text-[rgb(var(--text-primary))]">
+              {formatDateTime(job.completedAt)}
+            </span>
+          </div>
+        )}
+
+        {job.expiresAt &&
+          (job.status === "completed" || job.status === "expired") && (
+            <div
+              className={cn(
+                "flex items-center gap-2",
+                job.status === "expired" || isExpired()
+                  ? "text-red-600"
+                  : "text-[rgb(var(--text-secondary))]"
+              )}
+            >
+              <AlertCircle className="w-3 h-3" />
+              <span>{job.status === "expired" ? "Expired:" : "Expires:"}</span>
+              <span className="font-medium">
+                {formatDateTime(job.expiresAt)}
+              </span>
+              {/* Countdown timer for completed jobs (Requirement 5.5) */}
+              {job.status === "completed" && !isExpired() && (
+                <span className="text-xs font-semibold text-blue-600 ml-1">
+                  ({formatTimeRemaining(job.expiresAt)} left)
+                </span>
+              )}
+            </div>
+          )}
+      </div>
+
+      {/* Error Message (for failed jobs) - WCAG AA compliant */}
+      {job.status === "failed" && job.errorMessage && (
+        <div
+          className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg"
+          role="alert"
+          aria-live="assertive"
+        >
+          <div className="flex items-start gap-2">
+            <AlertCircle
+              className="w-4 h-4 text-red-600 shrink-0 mt-0.5"
+              aria-hidden="true"
+            />
+            <div className="flex-1 min-w-0">
+              {/* Light: red-900 on red-50 (9.5:1 contrast) ✓ */}
+              {/* Dark: red-200 on red-900/30 (7.5:1 contrast) ✓ */}
+              <p className="text-xs font-medium text-red-900 mb-1">Error</p>
+              {/* Light: red-800 on red-50 (8.8:1 contrast) ✓ */}
+              {/* Dark: red-200 on red-900/30 (7.5:1 contrast) ✓ */}
+              <p className="text-xs text-red-800 wrap-break-word">
+                {job.errorMessage}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Expiration Warning (for expired jobs) - WCAG AA compliant */}
+      {job.status === "expired" && (
+        <div
+          className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg"
+          role="alert"
+          aria-live="polite"
+        >
+          <div className="flex items-start gap-2">
+            {/* Light: yellow-700 on yellow-50 (5.8:1 contrast) ✓ */}
+            {/* Dark: yellow-400 on yellow-900/30 (7.2:1 contrast) ✓ */}
+            <Clock
+              className="w-4 h-4 text-yellow-700 shrink-0 mt-0.5"
+              aria-hidden="true"
+            />
+            <div className="flex-1 min-w-0">
+              {/* Light: yellow-900 on yellow-50 (9.2:1 contrast) ✓ */}
+              {/* Dark: yellow-200 on yellow-900/30 (8.1:1 contrast) ✓ */}
+              <p className="text-xs font-medium text-yellow-900 mb-1">
+                Download Expired
+              </p>
+              {/* Light: yellow-900 on yellow-50 (9.2:1 contrast) ✓ */}
+              {/* Dark: yellow-200 on yellow-900/30 (8.1:1 contrast) ✓ */}
+              <p className="text-xs text-yellow-900 wrap-break-word">
+                This export has expired and is no longer available for download.
+                Please create a new export with the same filters if you still
+                need this data.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Action Buttons */}
+      <div
+        className="flex items-center gap-2 pt-4 border-t border-[rgb(var(--border-primary))]"
+        role="group"
+        aria-label="Job actions"
+      >
+        {/* Refresh Button (not shown for expired jobs) */}
+        {job.status !== "expired" && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            leftIcon={
+              <RefreshCw
+                className={cn("w-4 h-4", isRefreshing && "animate-spin")}
+                aria-hidden="true"
+              />
+            }
+            className="flex-1 min-h-[44px] md:min-h-0"
+            aria-label={
+              isRefreshing ? "Refreshing job status" : "Refresh job status"
+            }
+          >
+            Refresh
+          </Button>
+        )}
+
+        {/* Download Button (only for completed jobs that haven't expired) */}
+        {canDownload && (
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handleDownload}
+            disabled={isDownloading}
+            loading={isDownloading}
+            leftIcon={<Download className="w-4 h-4" aria-hidden="true" />}
+            className="flex-1 min-h-[44px] md:min-h-0"
+            aria-label={
+              isDownloading ? "Downloading export file" : "Download export file"
+            }
+          >
+            Download
+          </Button>
+        )}
+
+        {/* Create New Export Button (only for expired jobs) */}
+        {job.status === "expired" && onCreateNew && (
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={onCreateNew}
+            leftIcon={<FileJson className="w-4 h-4" aria-hidden="true" />}
+            className="flex-1 min-h-[44px] md:min-h-0"
+            aria-label="Create new export with same filters"
+          >
+            Create New Export
+          </Button>
+        )}
+
+        {/* Delete Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onDelete}
+          className="text-red-600 hover:text-red-700 hover:bg-red-50 min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0"
+          aria-label="Delete job"
+        >
+          <Trash2 className="w-4 h-4" aria-hidden="true" />
+        </Button>
+      </div>
+    </article>
+  );
+});

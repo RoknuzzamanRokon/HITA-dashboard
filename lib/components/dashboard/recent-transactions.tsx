@@ -45,7 +45,6 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-
   const getMockTransactions = (): Transaction[] => {
     const now = new Date();
     return [
@@ -245,7 +244,7 @@ export const RecentTransactions: React.FC<RecentTransactionsProps> = ({
               <div
                 key={transaction.id}
                 className={`
-                  p-4 rounded-xl border transition-all duration-200 hover:shadow-md
+                  p-4 rounded-xl border transition-all duration-200
                   ${getStatusColor(transaction.status)}
                   animate-fade-in
                 `}

@@ -5,7 +5,8 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import {
   Search,
   Building2,
@@ -20,12 +21,15 @@ import {
 import { Button } from "@/lib/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/lib/components/ui/card";
 import { HotelSearchCompact } from "@/lib/components/hotels/hotel-search-compact";
+import { HotelDetailsModal } from "@/lib/components/hotel-details-modal/HotelDetailsModal";
+import { HotelAutocompleteSearch } from "@/lib/components/hotels/hotel-autocomplete-search";
 
 import { useAuth } from "@/lib/contexts/auth-context";
 import { HotelService } from "@/lib/api/hotels";
 import type { Hotel, HotelStats } from "@/lib/types/hotel";
 
 export default function HotelsPage() {
+  const router = useRouter();
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const [isLoading, setIsLoading] = useState<boolean>(false); // Start with false to show mock data immediately
   const [stats, setStats] = useState<HotelStats | null>(null);
@@ -80,12 +84,32 @@ export default function HotelsPage() {
       availabilityStatus: string;
     }>;
   } | null>(null);
+  const [activeSupplierCount, setActiveSupplierCount] = useState<number | null>(
+    null
+  );
+
+  // Modal state management
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedHotelIttid, setSelectedHotelIttid] = useState<string>("");
+  const [selectedHotelName, setSelectedHotelName] = useState<string>("");
+  const triggerButtonRef = useRef<HTMLElement>(null);
 
   const handleHotelSelect = (hotel: Hotel) => {
-    // Log the selected hotel for now - can be extended to show modal or navigate
-    console.log("Selected hotel:", hotel);
-    // Optional: Navigate to hotel details page
-    // window.location.href = `/dashboard/hotels/${hotel.ittid}`;
+    console.log("🏨 Hotel selected:", hotel);
+    console.log("📋 ITTID:", hotel.ittid);
+    console.log("🏷️ Name:", hotel.name);
+
+    // Navigate to hotel details page in the same window
+    const detailsUrl = `/dashboard/hotels/details/${hotel.ittid}`;
+    console.log("🔗 Navigating to details page:", detailsUrl);
+    router.push(detailsUrl);
+
+    console.log("✅ Navigation initiated");
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    // Focus will be returned to trigger button by the modal component
   };
 
   const handleExport = async () => {
@@ -231,6 +255,30 @@ export default function HotelsPage() {
           }`
         );
       }
+
+      // Load active supplier count
+      try {
+        console.log("Loading active supplier count...");
+        const activeSupplierCountResponse =
+          await HotelService.checkActiveMySupplier();
+        if (
+          activeSupplierCountResponse.success &&
+          activeSupplierCountResponse.data
+        ) {
+          setActiveSupplierCount(
+            activeSupplierCountResponse.data.active_supplier
+          );
+          console.log(
+            "Loaded active supplier count:",
+            activeSupplierCountResponse.data.active_supplier
+          );
+        }
+      } catch (activeSupplierCountError) {
+        console.log(
+          "Active supplier count not available:",
+          activeSupplierCountError
+        );
+      }
     } finally {
       setIsLoading(false);
     }
@@ -319,16 +367,9 @@ export default function HotelsPage() {
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                   <span className="text-gray-500 font-medium">
                     System Online
+                    {activeSupplierCount !== null && `: ${activeSupplierCount}`}
                   </span>
                 </div>
-                {recentHotels.length > 0 && (
-                  <div className="flex items-center space-x-2 text-sm">
-                    <Database className="h-3 w-3 text-gray-400" />
-                    <span className="text-gray-500">
-                      {recentHotels.length} hotels loaded
-                    </span>
-                  </div>
-                )}
                 {accessibleSuppliers.length > 0 && (
                   <div className="flex items-center space-x-2 text-sm">
                     <Users className="h-3 w-3 text-gray-400" />
@@ -509,6 +550,13 @@ export default function HotelsPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Hotel Autocomplete Search */}
+        <Card className="mb-8" hover={false}>
+          <CardContent className="p-6">
+            <HotelAutocompleteSearch />
+          </CardContent>
+        </Card>
 
         {/* Hotel Info Details Section */}
         {hotelInfo && (
@@ -738,7 +786,7 @@ export default function HotelsPage() {
                           className={`px-2 py-1 rounded-full text-xs ${
                             supplier.accessType === "fullAccess" ||
                             supplier.accessType === "full_access"
-                              ? "bg-green-100 text-green-800"
+                              ? "bg-green-100 text-gray-900"
                               : "bg-blue-100 text-blue-800"
                           }`}
                         >
@@ -819,6 +867,14 @@ export default function HotelsPage() {
           </div>
         </div>
       </div>
+
+      {/* Hotel Details Modal */}
+      <HotelDetailsModal
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        ittid={selectedHotelIttid}
+        hotelName={selectedHotelName}
+      />
     </div>
   );
 }

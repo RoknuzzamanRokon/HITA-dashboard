@@ -29,3 +29,6 @@ export * from './responsive';
 
 // Menu configuration
 export * from './menu-config';
+
+// Hotel details transformation utilities
+export * from './hotel-details-transform';

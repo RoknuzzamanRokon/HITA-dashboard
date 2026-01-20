@@ -58,6 +58,75 @@ export function formatNumber(num: number): string {
 }
 
 /**
+ * Calculate time remaining until expiration (Requirement 5.5)
+ * Returns a human-readable string like "2h 30m" or "Expired"
+ */
+export function formatTimeRemaining(expiresAt: Date | string | null): string {
+    if (!expiresAt) return 'N/A';
+
+    const expirationDate = typeof expiresAt === 'string' ? new Date(expiresAt) : expiresAt;
+    const now = new Date();
+    const diffMs = expirationDate.getTime() - now.getTime();
+
+    // If expired
+    if (diffMs <= 0) {
+        return 'Expired';
+    }
+
+    // Calculate time units
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    // Format based on time remaining
+    if (diffDays > 0) {
+        const hours = diffHours % 24;
+        return hours > 0 ? `${diffDays}d ${hours}h` : `${diffDays}d`;
+    } else if (diffHours > 0) {
+        const minutes = diffMinutes % 60;
+        return minutes > 0 ? `${diffHours}h ${minutes}m` : `${diffHours}h`;
+    } else if (diffMinutes > 0) {
+        return `${diffMinutes}m`;
+    } else {
+        return 'Less than 1m';
+    }
+}
+
+/**
+ * Format estimated completion time (Requirement 7.4)
+ * Returns a human-readable string like "~5m" or "~2h 30m", or null if no time provided
+ */
+export function formatEstimatedTime(estimatedTime: Date | string | null): string | null {
+    if (!estimatedTime) return null;
+
+    const estimatedDate = typeof estimatedTime === 'string' ? new Date(estimatedTime) : estimatedTime;
+    const now = new Date();
+    const diffMs = estimatedDate.getTime() - now.getTime();
+
+    // If time has passed
+    if (diffMs <= 0) {
+        return 'Soon';
+    }
+
+    // Calculate time units
+    const diffSeconds = Math.floor(diffMs / 1000);
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+    // Format based on time remaining
+    if (diffHours > 0) {
+        const minutes = diffMinutes % 60;
+        return minutes > 0 ? `~${diffHours}h ${minutes}m` : `~${diffHours}h`;
+    } else if (diffMinutes > 0) {
+        return `~${diffMinutes}m`;
+    } else if (diffSeconds > 0) {
+        return `~${diffSeconds}s`;
+    } else {
+        return 'Soon';
+    }
+}
+
+/**
  * Debounce function to limit the rate of function calls
  */
 export function debounce<T extends (...args: any[]) => any>(

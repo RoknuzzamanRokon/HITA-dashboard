@@ -9,6 +9,7 @@ import React, {
   useContext,
   useReducer,
   useEffect,
+  useRef,
   ReactNode,
 } from "react";
 import { AuthService } from "@/lib/api/auth";
@@ -27,7 +28,8 @@ type AuthAction =
 // Auth context type
 interface AuthContextType extends AuthState {
   login: (
-    credentials: LoginCredentials
+    credentials: LoginCredentials,
+    rememberMe?: boolean,
   ) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -100,6 +102,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [error, setError] = React.useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = React.useState(false);
 
+  // Cache for refreshUser to prevent duplicate calls
+  const refreshUserCache = useRef({ lastRefreshTime: 0 });
+
+  // Cache initialization flag
+  const cacheInitialized = useRef(false);
+
   // Initialize authentication state on mount
   useEffect(() => {
     // Initialize session tracking
@@ -109,11 +117,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Add visibility change listener to re-authenticate when tab becomes visible
   useEffect(() => {
+    let lastRefreshTime = 0;
+    const REFRESH_COOLDOWN = 30000; // 30 seconds cooldown
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible" && state.isAuthenticated) {
-        // Update session activity and silently refresh user data
-        SessionPersistence.updateActivity();
-        refreshUser();
+        const now = Date.now();
+
+        // Only refresh if enough time has passed since last refresh
+        if (now - lastRefreshTime > REFRESH_COOLDOWN) {
+          console.log(
+            "🔄 Tab became visible, refreshing user data (throttled)",
+          );
+          SessionPersistence.updateActivity();
+          refreshUser();
+          lastRefreshTime = now;
+        } else {
+          console.log(
+            "🚫 Skipping user refresh - too recent (within 30s cooldown)",
+          );
+          // Just update activity without API call
+          SessionPersistence.updateActivity();
+        }
       }
     };
 
@@ -131,68 +156,70 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log("🔄 Initializing auth state...");
       dispatch({ type: "SET_LOADING", payload: true });
 
-      // Check if user is authenticated
+      // Quick check if user is authenticated
       const hasToken = AuthService.isAuthenticated();
 
-      if (hasToken) {
-        console.log("✅ Token found, setting up user session...");
-        const token = AuthService.getToken();
-        dispatch({ type: "SET_TOKEN", payload: token });
+      if (!hasToken) {
+        console.log("❌ No valid token found, user not authenticated");
+        dispatch({ type: "LOGOUT" });
+        SessionPersistence.clearSession();
+        dispatch({ type: "SET_LOADING", payload: false });
+        return;
+      }
 
-        // Try to fetch current user, but don't fail if it doesn't work
-        try {
-          const userResponse = await AuthService.getCurrentUser();
+      console.log("✅ Token found, setting up user session...");
+      const token = AuthService.getToken();
+      dispatch({ type: "SET_TOKEN", payload: token });
 
-          if (userResponse.success && userResponse.data) {
-            console.log(
-              "✅ User profile loaded successfully:",
-              userResponse.data
-            );
-            dispatch({ type: "SET_USER", payload: userResponse.data });
+      // Try to fetch current user, but don't fail if it doesn't work
+      try {
+        const userResponse = await AuthService.getCurrentUser();
 
-            // Update session with user data
-            SessionPersistence.saveSession({
-              isAuthenticated: true,
-              userId: userResponse.data.id,
-              username: userResponse.data.username,
-            });
-          } else {
-            console.warn("⚠️ User profile fetch failed, using fallback user");
-            // Create a fallback user to keep session active
-            const session = SessionPersistence.getSession();
-            const fallbackUser = AuthService.createFallbackUser(
-              session.username || "user",
-              token || ""
-            );
-            dispatch({ type: "SET_USER", payload: fallbackUser });
+        if (userResponse.success && userResponse.data) {
+          console.log(
+            "✅ User profile loaded successfully:",
+            userResponse.data,
+          );
+          dispatch({ type: "SET_USER", payload: userResponse.data });
 
-            // Still save session data
-            SessionPersistence.saveSession({
-              isAuthenticated: true,
-              userId: fallbackUser.id,
-              username: fallbackUser.username,
-            });
-          }
-        } catch (userError) {
-          console.warn("⚠️ User fetch error, using fallback:", userError);
-          // Always create a fallback user if we have a token
+          // Update session with user data
+          SessionPersistence.saveSession({
+            isAuthenticated: true,
+            userId: userResponse.data.id,
+            username: userResponse.data.username,
+          });
+        } else {
+          console.warn("⚠️ User profile fetch failed, using fallback user");
+          // Create a fallback user to keep session active
           const session = SessionPersistence.getSession();
           const fallbackUser = AuthService.createFallbackUser(
             session.username || "user",
-            token || ""
+            token || "",
           );
           dispatch({ type: "SET_USER", payload: fallbackUser });
 
+          // Still save session data
           SessionPersistence.saveSession({
             isAuthenticated: true,
             userId: fallbackUser.id,
             username: fallbackUser.username,
           });
         }
-      } else {
-        console.log("❌ No valid token found, user not authenticated");
-        dispatch({ type: "LOGOUT" });
-        SessionPersistence.clearSession();
+      } catch (userError) {
+        console.warn("⚠️ User fetch error, using fallback:", userError);
+        // Always create a fallback user if we have a token
+        const session = SessionPersistence.getSession();
+        const fallbackUser = AuthService.createFallbackUser(
+          session.username || "user",
+          token || "",
+        );
+        dispatch({ type: "SET_USER", payload: fallbackUser });
+
+        SessionPersistence.saveSession({
+          isAuthenticated: true,
+          userId: fallbackUser.id,
+          username: fallbackUser.username,
+        });
       }
     } catch (error) {
       console.error("❌ Auth initialization failed:", error);
@@ -201,12 +228,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const token = AuthService.getToken();
       if (token) {
         console.log(
-          "⚠️ Keeping user session active despite initialization error"
+          "⚠️ Keeping user session active despite initialization error",
         );
         const session = SessionPersistence.getSession();
         const fallbackUser = AuthService.createFallbackUser(
           session.username || "user",
-          token
+          token,
         );
         dispatch({ type: "SET_USER", payload: fallbackUser });
 
@@ -228,16 +255,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   /**
    * Login user
+   * @param credentials - Login credentials (username and password)
+   * @param rememberMe - If true, tokens are stored in localStorage (persistent). If false, stored in sessionStorage (session-only)
    */
   const login = async (
-    credentials: LoginCredentials
+    credentials: LoginCredentials,
+    rememberMe: boolean = true,
   ): Promise<{ success: boolean; error?: string }> => {
     try {
       dispatch({ type: "SET_LOADING", payload: true });
       setError(null);
 
-      console.log("🔐 Starting login process...");
-      const response = await AuthService.login(credentials);
+      console.log("🔐 Starting login process...", { rememberMe });
+      const response = await AuthService.login(credentials, rememberMe);
       console.log("🔐 Login response:", response);
 
       if (response.success && response.data) {
@@ -254,12 +284,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // If user profile fetch fails, create a basic user object from the token
           console.warn(
             "⚠️ Failed to fetch user profile, using fallback user data:",
-            userResponse.error
+            userResponse.error,
           );
           console.log("🔄 Creating fallback user to ensure login succeeds...");
           user = AuthService.createFallbackUser(
             credentials.username,
-            response.data.access_token
+            response.data.access_token,
           );
           console.log("✅ Fallback user created:", user);
         }
@@ -280,6 +310,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
           userId: user.id,
           username: user.username,
         });
+
+        // Initialize cache system for the user
+        console.log("🚀 Initializing cache system after login...");
+        try {
+          // Set current user ID for cache management
+          localStorage.setItem("current-cache-user-id", user.id);
+
+          // Mark cache as needing initialization
+          cacheInitialized.current = false;
+
+          console.log("✅ Cache system marked for initialization");
+        } catch (cacheError) {
+          console.warn("⚠️ Cache initialization setup failed:", cacheError);
+        }
 
         console.log("✅ Login process completed successfully");
         console.log("🔍 Final auth state after login:", {
@@ -316,57 +360,99 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       console.log("🚪 AuthContext: Starting logout process...");
       setIsLoggingOut(true);
-      dispatch({ type: "SET_LOADING", payload: true });
 
-      // Clear tokens from storage
-      console.log("🧹 AuthContext: Clearing tokens...");
-      await AuthService.logout();
+      // Clear tokens from storage first (immediate local logout)
+      console.log("🧹 AuthContext: Clearing tokens and session...");
+      SessionPersistence.clearSession();
 
-      // Update state
+      // Clear cache for the user
+      if (state.user) {
+        try {
+          console.log("🧹 AuthContext: Clearing user cache...");
+
+          // Clear all cache entries for this user
+          const keysToRemove: string[] = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(`cache_${state.user.id}_`)) {
+              keysToRemove.push(key);
+            }
+          }
+          keysToRemove.forEach((key) => localStorage.removeItem(key));
+
+          // Remove current user ID
+          localStorage.removeItem("current-cache-user-id");
+
+          console.log("✅ AuthContext: User cache cleared");
+        } catch (cacheError) {
+          console.warn("⚠️ AuthContext: Failed to clear cache:", cacheError);
+        }
+      }
+
+      // Update state immediately
       console.log("🔄 AuthContext: Updating state...");
       dispatch({ type: "LOGOUT" });
       setError(null);
 
-      // Clear session data
-      console.log("🧹 AuthContext: Clearing session...");
-      SessionPersistence.clearSession();
+      // Call logout API in background (don't wait for it)
+      AuthService.logout().catch((error) => {
+        console.warn("⚠️ Logout API call failed (continuing anyway):", error);
+      });
 
-      console.log("✅ AuthContext: Logout completed successfully");
+      console.log("✅ AuthContext: Local logout completed successfully");
 
       // Force redirect to login page immediately
       if (typeof window !== "undefined") {
         console.log("🔄 AuthContext: Redirecting to login...");
-        window.location.href = "/login";
+        // Use replace to prevent back button issues and add a small delay to ensure state is updated
+        setTimeout(() => {
+          window.location.replace("/login");
+        }, 100);
       }
     } catch (error) {
       console.error("❌ AuthContext: Logout failed:", error);
-      // Still logout locally even if API call fails
+      // Still logout locally even if everything fails
       dispatch({ type: "LOGOUT" });
       setError(null);
+      SessionPersistence.clearSession();
 
       // Force redirect even on error
       if (typeof window !== "undefined") {
         console.log(
-          "🔄 AuthContext: Force redirecting to login after error..."
+          "🔄 AuthContext: Force redirecting to login after error...",
         );
-        window.location.href = "/login";
+        setTimeout(() => {
+          window.location.replace("/login");
+        }, 100);
       }
     } finally {
-      dispatch({ type: "SET_LOADING", payload: false });
       setIsLoggingOut(false);
     }
   };
 
   /**
-   * Refresh user data
+   * Refresh user data with caching to prevent duplicate API calls
    */
   const refreshUser = async (): Promise<void> => {
+    const now = Date.now();
+    const REFRESH_COOLDOWN = 10000; // 10 seconds cooldown for refreshUser
+
+    // Prevent duplicate calls within cooldown period
+    if (now - refreshUserCache.current.lastRefreshTime < REFRESH_COOLDOWN) {
+      console.log("🚫 Skipping refreshUser - too recent (within 10s cooldown)");
+      return;
+    }
+
     try {
       if (!state.isAuthenticated) return;
+
+      console.log("🔄 Refreshing user data...");
+      refreshUserCache.current.lastRefreshTime = now;
 
       const userResponse = await AuthService.getCurrentUser();
       if (userResponse.success && userResponse.data) {
         dispatch({ type: "SET_USER", payload: userResponse.data });
+        console.log("✅ User data refreshed successfully");
       }
     } catch (error) {
       console.error("Failed to refresh user:", error);

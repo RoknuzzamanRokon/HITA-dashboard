@@ -13,8 +13,8 @@
     background-color: rgb(var(--bg-tertiary));
 }
 
-.bg-hover:hover {
-    background-color: rgb(var(--bg-hover));
+.bg-hover {
+    background-color: rgb(var(--bg-primary));
 }
 
 /* Text utilities */
@@ -143,9 +143,7 @@
     backdrop-filter: blur(4px);
 }
 
-.dark .modal-overlay {
-    background-color: rgba(0, 0, 0, 0.7);
-}
+/* Dark mode modal overlay removed */
 
 .modal-content {
     background-color: rgb(var(--bg-primary));

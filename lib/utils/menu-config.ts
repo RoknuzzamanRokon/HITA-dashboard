@@ -19,6 +19,7 @@ import {
     FileText,
     Search,
     User,
+    Bell,
 } from "lucide-react";
 import { UserRole } from "@/lib/types/auth";
 
@@ -58,6 +59,14 @@ export const mainMenuItems: MenuItem[] = [
         requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER, UserRole.GENERAL_USER],
     },
     {
+        id: "notifications",
+        label: "Notifications",
+        icon: Bell,
+        path: "/dashboard/notifications",
+        description: "View and manage your notifications",
+        requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER, UserRole.GENERAL_USER],
+    },
+    {
         id: "users",
         label: "User Management",
         icon: Users,
@@ -85,8 +94,16 @@ export const mainMenuItems: MenuItem[] = [
         id: "exports",
         label: "Content Export",
         icon: Download,
-        path: "/exports",
+        path: "/dashboard/exports",
         description: "Download and export content data",
+        requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER, UserRole.GENERAL_USER],
+    },
+    {
+        id: "documentation",
+        label: "Documentation",
+        icon: FileText,
+        path: "/dashboard/documentation",
+        description: "Platform guides and documentation",
         requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER, UserRole.GENERAL_USER],
     },
 ];
@@ -97,7 +114,7 @@ export const adminMenuItems: MenuItem[] = [
         id: "billing",
         label: "Billing & Points",
         icon: CreditCard,
-        path: "/billing",
+        path: "/dashboard/billing",
         description: "Manage user points and billing",
         requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER],
     },
@@ -105,7 +122,7 @@ export const adminMenuItems: MenuItem[] = [
         id: "sync",
         label: "Sync History",
         icon: Activity,
-        path: "/sync",
+        path: "/dashboard/sync",
         description: "Monitor content synchronization",
         requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER],
     },
@@ -113,9 +130,17 @@ export const adminMenuItems: MenuItem[] = [
         id: "issues",
         label: "Report Issues",
         icon: MessageSquare,
-        path: "/issues",
+        path: "/dashboard/issues",
         description: "Report and track system issues",
         requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER, UserRole.GENERAL_USER],
+    },
+    {
+        id: "admin-notifications",
+        label: "Send Notifications",
+        icon: Bell,
+        path: "/dashboard/admin/notifications",
+        description: "Send notifications to users",
+        requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER],
     },
 ];
 
@@ -149,7 +174,7 @@ export const systemMenuItems: MenuItem[] = [
                 id: "admin-config",
                 label: "Configuration",
                 icon: Settings,
-                path: "/admin/config",
+                path: "/dashboard/settings",
                 description: "System configuration",
                 requiredRoles: [UserRole.SUPER_USER],
             },
@@ -260,7 +285,7 @@ export function getQuickActions(userRole: UserRole): MenuItem[] {
                 id: "quick-export",
                 label: "Export Data",
                 icon: Download,
-                path: "/exports",
+                path: "/dashboard/exports",
                 requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER, UserRole.GENERAL_USER],
             }
         );

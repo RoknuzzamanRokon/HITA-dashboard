@@ -1,11 +1,229 @@
 @import "tailwindcss";
-@import "./dark-mode-utilities.css";
 
 /* Base styles for the admin management panel */
 :root {
     --accent-color: blue;
     --border-radius: 0.5rem;
     --animation-duration: 150ms;
+
+    /* Primary color theme variables - Default Blue */
+    --primary-color: #3b82f6;
+    --primary-rgb: 59, 130, 246;
+    --primary-hover: #2563eb;
+    --primary-light: #dbeafe;
+    --primary-dark: #1e40af;
+}
+
+/* Black Theme */
+:root[data-theme="black"] {
+    --primary-color: #1f2937;
+    --primary-rgb: 31, 41, 55;
+    --primary-hover: #111827;
+    --primary-light: #f3f4f6;
+    --primary-dark: #030712;
+}
+
+/* Orange Theme */
+:root[data-theme="orange"] {
+    --primary-color: #f97316;
+    --primary-rgb: 249, 115, 22;
+    --primary-hover: #ea580c;
+    --primary-light: #ffedd5;
+    --primary-dark: #c2410c;
+}
+
+/* Teal Theme */
+:root[data-theme="teal"] {
+    --primary-color: #14b8a6;
+    --primary-rgb: 20, 184, 166;
+    --primary-hover: #0d9488;
+    --primary-light: #ccfbf1;
+    --primary-dark: #0f766e;
+}
+
+/* Primary color utility classes */
+.bg-primary-color {
+    background-color: var(--primary-color) !important;
+}
+
+.bg-primary-light {
+    background-color: var(--primary-light) !important;
+}
+
+.bg-primary-hover {
+    background-color: var(--primary-color) !important;
+}
+
+.text-primary-color {
+    color: var(--primary-color) !important;
+}
+
+.border-primary-color {
+    border-color: var(--primary-color) !important;
+}
+
+.ring-primary-color {
+    --tw-ring-color: var(--primary-color) !important;
+}
+
+.focus\:ring-primary-color:focus {
+    --tw-ring-color: var(--primary-color) !important;
+}
+
+/* Apply primary color to common UI elements */
+
+/* Buttons with blue colors - replace with primary */
+button.bg-blue-500,
+button.bg-blue-600,
+.bg-blue-500,
+.bg-blue-600 {
+    background-color: var(--primary-color) !important;
+}
+
+button.bg-blue-500:hover,
+button.bg-blue-600:hover,
+.bg-blue-500:hover,
+.bg-blue-600:hover {
+    background-color: var(--primary-hover) !important;
+}
+
+/* Text colors */
+.text-blue-500,
+.text-blue-600,
+.text-blue-700 {
+    color: var(--primary-color) !important;
+}
+
+/* Border colors */
+.border-blue-500,
+.border-blue-600 {
+    border-color: var(--primary-color) !important;
+}
+
+/* Focus rings */
+.focus\:ring-blue-500:focus,
+.focus\:ring-blue-600:focus {
+    --tw-ring-color: var(--primary-color) !important;
+}
+
+/* Gradient backgrounds */
+.from-blue-500,
+.from-blue-600 {
+    --tw-gradient-from: var(--primary-color) !important;
+}
+
+.to-blue-500,
+.to-blue-600 {
+    --tw-gradient-to: var(--primary-color) !important;
+}
+
+/* Links */
+a.text-blue-600,
+a.text-blue-500 {
+    color: var(--primary-color) !important;
+}
+
+a.text-blue-600:hover,
+a.text-blue-500:hover {
+    color: var(--primary-hover) !important;
+}
+
+/* Badges and pills */
+.badge-info,
+.bg-blue-100 {
+    background-color: var(--primary-light) !important;
+    color: var(--primary-color) !important;
+}
+
+/* Icons with blue color */
+svg.text-blue-500,
+svg.text-blue-600 {
+    color: var(--primary-color) !important;
+}
+
+/* Checkboxes and radio buttons */
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+/* Progress bars */
+.bg-blue-500[role="progressbar"],
+.bg-blue-600[role="progressbar"] {
+    background-color: var(--primary-color) !important;
+}
+
+/* Tabs */
+[role="tab"][aria-selected="true"] {
+    color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+/* Active navigation items */
+.active,
+[aria-current="page"] {
+    color: var(--primary-color) !important;
+}
+
+.active .bg-blue-100,
+[aria-current="page"] .bg-blue-100 {
+    background-color: var(--primary-light) !important;
+}
+
+/* Sidebar active items */
+.sidebar-item.active {
+    background-color: var(--primary-light) !important;
+    color: var(--primary-color) !important;
+    border-left-color: var(--primary-color) !important;
+}
+
+/* Dropdown hover states */
+.dropdown-item:hover {
+    background-color: var(--primary-light) !important;
+}
+
+/* Card hover effects */
+.card:hover {
+    border-color: var(--primary-color) !important;
+}
+
+/* Loading spinners */
+.animate-spin {
+    border-top-color: var(--primary-color) !important;
+    border-bottom-color: var(--primary-color) !important;
+}
+
+/* Notification badges */
+.badge-info {
+    background-color: var(--primary-light) !important;
+    color: var(--primary-color) !important;
+}
+
+/* Switch/Toggle components */
+.bg-blue-600[role="switch"],
+.bg-blue-500[role="switch"] {
+    background-color: var(--primary-color) !important;
+}
+
+/* Slider components */
+input[type="range"]::-webkit-slider-thumb {
+    background-color: var(--primary-color) !important;
+}
+
+input[type="range"]::-moz-range-thumb {
+    background-color: var(--primary-color) !important;
+}
+
+/* Selection highlight */
+::selection {
+    background-color: var(--primary-light) !important;
+    color: var(--primary-color) !important;
+}
+
+::-moz-selection {
+    background-color: var(--primary-light) !important;
+    color: var(--primary-color) !important;
 }
 
 /* Light theme - Modern, clean design */
@@ -32,7 +250,7 @@
     --success: 34, 197, 94;
     --warning: 234, 179, 8;
     --error: 239, 68, 68;
-    --info: 59, 130, 246;
+    --info: var(--primary-rgb);
 
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -41,49 +259,33 @@
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
-/* Dark theme - Professional, high contrast design */
+/* Dark theme - Modern, high contrast design */
 .dark {
-    /* Backgrounds - Using slate/gray palette for better readability */
-    --bg-primary: 15, 23, 42;
-    /* slate-900 */
-    --bg-secondary: 30, 41, 59;
-    /* slate-800 */
-    --bg-tertiary: 51, 65, 85;
-    /* slate-700 */
-    --bg-hover: 51, 65, 85;
-    /* slate-700 */
-    --bg-active: 71, 85, 105;
-    /* slate-600 */
+    /* Backgrounds */
+    --bg-primary: 17, 24, 39;
+    --bg-secondary: 31, 41, 55;
+    --bg-tertiary: 55, 65, 81;
+    --bg-hover: 55, 65, 81;
+    --bg-active: 75, 85, 99;
 
-    /* Text colors - High contrast for accessibility */
-    --text-primary: 248, 250, 252;
-    /* slate-50 */
-    --text-secondary: 226, 232, 240;
-    /* slate-200 */
-    --text-tertiary: 203, 213, 225;
-    /* slate-300 */
-    --text-inverse: 15, 23, 42;
-    /* slate-900 */
+    /* Text colors */
+    --text-primary: 243, 244, 246;
+    --text-secondary: 209, 213, 219;
+    --text-tertiary: 156, 163, 175;
+    --text-inverse: 17, 24, 39;
 
-    /* Border colors - Subtle but visible */
-    --border-primary: 51, 65, 85;
-    /* slate-700 */
-    --border-secondary: 71, 85, 105;
-    /* slate-600 */
+    /* Border colors */
+    --border-primary: 55, 65, 81;
+    --border-secondary: 75, 85, 99;
     --border-focus: 96, 165, 250;
-    /* blue-400 */
 
-    /* Status colors - Adjusted for dark backgrounds */
+    /* Status colors - Brighter for dark mode */
     --success: 74, 222, 128;
-    /* green-400 */
-    --warning: 250, 204, 21;
-    /* yellow-400 */
+    --warning: 251, 191, 36;
     --error: 248, 113, 113;
-    /* red-400 */
-    --info: 96, 165, 250;
-    /* blue-400 */
+    --info: var(--primary-rgb);
 
-    /* Shadows - Lighter for dark mode */
+    /* Shadows - Darker for dark mode */
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
@@ -116,23 +318,64 @@ body {
     background: rgb(var(--text-tertiary));
 }
 
+/* Dark mode scrollbar styles */
 .dark ::-webkit-scrollbar-track {
-    background: rgb(var(--bg-primary));
+    background: rgb(var(--bg-secondary));
 }
 
 .dark ::-webkit-scrollbar-thumb {
-    background: rgb(var(--border-primary));
-    border: 2px solid rgb(var(--bg-primary));
+    background: rgb(var(--border-secondary));
+    border: 2px solid rgb(var(--bg-secondary));
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-    background: rgb(var(--border-secondary));
+    background: rgb(var(--text-tertiary));
 }
 
-/* Focus styles for accessibility */
+/* Focus styles for accessibility - Enhanced for keyboard navigation */
 .focus-visible:focus {
     outline: 2px solid #3b82f6;
     outline-offset: 2px;
+}
+
+/* Enhanced focus indicators for all interactive elements */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible,
+[role="tab"]:focus-visible,
+[tabindex]:focus-visible {
+    outline: 3px solid #3b82f6;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+    transition: outline 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Focus indicators for primary color theme */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+[role="tab"]:focus-visible {
+    outline-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.2);
+}
+
+/* Focus within for containers */
+.focus-within-ring:focus-within {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Remove default focus outline for mouse users */
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible),
+select:focus:not(:focus-visible) {
+    outline: none;
+    box-shadow: none;
 }
 
 /* Screen reader only utility class for accessibility */
@@ -157,6 +400,19 @@ body {
     overflow: visible;
     clip: auto;
     white-space: normal;
+}
+
+/* Focus-visible variant for skip links */
+.focus\:not-sr-only:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 0.5rem 1rem;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+    border-width: initial;
 }
 
 /* Loading spinner animation */
@@ -808,9 +1064,10 @@ erformance Optimizations */
         border: 2px solid rgba(0, 0, 0, 0.8);
     }
 
+    /* Dark mode glass effect */
     .dark .glass-effect,
     .dark .glass-effect-strong {
-        background: rgba(0, 0, 0, 0.9);
+        background: rgba(17, 24, 39, 0.9);
         border: 2px solid rgba(255, 255, 255, 0.8);
     }
 }
@@ -868,9 +1125,23 @@ erformance Optimizations */
     animation: shimmer 1.5s infinite;
 }
 
+/* Dark mode shimmer */
 .dark .loading-shimmer {
     background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
     background-size: 200% 100%;
+}
+
+/* Hide scrollbar utility */
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari and Opera */
 }
 
 /* Optimized scrollbars */
@@ -899,16 +1170,17 @@ erformance Optimizations */
     background-color: #a0aec0;
 }
 
+/* Dark mode custom scrollbar */
 .dark .custom-scrollbar {
-    scrollbar-color: #4a5568 transparent;
+    scrollbar-color: #6b7280 transparent;
 }
 
 .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: #4a5568;
+    background-color: #6b7280;
 }
 
 .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: #2d3748;
+    background-color: #9ca3af;
 }
 
 
@@ -1023,4 +1295,60 @@ erformance Optimizations */
 
 .futuristic-scrollbar::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(to bottom, #00f5ff, #7b2cbf);
+}
+
+
+svg {
+    display: inline
+}
+
+/* Next.js Portal positioning fixes */
+nextjs-portal {
+    left: unset !important;
+    top: unset !important;
+}
+
+/* Hide amber and blue cache status sections in profile page */
+.hide-amber-sections .bg-amber-50,
+.hide-amber-sections [class*="bg-amber-50"],
+.hide-amber-sections .dark\:bg-amber-900\/20,
+.hide-amber-sections [class*="dark:bg-amber-900/20"],
+.hide-amber-sections .bg-blue-50,
+.hide-amber-sections [class*="bg-blue-50"],
+.hide-amber-sections .dark\:bg-blue-900\/20,
+.hide-amber-sections [class*="dark:bg-blue-900/20"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+/* More specific selectors for stubborn elements */
+.hide-amber-sections div[class*="bg-amber"],
+.hide-amber-sections div[class*="bg-blue-50"],
+.hide-amber-sections div[class*="border-amber"],
+.hide-amber-sections div[class*="border-blue-200"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Additional aggressive hiding for status sections */
+.hide-status-sections>div[class*="amber"],
+.hide-status-sections>div[class*="blue-50"],
+.hide-status-sections div[class*="Offline Mode"],
+.hide-status-sections div[class*="cached data"],
+.hide-status-sections div:has(> *:contains("Offline Mode")),
+.hide-status-sections div:has(> *:contains("cached data")) {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
 }

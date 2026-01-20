@@ -40,11 +40,12 @@ export const apiEndpoints = {
         login: '/auth/token',
         register: '/auth/register',
         refresh: '/auth/refresh-token',
+        logout: '/auth/logout',
     },
 
     // User Management
     users: {
-        list: '/user',
+        list: '/user/list',
         create: '/user',
         update: (id: string) => `/user/${id}`,
         delete: (id: string) => `/user/${id}`,
@@ -54,6 +55,7 @@ export const apiEndpoints = {
         checkActiveSupplier: '/user/check-active-my-supplier',
         // Dashboard statistics
         dashboardStats: '/dashboard/stats',
+        supplierFreshness: '/dashboard/supplier-freshness',
         // Specific user creation endpoints
         createSuperUser: '/user/create_super_user/',
         createAdminUser: '/user/create_admin_user/',
@@ -91,6 +93,14 @@ export const apiEndpoints = {
         resetPoints: (userId: string) => `/user/reset_point/${userId}/`,
         deleteUser: (userId: string) => `/delete/delete_user/${userId}`,
         generateApiKey: (userId: string) => `/auth/generate_api_key/${userId}`,
+    },
+
+    // Export Management
+    exports: {
+        hotels: '/export/hotels',
+        mappings: '/export/mappings',
+        status: (jobId: string) => `/export/status/${jobId}`,
+        download: (jobId: string) => `/export/download/${jobId}`,
     },
 
     // Additional endpoints

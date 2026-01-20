@@ -41,8 +41,8 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
         ref={ref}
         className={cn(
           // Base styles
-          "rounded-xl transition-all duration-300 ease-out relative overflow-hidden",
-          "before:absolute before:inset-0 before:rounded-xl before:transition-opacity before:duration-300",
+          "rounded-xl transition-all duration-300 ease-out relative overflow-hidden select-text",
+          "before:absolute before:inset-0 before:rounded-xl before:transition-opacity before:duration-300 before:pointer-events-none",
 
           // Variant styles
           {
@@ -63,15 +63,6 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
             "bg-white shadow-xl border border-gray-100": variant === "elevated",
           },
 
-          // Hover effects
-          hover && {
-            "hover:scale-[1.02] hover:shadow-lg": variant === "default",
-            "hover:scale-[1.02] hover:shadow-xl": variant === "gradient",
-            "hover:bg-white/30 hover:shadow-3xl hover:before:opacity-100":
-              variant === "glass",
-            "hover:scale-[1.02] hover:shadow-2xl": variant === "elevated",
-          },
-
           // Click effects
           onClick && "cursor-pointer active:scale-[0.98]",
           isClicked && "animate-pulse",
@@ -86,6 +77,12 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
 
           className
         )}
+        style={{
+          userSelect: "text",
+          WebkitUserSelect: "text",
+          MozUserSelect: "text",
+          msUserSelect: "text",
+        }}
         onClick={handleClick}
         role={onClick ? "button" : undefined}
         tabIndex={onClick ? 0 : undefined}
