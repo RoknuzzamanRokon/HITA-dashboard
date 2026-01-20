@@ -11,7 +11,9 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:navigation": "jest --testPathPattern=navigation"
+    "test:navigation": "jest --testPathPattern=navigation",
+    "maintenance:enable": "node scripts/maintenance.js enable",
+    "maintenance:disable": "node scripts/maintenance.js disable"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.19",
