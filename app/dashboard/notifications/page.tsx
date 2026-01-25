@@ -18,7 +18,6 @@ import {
   Key,
   Settings,
   Loader2,
-  Filter,
   Search,
 } from "lucide-react";
 
