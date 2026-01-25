@@ -66,11 +66,22 @@ export function HotelAutocompleteSearch({
       setError(null);
 
       try {
-        const response = await HotelService.autocompleteAll(searchQuery.trim());
+        const response = await HotelService.autocompleteHotel(
+          searchQuery.trim(),
+        );
 
         if (response.success && response.data) {
-          setAutocompleteResults(response.data);
-          setShowDropdown(response.data.length > 0);
+          // Transform the API response to match AutocompleteResult interface
+          const transformedResults = response.data.map((item) => ({
+            name: item.name,
+            country_code: item.country || "US",
+            longitude: "0",
+            latitude: "0",
+            city: item.city || "",
+            country: item.country || "United States",
+          }));
+          setAutocompleteResults(transformedResults);
+          setShowDropdown(transformedResults.length > 0);
         } else {
           setError(response.error?.message || "Failed to fetch suggestions");
           setAutocompleteResults([]);
@@ -107,7 +118,7 @@ export function HotelAutocompleteSearch({
       case "ArrowDown":
         e.preventDefault();
         setSelectedIndex((prev) =>
-          prev < autocompleteResults.length - 1 ? prev + 1 : prev
+          prev < autocompleteResults.length - 1 ? prev + 1 : prev,
         );
         break;
       case "ArrowUp":

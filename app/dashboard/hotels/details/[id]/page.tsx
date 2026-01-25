@@ -525,7 +525,7 @@ export default function HotelDetailsPage() {
                     (mapping) =>
                       mapping.provider_name.toLowerCase() ===
                         supplierName.toLowerCase() &&
-                      mapping.full_details !== null
+                      mapping.full_details !== null,
                   );
 
                   supplierData.push({
@@ -545,7 +545,7 @@ export default function HotelDetailsPage() {
                   ids: string[];
                   hasFullDetails: boolean;
                 },
-                index: number
+                index: number,
               ) => {
                 // Choose colors based on whether supplier has full details
                 const bgGradient = supplier.hasFullDetails
@@ -686,7 +686,7 @@ export default function HotelDetailsPage() {
                     }}
                   >
                     {supplierData.map((supplier, index) =>
-                      renderSupplierCard(supplier, index)
+                      renderSupplierCard(supplier, index),
                     )}
                   </div>
                   {supplierData.length > 6 && (
@@ -715,7 +715,7 @@ export default function HotelDetailsPage() {
                     key={index}
                     onClick={() => {
                       console.log(
-                        `🔄 Switching to provider: ${provider.provider_name} (index: ${index})`
+                        `🔄 Switching to provider: ${provider.provider_name} (index: ${index})`,
                       );
                       setSelectedProvider(index);
                     }}
@@ -754,7 +754,7 @@ export default function HotelDetailsPage() {
                       </svg>
                       <div>
                         <p className="text-sm text-blue-600 font-medium">
-                          Currently Viewing
+                          Currently Viewing-
                         </p>
                         <p className="text-lg font-bold text-blue-900">
                           {currentProvider.provider_name} Details
@@ -762,6 +762,38 @@ export default function HotelDetailsPage() {
                       </div>
                     </div>
                   </div>
+                  
+                  {/* Hotel Name */}
+                  <div className="rounded-xl border border-gray-200 bg-gray-50">
+                    <div className="flex items-center gap-4 p-4">
+                      {/* Icon Badge */}
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100">
+                        <svg
+                          className="h-5 w-5 text-emerald-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M3 10h18M9 21V3m6 18V3"
+                          />
+                        </svg>
+                      </div>
+
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-gray-500">
+                          Hotel Name
+                        </p>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {currentProvider.full_details.name}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
 
                   {/* Basic Info */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -787,7 +819,7 @@ export default function HotelDetailsPage() {
                       <p className="text-sm text-gray-600">Last Updated</p>
                       <p className="font-semibold text-gray-900">
                         {new Date(
-                          currentProvider.updated_at
+                          currentProvider.updated_at,
                         ).toLocaleDateString()}
                       </p>
                     </div>
@@ -816,7 +848,7 @@ export default function HotelDetailsPage() {
                                   {desc.text}
                                 </p>
                               </div>
-                            )
+                            ),
                           )}
                         </div>
                       </div>
@@ -844,7 +876,7 @@ export default function HotelDetailsPage() {
                                   >
                                     {phone}
                                   </p>
-                                )
+                                ),
                               )}
                             </div>
                           )}
@@ -863,7 +895,7 @@ export default function HotelDetailsPage() {
                                   >
                                     {email}
                                   </p>
-                                )
+                                ),
                               )}
                             </div>
                           )}
@@ -889,7 +921,7 @@ export default function HotelDetailsPage() {
                             ? currentProvider.full_details.facilities
                             : currentProvider.full_details.facilities.slice(
                                 0,
-                                12
+                                12,
                               )
                           ).map((facility, index) => (
                             <div
@@ -1018,7 +1050,7 @@ export default function HotelDetailsPage() {
                                     </div>
                                   )}
                                 </div>
-                              )
+                              ),
                             )}
                           </div>
                           {/* Fade indicator at bottom if there are many photos */}

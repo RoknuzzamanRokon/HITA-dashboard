@@ -2,7 +2,7 @@
 
 /**
  * Sync History Page
- * 
+ *
  * Beautiful interface for monitoring and managing content synchronization
  * Features:
  * - Real-time sync status monitoring
@@ -16,6 +16,7 @@ import { useRequireAuth } from "@/lib/hooks/use-auth";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { PermissionGuard } from "@/lib/components/auth/permission-guard";
 import { Permission } from "@/lib/utils/rbac";
+import { RealTimeTimestamp } from "@/lib/components/ui/real-time-timestamp";
 import {
   Activity,
   RefreshCw,
@@ -26,9 +27,7 @@ import {
   TrendingUp,
   AlertTriangle,
   Play,
-  Pause,
   Settings,
-  Calendar,
   Filter,
   Download,
 } from "lucide-react";
@@ -57,7 +56,6 @@ interface SyncStats {
 
 export default function SyncPage() {
   const { isAuthenticated, isLoading: authLoading } = useRequireAuth();
-  const { user } = useAuth();
   const [syncJobs, setSyncJobs] = useState<SyncJob[]>([]);
   const [syncStats, setSyncStats] = useState<SyncStats>({
     totalSyncs: 0,
@@ -69,7 +67,9 @@ export default function SyncPage() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState<"all" | "running" | "completed" | "failed">("all");
+  const [selectedFilter, setSelectedFilter] = useState<
+    "all" | "running" | "completed" | "failed"
+  >("all");
 
   // Mock data for demonstration
   useEffect(() => {
@@ -77,7 +77,7 @@ export default function SyncPage() {
       setIsLoading(true);
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      
+
       setSyncJobs([
         {
           id: "1",
@@ -143,7 +143,7 @@ export default function SyncPage() {
     setIsSyncing(true);
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 2000));
-    
+
     const newJob: SyncJob = {
       id: Date.now().toString(),
       type,
@@ -153,7 +153,7 @@ export default function SyncPage() {
       itemsTotal: 0,
       progress: 0,
     };
-    
+
     setSyncJobs((prev) => [newJob, ...prev]);
     setIsSyncing(false);
   };
@@ -193,20 +193,6 @@ export default function SyncPage() {
     if (seconds < 60) return `${seconds}s`;
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
     return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
-  };
-
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return `${diffDays}d ago`;
   };
 
   if (authLoading || isLoading) {
@@ -261,7 +247,9 @@ export default function SyncPage() {
               </div>
               <span className="text-sm text-gray-500">Total Syncs</span>
             </div>
-            <div className="text-3xl font-bold text-gray-900">{syncStats.totalSyncs}</div>
+            <div className="text-3xl font-bold text-gray-900">
+              {syncStats.totalSyncs}
+            </div>
             <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
               <TrendingUp className="h-4 w-4 text-green-500" />
               <span>+12% from last month</span>
@@ -276,7 +264,10 @@ export default function SyncPage() {
               <span className="text-sm text-gray-500">Success Rate</span>
             </div>
             <div className="text-3xl font-bold text-gray-900">
-              {Math.round((syncStats.successfulSyncs / syncStats.totalSyncs) * 100)}%
+              {Math.round(
+                (syncStats.successfulSyncs / syncStats.totalSyncs) * 100,
+              )}
+              %
             </div>
             <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
               <span>{syncStats.successfulSyncs} successful</span>
@@ -294,7 +285,13 @@ export default function SyncPage() {
               {formatDuration(syncStats.averageDuration)}
             </div>
             <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
-              <span>Last sync: {formatTimeAgo(syncStats.lastSyncTime)}</span>
+              <span>
+                Last sync:{" "}
+                <RealTimeTimestamp
+                  dateString={syncStats.lastSyncTime}
+                  updateInterval={30000}
+                />
+              </span>
             </div>
           </div>
 
@@ -316,12 +313,22 @@ export default function SyncPage() {
 
         {/* Quick Actions */}
         <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Sync Actions</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            Quick Sync Actions
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {[
               { type: "hotel" as const, label: "Sync Hotels", icon: Database },
-              { type: "mapping" as const, label: "Sync Mappings", icon: RefreshCw },
-              { type: "content" as const, label: "Sync Content", icon: Activity },
+              {
+                type: "mapping" as const,
+                label: "Sync Mappings",
+                icon: RefreshCw,
+              },
+              {
+                type: "content" as const,
+                label: "Sync Content",
+                icon: Activity,
+              },
               { type: "full" as const, label: "Full Sync", icon: Play },
             ].map(({ type, label, icon: Icon }) => (
               <button
@@ -344,22 +351,26 @@ export default function SyncPage() {
         {/* Filters and Sync Jobs List */}
         <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-gray-900">Sync History</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Sync History
+            </h2>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
-                {(["all", "running", "completed", "failed"] as const).map((filter) => (
-                  <button
-                    key={filter}
-                    onClick={() => setSelectedFilter(filter)}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                      selectedFilter === filter
-                        ? "bg-white text-blue-600 shadow-sm"
-                        : "text-gray-600 hover:text-gray-900"
-                    }`}
-                  >
-                    {filter.charAt(0).toUpperCase() + filter.slice(1)}
-                  </button>
-                ))}
+                {(["all", "running", "completed", "failed"] as const).map(
+                  (filter) => (
+                    <button
+                      key={filter}
+                      onClick={() => setSelectedFilter(filter)}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                        selectedFilter === filter
+                          ? "bg-white text-blue-600 shadow-sm"
+                          : "text-gray-600 hover:text-gray-900"
+                      }`}
+                    >
+                      {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                    </button>
+                  ),
+                )}
               </div>
               <button className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
                 <Filter className="h-5 w-5" />
@@ -391,13 +402,17 @@ export default function SyncPage() {
                           {job.type} Sync
                         </h3>
                         <p className="text-sm text-gray-500">
-                          Started {formatTimeAgo(job.startedAt)}
+                          Started{" "}
+                          <RealTimeTimestamp
+                            dateString={job.startedAt}
+                            updateInterval={30000}
+                          />
                         </p>
                       </div>
                     </div>
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-                        job.status
+                        job.status,
                       )}`}
                     >
                       {job.status}
@@ -449,7 +464,10 @@ export default function SyncPage() {
                       <div>
                         <span className="text-gray-500">Completed:</span>
                         <span className="ml-2 font-medium text-gray-900">
-                          {formatTimeAgo(job.completedAt)}
+                          <RealTimeTimestamp
+                            dateString={job.completedAt}
+                            updateInterval={30000}
+                          />
                         </span>
                       </div>
                     )}

@@ -225,7 +225,7 @@ export function FilterPresetsManager<T extends ExportFilters = ExportFilters>({
               </div>
 
               {/* Modal body */}
-              <div className="p-6">
+              <div className="p-2">
                 <Input
                   label="Preset Name"
                   placeholder="Enter a name for this preset"

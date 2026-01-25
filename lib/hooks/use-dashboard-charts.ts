@@ -7,10 +7,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '@/lib/contexts/auth-context';
+import { useAuth } from '../contexts/auth-context';
 import { usePersistentCache, CACHE_CONFIGS } from './use-persistent-cache';
-import { apiClient } from "@/lib/api/client";
-import { config } from "@/lib/config";
+import { apiClient } from "../api/client";
+import { config } from "../config";
 import { useResilientData } from "./use-resilient-data";
 import {
     transformSupplierData,
@@ -20,7 +20,7 @@ import {
     SupplierChartData,
     TimeSeriesChartData,
     PackageChartData,
-} from "@/lib/utils/chart-data-transformers";
+} from "../utils/chart-data-transformers";
 
 // Enhanced dashboard charts data fetcher with caching
 async function fetchDashboardChartsWithCache(): Promise<DashboardChartsData> {
@@ -57,19 +57,19 @@ async function fetchDashboardChartsWithCache(): Promise<DashboardChartsData> {
     try {
         transformed = {
             suppliers: transformSupplierData(
-                platformOverview.available_suppliers
+                (platformOverview as any)?.available_suppliers || []
             ),
             registrations: transformTimeSeriesData(
-                platformTrends.user_registrations?.time_series
+                (platformTrends as any)?.user_registrations?.time_series || []
             ),
             logins: transformTimeSeriesData(
-                activityMetrics.user_logins?.time_series
+                (activityMetrics as any)?.user_logins?.time_series || []
             ),
             apiRequests: transformTimeSeriesData(
-                activityMetrics.api_requests?.time_series
+                (activityMetrics as any)?.api_requests?.time_series || []
             ),
             packages: transformPackageData(
-                platformOverview.available_packages
+                (platformOverview as any)?.available_packages || []
             ),
         };
     } catch (transformError) {
