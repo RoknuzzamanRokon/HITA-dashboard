@@ -14,74 +14,85 @@ export default function NotFound() {
     // Set client flag to true after hydration
     setIsClient(true);
 
-    // Mouse tracking for interactive effects
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-    };
+    // Only add event listeners on client side
+    if (typeof window !== "undefined") {
+      // Mouse tracking for interactive effects
+      const handleMouseMove = (e: MouseEvent) => {
+        setMousePosition({ x: e.clientX, y: e.clientY });
+      };
 
-    // Random glitch effect
-    const glitchInterval = setInterval(() => {
-      setIsGlitching(true);
-      setTimeout(() => setIsGlitching(false), 100);
-    }, 3000);
+      // Random glitch effect
+      const glitchInterval = setInterval(() => {
+        setIsGlitching(true);
+        setTimeout(() => setIsGlitching(false), 100);
+      }, 3000);
 
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      clearInterval(glitchInterval);
-    };
+      window.addEventListener("mousemove", handleMouseMove);
+
+      return () => {
+        window.removeEventListener("mousemove", handleMouseMove);
+        clearInterval(glitchInterval);
+      };
+    }
   }, []);
 
   // Calculate gradient position based on mouse (only after hydration)
-  const gradientX = isClient
-    ? (mousePosition.x / (window?.innerWidth || 1)) * 100
-    : 50;
-  const gradientY = isClient
-    ? (mousePosition.y / (window?.innerHeight || 1)) * 100
-    : 50;
+  const gradientX =
+    isClient && typeof window !== "undefined"
+      ? (mousePosition.x / window.innerWidth) * 100
+      : 50;
+  const gradientY =
+    isClient && typeof window !== "undefined"
+      ? (mousePosition.y / window.innerHeight) * 100
+      : 50;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 flex items-center justify-center px-4 relative overflow-hidden">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <motion.div
-          initial={{ x: -100, y: -100 }}
-          animate={{
-            x: [0, 100, 0],
-            y: [0, 100, 0],
-            rotate: [0, 180, 360],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: "linear",
-          }}
-          className="absolute w-96 h-96 bg-gradient-to-r from-blue-200/30 to-purple-200/30 rounded-full blur-3xl"
-        />
-        <motion.div
-          initial={{ x: "100%", y: "100%" }}
-          animate={{
-            x: ["100%", "0%", "100%"],
-            y: ["100%", "0%", "100%"],
-          }}
-          transition={{
-            duration: 25,
-            repeat: Infinity,
-            ease: "linear",
-          }}
-          className="absolute w-96 h-96 bg-gradient-to-r from-indigo-200/20 to-pink-200/20 rounded-full blur-3xl"
-        />
-      </div>
+      {/* Animated Background Elements - Only render on client */}
+      {isClient && (
+        <div className="absolute inset-0 overflow-hidden">
+          <motion.div
+            initial={{ x: -100, y: -100 }}
+            animate={{
+              x: [0, 100, 0],
+              y: [0, 100, 0],
+              rotate: [0, 180, 360],
+            }}
+            transition={{
+              duration: 20,
+              repeat: Infinity,
+              ease: "linear",
+            }}
+            className="absolute w-96 h-96 bg-gradient-to-r from-blue-200/30 to-purple-200/30 rounded-full blur-3xl"
+          />
+          <motion.div
+            initial={{ x: "100%", y: "100%" }}
+            animate={{
+              x: ["100%", "0%", "100%"],
+              y: ["100%", "0%", "100%"],
+            }}
+            transition={{
+              duration: 25,
+              repeat: Infinity,
+              ease: "linear",
+            }}
+            className="absolute w-96 h-96 bg-gradient-to-r from-indigo-200/20 to-pink-200/20 rounded-full blur-3xl"
+          />
+        </div>
+      )}
 
       <div className="max-w-2xl mx-auto text-center relative z-10">
         {/* Animated 404 Number */}
         <div className="mb-8 relative">
-          <div
-            className="absolute inset-0"
-            style={{
-              background: `radial-gradient(circle at ${gradientX}% ${gradientY}%, rgba(59, 130, 246, 0.3) 0%, transparent 50%)`,
-            }}
-          />
+          {/* Dynamic gradient background - only render on client */}
+          {isClient && (
+            <div
+              className="absolute inset-0"
+              style={{
+                background: `radial-gradient(circle at ${gradientX}% ${gradientY}%, rgba(59, 130, 246, 0.3) 0%, transparent 50%)`,
+              }}
+            />
+          )}
 
           <div className="relative">
             {/* Main 404 with gradient animation */}
@@ -112,8 +123,8 @@ export default function NotFound() {
               404
             </motion.h1>
 
-            {/* Glitch Effect Overlay */}
-            {isGlitching && (
+            {/* Glitch Effect Overlay - Only render on client */}
+            {isClient && isGlitching && (
               <>
                 <motion.div
                   initial={{ x: -5, opacity: 0.5 }}
@@ -268,7 +279,11 @@ export default function NotFound() {
             initial={{ scale: 0.9 }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => isClient && window.history.back()}
+            onClick={() => {
+              if (isClient && typeof window !== "undefined") {
+                window.history.back();
+              }
+            }}
             className="inline-flex items-center gap-2 px-6 py-3 bg-white text-gray-700 font-semibold rounded-lg border border-gray-300 hover:bg-gray-50 transition-all duration-200 shadow-md hover:shadow-lg"
           >
             <ArrowLeft className="w-5 h-5" />

@@ -40,6 +40,7 @@ import {
   AlertTriangle,
   Minus,
   Calendar,
+  Activity,
 } from "lucide-react";
 import type {
   UserListItem,
@@ -782,8 +783,6 @@ export default function CachedUsersPage() {
               </PermissionGuard>
             </div>
           </div>
-
-
 
           {/* Success Message */}
           {successMessage && (
@@ -2760,6 +2759,183 @@ export default function CachedUsersPage() {
 
       {/* Cache Status (Development Only) */}
       <CacheStatus />
+
+      {/* User Activity Modal */}
+      <Modal
+        isOpen={showUserActivityModal}
+        onClose={() => {
+          setShowUserActivityModal(false);
+          setSelectedUserActivity(null);
+        }}
+        title="User Activity"
+        size="lg"
+      >
+        {selectedUserActivity && (
+          <div className="space-y-4">
+            {/* Activity Header */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-lg font-bold shadow-lg">
+                  <Activity className="w-6 h-6" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-gray-900">
+                    Activity Log
+                  </h3>
+                  <p className="text-gray-600 text-sm">
+                    Recent user activity and API usage
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Activity Content */}
+            <div className="max-h-96 overflow-y-auto">
+              {selectedUserActivity.activities &&
+              selectedUserActivity.activities.length > 0 ? (
+                <div className="space-y-3">
+                  {selectedUserActivity.activities.map(
+                    (activity: any, index: number) => (
+                      <div
+                        key={index}
+                        className="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <span className="text-sm font-medium text-gray-900">
+                                {activity.action || activity.type || "Activity"}
+                              </span>
+                              {activity.status && (
+                                <span
+                                  className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                    activity.status === "success"
+                                      ? "bg-green-100 text-green-800"
+                                      : activity.status === "error"
+                                        ? "bg-red-100 text-red-800"
+                                        : "bg-gray-100 text-gray-800"
+                                  }`}
+                                >
+                                  {activity.status}
+                                </span>
+                              )}
+                            </div>
+                            {activity.description && (
+                              <p className="text-sm text-gray-600 mb-2">
+                                {activity.description}
+                              </p>
+                            )}
+                            {activity.details && (
+                              <div className="text-xs text-gray-500 bg-gray-50 rounded p-2 font-mono">
+                                {typeof activity.details === "string"
+                                  ? activity.details
+                                  : JSON.stringify(activity.details, null, 2)}
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-500 ml-4">
+                            {activity.timestamp
+                              ? new Date(activity.timestamp).toLocaleString()
+                              : activity.created_at
+                                ? new Date(activity.created_at).toLocaleString()
+                                : "Unknown time"}
+                          </div>
+                        </div>
+                      </div>
+                    ),
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No Activity Found
+                  </h3>
+                  <p className="text-gray-600">
+                    {selectedUserActivity.message ||
+                      "No recent activity data available for this user."}
+                  </p>
+                  {selectedUserActivity.error && (
+                    <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm text-red-600">
+                        Error: {selectedUserActivity.error}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Activity Summary */}
+            {selectedUserActivity.summary && (
+              <div className="border-t border-gray-200 pt-4">
+                <h4 className="text-sm font-medium text-gray-900 mb-2">
+                  Summary
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {Object.entries(selectedUserActivity.summary).map(
+                    ([key, value]) => (
+                      <div key={key} className="text-center">
+                        <div className="text-lg font-bold text-gray-900">
+                          {typeof value === "number"
+                            ? value.toLocaleString()
+                            : String(value)}
+                        </div>
+                        <div className="text-xs text-gray-500 capitalize">
+                          {key.replace(/_/g, " ")}
+                        </div>
+                      </div>
+                    ),
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Raw Data (for debugging) */}
+            {process.env.NODE_ENV === "development" && (
+              <details className="border-t border-gray-200 pt-4">
+                <summary className="text-sm font-medium text-gray-700 cursor-pointer hover:text-gray-900">
+                  Raw Activity Data (Development)
+                </summary>
+                <pre className="mt-2 text-xs bg-gray-100 p-3 rounded-lg overflow-auto max-h-40">
+                  {JSON.stringify(selectedUserActivity, null, 2)}
+                </pre>
+              </details>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-2 pt-3 border-t border-gray-200">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setShowUserActivityModal(false);
+                  setSelectedUserActivity(null);
+                }}
+              >
+                Close
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  // Refresh activity data
+                  const userId =
+                    selectedUserDetails?.id ||
+                    selectedUser?.id ||
+                    selectedUserDetail?.id;
+                  if (userId) {
+                    handleCheckActivity();
+                  }
+                }}
+                leftIcon={<RefreshCw className="h-3 w-3" />}
+              >
+                Refresh
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </PermissionGuard>
   );
 }

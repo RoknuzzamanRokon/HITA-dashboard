@@ -1,3 +1,5 @@
+import { isDevelopmentMode, shouldLogAsError, getApiErrorMessage } from '../utils/dev-mode-helper';
+
 /**
  * API Client for making HTTP requests to the backend
  */
@@ -300,6 +302,19 @@ export class ApiClient {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  // Get human-readable status text for HTTP status codes
+  private getStatusText(status: number): string {
+    const statusTexts: Record<number, string> = {
+      500: 'Internal Server Error',
+      501: 'Not Implemented',
+      502: 'Bad Gateway',
+      503: 'Service Unavailable',
+      504: 'Gateway Timeout',
+      505: 'HTTP Version Not Supported',
+    };
+    return statusTexts[status] || `HTTP ${status}`;
+  }
+
   // Cancel all active requests (only used on page unload now)
   public cancelAllRequests(): void {
     if (this.activeRequests.size > 0) {
@@ -338,13 +353,20 @@ export class ApiClient {
     }
 
     if (!response.ok) {
-      // Only log unexpected errors to console
-      // 400 (validation/user errors), 403 (permission), 404 (not found) are expected and should be treated as info
+      // Use development mode helper to determine logging level
       const isExpectedError = response.status === 400 || response.status === 403 || response.status === 404;
+      const isServerError = response.status >= 500 && response.status <= 599;
+      const shouldLogError = shouldLogAsError(response.status);
 
-      if (!isExpectedError) {
+      if (!isExpectedError && shouldLogError) {
         console.error(`❌ Error response - Status: ${response.status}`);
         console.error(`❌ Error data:`, JSON.stringify(data, null, 2));
+      } else if (isServerError && !shouldLogError) {
+        // Log server errors as info in development when backend is not expected
+        console.log(`ℹ️ ${getApiErrorMessage(response.status, `Server error - Status: ${response.status}`)}`);
+      } else if (isServerError) {
+        // Log server errors as warnings when backend is expected
+        console.warn(`⚠️ Server error - Status: ${response.status} (${this.getStatusText(response.status)})`);
       } else {
         // Just log as info for expected errors
         console.log(`ℹ️ Expected error response - Status: ${response.status}`, data?.message || data?.error || 'No message');

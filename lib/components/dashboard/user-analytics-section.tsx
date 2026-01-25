@@ -60,38 +60,56 @@ export function UserAnalyticsSection() {
 
   // Update analytics when cached data changes
   useEffect(() => {
-    if (apiData) {
-      // Map API response to analytics format
-      const mappedData: UserAnalytics = {
-        totalLogins: apiData.authentication.successful_logins,
-        apiCalls: apiData.summary.total_endpoint_calls,
-        failedAttempts: apiData.authentication.failed_logins,
-        lastLogin: apiData.user.account_created,
-        securityScore: apiData.authentication.success_rate,
-        recentActivities: apiData.recent_activities
-          .slice(0, 4)
-          .map((activity: any) => ({
-            id: activity.id.toString(),
-            type: activity.action,
-            description: `${activity.action_label}${
-              activity.endpoint ? ` - ${activity.endpoint}` : ""
-            }`,
-            timestamp: activity.created_at,
-            status:
-              activity.details?.success === false
-                ? "error"
-                : ("success" as "success" | "warning" | "error"),
-          })),
-      };
+    try {
+      if (apiData) {
+        // Validate that we have the expected data structure
+        if (!apiData.authentication && !apiData.summary && !apiData.user) {
+          console.warn(
+            "⚠️ User analytics: API data structure is unexpected:",
+            apiData,
+          );
+          setError("Analytics data format is not supported");
+          return;
+        }
 
-      setAnalytics(mappedData);
-      setError(null);
-    } else if (queryError) {
-      setError(
-        queryError instanceof Error
-          ? queryError.message
-          : "Failed to load analytics",
-      );
+        // Map API response to analytics format with safe property access
+        const mappedData: UserAnalytics = {
+          totalLogins: apiData.authentication?.successful_logins || 0,
+          apiCalls: apiData.summary?.total_endpoint_calls || 0,
+          failedAttempts: apiData.authentication?.failed_logins || 0,
+          lastLogin: apiData.user?.account_created || new Date().toISOString(),
+          securityScore: apiData.authentication?.success_rate || 0,
+          recentActivities: (apiData.recent_activities || [])
+            .slice(0, 4)
+            .map((activity: any) => ({
+              id: activity.id?.toString() || Math.random().toString(),
+              type: activity.action || "unknown",
+              description: `${activity.action_label || activity.action || "Activity"}${
+                activity.endpoint ? ` - ${activity.endpoint}` : ""
+              }`,
+              timestamp: activity.created_at || new Date().toISOString(),
+              status:
+                activity.details?.success === false
+                  ? "error"
+                  : ("success" as "success" | "warning" | "error"),
+            })),
+        };
+
+        console.log("✅ User analytics mapped successfully:", mappedData);
+        setAnalytics(mappedData);
+        setError(null);
+      } else if (queryError) {
+        console.error("❌ User analytics query error:", queryError);
+        setError(
+          queryError instanceof Error
+            ? queryError.message
+            : "Failed to load analytics",
+        );
+      }
+    } catch (err) {
+      console.error("❌ Error processing user analytics data:", err);
+      setError("Failed to process analytics data");
+      setAnalytics(null);
     }
   }, [apiData, queryError]);
 
@@ -185,7 +203,7 @@ export function UserAnalyticsSection() {
           </h2>
           <p className="text-sm text-[rgb(var(--text-secondary))] mt-1">
             Track your usage patterns and security status{" "}
-            {apiData && `(Last ${apiData.period.days} days)`}
+            {apiData?.period?.days && `(Last ${apiData.period.days} days)`}
           </p>
         </div>
         {isUsingCachedData && (

@@ -67,8 +67,8 @@ export function RootLayout({ children }: RootLayoutProps) {
           )}
         >
           <div className="p-1 pt-20 mx-auto">
-            <div className="bg-[rgb(var(--bg-secondary))] rounded-xl shadow-[var(--shadow-sm)] border border-[rgb(var(--border-primary))]">
-              <div className="p-6">{children}</div>
+            <div className="bg-[rgb(var(--bg-secondary))]  shadow-[var(--shadow-sm)] border border-[rgb(var(--border-primary))]">
+              <div className="p-2">{children}</div>
             </div>
           </div>
         </main>

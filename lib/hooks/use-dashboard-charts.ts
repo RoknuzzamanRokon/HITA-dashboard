@@ -36,6 +36,13 @@ async function fetchDashboardChartsWithCache(): Promise<DashboardChartsData> {
             (response.error && Object.keys(response.error).length > 0
                 ? JSON.stringify(response.error)
                 : 'Dashboard charts API returned unsuccessful response');
+
+        // Add context for server errors
+        if (response.error?.status >= 500) {
+            console.warn('⚠️ Dashboard charts: Server error detected, this is expected when backend is unavailable');
+            throw new Error(`Server temporarily unavailable (${response.error.status}): ${errorMessage}`);
+        }
+
         throw new Error(errorMessage);
     }
 
