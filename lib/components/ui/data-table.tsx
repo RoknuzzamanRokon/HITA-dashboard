@@ -104,7 +104,7 @@ export function DataTable<T extends Record<string, any>>({
           ?.toString()
           .toLowerCase()
           .includes(searchQuery.toLowerCase());
-      })
+      }),
     );
   }, [sortedData, searchQuery, columns, onSearch]);
 
@@ -217,8 +217,8 @@ export function DataTable<T extends Record<string, any>>({
   return (
     <div
       className={cn(
-        "bg-white shadow-sm rounded-lg border p-6 border-gray-200",
-        className
+        "bg-gray-50 rounded-lg p-6 border-2 border-gray-200",
+        className,
       )}
     >
       {/* Header with search and actions */}
@@ -247,7 +247,7 @@ export function DataTable<T extends Record<string, any>>({
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+          <thead className="bg-white">
             <tr>
               {columns.map((column) => (
                 <th
@@ -255,7 +255,7 @@ export function DataTable<T extends Record<string, any>>({
                   className={cn(
                     "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider",
                     column.sortable && "cursor-pointer",
-                    column.headerClassName
+                    column.headerClassName,
                   )}
                   onClick={() => column.sortable && handleSort(column.key)}
                 >
@@ -288,13 +288,16 @@ export function DataTable<T extends Record<string, any>>({
               </tr>
             ) : (
               filteredData.map((row, index) => (
-                <tr key={index} className="">
+                <tr
+                  key={index}
+                  className="hover:bg-gray-50 transition-colors duration-150"
+                >
                   {columns.map((column) => (
                     <td
                       key={String(column.key)}
                       className={cn(
                         "px-6 py-4 whitespace-nowrap text-sm",
-                        column.className
+                        column.className,
                       )}
                     >
                       {column.render
