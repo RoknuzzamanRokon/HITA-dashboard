@@ -48,10 +48,7 @@ export function RootLayout({ children }: RootLayoutProps) {
   return (
     <div className="min-h-screen bg-[rgb(var(--bg-primary))] transition-colors duration-300">
       {/* Navbar */}
-      <Navbar
-        user={user}
-        onToggleSidebar={toggleSidebar}
-      />
+      <Navbar user={user} onToggleSidebar={toggleSidebar} />
 
       <div className="flex">
         {/* Sidebar */}
@@ -66,10 +63,10 @@ export function RootLayout({ children }: RootLayoutProps) {
         <main
           className={cn(
             "flex-1 transition-all duration-500 ease-out",
-            sidebarOpen ? "lg:ml-72" : "lg:ml-20"
+            sidebarOpen ? "lg:ml-72" : "lg:ml-20",
           )}
         >
-          <div className="p-6 pt-20 mx-auto">
+          <div className="p-1 pt-20 mx-auto">
             <div className="bg-[rgb(var(--bg-secondary))] rounded-xl shadow-[var(--shadow-sm)] border border-[rgb(var(--border-primary))]">
               <div className="p-6">{children}</div>
             </div>
