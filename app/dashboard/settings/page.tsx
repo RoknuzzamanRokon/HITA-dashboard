@@ -2,7 +2,7 @@
 
 /**
  * System Settings Page
- * 
+ *
  * Comprehensive system configuration interface with all important settings
  */
 
@@ -32,11 +32,20 @@ import { Button } from "@/lib/components/ui/button";
 import { Toggle } from "@/lib/components/ui/toggle";
 import { ColorPicker } from "@/lib/components/ui/color-picker";
 import { RadioGroup, type RadioOption } from "@/lib/components/ui/radio-group";
+import { AdvancedCacheClearButton } from "@/lib/components/ui/cache-clear-button";
 import { useRequireAuth } from "@/lib/hooks/use-auth";
 import { PermissionGuard } from "@/lib/components/auth/permission-guard";
 import { Permission } from "@/lib/utils/rbac";
 
-type SettingsTab = "general" | "api" | "database" | "security" | "email" | "system" | "backup" | "appearance";
+type SettingsTab =
+  | "general"
+  | "api"
+  | "database"
+  | "security"
+  | "email"
+  | "system"
+  | "backup"
+  | "appearance";
 
 export default function SettingsPage() {
   const { isAuthenticated, isLoading: authLoading } = useRequireAuth();
@@ -115,12 +124,20 @@ export default function SettingsPage() {
   const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
     { id: "general", label: "General", icon: <Globe className="h-4 w-4" /> },
     { id: "api", label: "API", icon: <Key className="h-4 w-4" /> },
-    { id: "database", label: "Database", icon: <Database className="h-4 w-4" /> },
+    {
+      id: "database",
+      label: "Database",
+      icon: <Database className="h-4 w-4" />,
+    },
     { id: "security", label: "Security", icon: <Shield className="h-4 w-4" /> },
     { id: "email", label: "Email", icon: <Mail className="h-4 w-4" /> },
     { id: "system", label: "System Info", icon: <Info className="h-4 w-4" /> },
     { id: "backup", label: "Backup", icon: <HardDrive className="h-4 w-4" /> },
-    { id: "appearance", label: "Appearance", icon: <Palette className="h-4 w-4" /> },
+    {
+      id: "appearance",
+      label: "Appearance",
+      icon: <Palette className="h-4 w-4" />,
+    },
   ];
 
   const themeOptions: RadioOption[] = [
@@ -257,8 +274,12 @@ export default function SettingsPage() {
                     <Globe className="h-5 w-5 text-blue-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">General Settings</h2>
-                    <p className="text-sm text-gray-600">Basic system configuration</p>
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      General Settings
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      Basic system configuration
+                    </p>
                   </div>
                 </div>
 
@@ -271,7 +292,10 @@ export default function SettingsPage() {
                       type="text"
                       value={generalSettings.siteName}
                       onChange={(e) =>
-                        setGeneralSettings({ ...generalSettings, siteName: e.target.value })
+                        setGeneralSettings({
+                          ...generalSettings,
+                          siteName: e.target.value,
+                        })
                       }
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
@@ -285,7 +309,10 @@ export default function SettingsPage() {
                       type="url"
                       value={generalSettings.siteUrl}
                       onChange={(e) =>
-                        setGeneralSettings({ ...generalSettings, siteUrl: e.target.value })
+                        setGeneralSettings({
+                          ...generalSettings,
+                          siteUrl: e.target.value,
+                        })
                       }
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
@@ -299,7 +326,10 @@ export default function SettingsPage() {
                       <select
                         value={generalSettings.timezone}
                         onChange={(e) =>
-                          setGeneralSettings({ ...generalSettings, timezone: e.target.value })
+                          setGeneralSettings({
+                            ...generalSettings,
+                            timezone: e.target.value,
+                          })
                         }
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       >
@@ -307,7 +337,9 @@ export default function SettingsPage() {
                         <option value="America/New_York">Eastern Time</option>
                         <option value="America/Chicago">Central Time</option>
                         <option value="America/Denver">Mountain Time</option>
-                        <option value="America/Los_Angeles">Pacific Time</option>
+                        <option value="America/Los_Angeles">
+                          Pacific Time
+                        </option>
                       </select>
                     </div>
 
@@ -318,7 +350,10 @@ export default function SettingsPage() {
                       <select
                         value={generalSettings.language}
                         onChange={(e) =>
-                          setGeneralSettings({ ...generalSettings, language: e.target.value })
+                          setGeneralSettings({
+                            ...generalSettings,
+                            language: e.target.value,
+                          })
                         }
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       >
@@ -334,7 +369,10 @@ export default function SettingsPage() {
                     <Toggle
                       checked={generalSettings.maintenanceMode}
                       onChange={(checked) =>
-                        setGeneralSettings({ ...generalSettings, maintenanceMode: checked })
+                        setGeneralSettings({
+                          ...generalSettings,
+                          maintenanceMode: checked,
+                        })
                       }
                       label="Maintenance Mode"
                       description="Enable to put the system in maintenance mode"
@@ -343,7 +381,10 @@ export default function SettingsPage() {
                     <Toggle
                       checked={generalSettings.enableRegistration}
                       onChange={(checked) =>
-                        setGeneralSettings({ ...generalSettings, enableRegistration: checked })
+                        setGeneralSettings({
+                          ...generalSettings,
+                          enableRegistration: checked,
+                        })
                       }
                       label="Enable User Registration"
                       description="Allow new users to register"
@@ -352,7 +393,10 @@ export default function SettingsPage() {
                     <Toggle
                       checked={generalSettings.enableNotifications}
                       onChange={(checked) =>
-                        setGeneralSettings({ ...generalSettings, enableNotifications: checked })
+                        setGeneralSettings({
+                          ...generalSettings,
+                          enableNotifications: checked,
+                        })
                       }
                       label="Enable Notifications"
                       description="Enable system-wide notifications"
@@ -370,8 +414,12 @@ export default function SettingsPage() {
                     <Key className="h-5 w-5 text-purple-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">API Configuration</h2>
-                    <p className="text-sm text-gray-600">Manage API endpoints and rate limiting</p>
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      API Configuration
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      Manage API endpoints and rate limiting
+                    </p>
                   </div>
                 </div>
 
@@ -384,7 +432,10 @@ export default function SettingsPage() {
                       type="url"
                       value={apiSettings.apiBaseUrl}
                       onChange={(e) =>
-                        setApiSettings({ ...apiSettings, apiBaseUrl: e.target.value })
+                        setApiSettings({
+                          ...apiSettings,
+                          apiBaseUrl: e.target.value,
+                        })
                       }
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
@@ -399,7 +450,10 @@ export default function SettingsPage() {
                         type="number"
                         value={apiSettings.apiTimeout}
                         onChange={(e) =>
-                          setApiSettings({ ...apiSettings, apiTimeout: parseInt(e.target.value) })
+                          setApiSettings({
+                            ...apiSettings,
+                            apiTimeout: parseInt(e.target.value),
+                          })
                         }
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
@@ -410,7 +464,10 @@ export default function SettingsPage() {
                     <Toggle
                       checked={apiSettings.rateLimitEnabled}
                       onChange={(checked) =>
-                        setApiSettings({ ...apiSettings, rateLimitEnabled: checked })
+                        setApiSettings({
+                          ...apiSettings,
+                          rateLimitEnabled: checked,
+                        })
                       }
                       label="Enable Rate Limiting"
                       description="Limit API requests per time window"
@@ -465,7 +522,10 @@ export default function SettingsPage() {
                     <Toggle
                       checked={apiSettings.apiKeyRequired}
                       onChange={(checked) =>
-                        setApiSettings({ ...apiSettings, apiKeyRequired: checked })
+                        setApiSettings({
+                          ...apiSettings,
+                          apiKeyRequired: checked,
+                        })
                       }
                       label="Require API Key"
                       description="Require API key for all requests"
@@ -483,8 +543,12 @@ export default function SettingsPage() {
                     <Database className="h-5 w-5 text-green-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">Database Settings</h2>
-                    <p className="text-sm text-gray-600">Configure database connections and backups</p>
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      Database Settings
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      Configure database connections and backups
+                    </p>
                   </div>
                 </div>
 
@@ -529,7 +593,10 @@ export default function SettingsPage() {
                     <Toggle
                       checked={databaseSettings.enableLogging}
                       onChange={(checked) =>
-                        setDatabaseSettings({ ...databaseSettings, enableLogging: checked })
+                        setDatabaseSettings({
+                          ...databaseSettings,
+                          enableLogging: checked,
+                        })
                       }
                       label="Enable Query Logging"
                       description="Log all database queries for debugging"
@@ -538,7 +605,10 @@ export default function SettingsPage() {
                     <Toggle
                       checked={databaseSettings.backupEnabled}
                       onChange={(checked) =>
-                        setDatabaseSettings({ ...databaseSettings, backupEnabled: checked })
+                        setDatabaseSettings({
+                          ...databaseSettings,
+                          backupEnabled: checked,
+                        })
                       }
                       label="Enable Automatic Backups"
                       description="Automatically backup database on schedule"
@@ -598,8 +668,12 @@ export default function SettingsPage() {
                     <Shield className="h-5 w-5 text-red-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">Security Settings</h2>
-                    <p className="text-sm text-gray-600">Configure security and authentication</p>
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      Security Settings
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      Configure security and authentication
+                    </p>
                   </div>
                 </div>
 
@@ -692,7 +766,10 @@ export default function SettingsPage() {
                     <Toggle
                       checked={securitySettings.enable2FA}
                       onChange={(checked) =>
-                        setSecuritySettings({ ...securitySettings, enable2FA: checked })
+                        setSecuritySettings({
+                          ...securitySettings,
+                          enable2FA: checked,
+                        })
                       }
                       label="Enable Two-Factor Authentication"
                       description="Require 2FA for all users"
@@ -701,7 +778,10 @@ export default function SettingsPage() {
                     <Toggle
                       checked={securitySettings.enableIpWhitelist}
                       onChange={(checked) =>
-                        setSecuritySettings({ ...securitySettings, enableIpWhitelist: checked })
+                        setSecuritySettings({
+                          ...securitySettings,
+                          enableIpWhitelist: checked,
+                        })
                       }
                       label="Enable IP Whitelist"
                       description="Restrict access to whitelisted IPs only"
@@ -710,7 +790,10 @@ export default function SettingsPage() {
                     <Toggle
                       checked={securitySettings.enableAuditLog}
                       onChange={(checked) =>
-                        setSecuritySettings({ ...securitySettings, enableAuditLog: checked })
+                        setSecuritySettings({
+                          ...securitySettings,
+                          enableAuditLog: checked,
+                        })
                       }
                       label="Enable Audit Logging"
                       description="Log all security-related events"
@@ -728,8 +811,12 @@ export default function SettingsPage() {
                     <Mail className="h-5 w-5 text-yellow-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">Email Settings</h2>
-                    <p className="text-sm text-gray-600">Configure SMTP and email notifications</p>
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      Email Settings
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      Configure SMTP and email notifications
+                    </p>
                   </div>
                 </div>
 
@@ -743,7 +830,10 @@ export default function SettingsPage() {
                         type="text"
                         value={emailSettings.smtpHost}
                         onChange={(e) =>
-                          setEmailSettings({ ...emailSettings, smtpHost: e.target.value })
+                          setEmailSettings({
+                            ...emailSettings,
+                            smtpHost: e.target.value,
+                          })
                         }
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
@@ -776,7 +866,10 @@ export default function SettingsPage() {
                         type="text"
                         value={emailSettings.smtpUser}
                         onChange={(e) =>
-                          setEmailSettings({ ...emailSettings, smtpUser: e.target.value })
+                          setEmailSettings({
+                            ...emailSettings,
+                            smtpUser: e.target.value,
+                          })
                         }
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
@@ -790,7 +883,10 @@ export default function SettingsPage() {
                         type="password"
                         value={emailSettings.smtpPassword}
                         onChange={(e) =>
-                          setEmailSettings({ ...emailSettings, smtpPassword: e.target.value })
+                          setEmailSettings({
+                            ...emailSettings,
+                            smtpPassword: e.target.value,
+                          })
                         }
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
@@ -806,7 +902,10 @@ export default function SettingsPage() {
                         type="email"
                         value={emailSettings.fromEmail}
                         onChange={(e) =>
-                          setEmailSettings({ ...emailSettings, fromEmail: e.target.value })
+                          setEmailSettings({
+                            ...emailSettings,
+                            fromEmail: e.target.value,
+                          })
                         }
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
@@ -820,7 +919,10 @@ export default function SettingsPage() {
                         type="text"
                         value={emailSettings.fromName}
                         onChange={(e) =>
-                          setEmailSettings({ ...emailSettings, fromName: e.target.value })
+                          setEmailSettings({
+                            ...emailSettings,
+                            fromName: e.target.value,
+                          })
                         }
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
@@ -831,7 +933,10 @@ export default function SettingsPage() {
                     <Toggle
                       checked={emailSettings.smtpSecure}
                       onChange={(checked) =>
-                        setEmailSettings({ ...emailSettings, smtpSecure: checked })
+                        setEmailSettings({
+                          ...emailSettings,
+                          smtpSecure: checked,
+                        })
                       }
                       label="Use Secure Connection (TLS/SSL)"
                       description="Enable secure SMTP connection"
@@ -840,7 +945,10 @@ export default function SettingsPage() {
                     <Toggle
                       checked={emailSettings.enableEmailNotifications}
                       onChange={(checked) =>
-                        setEmailSettings({ ...emailSettings, enableEmailNotifications: checked })
+                        setEmailSettings({
+                          ...emailSettings,
+                          enableEmailNotifications: checked,
+                        })
                       }
                       label="Enable Email Notifications"
                       description="Send email notifications for system events"
@@ -858,8 +966,12 @@ export default function SettingsPage() {
                     <Info className="h-5 w-5 text-indigo-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">System Information</h2>
-                    <p className="text-sm text-gray-600">View system status and details</p>
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      System Information
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      View system status and details
+                    </p>
                   </div>
                 </div>
 
@@ -867,18 +979,24 @@ export default function SettingsPage() {
                   <div className="space-y-4">
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <div className="text-sm text-gray-600 mb-1">Version</div>
-                      <div className="text-lg font-semibold text-gray-900">{systemInfo.version}</div>
+                      <div className="text-lg font-semibold text-gray-900">
+                        {systemInfo.version}
+                      </div>
                     </div>
 
                     <div className="p-4 bg-gray-50 rounded-lg">
-                      <div className="text-sm text-gray-600 mb-1">Environment</div>
+                      <div className="text-sm text-gray-600 mb-1">
+                        Environment
+                      </div>
                       <div className="text-lg font-semibold text-gray-900">
                         {systemInfo.environment}
                       </div>
                     </div>
 
                     <div className="p-4 bg-gray-50 rounded-lg">
-                      <div className="text-sm text-gray-600 mb-1">Node Version</div>
+                      <div className="text-sm text-gray-600 mb-1">
+                        Node Version
+                      </div>
                       <div className="text-lg font-semibold text-gray-900">
                         {systemInfo.nodeVersion}
                       </div>
@@ -886,28 +1004,59 @@ export default function SettingsPage() {
 
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <div className="text-sm text-gray-600 mb-1">Uptime</div>
-                      <div className="text-lg font-semibold text-gray-900">{systemInfo.uptime}</div>
+                      <div className="text-lg font-semibold text-gray-900">
+                        {systemInfo.uptime}
+                      </div>
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     <div className="p-4 bg-gray-50 rounded-lg">
-                      <div className="text-sm text-gray-600 mb-1">Memory Usage</div>
+                      <div className="text-sm text-gray-600 mb-1">
+                        Memory Usage
+                      </div>
                       <div className="text-lg font-semibold text-gray-900">
                         {systemInfo.memoryUsage}
                       </div>
                     </div>
 
                     <div className="p-4 bg-gray-50 rounded-lg">
-                      <div className="text-sm text-gray-600 mb-1">CPU Usage</div>
-                      <div className="text-lg font-semibold text-gray-900">{systemInfo.cpuUsage}</div>
+                      <div className="text-sm text-gray-600 mb-1">
+                        CPU Usage
+                      </div>
+                      <div className="text-lg font-semibold text-gray-900">
+                        {systemInfo.cpuUsage}
+                      </div>
                     </div>
 
                     <div className="p-4 bg-gray-50 rounded-lg">
-                      <div className="text-sm text-gray-600 mb-1">Disk Usage</div>
-                      <div className="text-lg font-semibold text-gray-900">{systemInfo.diskUsage}</div>
+                      <div className="text-sm text-gray-600 mb-1">
+                        Disk Usage
+                      </div>
+                      <div className="text-lg font-semibold text-gray-900">
+                        {systemInfo.diskUsage}
+                      </div>
                     </div>
                   </div>
+                </div>
+
+                {/* Cache Management Section */}
+                <div className="mt-8 pt-6 border-t border-gray-200">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-orange-100 rounded-lg">
+                      <HardDrive className="h-5 w-5 text-orange-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Cache Management
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Manage frontend cache and stored data
+                      </p>
+                    </div>
+                  </div>
+
+                  <AdvancedCacheClearButton />
                 </div>
               </Card>
             )}
@@ -920,8 +1069,12 @@ export default function SettingsPage() {
                     <HardDrive className="h-5 w-5 text-teal-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">Backup & Restore</h2>
-                    <p className="text-sm text-gray-600">Manage system backups</p>
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      Backup & Restore
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      Manage system backups
+                    </p>
                   </div>
                 </div>
 
@@ -929,30 +1082,44 @@ export default function SettingsPage() {
                   <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <div className="flex items-center gap-3 mb-2">
                       <AlertCircle className="h-5 w-5 text-blue-600" />
-                      <h3 className="font-semibold text-blue-900">Backup Information</h3>
+                      <h3 className="font-semibold text-blue-900">
+                        Backup Information
+                      </h3>
                     </div>
                     <p className="text-sm text-blue-800">
-                      Automatic backups are configured in Database Settings. Manual backups can be
-                      created using the button below.
+                      Automatic backups are configured in Database Settings.
+                      Manual backups can be created using the button below.
                     </p>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <Button variant="gradient" leftIcon={<HardDrive className="h-4 w-4" />}>
+                    <Button
+                      variant="gradient"
+                      leftIcon={<HardDrive className="h-4 w-4" />}
+                    >
                       Create Backup Now
                     </Button>
-                    <Button variant="outline" leftIcon={<RefreshCw className="h-4 w-4" />}>
+                    <Button
+                      variant="outline"
+                      leftIcon={<RefreshCw className="h-4 w-4" />}
+                    >
                       Restore from Backup
                     </Button>
                   </div>
 
                   <div className="border-t pt-6">
-                    <h3 className="font-semibold text-gray-900 mb-4">Recent Backups</h3>
+                    <h3 className="font-semibold text-gray-900 mb-4">
+                      Recent Backups
+                    </h3>
                     <div className="space-y-2">
                       <div className="p-4 border border-gray-200 rounded-lg flex items-center justify-between">
                         <div>
-                          <div className="font-medium text-gray-900">Full System Backup</div>
-                          <div className="text-sm text-gray-600">2 hours ago</div>
+                          <div className="font-medium text-gray-900">
+                            Full System Backup
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            2 hours ago
+                          </div>
                         </div>
                         <Button variant="outline" size="sm">
                           Download
@@ -960,7 +1127,9 @@ export default function SettingsPage() {
                       </div>
                       <div className="p-4 border border-gray-200 rounded-lg flex items-center justify-between">
                         <div>
-                          <div className="font-medium text-gray-900">Database Backup</div>
+                          <div className="font-medium text-gray-900">
+                            Database Backup
+                          </div>
                           <div className="text-sm text-gray-600">1 day ago</div>
                         </div>
                         <Button variant="outline" size="sm">
@@ -981,15 +1150,21 @@ export default function SettingsPage() {
                     <Palette className="h-5 w-5 text-pink-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">Appearance</h2>
-                    <p className="text-sm text-gray-600">Customize the visual appearance</p>
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      Appearance
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      Customize the visual appearance
+                    </p>
                   </div>
                 </div>
 
                 <div className="space-y-6">
                   <RadioGroup
                     value={settings.theme}
-                    onChange={(value) => updateSettings({ theme: value as Theme })}
+                    onChange={(value) =>
+                      updateSettings({ theme: value as Theme })
+                    }
                     options={themeOptions}
                     name="theme"
                     label="Theme Mode"

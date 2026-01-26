@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/lib/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/lib/components/ui/card";
+import { CacheClearButton } from "@/lib/components/ui/cache-clear-button";
 import { HotelSearchCompact } from "@/lib/components/hotels/hotel-search-compact";
 import { HotelDetailsModal } from "@/lib/components/hotel-details-modal/HotelDetailsModal";
 import { HotelAutocompleteSearch } from "@/lib/components/hotels/hotel-autocomplete-search";
@@ -85,7 +86,7 @@ export default function HotelsPage() {
     }>;
   } | null>(null);
   const [activeSupplierCount, setActiveSupplierCount] = useState<number | null>(
-    null
+    null,
   );
 
   // Modal state management
@@ -216,7 +217,7 @@ export default function HotelsPage() {
           setUserRole(suppliersResponse.data.user_role);
           console.log(
             "Loaded suppliers:",
-            suppliersResponse.data.accessible_suppliers.length
+            suppliersResponse.data.accessible_suppliers.length,
           );
         }
       } catch (supplierError) {
@@ -232,17 +233,17 @@ export default function HotelsPage() {
           setSupplierInfo(activeSupplierResponse.data);
           console.log(
             "Loaded active suppliers info:",
-            activeSupplierResponse.data
+            activeSupplierResponse.data,
           );
         } else {
           console.error(
             "Active suppliers API failed:",
-            activeSupplierResponse.error
+            activeSupplierResponse.error,
           );
           setError(
             `Failed to load supplier info: ${
               activeSupplierResponse.error?.message || "Unknown error"
-            }`
+            }`,
           );
         }
       } catch (supplierInfoError) {
@@ -252,7 +253,7 @@ export default function HotelsPage() {
             supplierInfoError instanceof Error
               ? supplierInfoError.message
               : "Unknown error"
-          }`
+          }`,
         );
       }
 
@@ -266,17 +267,17 @@ export default function HotelsPage() {
           activeSupplierCountResponse.data
         ) {
           setActiveSupplierCount(
-            activeSupplierCountResponse.data.active_supplier
+            activeSupplierCountResponse.data.active_supplier,
           );
           console.log(
             "Loaded active supplier count:",
-            activeSupplierCountResponse.data.active_supplier
+            activeSupplierCountResponse.data.active_supplier,
           );
         }
       } catch (activeSupplierCountError) {
         console.log(
           "Active supplier count not available:",
-          activeSupplierCountError
+          activeSupplierCountError,
         );
       }
     } finally {
@@ -401,6 +402,14 @@ export default function HotelsPage() {
                 <Download className="h-4 w-4 mr-2" />
                 <span>Export Data</span>
               </button>
+
+              {/* Cache Clear Button */}
+              <CacheClearButton
+                variant="outline"
+                size="sm"
+                showCacheInfo={false}
+                className="text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400"
+              />
             </div>
           </div>
         </div>
@@ -490,7 +499,7 @@ export default function HotelsPage() {
                   {hotelInfo && (
                     <p className="text-xs text-gray-500 mt-1">
                       {Math.round(
-                        (hotelInfo.activeHotels / hotelInfo.totalHotels) * 100
+                        (hotelInfo.activeHotels / hotelInfo.totalHotels) * 100,
                       )}
                       % of total
                     </p>
@@ -575,7 +584,7 @@ export default function HotelsPage() {
                             hotelInfo.topSuppliers.filter((supplier) =>
                               supplier.name
                                 .toLowerCase()
-                                .includes(supplierFilter.toLowerCase())
+                                .includes(supplierFilter.toLowerCase()),
                             ).length
                           } of ${hotelInfo.topSuppliers.length} suppliers`
                         : `${hotelInfo.topSuppliers.length} suppliers sorted by hotel count`}
@@ -620,12 +629,12 @@ export default function HotelsPage() {
                       .filter((supplier) =>
                         supplier.name
                           .toLowerCase()
-                          .includes(supplierFilter.toLowerCase())
+                          .includes(supplierFilter.toLowerCase()),
                       )
                       .map((supplier, filteredIndex) => {
                         // Get the original index for ranking
                         const originalIndex = hotelInfo.topSuppliers.findIndex(
-                          (s) => s.name === supplier.name
+                          (s) => s.name === supplier.name,
                         );
                         return (
                           <div
@@ -677,7 +686,7 @@ export default function HotelsPage() {
                         hotelInfo.topSuppliers.filter((supplier) =>
                           supplier.name
                             .toLowerCase()
-                            .includes(supplierFilter.toLowerCase())
+                            .includes(supplierFilter.toLowerCase()),
                         ).length
                       }{" "}
                       suppliers matching "{supplierFilter}"
@@ -711,7 +720,7 @@ export default function HotelsPage() {
                 <div className="space-y-4">
                   {hotelInfo.hotelsByRegion.map((region, index) => {
                     const percentage = Math.round(
-                      (region.count / hotelInfo.totalHotels) * 100
+                      (region.count / hotelInfo.totalHotels) * 100,
                     );
                     return (
                       <div key={region.region} className="space-y-2">

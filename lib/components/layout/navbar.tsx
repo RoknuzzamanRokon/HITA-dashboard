@@ -23,8 +23,10 @@ import {
   Shield,
   MessageSquare,
   Home,
+  Trash2,
 } from "lucide-react";
 import { ColorThemeButton } from "@/lib/components/ui/ColorThemeButton";
+import { CacheClearButton } from "@/lib/components/ui/cache-clear-button";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { useTheme } from "@/lib/contexts/theme-context";
 import { User as UserType } from "@/lib/types/auth";
@@ -46,7 +48,7 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
 
   // Calculate actual unread count from notifications (same as notifications page)
   const actualUnreadCount = notifications.filter(
-    (n) => n.status === "unread"
+    (n) => n.status === "unread",
   ).length;
 
   // Debug logging for count mismatch
@@ -70,7 +72,7 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
   // Get recent unread notifications (max 5 for dropdown)
   // Filter to show only unread notifications, so they disappear when marked as read
   const recentNotifications = notifications
-    .filter(n => n.status === "unread")
+    .filter((n) => n.status === "unread")
     .slice(0, 5);
 
   // Handle notification click
@@ -175,7 +177,7 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
                   ? "text-gray-300 hover:text-white hover:bg-gray-700/40"
                   : "text-gray-600 hover:text-gray-900 hover:bg-white/40",
                 "hover:backdrop-blur-sm hover:shadow-lg hover:scale-110",
-                "focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                "focus:outline-none focus:ring-2 focus:ring-blue-500/50",
               )}
               aria-label="Toggle sidebar"
             >
@@ -184,7 +186,7 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
                   "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl",
                   theme === "dark"
                     ? "bg-gradient-to-r from-gray-700/20 to-transparent"
-                    : "bg-gradient-to-r from-white/20 to-transparent"
+                    : "bg-gradient-to-r from-white/20 to-transparent",
                 )}
               />
               <Menu className="h-5 w-5 relative z-10 transition-transform duration-300 group-hover:rotate-180" />
@@ -208,7 +210,7 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
               className={cn(
                 "md:hidden p-2 rounded-xl text-gray-600 hover:text-gray-900 transition-all duration-300 group relative overflow-hidden",
                 "hover:bg-white/40 hover:backdrop-blur-sm hover:shadow-lg hover:scale-110",
-                "focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                "focus:outline-none focus:ring-2 focus:ring-blue-500/50",
               )}
               aria-label="Search"
             >
@@ -223,7 +225,7 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
                 className={cn(
                   "p-2 rounded-xl text-gray-600 hover:text-gray-900 transition-all duration-300 group relative overflow-hidden",
                   "hover:bg-white/40 hover:backdrop-blur-sm hover:shadow-lg hover:scale-110",
-                  "focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                  "focus:outline-none focus:ring-2 focus:ring-blue-500/50",
                 )}
                 aria-label="Notifications"
               >
@@ -275,7 +277,7 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
                           }
                           className={cn(
                             "p-4 border-b border-white/10 hover:bg-white/20 transition-colors duration-200 cursor-pointer",
-                            notification.status === "unread" && "bg-blue-50/50"
+                            notification.status === "unread" && "bg-blue-50/50",
                           )}
                         >
                           <div className="flex items-start space-x-3">
@@ -284,7 +286,7 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
                                 "w-2 h-2 rounded-full mt-2 flex-shrink-0",
                                 notification.status === "unread"
                                   ? "bg-blue-500"
-                                  : "bg-gray-300"
+                                  : "bg-gray-300",
                               )}
                             />
                             <div className="flex-1 min-w-0">
@@ -329,7 +331,7 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
                 className={cn(
                   "flex items-center space-x-3 p-2 rounded-xl text-gray-600 hover:text-gray-900 transition-all duration-300 group relative overflow-hidden",
                   "hover:bg-white/40 hover:backdrop-blur-sm hover:shadow-lg hover:scale-105",
-                  "focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                  "focus:outline-none focus:ring-2 focus:ring-blue-500/50",
                 )}
                 aria-label="User menu"
               >
@@ -349,7 +351,7 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
                   <ChevronDown
                     className={cn(
                       "h-4 w-4 transition-transform duration-300",
-                      dropdownOpen && "rotate-180"
+                      dropdownOpen && "rotate-180",
                     )}
                   />
                 </div>
@@ -428,6 +430,18 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
                         <HelpCircle className="h-4 w-4 mr-3 text-gray-500 group-hover:text-blue-500 transition-colors duration-200" />
                         <span className="font-medium">Help & Support</span>
                       </button>
+                    </div>
+
+                    {/* Cache Management */}
+                    <div className="border-t border-white/20 pt-2">
+                      <div className="px-4 py-2">
+                        <CacheClearButton
+                          variant="ghost"
+                          size="sm"
+                          className="w-full justify-start text-orange-600 hover:text-orange-700 hover:bg-orange-50/50"
+                          onCacheCleared={() => setDropdownOpen(false)}
+                        />
+                      </div>
                     </div>
 
                     <div className="border-t border-white/20 pt-2">
