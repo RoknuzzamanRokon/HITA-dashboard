@@ -33,6 +33,34 @@ function SearchResultsContent() {
   const latitude = searchParams.get("lat");
   const longitude = searchParams.get("lng");
   const countryCode = searchParams.get("country");
+  const suppliersParam = searchParams.get("suppliers");
+
+  // Parse suppliers from URL parameter
+  const selectedSuppliers = suppliersParam
+    ? suppliersParam.split(",").filter((s) => s.trim())
+    : [
+        "goglobal",
+        "hotelbeds",
+        "paximumhotel",
+        "itt",
+        "ean",
+        "juniperhotel",
+        "hyperguestdirect",
+        "letsflyhotel",
+        "hotelston",
+        "kiwihotel",
+        "dotw",
+        "agoda",
+        "stuba",
+        "mgholiday",
+        "ratehawkhotel",
+        "grnconnect",
+        "innstanttravel",
+        "restel",
+        "illusionshotel",
+        "roomerang",
+        "tbohotel",
+      ];
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -49,33 +77,11 @@ function SearchResultsContent() {
 
       try {
         const response = await HotelService.searchHotelsByLocation({
-          latitude: latitude,
-          longitude: longitude,
-          countryCode,
+          lat: latitude,
+          lon: longitude,
           radius: "10",
-          suppliers: [
-            "goglobal",
-            "hotelbeds",
-            "paximumhotel",
-            "itt",
-            "ean",
-            "juniperhotel",
-            "hyperguestdirect",
-            "letsflyhotel",
-            "hotelston",
-            "kiwihotel",
-            "dotw",
-            "agoda",
-            "stuba",
-            "mgholiday",
-            "ratehawkhotel",
-            "grnconnect",
-            "innstanttravel",
-            "restel",
-            "illusionshotel",
-            "roomerang",
-            "tbohotel",
-          ],
+          supplier: selectedSuppliers,
+          country_code: countryCode,
         });
 
         const endTime = performance.now();
@@ -86,7 +92,7 @@ function SearchResultsContent() {
           setLocationResults(response.data);
         } else {
           setError(
-            response.error?.message || "Failed to search hotels by location"
+            response.error?.message || "Failed to search hotels by location",
           );
         }
       } catch (err) {
@@ -97,7 +103,7 @@ function SearchResultsContent() {
     };
 
     fetchResults();
-  }, [latitude, longitude, countryCode]);
+  }, [latitude, longitude, countryCode, suppliersParam]);
 
   if (isLoading) {
     return (
@@ -323,6 +329,31 @@ function SearchResultsContent() {
                   </span>{" "}
                   response time
                 </p>
+                {selectedSuppliers.length > 0 && (
+                  <>
+                    <span className="text-gray-300">•</span>
+                    <p className="text-sm text-gray-600 flex items-center gap-1.5">
+                      <svg
+                        className="h-4 w-4 text-purple-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                        />
+                      </svg>
+                      <span className="font-semibold text-gray-900">
+                        {selectedSuppliers.length}
+                      </span>{" "}
+                      supplier{selectedSuppliers.length !== 1 ? "s" : ""}{" "}
+                      selected
+                    </p>
+                  </>
+                )}
               </div>
             </div>
 

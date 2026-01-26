@@ -116,6 +116,11 @@ export interface AutocompleteResult {
     latitude: string;
     city: string;
     country: string;
+    // Additional fields from actual API response
+    ittid?: string;
+    lat?: number;
+    lon?: number;
+    address?: string;
 }
 
 export interface LocationSearchParams {
