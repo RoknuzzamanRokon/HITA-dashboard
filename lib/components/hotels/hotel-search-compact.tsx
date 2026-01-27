@@ -39,6 +39,11 @@ export function HotelSearchCompact({
       type: string;
       country?: string;
       city?: string;
+      ittid?: string;
+      lat?: number;
+      lon?: number;
+      country_code?: string;
+      address?: string;
     }>
   >([]);
   const [loading, setLoading] = useState(false);
@@ -64,6 +69,7 @@ export function HotelSearchCompact({
 
       if (response.success && response.data) {
         console.log("✅ Got suggestions:", response.data.length);
+        console.log("🔍 Sample suggestion with ittid:", response.data[0]);
         // Limit to first 6 results
         const limitedSuggestions = response.data.slice(0, 6);
         setSuggestions(limitedSuggestions);
@@ -82,7 +88,57 @@ export function HotelSearchCompact({
     }
   };
 
-  // Fetch hotel details by name
+  // Create hotel object directly from autocomplete data (using ittid)
+  const createHotelFromAutocomplete = (suggestion: {
+    name: string;
+    type: string;
+    country?: string;
+    city?: string;
+    ittid?: string;
+    lat?: number;
+    lon?: number;
+    country_code?: string;
+    address?: string;
+  }) => {
+    setLoadingDetails(true);
+    setError(null);
+    setShowSuggestions(false);
+
+    try {
+      console.log("🏨 Creating hotel from autocomplete data:", suggestion);
+
+      // Transform the autocomplete response to match Hotel type
+      const hotel: Hotel = {
+        ittid: suggestion.ittid || "",
+        id: parseInt(suggestion.ittid?.replace(/\D/g, "") || "0") || 0,
+        name: suggestion.name,
+        city: suggestion.city || "",
+        country: suggestion.country || "",
+        countryCode: suggestion.country_code || "",
+        latitude: suggestion.lat?.toString() || "",
+        longitude: suggestion.lon?.toString() || "",
+        addressLine1: suggestion.address || "",
+        addressLine2: null,
+        postalCode: null,
+        chainName: null,
+        propertyType: null,
+        mapStatus: "mapped",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      setHotels([hotel]);
+      console.log("✅ Hotel created from autocomplete data:", hotel);
+    } catch (error) {
+      console.error("Error creating hotel from autocomplete:", error);
+      setError("An unexpected error occurred");
+      setHotels([]);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
+  // Fetch hotel details by name (fallback method)
   const fetchHotelByName = async (hotelName: string) => {
     setLoadingDetails(true);
     setError(null);
@@ -148,9 +204,26 @@ export function HotelSearchCompact({
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
-  const handleSuggestionClick = (suggestionName: string) => {
-    setSearchQuery(suggestionName);
-    fetchHotelByName(suggestionName);
+  const handleSuggestionClick = (suggestion: {
+    name: string;
+    type: string;
+    country?: string;
+    city?: string;
+    ittid?: string;
+    lat?: number;
+    lon?: number;
+    country_code?: string;
+    address?: string;
+  }) => {
+    setSearchQuery(suggestion.name);
+
+    // Use the ittid directly from autocomplete response instead of calling search-with-hotel-name
+    if (suggestion.ittid) {
+      createHotelFromAutocomplete(suggestion);
+    } else {
+      // Fallback to name search if no ittid
+      fetchHotelByName(suggestion.name);
+    }
 
     setTimeout(() => {
       setShowSuggestions(false);
@@ -199,7 +272,7 @@ export function HotelSearchCompact({
               {suggestions.map((suggestion, index) => (
                 <div
                   key={index}
-                  onClick={() => handleSuggestionClick(suggestion.name)}
+                  onClick={() => handleSuggestionClick(suggestion)}
                   className="flex items-center px-3 py-2.5 cursor-pointer border-b border-gray-100 last:border-b-0"
                 >
                   <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mr-3">
@@ -218,6 +291,11 @@ export function HotelSearchCompact({
                             .filter(Boolean)
                             .join(", ")}
                         </span>
+                      </div>
+                    )}
+                    {suggestion.ittid && (
+                      <div className="text-xs text-blue-600 mt-0.5 font-mono">
+                        ID: {suggestion.ittid}
                       </div>
                     )}
                   </div>
@@ -300,7 +378,7 @@ export function HotelSearchCompact({
                       {hotel.mapStatus && (
                         <Badge
                           className={`text-xs px-3 py-1 ${getStatusColor(
-                            hotel.mapStatus
+                            hotel.mapStatus,
                           )}`}
                         >
                           {hotel.mapStatus.toUpperCase()}
@@ -426,7 +504,7 @@ export function HotelSearchCompact({
                         console.log("🏨 Hotel data:", hotel);
                         console.log(
                           "📞 onHotelSelect function:",
-                          onHotelSelect
+                          onHotelSelect,
                         );
                         onHotelSelect(hotel);
                         console.log("🔘 BUTTON CLICKED - END");

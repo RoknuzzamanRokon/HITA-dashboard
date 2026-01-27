@@ -253,9 +253,9 @@ export class ApiClient {
 
       // Handle different types of errors
       if (err instanceof DOMException && err.name === 'AbortError') {
-        console.warn('🚫 Request was cancelled or timed out');
+        console.debug('🚫 Request was cancelled (page unload or user navigation)');
         cleanup();
-        errorMessage = 'Request was cancelled. Please try again.';
+        errorMessage = 'Request was cancelled';
         errorStatus = 408; // Request Timeout
       } else if (err instanceof TypeError && err.message.includes('fetch')) {
         console.error('🚨 CORS Error detected - this is likely a backend CORS configuration issue');
@@ -320,7 +320,12 @@ export class ApiClient {
     if (this.activeRequests.size > 0) {
       console.log(`🔄 Cancelling ${this.activeRequests.size} active requests due to page unload`);
       for (const [requestKey, controller] of this.activeRequests) {
-        controller.abort();
+        try {
+          controller.abort('Page unload - cancelling active requests');
+        } catch (error) {
+          // Ignore abort errors during cleanup
+          console.debug(`Request ${requestKey} already aborted or completed`);
+        }
       }
       this.activeRequests.clear();
     }
@@ -448,8 +453,13 @@ export const apiClient = new ApiClient();
 if (typeof window !== 'undefined') {
   // Only cancel requests when the page is actually being unloaded (user navigating away permanently)
   window.addEventListener('beforeunload', () => {
-    console.log('🔄 Page unloading, cancelling active requests');
-    apiClient.cancelAllRequests();
+    console.debug('🔄 Page unloading, cancelling active requests');
+    try {
+      apiClient.cancelAllRequests();
+    } catch (error) {
+      // Ignore errors during cleanup
+      console.debug('Cleanup completed with minor issues (expected during page unload)');
+    }
   });
 
   // Remove the aggressive visibility change cancellation

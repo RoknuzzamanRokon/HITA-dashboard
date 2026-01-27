@@ -206,6 +206,12 @@ export class CacheManager {
             }
 
         } catch (error) {
+            // Suppress abort-related errors during cache clearing
+            if (error instanceof DOMException && error.name === 'AbortError') {
+                console.debug('Cache clear completed (some requests were cancelled during page refresh)');
+                return; // Don't throw for abort errors during cache clear
+            }
+
             console.error('❌ Error during cache clearing:', error);
             throw error;
         }

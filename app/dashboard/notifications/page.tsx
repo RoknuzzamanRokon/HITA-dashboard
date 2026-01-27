@@ -3,7 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { useRequireAuth } from "@/lib/hooks/use-auth";
 import { useNotifications } from "@/lib/hooks/use-notifications";
+import { BackendNotification } from "@/lib/api/notifications";
 import { RealTimeTimestamp } from "@/lib/components/ui/real-time-timestamp";
+import { getNotificationDisplayTimestamp } from "@/lib/utils/notification-helpers";
+import { NotificationInspector } from "@/lib/components/debug/notification-inspector";
 import {
   Bell,
   Check,
@@ -83,6 +86,8 @@ export default function NotificationsPage() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [markingAsRead, setMarkingAsRead] = useState<Set<number>>(new Set());
+  const [inspectingNotification, setInspectingNotification] =
+    useState<BackendNotification | null>(null);
 
   // Auto-sync unread count when there's a mismatch
   useEffect(() => {
@@ -125,6 +130,9 @@ export default function NotificationsPage() {
   const handleMarkAsRead = async (notificationId: number) => {
     // Prevent multiple clicks
     if (markingAsRead.has(notificationId)) {
+      console.log(
+        `⏳ Already marking notification ${notificationId}, ignoring duplicate request`,
+      );
       return;
     }
 
@@ -133,6 +141,19 @@ export default function NotificationsPage() {
       console.log(
         `🖱️ UI: User clicked mark as read for notification ${notificationId}`,
       );
+
+      // Find the notification to check its current state
+      const notification = notifications.find((n) => n.id === notificationId);
+      if (notification) {
+        console.log(`📊 Notification ${notificationId} current state:`, {
+          id: notification.id,
+          status: notification.status,
+          title: notification.title,
+          created_at: notification.created_at,
+          meta_data: notification.meta_data,
+        });
+      }
+
       await markAsRead(notificationId);
       console.log(`✅ UI: Mark as read completed successfully`);
     } catch (err) {
@@ -352,18 +373,40 @@ export default function NotificationsPage() {
                 onClick={async (e) => {
                   // Don't handle click if already marking as read
                   if (isMarking) {
+                    console.log(
+                      `⏳ Already marking notification ${notification.id} as read, ignoring click`,
+                    );
                     return;
                   }
 
                   // Don't handle click if user clicked on a button or link
                   const target = e.target as HTMLElement;
                   if (target.closest("button") || target.closest("a")) {
+                    console.log(
+                      `🖱️ Click on button/link detected, ignoring notification click`,
+                    );
                     return;
                   }
 
-                  // Mark as read if notification is unread
+                  // Only mark as read if notification is currently unread
                   if (notification.status === "unread") {
+                    console.log(
+                      `📖 Notification ${notification.id} clicked - marking as read`,
+                    );
+                    console.log(
+                      `📊 Current notification status:`,
+                      notification.status,
+                    );
+                    console.log(`📊 Full notification object:`, notification);
                     await handleMarkAsRead(notification.id);
+                  } else {
+                    console.log(
+                      `ℹ️ Notification ${notification.id} is already read, no action needed`,
+                    );
+                    console.log(
+                      `📊 Current notification status:`,
+                      notification.status,
+                    );
                   }
                 }}
                 className={`p-4 rounded-lg border transition-all duration-200 hover:shadow-md ${
@@ -409,7 +452,9 @@ export default function NotificationsPage() {
                         )}
                         <span className="text-xs text-[rgb(var(--text-tertiary))]">
                           <RealTimeTimestamp
-                            dateString={notification.created_at}
+                            dateString={getNotificationDisplayTimestamp(
+                              notification,
+                            )}
                             className="text-xs text-[rgb(var(--text-tertiary))]"
                             updateInterval={5000}
                           />
@@ -503,8 +548,15 @@ export default function NotificationsPage() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
+                            console.log(
+                              `🖱️ Mark as read button clicked for notification ${notification.id}`,
+                            );
                             if (!isMarking) {
                               handleMarkAsRead(notification.id);
+                            } else {
+                              console.log(
+                                `⏳ Already marking notification ${notification.id}, ignoring button click`,
+                              );
                             }
                           }}
                           disabled={isMarking}
@@ -531,6 +583,19 @@ export default function NotificationsPage() {
                         <Trash2 className="w-3 h-3" />
                         <span>Delete</span>
                       </button>
+
+                      {process.env.NODE_ENV === "development" && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setInspectingNotification(notification);
+                          }}
+                          className="text-xs text-purple-600 hover:text-purple-700 font-medium flex items-center space-x-1"
+                        >
+                          <AlertCircle className="w-3 h-3" />
+                          <span>Debug</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -558,6 +623,14 @@ export default function NotificationsPage() {
             )}
           </button>
         </div>
+      )}
+
+      {/* Debug Inspector */}
+      {inspectingNotification && (
+        <NotificationInspector
+          notification={inspectingNotification}
+          onClose={() => setInspectingNotification(null)}
+        />
       )}
     </div>
   );

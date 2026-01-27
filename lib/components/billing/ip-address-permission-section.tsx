@@ -2,12 +2,11 @@
 
 import React, { useState } from "react";
 import {
-  Shield,
+  Globe,
   Plus,
   Trash2,
   CheckCircle,
   AlertCircle,
-  Globe,
   List,
   Loader2,
 } from "lucide-react";
@@ -44,9 +43,12 @@ export function IpAddressPermissionSection() {
   const [userId, setUserId] = useState("");
   const [ipList, setIpList] = useState<IpEntry[]>([]);
   const [userInfo, setUserInfo] = useState<ApiResponse["user"] | null>(null);
-  const [managedBy, setManagedBy] = useState<ApiResponse["managed_by"] | null>(null);
+  const [managedBy, setManagedBy] = useState<ApiResponse["managed_by"] | null>(
+    null,
+  );
   const [newIp, setNewIp] = useState("");
   const [loading, setLoading] = useState(false);
+  const [removingIp, setRemovingIp] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,7 +68,8 @@ export function IpAddressPermissionSection() {
         throw new Error("Authentication token not found");
       }
 
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8001';
+      const apiBaseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8001";
       const response = await fetch(
         `${apiBaseUrl}/v1.0/permissions/ip/list/${userId}`,
         {
@@ -75,23 +78,27 @@ export function IpAddressPermissionSection() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || errorData.detail || "Failed to fetch IP list");
+        throw new Error(
+          errorData.message || errorData.detail || "Failed to fetch IP list",
+        );
       }
 
       const data: ApiResponse = await response.json();
-      
+
       // Extract IP entries from the response
       const entries = data.ip_whitelist?.entries || [];
       setIpList(entries);
       setUserInfo(data.user);
       setManagedBy(data.managed_by);
-      
-      setSuccess(`Found ${entries.length} active IP address${entries.length !== 1 ? 'es' : ''} for ${data.user?.username || 'user'}`);
+
+      setSuccess(
+        `Found ${entries.length} active IP address${entries.length !== 1 ? "es" : ""} for ${data.user?.username || "user"}`,
+      );
       setTimeout(() => setSuccess(null), 5000);
     } catch (err) {
       console.error("Error fetching IP list:", err);
@@ -134,22 +141,35 @@ export function IpAddressPermissionSection() {
             id: userId,
             ip: [newIp],
           }),
-        }
+        },
       );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to activate IP address");
+        throw new Error(
+          errorData.message ||
+            errorData.detail ||
+            "Failed to activate IP address",
+        );
       }
 
       const result = await response.json();
+      console.log("Activate IP response:", result);
       setSuccess(`Successfully activated IP address: ${newIp}`);
       setNewIp("");
+
+      // Refresh the IP list if we're on the list tab
+      if (activeTab === "list") {
+        setTimeout(() => {
+          handleShowList();
+        }, 1000);
+      }
+
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error("Error activating IP:", err);
       setError(
-        err instanceof Error ? err.message : "Failed to activate IP address"
+        err instanceof Error ? err.message : "Failed to activate IP address",
       );
     } finally {
       setLoading(false);
@@ -177,37 +197,120 @@ export function IpAddressPermissionSection() {
         throw new Error("Authentication token not found");
       }
 
-      const response = await fetch(
-        "http://127.0.0.1:8001/v1.0/permissions/ip/remove",
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            id: userId,
-            ip: [newIp],
-          }),
-        }
-      );
+      const apiBaseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8001";
+      const response = await fetch(`${apiBaseUrl}/v1.0/permissions/ip/remove`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          ip_addresses: [newIp],
+        }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to deactivate IP address");
+        throw new Error(
+          errorData.message ||
+            errorData.detail ||
+            "Failed to deactivate IP address",
+        );
       }
 
       const result = await response.json();
-      setSuccess(`Successfully deactivated IP address: ${newIp}`);
+      console.log("Remove IP response:", result);
+
+      // Update success message based on response
+      const removedCount = result.removed_ips?.length || 1;
+      const targetUser = result.target_user?.username || "user";
+      setSuccess(
+        `Successfully removed ${removedCount} IP address(es) from ${targetUser}'s whitelist`,
+      );
       setNewIp("");
-      setTimeout(() => setSuccess(null), 3000);
+
+      // Refresh the IP list if we're on the list tab
+      if (activeTab === "list") {
+        setTimeout(() => {
+          handleShowList();
+        }, 1000);
+      }
+
+      setTimeout(() => setSuccess(null), 5000);
     } catch (err) {
       console.error("Error deactivating IP:", err);
       setError(
-        err instanceof Error ? err.message : "Failed to deactivate IP address"
+        err instanceof Error ? err.message : "Failed to deactivate IP address",
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRemoveIpFromList = async (ipAddress: string) => {
+    if (!userId.trim()) {
+      setError("User ID is required");
+      return;
+    }
+
+    setRemovingIp(ipAddress);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const token = TokenStorage.getToken();
+      if (!token) {
+        throw new Error("Authentication token not found");
+      }
+
+      const apiBaseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8001";
+      const response = await fetch(`${apiBaseUrl}/v1.0/permissions/ip/remove`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          ip_addresses: [ipAddress],
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message ||
+            errorData.detail ||
+            "Failed to remove IP address",
+        );
+      }
+
+      const result = await response.json();
+      console.log("Remove IP from list response:", result);
+
+      // Update success message based on response
+      const removedCount = result.removed_ips?.length || 1;
+      const targetUser = result.target_user?.username || "user";
+      setSuccess(
+        `Successfully removed ${removedCount} IP address(es) from ${targetUser}'s whitelist`,
+      );
+
+      // Remove the IP from local state immediately for better UX
+      setIpList((prev) =>
+        prev.filter((entry) => entry.ip_address !== ipAddress),
+      );
+
+      setTimeout(() => setSuccess(null), 5000);
+    } catch (err) {
+      console.error("Error removing IP from list:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to remove IP address",
+      );
+    } finally {
+      setRemovingIp(null);
     }
   };
 
@@ -292,6 +395,27 @@ export function IpAddressPermissionSection() {
 
               {ipList.length > 0 && (
                 <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {userInfo && (
+                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md mb-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                            User: {userInfo.username}
+                          </p>
+                          <p className="text-xs text-blue-700 dark:text-blue-300">
+                            ID: {userInfo.id} | Email: {userInfo.email}
+                          </p>
+                        </div>
+                        {managedBy && (
+                          <div className="text-right">
+                            <p className="text-xs text-blue-700 dark:text-blue-300">
+                              Managed by: {managedBy.username}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   <p className="text-sm font-medium text-[rgb(var(--text-secondary))]">
                     Active IP Addresses ({ipList.length})
                   </p>
@@ -305,27 +429,51 @@ export function IpAddressPermissionSection() {
                           <Globe className="w-4 h-4 mr-2 text-cyan-600 dark:text-cyan-400" />
                           {entry.ip_address}
                         </span>
-                        <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-black text-xs font-semibold rounded-full">
-                          ACTIVE
-                        </span>
+                        <div className="flex items-center space-x-2">
+                          <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-black text-xs font-semibold rounded-full">
+                            ACTIVE
+                          </span>
+                          <button
+                            onClick={() =>
+                              handleRemoveIpFromList(entry.ip_address)
+                            }
+                            disabled={removingIp === entry.ip_address}
+                            className="p-1 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:opacity-50"
+                            title="Remove IP address"
+                          >
+                            {removingIp === entry.ip_address ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         <div>
-                          <span className="text-[rgb(var(--text-secondary))]">Created:</span>
+                          <span className="text-[rgb(var(--text-secondary))]">
+                            Created:
+                          </span>
                           <span className="ml-2 text-[rgb(var(--text-primary))] font-medium">
                             {new Date(entry.created_at).toLocaleString()}
                           </span>
                         </div>
                         <div>
-                          <span className="text-[rgb(var(--text-secondary))]">Updated:</span>
+                          <span className="text-[rgb(var(--text-secondary))]">
+                            Updated:
+                          </span>
                           <span className="ml-2 text-[rgb(var(--text-primary))] font-medium">
                             {new Date(entry.updated_at).toLocaleString()}
                           </span>
                         </div>
                       </div>
                       <div className="mt-2 text-xs">
-                        <span className="text-[rgb(var(--text-secondary))]">Entry ID:</span>
-                        <span className="ml-2 text-[rgb(var(--text-primary))] font-mono">#{entry.id}</span>
+                        <span className="text-[rgb(var(--text-secondary))]">
+                          Entry ID:
+                        </span>
+                        <span className="ml-2 text-[rgb(var(--text-primary))] font-mono">
+                          #{entry.id}
+                        </span>
                       </div>
                     </div>
                   ))}

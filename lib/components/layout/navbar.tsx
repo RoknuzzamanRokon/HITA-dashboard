@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useNotifications } from "@/lib/hooks/use-notifications";
 import { RealTimeTimestamp } from "@/lib/components/ui/real-time-timestamp";
+import { getNotificationDisplayTimestamp } from "@/lib/utils/notification-helpers";
 import {
   Menu,
   Bell,
@@ -77,9 +78,25 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
 
   // Handle notification click
   const handleNotificationClick = async (notificationId: number) => {
+    console.log(`🖱️ Navbar: Notification ${notificationId} clicked`);
+
     try {
-      // Mark notification as read
-      await markAsRead(notificationId);
+      // Only mark as read if it's currently unread
+      const notification = notifications.find((n) => n.id === notificationId);
+      if (notification && notification.status === "unread") {
+        console.log(
+          `📖 Navbar: Marking notification ${notificationId} as read...`,
+        );
+        await markAsRead(notificationId);
+        console.log(
+          `✅ Navbar: Successfully marked notification ${notificationId} as read`,
+        );
+      } else {
+        console.log(
+          `ℹ️ Navbar: Notification ${notificationId} is already read, skipping mark as read`,
+        );
+      }
+
       // Close the notification dropdown
       setNotificationOpen(false);
       // Navigate to notifications page
@@ -298,7 +315,9 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
                               </p>
                               <p className="text-xs text-gray-500 mt-1">
                                 <RealTimeTimestamp
-                                  dateString={notification.created_at}
+                                  dateString={getNotificationDisplayTimestamp(
+                                    notification,
+                                  )}
                                   className="text-xs text-gray-500"
                                   updateInterval={5000}
                                 />

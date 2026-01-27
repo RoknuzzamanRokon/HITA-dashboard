@@ -83,8 +83,11 @@ export function CacheClearButton({
         "✅ All frontend caches cleared successfully!\n\nThe page will refresh to apply changes.",
       );
 
-      // Refresh the page instead of full reload
-      window.location.href = window.location.href;
+      // Add a small delay to allow any pending operations to complete
+      setTimeout(() => {
+        // Refresh the page instead of full reload
+        window.location.href = window.location.href;
+      }, 500);
     } catch (error) {
       console.error("Failed to clear cache:", error);
       alert("❌ Failed to clear some caches. Check console for details.");
