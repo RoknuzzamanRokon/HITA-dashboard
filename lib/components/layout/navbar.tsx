@@ -42,10 +42,19 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
   const { logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const router = useRouter();
-  const { notifications, unreadCount, markAsRead } = useNotifications({
+  const { notifications, unreadCount, markAsRead, refresh } = useNotifications({
     autoRefresh: true,
     refreshInterval: 30000, // 30 seconds
   });
+
+  // Debug logging for navbar notifications
+  useEffect(() => {
+    console.log("🔍 Navbar: Notifications updated", {
+      count: notifications.length,
+      unreadCount,
+      unreadFromList: notifications.filter((n) => n.status === "unread").length,
+    });
+  }, [notifications, unreadCount]);
 
   // Calculate actual unread count from notifications (same as notifications page)
   const actualUnreadCount = notifications.filter(
@@ -91,6 +100,12 @@ export function Navbar({ user, onToggleSidebar }: NavbarProps) {
         console.log(
           `✅ Navbar: Successfully marked notification ${notificationId} as read`,
         );
+
+        // Force immediate refresh of navbar state
+        setTimeout(() => {
+          console.log("🔄 Navbar: Force refreshing after mark as read");
+          refresh();
+        }, 100); // Reduced delay
       } else {
         console.log(
           `ℹ️ Navbar: Notification ${notificationId} is already read, skipping mark as read`,

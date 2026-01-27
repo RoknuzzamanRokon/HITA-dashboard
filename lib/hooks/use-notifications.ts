@@ -81,10 +81,14 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
             console.log(`🔄 Hook: Marking notification ${notificationId} as read...`);
             await NotificationService.markAsRead(notificationId);
             console.log(`✅ Hook: Successfully marked notification ${notificationId} as read`);
-            
-            // Trigger global refresh event immediately so other components (like navbar) update right away
-            // The refresh will fetch the latest data from backend, ensuring consistency
-            window.dispatchEvent(new CustomEvent('refreshNotifications'));
+
+            // Wait a bit longer before triggering global refresh to let optimistic update settle
+            setTimeout(() => {
+                console.log('🔄 Triggering global notification refresh after mark as read');
+                window.dispatchEvent(new CustomEvent('refreshNotifications', {
+                    detail: { notificationId, action: 'markAsRead' }
+                }));
+            }, 500); // Increased delay to let optimistic update be visible
         } catch (err) {
             console.error(`❌ Hook: Error marking notification ${notificationId} as read:`, err);
             // Revert optimistic update on error
@@ -241,10 +245,27 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
         }, refreshInterval);
 
         // Listen for global refresh events (e.g., from supplier changes or marking as read)
-        const handleGlobalRefresh = () => {
-            console.log('🔄 Global notification refresh triggered');
-            // Refresh immediately without delay
-            refresh();
+        const handleGlobalRefresh = (event?: CustomEvent) => {
+            console.log('🔄 Global notification refresh triggered', event?.detail);
+
+            // If this is a mark-as-read event, be more conservative about refreshing
+            if (event?.detail?.action === 'markAsRead') {
+                console.log('🔄 Mark-as-read refresh - checking if refresh is needed');
+                // Only refresh if the notification isn't already marked as read in local state
+                const notificationId = event.detail.notificationId;
+                const notification = notifications.find(n => n.id === notificationId);
+                if (notification && notification.status === 'unread') {
+                    console.log('🔄 Notification still shows as unread, refreshing...');
+                    refresh();
+                    fetchUnreadCount();
+                } else {
+                    console.log('🔄 Notification already marked as read locally, skipping refresh');
+                }
+            } else {
+                // For other events, refresh immediately
+                refresh();
+                fetchUnreadCount();
+            }
         };
 
         window.addEventListener('refreshNotifications', handleGlobalRefresh);
@@ -253,7 +274,7 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
             clearInterval(interval);
             window.removeEventListener('refreshNotifications', handleGlobalRefresh);
         };
-    }, [autoRefresh, refreshInterval, fetchUnreadCount, refresh]);
+    }, [autoRefresh, refreshInterval, fetchUnreadCount, refresh, notifications]);
 
     return {
         notifications,

@@ -156,6 +156,14 @@ export default function NotificationsPage() {
 
       await markAsRead(notificationId);
       console.log(`✅ UI: Mark as read completed successfully`);
+
+      // Force immediate refresh to ensure UI is in sync
+      setTimeout(() => {
+        console.log(
+          "🔄 Notifications page: Force refreshing after mark as read",
+        );
+        refresh();
+      }, 100); // Reduced delay
     } catch (err) {
       console.error(`❌ UI: Failed to mark notification as read:`, err);
     } finally {
