@@ -49,7 +49,7 @@ const routeConfigs: RouteConfig[] = [
         requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER, UserRole.GENERAL_USER],
     },
     {
-        path: "/billing",
+        path: "/pointsPermission",
         requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER],
         redirectTo: "/dashboard",
     },

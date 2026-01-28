@@ -2206,8 +2206,8 @@ export default function CachedUsersPage() {
                   // Close the modal
                   setShowUserModal(false);
 
-                  // Navigate to billing page with user ID
-                  router.push(`/dashboard/billing?userId=${userId}`);
+                  // Navigate to permission page with user ID
+                  router.push(`/dashboard/managePermission?userId=${userId}`);
                 }}
                 leftIcon={<Edit className="h-3 w-3" />}
               >
@@ -2745,8 +2745,8 @@ export default function CachedUsersPage() {
                   // Close the detail modal
                   setShowUserDetailModal(false);
 
-                  // Navigate to billing page with user ID
-                  router.push(`/dashboard/billing?userId=${userId}`);
+                  // Navigate to permission page with user ID
+                  router.push(`/dashboard/managePermission?userId=${userId}`);
                 }}
                 leftIcon={<Edit className="h-3 w-3" />}
               >

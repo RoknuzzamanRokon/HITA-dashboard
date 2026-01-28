@@ -111,11 +111,11 @@ export const mainMenuItems: MenuItem[] = [
 // Administrative menu items
 export const adminMenuItems: MenuItem[] = [
     {
-        id: "billing",
-        label: "Billing & Points",
+        id: "pointsPermission",
+        label: "Points & Permission",
         icon: CreditCard,
-        path: "/dashboard/billing",
-        description: "Manage user points and billing",
+        path: "/dashboard/managePermission",
+        description: "Manage user points",
         requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER],
     },
     {
