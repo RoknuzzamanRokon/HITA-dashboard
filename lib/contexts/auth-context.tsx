@@ -403,10 +403,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Force redirect to login page immediately
       if (typeof window !== "undefined") {
-        console.log("🔄 AuthContext: Redirecting to login...");
+        console.log("🔄 AuthContext: Redirecting to home page...");
         // Use replace to prevent back button issues and add a small delay to ensure state is updated
         setTimeout(() => {
-          window.location.replace("/login");
+          window.location.replace("/");
         }, 100);
       }
     } catch (error) {
@@ -419,10 +419,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Force redirect even on error
       if (typeof window !== "undefined") {
         console.log(
-          "🔄 AuthContext: Force redirecting to login after error...",
+          "🔄 AuthContext: Force redirecting to home page after error...",
         );
         setTimeout(() => {
-          window.location.replace("/login");
+          window.location.replace("/");
         }, 100);
       }
     } finally {

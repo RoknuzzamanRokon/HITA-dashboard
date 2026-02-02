@@ -207,7 +207,7 @@ export function useLogout() {
 
     const handleLogout = async () => {
         await logout();
-        router.push('/login');
+        router.push('/');
     };
 
     return { handleLogout, isLoading };
