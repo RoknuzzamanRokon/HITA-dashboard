@@ -35,6 +35,7 @@ import { useSmartRealtime } from "@/lib/hooks/use-smart-realtime";
 import { useOptimizedDashboard } from "@/lib/hooks/use-dashboard-optimized";
 import { useCachedDashboard } from "@/lib/hooks/use-cached-dashboard";
 import { useCachedUserAnalytics } from "@/lib/hooks/use-cached-user-analytics";
+import { usePrefetchDashboardData } from "@/lib/hooks/use-dashboard-prefetch";
 
 // Optimized section components
 import {
@@ -64,6 +65,12 @@ function EnhancedSectionSkeleton({ height = "h-64" }: { height?: string }) {
 export default function OptimizedDashboardPage() {
   const { isAuthenticated, isLoading } = useRequireAuth();
   const { user } = useAuth();
+
+  // Prefetch critical dashboard queries immediately after auth so data is ready ASAP
+  usePrefetchDashboardData({
+    userRole: user?.role,
+    prefetchDelay: 0,
+  });
 
   // Initialize cache system
   React.useEffect(() => {
@@ -118,7 +125,7 @@ export default function OptimizedDashboardPage() {
 
   // Use cached data if available, otherwise use regular data
   const finalStats = cachedStats || stats;
-  const finalStatsLoading = cachedStatsLoading && statsLoading;
+  const finalStatsLoading = !finalStats && (cachedStatsLoading || statsLoading);
   const finalStatsError = cachedStatsError || statsError;
 
   // Cached points data
@@ -140,7 +147,8 @@ export default function OptimizedDashboardPage() {
 
   // Use cached data if available
   const finalPointsData = cachedPointsData || pointsData;
-  const finalPointsLoading = cachedPointsLoading && pointsLoading;
+  const finalPointsLoading =
+    !finalPointsData && (cachedPointsLoading || pointsLoading);
 
   // Cached charts data
   const {
@@ -163,7 +171,8 @@ export default function OptimizedDashboardPage() {
 
   // Use cached data if available
   const finalChartsData = cachedChartsData || chartsData;
-  const finalChartsLoading = cachedChartsLoading && chartsLoading;
+  const finalChartsLoading =
+    !finalChartsData && (cachedChartsLoading || chartsLoading);
   const finalChartsError = cachedChartsError || chartsError;
   const finalChartsRefreshing = cachedChartsRefreshing || chartsRefreshing;
 
