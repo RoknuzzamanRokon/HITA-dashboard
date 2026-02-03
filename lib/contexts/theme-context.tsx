@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 export type Theme = "light" | "dark" | "system";
 
@@ -32,6 +33,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
   const [settings, setSettings] = useState<ThemeSettings>(defaultSettings);
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
+  const pathname = usePathname();
 
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -57,13 +59,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (!mounted) return;
 
     const root = document.documentElement;
+    const isDashboardRoute = pathname?.startsWith("/dashboard");
+    const activeSettings = isDashboardRoute ? settings : defaultSettings;
 
     // Always apply light theme
     root.classList.remove("light", "dark");
     root.classList.add("light");
 
     // Apply accent color with full color theme
-    root.style.setProperty("--accent-color", settings.accentColor);
+    root.style.setProperty("--accent-color", activeSettings.accentColor);
 
     // Apply color theme variables
     const colorThemes: Record<
@@ -174,7 +178,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       },
     };
 
-    const theme = colorThemes[settings.accentColor] || colorThemes.blue;
+    const theme = colorThemes[activeSettings.accentColor] || colorThemes.blue;
     root.style.setProperty("--primary-color", theme.primary);
     root.style.setProperty("--primary-rgb", theme.primaryRgb);
     root.style.setProperty("--primary-hover", theme.hover);
@@ -188,15 +192,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       lg: "0.75rem",
       xl: "1rem",
     };
-    root.style.setProperty("--border-radius", radiusMap[settings.borderRadius]);
+    root.style.setProperty(
+      "--border-radius",
+      radiusMap[activeSettings.borderRadius]
+    );
 
     // Apply animation preferences
-    if (settings.reducedMotion || !settings.animations) {
+    if (activeSettings.reducedMotion || !activeSettings.animations) {
       root.style.setProperty("--animation-duration", "0.01ms");
     } else {
       root.style.setProperty("--animation-duration", "150ms");
     }
-  }, [mounted, resolvedTheme, settings]);
+  }, [mounted, pathname, resolvedTheme, settings]);
 
   const updateSettings = (newSettings: Partial<ThemeSettings>) => {
     const updatedSettings = { ...settings, ...newSettings };
