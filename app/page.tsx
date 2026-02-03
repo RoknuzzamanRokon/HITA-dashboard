@@ -166,31 +166,146 @@ export default function HomePage() {
           ></div>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-              The Most Comprehensive
-              <span className="text-blue-600 block">Hotel API Platform</span>
-            </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              Access millions of hotels worldwide with our powerful API. Get
-              real-time availability, pricing, and detailed property information
-              from trusted suppliers.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/pricing"
-                className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white px-8 py-4 rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 font-semibold text-lg flex items-center justify-center group shadow-lg hover:shadow-xl"
-              >
-                Get Started
-                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link
-                href="/blog"
-                className="border-2 border-slate-300 text-slate-700 px-8 py-4 rounded-xl hover:border-blue-500 hover:text-blue-600 transition-all duration-200 font-semibold text-lg bg-white/80 backdrop-blur-sm"
-              >
-                Learn More
-              </Link>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-24">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            <div className="lg:col-span-6">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/70 backdrop-blur-sm border border-gray-200 px-4 py-2 text-sm text-gray-700 shadow-sm">
+                <span className="inline-flex h-2 w-2 rounded-full bg-primary-color"></span>
+                Enterprise-ready Hotel Data Platform
+              </div>
+              <h1 className="mt-6 text-4xl md:text-6xl font-bold tracking-tight text-gray-900">
+                Build booking experiences with a
+                <span className="text-blue-600 block">premium Hotel API</span>
+              </h1>
+              <p className="mt-6 text-lg md:text-xl text-gray-600 max-w-2xl">
+                Connect to global inventory with real-time availability,
+                pricing, and rich property content. Designed for fast
+                integration and consistent performance at scale.
+              </p>
+              <div className="mt-8 flex flex-col sm:flex-row gap-4">
+                <Link
+                  href="/pricing"
+                  className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white px-8 py-4 rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 font-semibold text-lg inline-flex items-center justify-center group shadow-lg hover:shadow-xl"
+                >
+                  Get Started
+                  <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <Link
+                  href="/blog"
+                  className="border-2 border-slate-300 text-slate-700 px-8 py-4 rounded-xl hover:border-blue-500 hover:text-blue-600 transition-all duration-200 font-semibold text-lg bg-white/80 backdrop-blur-sm inline-flex items-center justify-center"
+                >
+                  View Docs
+                </Link>
+              </div>
+
+              <div className="mt-10 grid grid-cols-3 gap-6 max-w-xl">
+                <div className="rounded-2xl border border-gray-200 bg-white/70 backdrop-blur-sm px-4 py-4 shadow-sm">
+                  <div className="text-2xl font-bold text-gray-900">99.9%</div>
+                  <div className="text-sm text-gray-600">Uptime SLA</div>
+                </div>
+                <div className="rounded-2xl border border-gray-200 bg-white/70 backdrop-blur-sm px-4 py-4 shadow-sm">
+                  <div className="text-2xl font-bold text-gray-900">2M+</div>
+                  <div className="text-sm text-gray-600">Properties</div>
+                </div>
+                <div className="rounded-2xl border border-gray-200 bg-white/70 backdrop-blur-sm px-4 py-4 shadow-sm">
+                  <div className="text-2xl font-bold text-gray-900">50ms</div>
+                  <div className="text-sm text-gray-600">Avg latency</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="lg:col-span-6">
+              <div className="relative">
+                <div className="absolute -inset-4 bg-gradient-to-br from-blue-500/20 via-indigo-500/10 to-slate-500/10 blur-2xl rounded-3xl"></div>
+                <div className="relative rounded-3xl border border-gray-200 bg-white/70 backdrop-blur-sm shadow-3xl overflow-hidden">
+                  <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white/60">
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 w-3 rounded-full bg-red-400"></div>
+                      <div className="h-3 w-3 rounded-full bg-yellow-400"></div>
+                      <div className="h-3 w-3 rounded-full bg-green-400"></div>
+                    </div>
+                    <div className="text-sm font-medium text-gray-700">
+                      API Preview
+                    </div>
+                    <div className="text-sm text-gray-500">v1</div>
+                  </div>
+
+                  <div className="p-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                        <div className="text-xs text-gray-500">Endpoint</div>
+                        <div className="mt-2 font-mono text-sm text-gray-900 break-all">
+                          /hotels/search
+                        </div>
+                        <div className="mt-3 inline-flex items-center gap-2 text-xs text-gray-600">
+                          <span className="inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+                          200 OK
+                        </div>
+                      </div>
+                      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                        <div className="text-xs text-gray-500">Coverage</div>
+                        <div className="mt-2 text-2xl font-bold text-gray-900">
+                          Global
+                        </div>
+                        <div className="mt-1 text-sm text-gray-600">
+                          Multi-supplier inventory
+                        </div>
+                      </div>
+                      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:col-span-2">
+                        <div className="text-xs text-gray-500">
+                          Sample response
+                        </div>
+                        <pre className="mt-3 text-xs leading-relaxed text-gray-800 overflow-x-auto">
+                          {`{
+        "name": "Inno Hotel",
+        "id": 475547,
+        "ittid": "10470506",
+        "address_line1": "Dapnajore, Basail Upazila, Korotia Union",
+        "address_line2": "",
+        "content_update_status": "NewAdd",
+        "created_at": "2025-06-30T03:55:41",
+        "latitude": "24.2435",
+        "longitude": "89.987",
+}`}
+                        </pre>
+                      </div>
+                    </div>
+                    <div className="mt-6 flex items-center justify-between">
+                      <div className="text-sm text-gray-600">
+                        Secure auth, caching, and rate limits
+                      </div>
+                      <div className="inline-flex items-center gap-2 rounded-full bg-primary-light px-4 py-2 text-sm text-primary-color font-semibold">
+                        Production Ready
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trusted By */}
+      <section className="py-12 bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="text-sm font-medium text-gray-600">
+              Trusted by teams building travel products worldwide
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full md:w-auto">
+              <div className="h-10 rounded-xl border border-gray-200 bg-gray-50/70 flex items-center justify-center text-sm font-semibold text-gray-700">
+                TravelTech
+              </div>
+              <div className="h-10 rounded-xl border border-gray-200 bg-gray-50/70 flex items-center justify-center text-sm font-semibold text-gray-700">
+                BookingPro
+              </div>
+              <div className="h-10 rounded-xl border border-gray-200 bg-gray-50/70 flex items-center justify-center text-sm font-semibold text-gray-700">
+                Wanderlust
+              </div>
+              <div className="h-10 rounded-xl border border-gray-200 bg-gray-50/70 flex items-center justify-center text-sm font-semibold text-gray-700">
+                HotelSuite
+              </div>
             </div>
           </div>
         </div>
@@ -209,7 +324,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center p-8 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 hover:shadow-lg transition-all duration-300 border border-blue-100/50">
+            <div className="text-center p-8 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-blue-100/50">
               <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
                 <Zap className="w-8 h-8 text-white" />
               </div>
@@ -222,7 +337,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="text-center p-8 rounded-2xl bg-gradient-to-br from-slate-50 to-gray-50 hover:shadow-lg transition-all duration-300 border border-slate-100/50">
+            <div className="text-center p-8 rounded-2xl bg-gradient-to-br from-slate-50 to-gray-50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-slate-100/50">
               <div className="w-16 h-16 bg-gradient-to-br from-slate-700 to-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
                 <Shield className="w-8 h-8 text-white" />
               </div>
@@ -235,7 +350,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="text-center p-8 rounded-2xl bg-gradient-to-br from-indigo-50 to-blue-50 hover:shadow-lg transition-all duration-300 border border-indigo-100/50">
+            <div className="text-center p-8 rounded-2xl bg-gradient-to-br from-indigo-50 to-blue-50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-indigo-100/50">
               <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
                 <Globe className="w-8 h-8 text-white" />
               </div>
@@ -254,20 +369,20 @@ export default function HomePage() {
       {/* Stats Section */}
       <section className="py-24 bg-gradient-to-br from-slate-50 to-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="text-center">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="rounded-2xl border border-gray-200 bg-white/70 backdrop-blur-sm p-6 text-center shadow-sm">
               <div className="text-4xl font-bold text-blue-600 mb-2">2M+</div>
               <div className="text-gray-600">Hotels Worldwide</div>
             </div>
-            <div className="text-center">
+            <div className="rounded-2xl border border-gray-200 bg-white/70 backdrop-blur-sm p-6 text-center shadow-sm">
               <div className="text-4xl font-bold text-blue-600 mb-2">99.9%</div>
               <div className="text-gray-600">API Uptime</div>
             </div>
-            <div className="text-center">
+            <div className="rounded-2xl border border-gray-200 bg-white/70 backdrop-blur-sm p-6 text-center shadow-sm">
               <div className="text-4xl font-bold text-blue-600 mb-2">50ms</div>
               <div className="text-gray-600">Avg Response Time</div>
             </div>
-            <div className="text-center">
+            <div className="rounded-2xl border border-gray-200 bg-white/70 backdrop-blur-sm p-6 text-center shadow-sm">
               <div className="text-4xl font-bold text-blue-600 mb-2">24/7</div>
               <div className="text-gray-600">Expert Support</div>
             </div>
