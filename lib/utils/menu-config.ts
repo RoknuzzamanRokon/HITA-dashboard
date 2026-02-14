@@ -20,6 +20,7 @@ import {
     Search,
     User,
     Bell,
+    BookOpen,
 } from "lucide-react";
 import { UserRole } from "@/lib/types/auth";
 
@@ -140,6 +141,14 @@ export const adminMenuItems: MenuItem[] = [
         icon: Bell,
         path: "/dashboard/admin/notifications",
         description: "Send notifications to users",
+        requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER],
+    },
+    {
+        id: "blog-control",
+        label: "Blog Control",
+        icon: BookOpen,
+        path: "/dashboard/blog",
+        description: "Manage blog content and rollout readiness",
         requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER],
     },
 ];

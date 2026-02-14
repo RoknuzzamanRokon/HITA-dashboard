@@ -42,7 +42,7 @@ export class ApiClient {
         this.baseUrl = `${apiBaseUrl}/${apiVersion}`;
       }
     } else if (process.env.NODE_ENV === 'development') {
-      this.baseUrl = 'http://localhost:8001/v1.0';
+      this.baseUrl = 'http://localhost:8000/v1.0';
       console.warn('API URL not set, using fallback:', this.baseUrl);
     } else {
       this.baseUrl = '';

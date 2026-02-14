@@ -172,6 +172,7 @@ export function canAccessRoute(user: User | null, route: string): boolean {
         '/dashboard/analytics': [Permission.VIEW_ANALYTICS],
         '/dashboard/providers': [Permission.VIEW_ALL_PROVIDERS],
         '/dashboard/exports': [Permission.EXPORT_DATA],
+        '/dashboard/blog': [Permission.VIEW_ALL_CONTENT],
         '/dashboard/settings': [Permission.VIEW_SYSTEM_SETTINGS],
     };
 
