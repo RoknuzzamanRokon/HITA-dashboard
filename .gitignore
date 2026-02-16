@@ -40,6 +40,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Free trial data storage
+/data/trial-requests.json
 
 .vscode
 .kiro

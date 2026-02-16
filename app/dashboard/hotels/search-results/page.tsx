@@ -108,7 +108,7 @@ function SearchResultsContent() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col items-center justify-center py-20">
             <svg
               className="animate-spin h-12 w-12 text-blue-600 mb-4"
@@ -145,7 +145,7 @@ function SearchResultsContent() {
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Card className="border-red-200 bg-red-50">
             <div className="p-6">
               <div className="flex items-start gap-3">
@@ -253,7 +253,7 @@ function SearchResultsContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header with breadcrumb */}
         <div className="mb-6">
           <Button

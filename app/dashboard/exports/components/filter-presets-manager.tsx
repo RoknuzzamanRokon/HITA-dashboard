@@ -141,7 +141,7 @@ export function FilterPresetsManager<T extends ExportFilters = ExportFilters>({
 
             {/* Dropdown menu */}
             <div className="absolute left-0 mt-2 w-80 bg-[rgb(var(--bg-primary))] rounded-xl shadow-xl border border-[rgb(var(--border-primary))] z-20 max-h-96 overflow-y-auto">
-              <div className="p-2">
+              <div className="p-4">
                 {filteredPresets.map((preset) => (
                   <div
                     key={preset.id}
@@ -225,7 +225,7 @@ export function FilterPresetsManager<T extends ExportFilters = ExportFilters>({
               </div>
 
               {/* Modal body */}
-              <div className="p-2">
+              <div className="p-4">
                 <Input
                   label="Preset Name"
                   placeholder="Enter a name for this preset"

@@ -172,7 +172,7 @@ const StatsCard: React.FC<StatsCardProps> = ({
           <div
             className={cn(
               "rounded-xl bg-gradient-to-br shadow-lg transform transition-transform duration-300",
-              compact ? "p-2" : "p-3",
+              compact ? "p-4" : "p-6",
               gradientClasses[gradient]
             )}
           >

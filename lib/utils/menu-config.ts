@@ -112,6 +112,14 @@ export const mainMenuItems: MenuItem[] = [
 // Administrative menu items
 export const adminMenuItems: MenuItem[] = [
     {
+        id: "waiting-users",
+        label: "Waiting User",
+        icon: UserCheck,
+        path: "/dashboard/admin/free-trials",
+        description: "Manage free trial requests and waiting users",
+        requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER],
+    },
+    {
         id: "pointsPermission",
         label: "Points & Permission",
         icon: CreditCard,

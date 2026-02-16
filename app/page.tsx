@@ -8,6 +8,7 @@ import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/contexts/auth-context";
+import SuppliersSection from "./suppliers-section";
 import {
   ArrowRight,
   Shield,
@@ -19,6 +20,16 @@ import {
   Star,
   Menu,
   X,
+  Code,
+  Database,
+  Lock,
+  Smartphone,
+  TrendingUp,
+  Clock,
+  HeadphonesIcon,
+  FileText,
+  Layers,
+  GitBranch,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -70,6 +81,18 @@ function Navigation() {
             >
               Pricing
             </Link>
+            <Link
+              href="/contact"
+              className="text-gray-600 hover:text-primary-color transition-colors font-medium"
+            >
+              Contact
+            </Link>
+            <Link
+              href="/free-trial"
+              className="border-2 border-blue-500 text-blue-600 px-6 py-2 rounded-xl hover:bg-blue-50 transition-all duration-200 font-medium"
+            >
+              Free Trial
+            </Link>
             <button
               onClick={handleLoginClick}
               className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white px-6 py-2 rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
@@ -117,6 +140,20 @@ function Navigation() {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Pricing
+              </Link>
+              <Link
+                href="/contact"
+                className="text-gray-600 hover:text-primary-color transition-colors font-medium"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Contact
+              </Link>
+              <Link
+                href="/free-trial"
+                className="border-2 border-blue-500 text-blue-600 px-6 py-2 rounded-xl hover:bg-blue-50 transition-all duration-200 font-medium text-center"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Free Trial
               </Link>
               <button
                 onClick={() => {
@@ -175,7 +212,9 @@ export default function HomePage() {
               </div>
               <h1 className="mt-6 text-4xl md:text-6xl font-bold tracking-tight text-gray-900">
                 Build booking experiences with a
-                <span className="text-blue-600 block">premium Hotel API</span>
+                <span className="text-blue-600 block">
+                  premium Hotel Content API
+                </span>
               </h1>
               <p className="mt-6 text-lg md:text-xl text-gray-600 max-w-2xl">
                 Connect to global inventory with real-time availability,
@@ -286,30 +325,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Trusted By */}
-      <section className="py-12 bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="text-sm font-medium text-gray-600">
-              Trusted by teams building travel products worldwide
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full md:w-auto">
-              <div className="h-10 rounded-xl border border-gray-200 bg-gray-50/70 flex items-center justify-center text-sm font-semibold text-gray-700">
-                TravelTech
-              </div>
-              <div className="h-10 rounded-xl border border-gray-200 bg-gray-50/70 flex items-center justify-center text-sm font-semibold text-gray-700">
-                BookingPro
-              </div>
-              <div className="h-10 rounded-xl border border-gray-200 bg-gray-50/70 flex items-center justify-center text-sm font-semibold text-gray-700">
-                Wanderlust
-              </div>
-              <div className="h-10 rounded-xl border border-gray-200 bg-gray-50/70 flex items-center justify-center text-sm font-semibold text-gray-700">
-                HotelSuite
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Integrated Suppliers Section */}
+      <SuppliersSection />
 
       {/* Features Section */}
       <section className="py-24 bg-white">
@@ -360,6 +377,329 @@ export default function HomePage() {
               <p className="text-gray-600">
                 Access to millions of properties worldwide from trusted
                 suppliers and hotel chains.
+              </p>
+            </div>
+
+            <div className="text-center p-8 rounded-2xl bg-gradient-to-br from-green-50 to-emerald-50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-green-100/50">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <Code className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                Developer Friendly
+              </h3>
+              <p className="text-gray-600">
+                RESTful API with comprehensive documentation, SDKs for popular
+                languages, and interactive examples.
+              </p>
+            </div>
+
+            <div className="text-center p-8 rounded-2xl bg-gradient-to-br from-purple-50 to-violet-50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-purple-100/50">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <Database className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                Real-Time Data
+              </h3>
+              <p className="text-gray-600">
+                Live availability, pricing updates, and instant booking
+                confirmations with webhook support.
+              </p>
+            </div>
+
+            <div className="text-center p-8 rounded-2xl bg-gradient-to-br from-orange-50 to-amber-50 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-orange-100/50">
+              <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <HeadphonesIcon className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                24/7 Support
+              </h3>
+              <p className="text-gray-600">
+                Dedicated technical support team available around the clock to
+                help you succeed.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* API Features Section */}
+      <section className="py-24 bg-gradient-to-br from-slate-50 to-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Powerful API Features
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Everything you need to build world-class booking experiences
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+              <div className="flex items-start">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Lock className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="ml-4">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    Secure Authentication
+                  </h3>
+                  <p className="text-gray-600">
+                    OAuth 2.0, API keys, and JWT tokens with role-based access
+                    control and IP whitelisting.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+              <div className="flex items-start">
+                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Smartphone className="w-6 h-6 text-green-600" />
+                </div>
+                <div className="ml-4">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    Mobile Optimized
+                  </h3>
+                  <p className="text-gray-600">
+                    Lightweight responses, image optimization, and native SDKs
+                    for iOS and Android.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+              <div className="flex items-start">
+                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <TrendingUp className="w-6 h-6 text-purple-600" />
+                </div>
+                <div className="ml-4">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    Advanced Analytics
+                  </h3>
+                  <p className="text-gray-600">
+                    Detailed usage metrics, performance monitoring, and custom
+                    reporting dashboards.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+              <div className="flex items-start">
+                <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-6 h-6 text-orange-600" />
+                </div>
+                <div className="ml-4">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    Rate Limiting
+                  </h3>
+                  <p className="text-gray-600">
+                    Flexible rate limits with burst support and automatic
+                    scaling for high-traffic periods.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+              <div className="flex items-start">
+                <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <FileText className="w-6 h-6 text-indigo-600" />
+                </div>
+                <div className="ml-4">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    Rich Documentation
+                  </h3>
+                  <p className="text-gray-600">
+                    Interactive API explorer, code samples, tutorials, and
+                    comprehensive guides.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+              <div className="flex items-start">
+                <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Layers className="w-6 h-6 text-pink-600" />
+                </div>
+                <div className="ml-4">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    Webhook Integration
+                  </h3>
+                  <p className="text-gray-600">
+                    Real-time notifications for bookings, cancellations, and
+                    price changes via webhooks.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Integration Section */}
+      <section className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+                Easy Integration in Minutes
+              </h2>
+              <p className="text-xl text-gray-600 mb-8">
+                Get started quickly with our SDKs, comprehensive documentation,
+                and code examples in your favorite programming language.
+              </p>
+
+              <div className="space-y-4">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  </div>
+                  <span className="ml-3 text-gray-700">
+                    RESTful API with JSON responses
+                  </span>
+                </div>
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  </div>
+                  <span className="ml-3 text-gray-700">
+                    SDKs for Node.js, Python, PHP, Ruby, Java
+                  </span>
+                </div>
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  </div>
+                  <span className="ml-3 text-gray-700">
+                    Postman collection and OpenAPI spec
+                  </span>
+                </div>
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  </div>
+                  <span className="ml-3 text-gray-700">
+                    Sandbox environment for testing
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-8">
+                <Link
+                  href="/blog"
+                  className="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold"
+                >
+                  View Documentation
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Link>
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="absolute -inset-4 bg-gradient-to-br from-blue-500/10 via-indigo-500/10 to-purple-500/10 blur-2xl rounded-3xl"></div>
+              <div className="relative bg-gray-900 rounded-2xl p-6 shadow-2xl">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="h-3 w-3 rounded-full bg-red-400"></div>
+                    <div className="h-3 w-3 rounded-full bg-yellow-400"></div>
+                    <div className="h-3 w-3 rounded-full bg-green-400"></div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <GitBranch className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-400">main</span>
+                  </div>
+                </div>
+                <pre className="text-sm text-gray-300 overflow-x-auto">
+                  <code>{`// Initialize the API client
+const HotelAPI = require('@hotelapi/sdk');
+
+const client = new HotelAPI({
+  apiKey: 'your_api_key_here'
+});
+
+// Search for hotels
+const results = await client.hotels.search({
+  location: 'New York',
+  checkIn: '2024-06-01',
+  checkOut: '2024-06-05',
+  guests: 2
+});
+
+console.log(results);
+// Returns: { hotels: [...], total: 1247 }`}</code>
+                </pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Use Cases Section */}
+      <section className="py-24 bg-gradient-to-br from-slate-50 to-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Built for Every Use Case
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              From startups to enterprises, our API scales with your needs
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mb-4">
+                <Globe className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Travel Agencies
+              </h3>
+              <p className="text-gray-600 text-sm">
+                Build custom booking platforms with multi-supplier inventory and
+                competitive pricing.
+              </p>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mb-4">
+                <Smartphone className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Mobile Apps
+              </h3>
+              <p className="text-gray-600 text-sm">
+                Create seamless mobile booking experiences with optimized
+                endpoints and native SDKs.
+              </p>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl flex items-center justify-center mb-4">
+                <BarChart3 className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Corporate Travel
+              </h3>
+              <p className="text-gray-600 text-sm">
+                Manage business travel with policy compliance, reporting, and
+                approval workflows.
+              </p>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center mb-4">
+                <Users className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Metasearch
+              </h3>
+              <p className="text-gray-600 text-sm">
+                Aggregate and compare hotel prices from multiple sources in
+                real-time.
               </p>
             </div>
           </div>

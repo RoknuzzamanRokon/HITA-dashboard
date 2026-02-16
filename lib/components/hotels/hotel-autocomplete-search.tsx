@@ -432,7 +432,7 @@ export function HotelAutocompleteSearch({
                   </div>
 
                   {/* Supplier List */}
-                  <div className="p-2">
+                  <div className="p-4">
                     {availableSuppliers.map((supplier) => (
                       <label
                         key={supplier}
