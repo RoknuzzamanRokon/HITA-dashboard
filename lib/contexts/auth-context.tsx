@@ -188,6 +188,52 @@ export function AuthProvider({ children }: AuthProviderProps) {
             userId: userResponse.data.id,
             username: userResponse.data.username,
           });
+
+          // Fetch and store API key for general users only (not super_user or admin_user)
+          if (
+            userResponse.data.role !== "super_user" &&
+            userResponse.data.role !== "admin_user"
+          ) {
+            console.log("🔑 Fetching API key for general user...");
+            try {
+              const apiKeyResponse = await fetch(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8001"}/${process.env.NEXT_PUBLIC_API_VERSION || "v1.0"}/auth/check-api-key`,
+                {
+                  method: "GET",
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                  },
+                },
+              );
+
+              if (apiKeyResponse.ok) {
+                const apiKeyData = await apiKeyResponse.json();
+                if (apiKeyData?.security?.apiKey) {
+                  localStorage.setItem(
+                    "user_api_key",
+                    apiKeyData.security.apiKey,
+                  );
+                  console.log(
+                    "✅ API key fetched and stored during initialization",
+                  );
+                }
+              } else {
+                console.warn(
+                  "⚠️ Failed to fetch API key during initialization:",
+                  apiKeyResponse.status,
+                );
+              }
+            } catch (apiKeyError) {
+              console.warn(
+                "⚠️ Error fetching API key during initialization:",
+                apiKeyError,
+              );
+              // Don't fail initialization if API key fetch fails
+            }
+          } else {
+            console.log("ℹ️ Skipping API key fetch for super_user/admin_user");
+          }
         } else {
           console.warn("⚠️ User profile fetch failed, using fallback user");
           // Create a fallback user to keep session active
@@ -311,6 +357,44 @@ export function AuthProvider({ children }: AuthProviderProps) {
           username: user.username,
         });
 
+        // Fetch and store API key for general users only (not super_user or admin_user)
+        if (user.role !== "super_user" && user.role !== "admin_user") {
+          console.log("🔑 Fetching API key for general user...");
+          try {
+            const apiKeyResponse = await fetch(
+              `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8001"}/${process.env.NEXT_PUBLIC_API_VERSION || "v1.0"}/auth/check-api-key`,
+              {
+                method: "GET",
+                headers: {
+                  Authorization: `Bearer ${response.data.access_token}`,
+                  "Content-Type": "application/json",
+                },
+              },
+            );
+
+            if (apiKeyResponse.ok) {
+              const apiKeyData = await apiKeyResponse.json();
+              if (apiKeyData?.security?.apiKey) {
+                localStorage.setItem(
+                  "user_api_key",
+                  apiKeyData.security.apiKey,
+                );
+                console.log("✅ API key fetched and stored");
+              }
+            } else {
+              console.warn(
+                "⚠️ Failed to fetch API key:",
+                apiKeyResponse.status,
+              );
+            }
+          } catch (apiKeyError) {
+            console.warn("⚠️ Error fetching API key:", apiKeyError);
+            // Don't fail login if API key fetch fails
+          }
+        } else {
+          console.log("ℹ️ Skipping API key fetch for super_user/admin_user");
+        }
+
         // Initialize cache system for the user
         console.log("🚀 Initializing cache system after login...");
         try {
@@ -382,6 +466,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
           // Remove current user ID
           localStorage.removeItem("current-cache-user-id");
+
+          // Remove API key
+          localStorage.removeItem("user_api_key");
+          console.log("🧹 AuthContext: API key cleared");
 
           console.log("✅ AuthContext: User cache cleared");
         } catch (cacheError) {

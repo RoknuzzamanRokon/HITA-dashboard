@@ -29,27 +29,54 @@ async function fetchApiKeyWithCache(): Promise<ApiKeyData> {
     const token = TokenStorage.getToken();
 
     if (!token) {
+        console.error('❌ No authentication token found');
         throw new Error("Authentication token not found. Please login again.");
     }
 
-    const response = await fetch(
-        "http://127.0.0.1:8001/v1.0/auth/check-api-key",
-        {
-            method: "GET",
-            headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-            },
+    console.log('📡 Making request to: http://127.0.0.1:8001/v1.0/auth/check-api-key');
+    console.log('🔑 Using token:', token.substring(0, 20) + '...');
+
+    try {
+        const response = await fetch(
+            "http://127.0.0.1:8001/v1.0/auth/check-api-key",
+            {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+
+        console.log('📡 Response status:', response.status);
+        console.log('📡 Response ok:', response.ok);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ API key fetch failed:', response.status, errorText);
+            throw new Error(`Failed to fetch API key: ${response.status} - ${errorText}`);
         }
-    );
 
-    if (!response.ok) {
-        throw new Error("Failed to fetch API key");
+        const data = await response.json();
+        console.log('✅ Fresh API key data fetched:', data);
+
+        // Store API key in localStorage for use in API client
+        if (data?.security?.apiKey) {
+            try {
+                localStorage.setItem('user_api_key', data.security.apiKey);
+                console.log('✅ API key stored in localStorage:', data.security.apiKey.substring(0, 10) + '...');
+            } catch (error) {
+                console.warn('⚠️ Failed to store API key in localStorage:', error);
+            }
+        } else {
+            console.warn('⚠️ No API key found in response data');
+        }
+
+        return data;
+    } catch (error) {
+        console.error('❌ Error fetching API key:', error);
+        throw error;
     }
-
-    const data = await response.json();
-    console.log('✅ Fresh API key data fetched');
-    return data;
 }
 
 export function useCachedApiKey() {
@@ -118,7 +145,21 @@ export function useCachedApiKey() {
     // Fetch API key function (since it's disabled by default)
     const fetchApiKey = async () => {
         console.log('🔄 Manually fetching API key data...');
-        await queryClient.refetchQueries({ queryKey });
+        try {
+            const result = await queryClient.fetchQuery({
+                queryKey,
+                queryFn: async () => {
+                    const freshData = await fetchApiKeyWithCache();
+                    cache.saveToCache('api-key', freshData);
+                    return freshData;
+                },
+            });
+            console.log('✅ API key fetch completed:', result);
+            return result;
+        } catch (error) {
+            console.error('❌ API key fetch failed:', error);
+            throw error;
+        }
     };
 
     // Check if using cached data

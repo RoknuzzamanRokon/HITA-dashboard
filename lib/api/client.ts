@@ -141,10 +141,12 @@ export class ApiClient {
         };
       }
 
-      // Add X-API-Key header if available (required for export endpoints)
+      // Add X-API-Key header if available (required for export endpoints and general users)
       const isExportEndpoint = endpoint.includes('/export') ||
         endpoint.includes('/download') ||
         endpoint.includes('/content/export');
+
+      // For export endpoints, always try to add API key
       if (isExportEndpoint) {
         const apiKey = typeof localStorage !== 'undefined' ? localStorage.getItem('user_api_key') : null;
         if (apiKey) {
@@ -152,6 +154,14 @@ export class ApiClient {
           console.log('✅ API Key added to headers for export endpoint:', apiKey.substring(0, 10) + '...');
         } else {
           console.warn('⚠️ No API key found in localStorage for export endpoint:', endpoint);
+        }
+      } else {
+        // For non-export endpoints, add API key if available (for general users)
+        // This allows general users to access endpoints that accept either Bearer token or API key
+        const apiKey = typeof localStorage !== 'undefined' ? localStorage.getItem('user_api_key') : null;
+        if (apiKey) {
+          requestHeaders['X-API-Key'] = apiKey;
+          console.log('✅ API Key added to headers (general user):', apiKey.substring(0, 10) + '...');
         }
       }
     }

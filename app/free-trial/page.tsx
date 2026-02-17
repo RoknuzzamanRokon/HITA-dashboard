@@ -279,15 +279,11 @@ export default function FreeTrialPage() {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/70 backdrop-blur-sm border border-blue-200 px-4 py-2 text-sm text-blue-700 shadow-sm mb-4">
-            <span className="inline-flex h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span>
-            30-Day Free Trial
-          </div>
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             Start Your Free Trial Today
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Get full access to our Hotel API for 30 days. No credit card
+            Get full access to our Hotel API for demo in 3 days. No credit card
             required. Start building amazing travel experiences today.
           </p>
         </div>

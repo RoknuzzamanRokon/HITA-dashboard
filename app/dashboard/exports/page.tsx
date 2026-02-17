@@ -59,11 +59,26 @@ export default function ExportsPage() {
   const isGeneralUser =
     user?.role === UserRole.GENERAL_USER || user?.role === UserRole.USER;
 
-  // Check if user is a demo user (0 points) - super users and admin users get full access
-  const isDemoUser =
-    user?.role !== "super_user" &&
-    user?.role !== "admin_user" &&
-    (user?.pointBalance === 0 || !user?.pointBalance);
+  // Check if user is super user (always has access)
+  const isSuperUser = user?.role === "super_user";
+
+  // Check if user is admin user
+  const isAdminUser = user?.role === "admin_user";
+
+  // Check if user has points
+  const hasPoints = user?.pointBalance && user.pointBalance > 0;
+
+  // Determine if user is a demo user (no access to exports)
+  // Demo user = any user with 0 points or no points, except super_user
+  const isDemoUser = !isSuperUser && !hasPoints;
+
+  // Determine if user has access to exports page
+  // - super_user: always has access
+  // - admin_user: has access if they have points
+  // - general_user: has access if they have points (and need valid API key)
+  // - demo user: no access
+  const hasExportAccess =
+    isSuperUser || (hasPoints && (isAdminUser || isGeneralUser));
 
   // API Key validation state
   const [showApiKeyModal, setShowApiKeyModal] = useState(isGeneralUser);
@@ -117,7 +132,7 @@ export default function ExportsPage() {
         console.error(`Failed to update status for job ${jobId}:`, error);
       });
     },
-    [refreshJobStatus]
+    [refreshJobStatus],
   );
 
   // Polling error handler - displays notification when polling fails after max retries
@@ -133,7 +148,7 @@ export default function ExportsPage() {
         autoDismiss: false,
       });
     },
-    [addNotification]
+    [addNotification],
   );
 
   /**
@@ -245,7 +260,7 @@ export default function ExportsPage() {
 
         const retryCount = retryManager.getRetryCount(
           operationType,
-          operationId
+          operationId,
         );
         const canRetry = retryManager.canRetry(operationType, operationId);
 
@@ -279,7 +294,7 @@ export default function ExportsPage() {
         console.error("Download error:", error);
       }
     },
-    [jobs, addNotification, retryManager]
+    [jobs, addNotification, retryManager],
   );
 
   /**
@@ -305,7 +320,7 @@ export default function ExportsPage() {
 
         const retryCount = retryManager.getRetryCount(
           operationType,
-          operationId
+          operationId,
         );
         const canRetry = retryManager.canRetry(operationType, operationId);
 
@@ -340,7 +355,7 @@ export default function ExportsPage() {
         throw error; // Re-throw to allow filter panel to handle it
       }
     },
-    [createHotelExport, addNotification, retryManager]
+    [createHotelExport, addNotification, retryManager],
   );
 
   /**
@@ -366,7 +381,7 @@ export default function ExportsPage() {
 
         const retryCount = retryManager.getRetryCount(
           operationType,
-          operationId
+          operationId,
         );
         const canRetry = retryManager.canRetry(operationType, operationId);
 
@@ -401,7 +416,7 @@ export default function ExportsPage() {
         throw error; // Re-throw to allow filter panel to handle it
       }
     },
-    [createMappingExport, addNotification, retryManager]
+    [createMappingExport, addNotification, retryManager],
   );
 
   /**
@@ -427,7 +442,7 @@ export default function ExportsPage() {
 
         const retryCount = retryManager.getRetryCount(
           operationType,
-          operationId
+          operationId,
         );
         const canRetry = retryManager.canRetry(operationType, operationId);
 
@@ -461,7 +476,7 @@ export default function ExportsPage() {
         console.error("Job refresh error:", error);
       }
     },
-    [refreshJobStatus, addNotification, retryManager]
+    [refreshJobStatus, addNotification, retryManager],
   );
 
   /**
@@ -509,7 +524,7 @@ export default function ExportsPage() {
       // The user can manually load the filters or adjust them as needed
       console.log(`Creating new export from expired job: ${job.jobId}`);
     },
-    [addNotification]
+    [addNotification],
   );
 
   /**
@@ -536,7 +551,7 @@ export default function ExportsPage() {
         (job) =>
           job.status === "completed" ||
           job.status === "failed" ||
-          job.status === "expired"
+          job.status === "expired",
       ).length;
 
       await clearCompletedJobs();
@@ -589,7 +604,7 @@ export default function ExportsPage() {
             Authorization: `Bearer ${token}`,
             "X-API-Key": apiKey.trim(),
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -606,14 +621,14 @@ export default function ExportsPage() {
 
       if (!data.access?.export_endpoints) {
         throw new Error(
-          "This API key does not have access to export endpoints"
+          "This API key does not have access to export endpoints",
         );
       }
 
       // Verify the API key belongs to the current logged-in user
       if (user && data.user?.user_id && data.user.user_id !== user.id) {
         throw new Error(
-          "This API key does not belong to your account. Please use your own API key."
+          "This API key does not belong to your account. Please use your own API key.",
         );
       }
 
@@ -644,7 +659,7 @@ export default function ExportsPage() {
       setApiKeyError(
         error instanceof Error
           ? error.message
-          : "Failed to validate API key. Please try again."
+          : "Failed to validate API key. Please try again.",
       );
     } finally {
       setIsValidatingApiKey(false);
@@ -652,25 +667,35 @@ export default function ExportsPage() {
   };
 
   /**
-   * Check user role on mount (only for admin and super admin bypass)
+   * Check user role on mount
+   * - Super users: bypass API key validation
+   * - Admin users: bypass API key validation
+   * - General users: require API key validation
    */
   React.useEffect(() => {
-    // Skip API key validation for admin and super admin
-    if (!isGeneralUser && isAuthenticated) {
+    // Skip API key validation for super_user and admin_user
+    if ((isSuperUser || isAdminUser) && isAuthenticated) {
       setIsApiKeyValid(true);
       setShowApiKeyModal(false);
     }
-  }, [isAuthenticated, isGeneralUser]);
+  }, [isAuthenticated, isSuperUser, isAdminUser]);
 
   /**
-   * Redirect demo users to dashboard (they should not access exports)
+   * Redirect users without export access to dashboard
+   * - Demo users (no points, not super_user)
+   * - Admin users without points
+   * - General users without points
    */
   React.useEffect(() => {
-    if (isAuthenticated && isDemoUser) {
-      console.log("🚫 Demo user detected, redirecting to dashboard...");
+    if (isAuthenticated && !hasExportAccess) {
+      console.log(
+        "🚫 User does not have export access, redirecting to dashboard...",
+      );
+      console.log("User role:", user?.role);
+      console.log("User points:", user?.pointBalance);
       router.push("/dashboard");
     }
-  }, [isAuthenticated, isDemoUser, router]);
+  }, [isAuthenticated, hasExportAccess, router, user]);
 
   /**
    * Handler for closing confirmation dialog
@@ -716,7 +741,7 @@ export default function ExportsPage() {
         // Focus on the filter panel to create export
         if (filterPanelRef.current) {
           const submitButton = filterPanelRef.current.querySelector(
-            'button[type="submit"]'
+            'button[type="submit"]',
           ) as HTMLButtonElement;
           if (submitButton && !submitButton.disabled) {
             submitButton.focus();
@@ -738,7 +763,7 @@ export default function ExportsPage() {
       callback: () => {
         // Refresh all processing jobs
         const processingJobs = jobs.filter(
-          (job) => job.status === "processing"
+          (job) => job.status === "processing",
         );
         if (processingJobs.length > 0) {
           processingJobs.forEach((job) => {
@@ -1021,7 +1046,7 @@ export default function ExportsPage() {
                     "active:scale-95 active:opacity-90",
                     activeTab === "hotel"
                       ? "bg-primary-color !text-white shadow-md"
-                      : "text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--bg-secondary))] active:bg-[rgb(var(--bg-secondary))]"
+                      : "text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--bg-secondary))] active:bg-[rgb(var(--bg-secondary))]",
                   )}
                 >
                   <FileDown
@@ -1048,7 +1073,7 @@ export default function ExportsPage() {
                     "active:scale-95 active:opacity-90",
                     activeTab === "mapping"
                       ? "bg-primary-color !text-white shadow-md"
-                      : "text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--bg-secondary))] active:bg-[rgb(var(--bg-secondary))]"
+                      : "text-[rgb(var(--text-secondary))] hover:bg-[rgb(var(--bg-secondary))] active:bg-[rgb(var(--bg-secondary))]",
                   )}
                 >
                   <Map className="w-5 h-5 relative z-10" aria-hidden="true" />
