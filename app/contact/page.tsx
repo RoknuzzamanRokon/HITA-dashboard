@@ -5,158 +5,10 @@
 "use client";
 
 import React, { useState } from "react";
+import { PublicNavigation } from "@/lib/components/layout/public-navigation";
+import { Mail, Phone, MapPin, Send, CheckCircle, Globe } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/contexts/auth-context";
-import {
-  Mail,
-  Phone,
-  MapPin,
-  Globe,
-  Send,
-  CheckCircle,
-  Menu,
-  X,
-} from "lucide-react";
 
-// Navigation Component
-function Navigation() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { isAuthenticated } = useAuth();
-  const router = useRouter();
-
-  const handleLoginClick = () => {
-    if (isAuthenticated) {
-      router.push("/dashboard");
-    } else {
-      router.push("/login");
-    }
-  };
-
-  return (
-    <nav className="bg-white/95 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary-color rounded-lg flex items-center justify-center">
-                <Globe className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-gray-900">HotelAPI</span>
-            </Link>
-          </div>
-
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            <Link
-              href="/"
-              className="text-gray-600 hover:text-primary-color transition-colors font-medium"
-            >
-              Home
-            </Link>
-            <Link
-              href="/blog"
-              className="text-gray-600 hover:text-primary-color transition-colors font-medium"
-            >
-              Blog
-            </Link>
-            <Link
-              href="/pricing"
-              className="text-gray-600 hover:text-primary-color transition-colors font-medium"
-            >
-              Pricing
-            </Link>
-            <Link
-              href="/contact"
-              className="text-gray-900 hover:text-primary-color transition-colors font-medium"
-            >
-              Contact
-            </Link>
-            <Link
-              href="/free-trial"
-              className="border-2 border-blue-500 text-blue-600 px-6 py-2 rounded-xl hover:bg-blue-50 transition-all duration-200 font-medium"
-            >
-              Free Trial
-            </Link>
-            <button
-              onClick={handleLoginClick}
-              className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white px-6 py-2 rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
-            >
-              {isAuthenticated ? "Dashboard" : "Login"}
-            </button>
-          </div>
-
-          {/* Mobile menu button */}
-          <div className="md:hidden">
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              {isMenuOpen ? (
-                <X className="w-6 h-6" />
-              ) : (
-                <Menu className="w-6 h-6" />
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Navigation */}
-        {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-gray-200">
-            <div className="flex flex-col space-y-4">
-              <Link
-                href="/"
-                className="text-gray-600 hover:text-primary-color transition-colors font-medium"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Home
-              </Link>
-              <Link
-                href="/blog"
-                className="text-gray-600 hover:text-primary-color transition-colors font-medium"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Blog
-              </Link>
-              <Link
-                href="/pricing"
-                className="text-gray-600 hover:text-primary-color transition-colors font-medium"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Pricing
-              </Link>
-              <Link
-                href="/contact"
-                className="text-gray-900 hover:text-primary-color transition-colors font-medium"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Contact
-              </Link>
-              <Link
-                href="/free-trial"
-                className="border-2 border-blue-500 text-blue-600 px-6 py-2 rounded-xl hover:bg-blue-50 transition-all duration-200 font-medium text-center"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Free Trial
-              </Link>
-              <button
-                onClick={() => {
-                  handleLoginClick();
-                  setIsMenuOpen(false);
-                }}
-                className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white px-6 py-2 rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 font-medium text-left shadow-lg hover:shadow-xl"
-              >
-                {isAuthenticated ? "Dashboard" : "Login"}
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </nav>
-  );
-}
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -201,7 +53,7 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navigation />
+      <PublicNavigation />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-slate-50 via-gray-50 to-blue-50 py-20">
