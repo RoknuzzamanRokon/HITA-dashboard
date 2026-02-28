@@ -4,8 +4,12 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Calendar, Clock, User, ArrowLeft, Tag } from "lucide-react";
+import { PublicNavigation } from "@/lib/components/layout/public-navigation";
 import { blogService, BlogPost } from "@/lib/api/blog";
 import { mockBlogPosts } from "@/lib/api/mock-blog-data";
+import { marked } from "marked";
+import hljs from "highlight.js";
+import "./blog-content.css";
 
 export default function BlogPostPage() {
   const params = useParams<{ id: string }>();
@@ -22,6 +26,19 @@ export default function BlogPostPage() {
     return mockBlogPosts.find((p) => p.id === id) || null;
   }, [id]);
 
+  // Load highlight.js styles
+  useEffect(() => {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href =
+      "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css";
+    document.head.appendChild(link);
+
+    return () => {
+      document.head.removeChild(link);
+    };
+  }, []);
+
   useEffect(() => {
     const load = async () => {
       if (!id) return;
@@ -30,7 +47,10 @@ export default function BlogPostPage() {
 
       try {
         const viewedKey = `blog_viewed_${id}`;
-        const alreadyViewed = typeof window !== "undefined" ? sessionStorage.getItem(viewedKey) : null;
+        const alreadyViewed =
+          typeof window !== "undefined"
+            ? sessionStorage.getItem(viewedKey)
+            : null;
 
         // Track view once per open. If backend already increments view_count and writes to blog_analytics
         // on GET post, this ensures we don't trigger extra increments on re-renders.
@@ -63,16 +83,46 @@ export default function BlogPostPage() {
     if (looksLikeHtml) {
       return (
         <div
-          className="prose prose-slate max-w-none"
+          className="blog-content"
           dangerouslySetInnerHTML={{ __html: content }}
         />
       );
     }
 
+    // Configure marked for better markdown parsing
+    marked.setOptions({
+      gfm: true, // GitHub Flavored Markdown
+      breaks: true, // Convert \n to <br>
+    });
+
+    // Use marked hooks for code highlighting
+    marked.use({
+      renderer: {
+        code({ text, lang }: { text: string; lang?: string }) {
+          if (lang && hljs.getLanguage(lang)) {
+            try {
+              const highlighted = hljs.highlight(text, {
+                language: lang,
+              }).value;
+              return `<pre><code class="hljs language-${lang}">${highlighted}</code></pre>`;
+            } catch (err) {
+              console.error("Highlight error:", err);
+            }
+          }
+          const highlighted = hljs.highlightAuto(text).value;
+          return `<pre><code class="hljs">${highlighted}</code></pre>`;
+        },
+      },
+    });
+
+    // Parse markdown to HTML
+    const htmlContent = marked.parse(content) as string;
+
     return (
-      <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-        {content}
-      </div>
+      <div
+        className="blog-content"
+        dangerouslySetInnerHTML={{ __html: htmlContent }}
+      />
     );
   };
 
@@ -80,6 +130,7 @@ export default function BlogPostPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      <PublicNavigation />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="mb-8">
           <Link
@@ -118,7 +169,9 @@ export default function BlogPostPage() {
               <span className="text-sm text-gray-500">•</span>
               <div className="flex items-center text-sm text-gray-500">
                 <Calendar className="w-4 h-4 mr-1" />
-                {new Date(finalPost.published_at || finalPost.created_at).toLocaleDateString()}
+                {new Date(
+                  finalPost.published_at || finalPost.created_at,
+                ).toLocaleDateString()}
               </div>
               <div className="flex items-center text-sm text-gray-500">
                 <Clock className="w-4 h-4 mr-1" />
