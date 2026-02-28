@@ -22,6 +22,7 @@ interface UseExportJobsReturn {
     createHotelExport: (filters: HotelExportFilters) => Promise<void>;
     createMappingExport: (filters: MappingExportFilters) => Promise<void>;
     refreshJobStatus: (jobId: string) => Promise<void>;
+    refreshJobs: () => Promise<void>;
     deleteJob: (jobId: string) => Promise<void>;
     clearCompletedJobs: () => Promise<void>;
     isCreating: boolean;
@@ -159,7 +160,20 @@ export function useExportJobs(): UseExportJobsReturn {
 
                     // Also save to localStorage as cache
                     saveJobsToStorage(apiJobs);
+                    setError(null); // Clear any previous errors
                 } else {
+                    // Check if this is an API key error (401 with API key message)
+                    const errorMessage = response.error?.message || '';
+                    const isApiKeyError = response.error?.status === 401 &&
+                        (errorMessage.includes('API Key') || errorMessage.includes('X-API-Key'));
+
+                    if (isApiKeyError) {
+                        // Set error to show in UI, but don't redirect
+                        setError(errorMessage);
+                        console.warn('⚠️ API key required for export endpoints');
+                    }
+
+                    // Load from localStorage as fallback
                     const loadedJobs = loadJobsFromStorage();
                     setJobs(loadedJobs);
                 }
@@ -569,11 +583,76 @@ export function useExportJobs(): UseExportJobsReturn {
         );
     }, []);
 
+    /**
+     * Refresh all jobs from API
+     * Useful after API key validation or when user wants to manually refresh
+     */
+    const refreshJobs = useCallback(async (): Promise<void> => {
+        setIsLoadingJobs(true);
+        setError(null);
+
+        try {
+            console.log('🔄 Refreshing export jobs from API...');
+
+            const response = await exportAPI.getExportJobs();
+
+            if (response.success && response.data) {
+                console.log(`✅ Refreshed ${response.data.jobs.length} jobs from API`);
+
+                // Convert API response to ExportJob format
+                const apiJobs: ExportJob[] = response.data.jobs.map((job: any) => {
+                    // Normalize export type (API returns plural, frontend uses singular)
+                    let exportType: 'hotel' | 'mapping' = 'mapping';
+                    if (job.export_type === 'mappings') {
+                        exportType = 'mapping';
+                    } else if (job.export_type === 'hotels' || job.export_type === 'hotel') {
+                        exportType = 'hotel';
+                    }
+
+                    return {
+                        jobId: job.job_id,
+                        exportType,
+                        status: job.status,
+                        progress: job.progress_percentage || 0,
+                        processedRecords: job.processed_records || 0,
+                        totalRecords: job.total_records || 0,
+                        createdAt: new Date(job.created_at),
+                        startedAt: job.started_at ? new Date(job.started_at) : null,
+                        completedAt: job.completed_at ? new Date(job.completed_at) : null,
+                        expiresAt: job.expires_at ? new Date(job.expires_at) : null,
+                        estimatedCompletionTime: null,
+                        errorMessage: job.error_message || null,
+                        downloadUrl: job.download_url || null,
+                        filters: {
+                            ...(job.filters || {}),
+                            format: job.format || job.filters?.format || 'json',
+                        },
+                    };
+                });
+
+                setJobs(apiJobs);
+                saveJobsToStorage(apiJobs);
+            } else {
+                const errorMessage = response.error?.message || 'Failed to refresh jobs';
+                setError(errorMessage);
+                throw new Error(errorMessage);
+            }
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to refresh jobs';
+            console.error('❌ Error refreshing jobs:', errorMessage);
+            setError(errorMessage);
+            throw error;
+        } finally {
+            setIsLoadingJobs(false);
+        }
+    }, []);
+
     return {
         jobs,
         createHotelExport,
         createMappingExport,
         refreshJobStatus,
+        refreshJobs,
         deleteJob,
         clearCompletedJobs,
         isCreating,

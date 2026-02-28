@@ -41,15 +41,19 @@ export function SupplierPermissionSection() {
         throw new Error("Authentication token not found");
       }
 
+      const BACKEND_API_URL =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8001";
+      const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || "v1.0";
+
       const response = await fetch(
-        "http://127.0.0.1:8001/v1.0/user/check-active-my-supplier",
+        `${BACKEND_API_URL}/${API_VERSION}/user/check-active-my-supplier`,
         {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -87,8 +91,20 @@ export function SupplierPermissionSection() {
         throw new Error("Authentication token not found");
       }
 
+      const BACKEND_API_URL =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8001";
+      const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || "v1.0";
+
+      console.log("🌐 Environment check:");
+      console.log("  - BACKEND_API_URL:", BACKEND_API_URL);
+      console.log("  - API_VERSION:", API_VERSION);
+      console.log(
+        "  - Full URL:",
+        `${BACKEND_API_URL}/${API_VERSION}/permissions/admin/give-supplier-active?user_id=${userId}`,
+      );
+
       const response = await fetch(
-        `http://127.0.0.1:8001/v1.0/permissions/admin/give-supplier-active?user_id=${userId}`,
+        `${BACKEND_API_URL}/${API_VERSION}/permissions/admin/give-supplier-active?user_id=${userId}`,
         {
           method: "POST",
           headers: {
@@ -98,7 +114,7 @@ export function SupplierPermissionSection() {
           body: JSON.stringify({
             provider_activision_list: [selectedActiveSupplier],
           }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -108,14 +124,14 @@ export function SupplierPermissionSection() {
 
       const result = await response.json();
       setSuccess(
-        `Successfully activated ${selectedActiveSupplier} for user ${userId}`
+        `Successfully activated ${selectedActiveSupplier} for user ${userId}`,
       );
       setSelectedActiveSupplier("");
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error("Error activating supplier:", err);
       setError(
-        err instanceof Error ? err.message : "Failed to activate supplier"
+        err instanceof Error ? err.message : "Failed to activate supplier",
       );
     } finally {
       setLoading(false);
@@ -143,8 +159,12 @@ export function SupplierPermissionSection() {
         throw new Error("Authentication token not found");
       }
 
+      const BACKEND_API_URL =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8001";
+      const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || "v1.0";
+
       const response = await fetch(
-        `http://127.0.0.1:8001/v1.0/permissions/admin/give-supplier-deactivate?user_id=${userId}`,
+        `${BACKEND_API_URL}/${API_VERSION}/permissions/admin/give-supplier-deactivate?user_id=${userId}`,
         {
           method: "POST",
           headers: {
@@ -154,7 +174,7 @@ export function SupplierPermissionSection() {
           body: JSON.stringify({
             provider_deactivation_list: [selectedDeactiveSupplier],
           }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -164,14 +184,14 @@ export function SupplierPermissionSection() {
 
       const result = await response.json();
       setSuccess(
-        `Successfully deactivated ${selectedDeactiveSupplier} for user ${userId}`
+        `Successfully deactivated ${selectedDeactiveSupplier} for user ${userId}`,
       );
       setSelectedDeactiveSupplier("");
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error("Error deactivating supplier:", err);
       setError(
-        err instanceof Error ? err.message : "Failed to deactivate supplier"
+        err instanceof Error ? err.message : "Failed to deactivate supplier",
       );
     } finally {
       setLoading(false);

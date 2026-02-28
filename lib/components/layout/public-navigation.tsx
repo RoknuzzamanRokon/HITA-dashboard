@@ -48,7 +48,11 @@ export function PublicNavigation() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
+            <Link
+              href="/"
+              prefetch={true}
+              className="flex items-center space-x-2"
+            >
               <div className="w-8 h-8 bg-primary-color rounded-lg flex items-center justify-center">
                 <Globe className="w-5 h-5 text-white" />
               </div>
@@ -62,6 +66,7 @@ export function PublicNavigation() {
               <Link
                 key={link.href}
                 href={link.href}
+                prefetch={true}
                 className={cn(
                   "transition-colors font-semibold text-lg",
                   isActive(link.href)
@@ -74,6 +79,7 @@ export function PublicNavigation() {
             ))}
             <Link
               href="/free-trial"
+              prefetch={true}
               className={cn(
                 "border-2 px-6 py-2 rounded-xl transition-all duration-200 font-semibold",
                 isActive("/free-trial")
@@ -114,6 +120,7 @@ export function PublicNavigation() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  prefetch={true}
                   className={cn(
                     "transition-colors font-semibold",
                     isActive(link.href)
@@ -127,6 +134,7 @@ export function PublicNavigation() {
               ))}
               <Link
                 href="/free-trial"
+                prefetch={true}
                 className={cn(
                   "border-2 px-6 py-2 rounded-xl transition-all duration-200 font-semibold text-center",
                   isActive("/free-trial")

@@ -206,16 +206,28 @@ export class ApiClient {
       // Handle authentication errors (401)
       // Requirement 6.3: Detect 401 errors, clear auth token, redirect to login, show "Session expired" message
       if (!result.success && result.error?.status === 401) {
-        console.warn('🔒 Authentication error detected - redirecting to login');
-        if (typeof window !== 'undefined') {
-          // Clear auth token from localStorage (Requirement 6.3)
-          localStorage.removeItem('admin_auth_token');
+        // Check if this is an API key error (not a session expiration)
+        const errorMessage = result.error?.message || '';
+        const isApiKeyError = errorMessage.includes('API Key') ||
+          errorMessage.includes('X-API-Key') ||
+          errorMessage.includes('export endpoints');
 
-          // Store session expired message to show on login page (Requirement 6.3)
-          sessionStorage.setItem('auth_error_message', 'Your session has expired. Please log in again.');
+        if (!isApiKeyError) {
+          // Only redirect to login if it's NOT an API key error
+          console.warn('🔒 Authentication error detected - redirecting to login');
+          if (typeof window !== 'undefined') {
+            // Clear auth token from localStorage (Requirement 6.3)
+            localStorage.removeItem('admin_auth_token');
 
-          // Redirect to login page (Requirement 6.3)
-          window.location.href = '/login';
+            // Store session expired message to show on login page (Requirement 6.3)
+            sessionStorage.setItem('auth_error_message', 'Your session has expired. Please log in again.');
+
+            // Redirect to login page (Requirement 6.3)
+            window.location.href = '/login';
+          }
+        } else {
+          // API key error - don't redirect, let the page handle it
+          console.warn('🔑 API key required - staying on page');
         }
         return result;
       }
@@ -368,8 +380,15 @@ export class ApiClient {
     }
 
     if (!response.ok) {
+      // Check if this is an API key error (401 with specific message)
+      const errorMessage = (data && (data.message || data.error || data.detail)) || '';
+      const isApiKeyError = response.status === 401 &&
+        (errorMessage.includes('API Key') ||
+          errorMessage.includes('X-API-Key') ||
+          errorMessage.includes('export endpoints'));
+
       // Use development mode helper to determine logging level
-      const isExpectedError = response.status === 400 || response.status === 403 || response.status === 404;
+      const isExpectedError = response.status === 400 || response.status === 403 || response.status === 404 || isApiKeyError;
       const isServerError = response.status >= 500 && response.status <= 599;
       const shouldLogError = shouldLogAsError(response.status);
 

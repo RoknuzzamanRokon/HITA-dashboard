@@ -15,7 +15,7 @@ import {
   Phone,
   Loader2,
   AlertCircle,
-  Globe
+  Globe,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -101,14 +101,21 @@ export default function FreeTrialPage() {
     setIsSubmitting(true);
 
     try {
-      // TODO: Replace with actual API endpoint
-      const response = await fetch("/api/v1/free-trial/request", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      // Get backend API URL from environment
+      const BACKEND_API_URL =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8001";
+      const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || "v1.0";
+
+      const response = await fetch(
+        `${BACKEND_API_URL}/${API_VERSION}/free-trial/request`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
         },
-        body: JSON.stringify(formData),
-      });
+      );
 
       const data = await response.json();
 

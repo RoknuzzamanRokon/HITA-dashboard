@@ -26,6 +26,11 @@ const logError = (context: string, error: any) => {
  * Requirement 6.4: Show "Permission denied" notification and suggest contacting administrator
  */
 const getErrorMessage = (status: number, defaultMessage: string, context: string): string => {
+    // Check if this is an API key error - return the original message
+    if (defaultMessage.includes('API Key') || defaultMessage.includes('X-API-Key')) {
+        return defaultMessage;
+    }
+
     switch (status) {
         case 401:
             return 'Your session has expired. Please log in again.';
@@ -503,8 +508,16 @@ export class ExportAPI {
             const status = response.error?.status || 0;
             const originalMessage = response.error?.message || 'Failed to fetch export jobs';
 
+            // Check if this is an API key error (not a session expiration)
+            const isApiKeyError = originalMessage.includes('API Key') ||
+                originalMessage.includes('X-API-Key');
+
             if (status === 401) {
-                handleAuthError();
+                // Only redirect to login if it's NOT an API key error
+                // API key errors should be handled by the page component
+                if (!isApiKeyError) {
+                    handleAuthError();
+                }
             }
 
             return {

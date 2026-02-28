@@ -80,6 +80,11 @@ export default function FreeTrialsAdminPage() {
     setLoading(true);
     setError(null);
     try {
+      // Get backend API URL from environment
+      const BACKEND_API_URL =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8001";
+      const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || "v1.0";
+
       // Get token from auth context
       const authToken = token || "mock_admin_token";
 
@@ -90,9 +95,13 @@ export default function FreeTrialsAdminPage() {
 
       console.log("🔄 Fetching requests with filter:", filter);
       console.log("🔑 Using token:", authToken ? "Token present" : "No token");
+      console.log(
+        "🌐 Backend URL:",
+        `${BACKEND_API_URL}/${API_VERSION}/free-trial/requests`,
+      );
 
       const response = await fetch(
-        `/api/v1/admin/free-trial/requests?${params.toString()}`,
+        `${BACKEND_API_URL}/${API_VERSION}/free-trial/requests?${params.toString()}`,
         {
           headers: {
             Authorization: `Bearer ${authToken}`,
@@ -127,8 +136,10 @@ export default function FreeTrialsAdminPage() {
       }
     } catch (error: any) {
       console.error("❌ Error fetching requests:", error);
+      const BACKEND_API_URL =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8001";
       setError(
-        "Unable to connect to backend API. Please ensure the backend is running at http://localhost:8001",
+        `Unable to connect to backend API at ${BACKEND_API_URL}. Please check your network connection and ensure the backend server is accessible.`,
       );
     } finally {
       setLoading(false);
