@@ -54,25 +54,26 @@ export function UserInfoSection() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Read user ID from URL query parameter and auto-fill
+  // Read user ID from URL query parameter and handle changes
   useEffect(() => {
     const userIdFromUrl = searchParams.get("userId");
-    if (userIdFromUrl && userIdFromUrl !== userId) {
-      setUserId(userIdFromUrl);
-    }
-  }, [searchParams, userId]);
 
-  // Auto-fetch user info when userId is set from URL
-  useEffect(() => {
-    const userIdFromUrl = searchParams.get("userId");
-    if (userIdFromUrl && userIdFromUrl === userId && !userInfo && !loading) {
+    if (userIdFromUrl) {
+      // If there's a userId in URL, set it and fetch
+      setUserId(userIdFromUrl);
+      // Auto-fetch after a short delay
       const timer = setTimeout(() => {
         fetchUserInfo(userIdFromUrl);
       }, 300);
       return () => clearTimeout(timer);
+    } else {
+      // If no userId in URL, clear everything
+      setUserId("");
+      setUserInfo(null);
+      setError(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [searchParams]);
 
   const fetchUserInfo = async (idToFetch?: string) => {
     const id = idToFetch || userId.trim();
@@ -92,9 +93,6 @@ export function UserInfoSection() {
         throw new Error("Authentication token not found. Please login again.");
       }
 
-      console.log("Fetching user info for ID:", id);
-      console.log("Token exists:", !!token);
-
       const response = await fetch(
         `http://127.0.0.1:8001/v1.0/user/check-user-info/${id}`,
         {
@@ -103,25 +101,38 @@ export function UserInfoSection() {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (!response.ok) {
         if (response.status === 401) {
           throw new Error("Unauthorized. Please login again.");
         }
+        if (response.status === 404) {
+          throw new Error(
+            `User with ID "${id}" not found. Please check the user ID and try again.`,
+          );
+        }
+        if (response.status === 403) {
+          throw new Error(
+            "You don't have permission to view this user's information.",
+          );
+        }
         throw new Error(`Failed to fetch user info: ${response.statusText}`);
       }
 
       const data = await response.json();
-      console.log("User info received:", data);
       setUserInfo(data);
+      setError(null);
     } catch (err) {
-      console.error("Error fetching user info:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to fetch user info"
-      );
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to fetch user info";
+      setError(errorMessage);
       setUserInfo(null);
+      // Only log to console in development
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error fetching user info:", err);
+      }
     } finally {
       setLoading(false);
     }
