@@ -120,7 +120,7 @@ class FreeTrialAPI {
      */
     async submitRequest(data: FreeTrialRequest): Promise<FreeTrialResponse> {
         try {
-            const response = await fetch(`${this.baseURL}/free-trial/request`, {
+            const response = await fetch(`${this.baseURL}/free-trial/submit`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

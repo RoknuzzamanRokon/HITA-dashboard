@@ -107,7 +107,7 @@ export default function FreeTrialPage() {
       const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || "v1.0";
 
       const response = await fetch(
-        `${BACKEND_API_URL}/${API_VERSION}/free-trial/request`,
+        `${BACKEND_API_URL}/${API_VERSION}/free-trial/submit`,
         {
           method: "POST",
           headers: {
