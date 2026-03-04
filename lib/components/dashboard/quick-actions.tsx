@@ -6,6 +6,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import {
   UserPlus,
   Users,
@@ -30,6 +31,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
   compact = false,
   onCreateUser,
 }) => {
+  const router = useRouter();
   const actions = [
     {
       id: "create-user",
@@ -41,7 +43,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
           onCreateUser();
         } else {
           // Navigate to user creation with query param to open modal
-          window.location.href = "/dashboard/users?create=true";
+          router.push("/dashboard/users?create=true");
         }
       },
     },
@@ -52,7 +54,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
       color: "bg-green-500",
       onClick: () => {
         // Navigate to user management
-        window.location.href = "/dashboard/users";
+        router.push("/dashboard/users");
       },
     },
     {
@@ -103,7 +105,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
           const file = (e.target as HTMLInputElement).files?.[0];
           if (file) {
             alert(
-              `File "${file.name}" selected for import. Import functionality coming soon!`
+              `File "${file.name}" selected for import. Import functionality coming soon!`,
             );
           }
         };
@@ -116,7 +118,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
       icon: <BarChart3 className="w-5 h-5" />,
       color: "bg-indigo-500",
       onClick: () => {
-        window.location.href = "/dashboard/analytics";
+        router.push("/dashboard/analytics");
       },
     },
     {

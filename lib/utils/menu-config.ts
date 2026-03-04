@@ -60,6 +60,14 @@ export const mainMenuItems: MenuItem[] = [
         requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER, UserRole.GENERAL_USER],
     },
     {
+        id: "analytics",
+        label: "Analytics",
+        icon: BarChart3,
+        path: "/dashboard/analytics",
+        description: "View detailed analytics and reports",
+        requiredRoles: [UserRole.SUPER_USER, UserRole.ADMIN_USER, UserRole.GENERAL_USER],
+    },
+    {
         id: "notifications",
         label: "Notifications",
         icon: Bell,
@@ -171,14 +179,6 @@ export const systemMenuItems: MenuItem[] = [
         description: "System configuration and management",
         requiredRoles: [UserRole.SUPER_USER],
         children: [
-            {
-                id: "admin-dashboard",
-                label: "Admin Dashboard",
-                icon: BarChart3,
-                path: "/admin/dashboard",
-                description: "System metrics and health",
-                requiredRoles: [UserRole.SUPER_USER],
-            },
             {
                 id: "admin-permissions",
                 label: "Permissions",
