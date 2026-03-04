@@ -39,11 +39,10 @@ interface TrialRequest {
   phone_number: string;
   message?: string;
   status: string;
-  request_date: string;
+  created_at: string;
   ip_address?: string;
   user_agent?: string;
   notes?: string;
-  created_at?: string;
   updated_at?: string;
 }
 
@@ -255,7 +254,7 @@ export default function FreeTrialsAdminPage() {
       r.email,
       r.phone_number,
       r.status,
-      new Date(r.request_date).toLocaleDateString(),
+      new Date(r.created_at).toLocaleDateString(),
       r.message || "",
     ]);
 
@@ -509,7 +508,7 @@ export default function FreeTrialsAdminPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-600">
-                          {new Date(request.request_date).toLocaleDateString()}
+                          {new Date(request.created_at).toLocaleString()}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -649,9 +648,7 @@ export default function FreeTrialsAdminPage() {
                     <div>
                       <div className="text-sm text-gray-600">Request Date</div>
                       <div className="text-base font-medium text-gray-900">
-                        {new Date(
-                          selectedRequest.request_date,
-                        ).toLocaleString()}
+                        {new Date(selectedRequest.created_at).toLocaleString()}
                       </div>
                     </div>
                   </div>
