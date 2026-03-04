@@ -27,6 +27,8 @@ function SearchResultsContent() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 100;
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [selectedSupplierFilter, setSelectedSupplierFilter] =
+    useState<string>("all");
 
   // Get search parameters
   const hotelName = searchParams.get("hotel");
@@ -195,11 +197,24 @@ function SearchResultsContent() {
     return null;
   }
 
+  // Filter hotels by selected supplier
+  const filteredHotels =
+    selectedSupplierFilter === "all"
+      ? locationResults.hotels
+      : locationResults.hotels.filter((hotel) =>
+          hotel.suppliers.includes(selectedSupplierFilter),
+        );
+
+  // Get all unique suppliers from the results
+  const allSuppliers = Array.from(
+    new Set(locationResults.hotels.flatMap((hotel) => hotel.suppliers)),
+  ).sort();
+
   // Pagination calculations
-  const totalPages = Math.ceil(locationResults.hotels.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredHotels.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentHotels = locationResults.hotels.slice(startIndex, endIndex);
+  const currentHotels = filteredHotels.slice(startIndex, endIndex);
 
   // Generate page numbers to display
   const getPageNumbers = () => {
@@ -299,9 +314,10 @@ function SearchResultsContent() {
                     />
                   </svg>
                   <span className="font-semibold text-gray-900">
-                    {locationResults.totalHotels}
+                    {filteredHotels.length}
                   </span>{" "}
-                  hotel{locationResults.totalHotels !== 1 ? "s" : ""} found
+                  hotel{filteredHotels.length !== 1 ? "s" : ""}
+                  {selectedSupplierFilter !== "all" ? " (filtered)" : " found"}
                   {totalPages > 1 && (
                     <span className="text-gray-500">
                       {" "}
@@ -357,54 +373,89 @@ function SearchResultsContent() {
               </div>
             </div>
 
-            {/* View toggle */}
-            <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
-              <button
-                onClick={() => setViewMode("list")}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  viewMode === "list"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-                aria-label="List view"
-              >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+            {/* View toggle and Filter */}
+            <div className="flex items-center gap-3">
+              {/* Supplier Filter */}
+              <div className="flex items-center gap-2">
+                <label
+                  htmlFor="supplier-filter"
+                  className="text-sm font-medium text-gray-700"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                </svg>
-              </button>
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  viewMode === "grid"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-                aria-label="Grid view"
-              >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                  Filter by Supplier:
+                </label>
+                <select
+                  id="supplier-filter"
+                  value={selectedSupplierFilter}
+                  onChange={(e) => {
+                    setSelectedSupplierFilter(e.target.value);
+                    setCurrentPage(1); // Reset to first page when filter changes
+                  }}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-                  />
-                </svg>
-              </button>
+                  <option value="all">
+                    All Suppliers ({locationResults.totalHotels})
+                  </option>
+                  {allSuppliers.map((supplier) => {
+                    const count = locationResults.hotels.filter((h) =>
+                      h.suppliers.includes(supplier),
+                    ).length;
+                    return (
+                      <option key={supplier} value={supplier}>
+                        {supplier} ({count})
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                    viewMode === "list"
+                      ? "bg-white text-gray-900 shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                  aria-label="List view"
+                >
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                    viewMode === "grid"
+                      ? "bg-white text-gray-900 shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                  aria-label="Grid view"
+                >
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -416,11 +467,14 @@ function SearchResultsContent() {
               <Card
                 key={`${hotel.name}-${hotel.latitude}-${hotel.longitude}-${index}`}
                 padding="none"
-                className="overflow-hidden hover:shadow-xl focus-within:ring-2 focus-within:ring-blue-500 transition-all duration-300 group"
+                className="overflow-hidden hover:shadow-xl focus-within:ring-2 focus-within:ring-blue-500 transition-all duration-300 group cursor-pointer"
+                onClick={() =>
+                  hotel.ittid && handleViewDetails(hotel.name, hotel.ittid)
+                }
               >
-                <div className="flex flex-col sm:flex-row">
+                <div className="flex flex-col sm:flex-row sm:h-80">
                   {/* Hotel photo */}
-                  <div className="relative w-full sm:w-72 h-48 sm:h-64 bg-gray-200 flex-shrink-0 overflow-hidden">
+                  <div className="relative w-full sm:w-72 h-48 sm:h-full bg-gray-200 flex-shrink-0 overflow-hidden">
                     {hotel.photo ? (
                       <img
                         src={hotel.photo}
@@ -466,7 +520,7 @@ function SearchResultsContent() {
                   </div>
 
                   {/* Hotel details */}
-                  <div className="flex-1 p-5 sm:p-6 flex flex-col">
+                  <div className="flex-1 p-5 sm:p-6 flex flex-col sm:h-full">
                     <div className="flex-1">
                       {/* Hotel name and rating */}
                       <div className="mb-4">
@@ -544,10 +598,48 @@ function SearchResultsContent() {
                         )}
                       </div>
 
-                      {/* ITT ID with Copy Button */}
+                      {/* Supplier names */}
+                      <div className="mb-4">
+                        <div className="flex items-center gap-2">
+                          <svg
+                            className="h-5 w-5 text-gray-400 flex-shrink-0"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                            />
+                          </svg>
+                          <span className="text-sm font-semibold text-gray-700 flex-shrink-0">
+                            Suppliers:
+                          </span>
+                          {hotel.suppliers.length > 0 ? (
+                            <div className="flex flex-wrap gap-1.5 flex-1">
+                              {hotel.suppliers.map((supplier, idx) => (
+                                <span
+                                  key={idx}
+                                  className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200"
+                                >
+                                  {supplier}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-sm text-gray-500 italic">
+                              No suppliers available
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* ITT ID with Copy Button and View Details */}
                       {hotel.ittid && (
                         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                          <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-2 flex-1 min-w-0">
                               <span className="text-sm font-semibold text-blue-900">
                                 ITT ID:
@@ -555,21 +647,45 @@ function SearchResultsContent() {
                               <code className="text-sm font-mono text-blue-700 bg-white px-2 py-1 rounded border border-blue-200 truncate">
                                 {hotel.ittid}
                               </code>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCopyIttid(hotel.ittid);
+                                }}
+                                className="flex-shrink-0 p-2 hover:bg-blue-100 rounded-lg transition-colors group"
+                                title="Copy ITT ID"
+                              >
+                                {copiedId === hotel.ittid ? (
+                                  <Check className="w-4 h-4 text-green-600" />
+                                ) : (
+                                  <Copy className="w-4 h-4 text-blue-600 group-hover:text-blue-700" />
+                                )}
+                              </button>
                             </div>
-                            <button
+                            <Button
+                              variant="primary"
+                              size="md"
+                              className="flex-shrink-0"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleCopyIttid(hotel.ittid);
+                                handleViewDetails(hotel.name, hotel.ittid);
                               }}
-                              className="flex-shrink-0 p-2 hover:bg-blue-100 rounded-lg transition-colors group"
-                              title="Copy ITT ID"
                             >
-                              {copiedId === hotel.ittid ? (
-                                <Check className="w-4 h-4 text-green-600" />
-                              ) : (
-                                <Copy className="w-4 h-4 text-blue-600 group-hover:text-blue-700" />
-                              )}
-                            </button>
+                              View Details
+                              <svg
+                                className="ml-2 h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 5l7 7-7 7"
+                                />
+                              </svg>
+                            </Button>
                           </div>
                         </div>
                       )}
@@ -614,34 +730,6 @@ function SearchResultsContent() {
                         </div>
                       </div>
                     </div>
-
-                    {/* Action button */}
-                    <div className="mt-6 pt-4 border-t border-gray-100">
-                      <Button
-                        variant="primary"
-                        size="md"
-                        className="w-full sm:w-auto"
-                        onClick={() =>
-                          handleViewDetails(hotel.name, hotel.ittid)
-                        }
-                        disabled={!hotel.ittid}
-                      >
-                        View Details
-                        <svg
-                          className="ml-2 h-4 w-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5l7 7-7 7"
-                          />
-                        </svg>
-                      </Button>
-                    </div>
                   </div>
                 </div>
               </Card>
@@ -656,7 +744,10 @@ function SearchResultsContent() {
               <Card
                 key={`${hotel.name}-${hotel.latitude}-${hotel.longitude}-${index}`}
                 padding="none"
-                className="overflow-hidden hover:shadow-2xl focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2 transition-all duration-300 group"
+                className="overflow-hidden hover:shadow-2xl focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2 transition-all duration-300 group cursor-pointer"
+                onClick={() =>
+                  hotel.ittid && handleViewDetails(hotel.name, hotel.ittid)
+                }
               >
                 {/* Hotel photo */}
                 <div className="relative h-48 bg-gray-200 overflow-hidden">
@@ -744,7 +835,7 @@ function SearchResultsContent() {
                   </div>
 
                   {/* Hotel type and supplier badges */}
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 mb-3">
                     <Badge variant="secondary" size="sm" className="text-xs">
                       {hotel.type}
                     </Badge>
@@ -755,6 +846,60 @@ function SearchResultsContent() {
                       </Badge>
                     )}
                   </div>
+
+                  {/* ITT ID with Copy Button and View Details */}
+                  {hotel.ittid && (
+                    <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center justify-between gap-1 mb-2">
+                        <div className="flex items-center gap-1 flex-1 min-w-0">
+                          <span className="text-xs font-semibold text-blue-900">
+                            ITT ID:
+                          </span>
+                          <code className="text-xs font-mono text-blue-700 bg-white px-1.5 py-0.5 rounded border border-blue-200 truncate">
+                            {hotel.ittid}
+                          </code>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopyIttid(hotel.ittid);
+                          }}
+                          className="flex-shrink-0 p-1.5 hover:bg-blue-100 rounded transition-colors group"
+                          title="Copy ITT ID"
+                        >
+                          {copiedId === hotel.ittid ? (
+                            <Check className="w-3.5 h-3.5 text-green-600" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5 text-blue-600 group-hover:text-blue-700" />
+                          )}
+                        </button>
+                      </div>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        className="w-full text-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewDetails(hotel.name, hotel.ittid);
+                        }}
+                      >
+                        View Details
+                        <svg
+                          className="ml-1 h-3 w-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </Card>
             ))}
@@ -772,11 +917,11 @@ function SearchResultsContent() {
               </span>{" "}
               to{" "}
               <span className="font-semibold text-gray-900">
-                {Math.min(endIndex, locationResults.hotels.length)}
+                {Math.min(endIndex, filteredHotels.length)}
               </span>{" "}
               of{" "}
               <span className="font-semibold text-gray-900">
-                {locationResults.hotels.length}
+                {filteredHotels.length}
               </span>{" "}
               hotels
             </div>

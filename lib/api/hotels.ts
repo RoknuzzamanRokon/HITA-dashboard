@@ -684,10 +684,7 @@ export class HotelService {
                     photo: string;
                     star: number;
                     ittid: string;
-                    agoda?: string[];
-                    goglobal?: string[];
-                    hotelbeds?: string[];
-                    // Add other supplier fields as needed
+                    [key: string]: any; // Allow dynamic supplier keys
                 }>;
             }>('/locations/search-hotel-with-location', requestBody);
 
@@ -697,22 +694,29 @@ export class HotelService {
                     success: true,
                     data: {
                         totalHotels: response.data.total_hotels, // Map 'total_hotels' to 'totalHotels'
-                        hotels: response.data.hotels.map(hotel => ({
-                            latitude: hotel.a, // 'a' is latitude
-                            longitude: hotel.b, // 'b' is longitude
-                            name: hotel.name,
-                            address: hotel.addr, // 'addr' is address
-                            type: hotel.type,
-                            photo: hotel.photo,
-                            starRating: hotel.star, // 'star' is rating
-                            ittid: hotel.ittid,
-                            suppliers: [
-                                ...(hotel.agoda || []).map(() => 'agoda'),
-                                ...(hotel.goglobal || []).map(() => 'goglobal'),
-                                ...(hotel.hotelbeds || []).map(() => 'hotelbeds'),
-                                // Add other suppliers as they appear in the response
-                            ].filter(Boolean)
-                        }))
+                        hotels: response.data.hotels.map(hotel => {
+                            // Extract all supplier keys dynamically
+                            const knownFields = ['a', 'b', 'name', 'addr', 'type', 'photo', 'star', 'ittid'];
+                            const suppliers: string[] = [];
+
+                            Object.keys(hotel).forEach(key => {
+                                if (!knownFields.includes(key) && Array.isArray(hotel[key]) && hotel[key].length > 0) {
+                                    suppliers.push(key);
+                                }
+                            });
+
+                            return {
+                                latitude: hotel.a, // 'a' is latitude
+                                longitude: hotel.b, // 'b' is longitude
+                                name: hotel.name,
+                                address: hotel.addr, // 'addr' is address
+                                type: hotel.type,
+                                photo: hotel.photo,
+                                starRating: hotel.star, // 'star' is rating
+                                ittid: hotel.ittid,
+                                suppliers: suppliers
+                            };
+                        })
                     }
                 };
             }
