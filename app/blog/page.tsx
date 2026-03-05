@@ -196,7 +196,9 @@ export default function BlogPage() {
                       </div>
 
                       <h2 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
-                        {post.title}
+                        {post.title.length > 23
+                          ? post.title.slice(0, 23) + "..."
+                          : post.title}
                       </h2>
 
                       <p className="text-gray-600 mb-6">{post.excerpt}</p>
