@@ -30,6 +30,32 @@ export default function HotelDetailsPage() {
   const [showAllFacilities, setShowAllFacilities] = useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [isFromCache, setIsFromCache] = useState<boolean>(false);
+  const [loadedPhotos, setLoadedPhotos] = useState<Set<string>>(new Set());
+  const [photoRetryCounts, setPhotoRetryCounts] = useState<
+    Record<string, number>
+  >({});
+  const currentProvider =
+    hotelDetails?.provider_mappings?.[selectedProvider] || null;
+
+  const getRetryPhotoSrc = (url: string, retryCount: number) => {
+    if (retryCount <= 0) return url;
+    const separator = url.includes("?") ? "&" : "?";
+    return `${url}${separator}retry=${retryCount}`;
+  };
+
+  const warmImageCache = async (url: string, attempt = 0): Promise<boolean> =>
+    new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(true);
+      img.onerror = () => {
+        if (attempt < 2) {
+          warmImageCache(url, attempt + 1).then(resolve);
+        } else {
+          resolve(false);
+        }
+      };
+      img.src = getRetryPhotoSrc(url, attempt);
+    });
 
   useEffect(() => {
     const fetchHotelDetails = async () => {
@@ -103,6 +129,60 @@ export default function HotelDetailsPage() {
 
     fetchHotelDetails();
   }, [ittid, user]);
+
+  useEffect(() => {
+    const photos =
+      currentProvider?.full_details?.hotel_photo
+        ?.map((photo) => photo.url)
+        .filter(Boolean) || [];
+    if (photos.length === 0) return;
+    let isCancelled = false;
+
+    const preload = async () => {
+      const results = await Promise.all(photos.map((url) => warmImageCache(url)));
+      if (isCancelled) return;
+      setLoadedPhotos((prev) => {
+        const next = new Set(prev);
+        results.forEach((loaded, index) => {
+          if (loaded) next.add(photos[index]);
+        });
+        return next;
+      });
+    };
+
+    preload();
+    return () => {
+      isCancelled = true;
+    };
+  }, [currentProvider]);
+
+  useEffect(() => {
+    const primaryPhoto = hotelDetails?.hotel?.primary_photo || "";
+    const roomPhotos =
+      currentProvider?.full_details?.room_type
+        ?.map((room) => room.room_pic)
+        .filter(Boolean) || [];
+    const photos = [primaryPhoto, ...roomPhotos].filter(Boolean);
+    if (photos.length === 0) return;
+
+    let isCancelled = false;
+    const preload = async () => {
+      const results = await Promise.all(photos.map((url) => warmImageCache(url)));
+      if (isCancelled) return;
+      setLoadedPhotos((prev) => {
+        const next = new Set(prev);
+        results.forEach((loaded, index) => {
+          if (loaded) next.add(photos[index]);
+        });
+        return next;
+      });
+    };
+
+    preload();
+    return () => {
+      isCancelled = true;
+    };
+  }, [hotelDetails, currentProvider]);
 
   const handleCopyProviderId = async (providerId: string) => {
     try {
@@ -304,7 +384,21 @@ export default function HotelDetailsPage() {
   }
 
   const hotel = hotelDetails.hotel;
-  const currentProvider = hotelDetails.provider_mappings[selectedProvider];
+  const galleryPhotos =
+    currentProvider?.full_details?.hotel_photo
+      ?.map((photo) => photo.url)
+      .filter(Boolean) || [];
+  const roomPhotos =
+    currentProvider?.full_details?.room_type
+      ?.map((room) => room.room_pic)
+      .filter(Boolean) || [];
+  const primaryPhoto = hotel.primary_photo ? [hotel.primary_photo] : [];
+  const allPhotoUrls = Array.from(
+    new Set([...primaryPhoto, ...galleryPhotos, ...roomPhotos]),
+  );
+  const loadedPhotoCount = allPhotoUrls.filter((url) =>
+    loadedPhotos.has(url),
+  ).length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
@@ -369,10 +463,31 @@ export default function HotelDetailsPage() {
               <div className="lg:w-1/3">
                 {hotel.primary_photo ? (
                   <img
-                    src={hotel.primary_photo}
+                    src={getRetryPhotoSrc(
+                      hotel.primary_photo,
+                      photoRetryCounts[hotel.primary_photo] || 0,
+                    )}
                     alt={hotel.name}
                     className="w-full h-64 object-cover rounded-lg"
+                    loading="eager"
+                    decoding="async"
+                    onLoad={() =>
+                      setLoadedPhotos((prev) => {
+                        const next = new Set(prev);
+                        next.add(hotel.primary_photo);
+                        return next;
+                      })
+                    }
                     onError={(e) => {
+                      const currentRetry =
+                        photoRetryCounts[hotel.primary_photo] || 0;
+                      if (currentRetry < 2) {
+                        setPhotoRetryCounts((prev) => ({
+                          ...prev,
+                          [hotel.primary_photo]: currentRetry + 1,
+                        }));
+                        return;
+                      }
                       const target = e.target as HTMLImageElement;
                       target.src =
                         "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f3f4f6' width='400' height='300'/%3E%3Ctext fill='%239ca3af' font-family='sans-serif' font-size='18' x='50%25' y='50%25' text-anchor='middle' dominant-baseline='middle'%3ENo Image%3C/text%3E%3C/svg%3E";
@@ -991,6 +1106,14 @@ export default function HotelDetailsPage() {
                               {currentProvider.full_details.hotel_photo.length}{" "}
                               photos
                             </span>
+                            {allPhotoUrls.length > 0 && (
+                              <>
+                                <span>•</span>
+                                <span className="text-xs">
+                                  Loaded {loadedPhotoCount}/{allPhotoUrls.length}
+                                </span>
+                              </>
+                            )}
                             {currentProvider.full_details.hotel_photo.length >
                               12 && (
                               <>
@@ -1024,33 +1147,69 @@ export default function HotelDetailsPage() {
                             }}
                           >
                             {currentProvider.full_details.hotel_photo.map(
-                              (photo, index) => (
-                                <div
-                                  key={index}
-                                  className="aspect-video bg-gray-200 rounded-lg overflow-hidden group cursor-pointer"
-                                  onClick={() =>
-                                    window.open(photo.url, "_blank")
-                                  }
-                                >
-                                  <img
-                                    src={photo.url}
-                                    alt={
-                                      photo.title || `Hotel photo ${index + 1}`
+                              (photo, index) => {
+                                if (!photo.url) return null;
+                                const retryCount =
+                                  photoRetryCounts[photo.url] || 0;
+                                const photoSrc = getRetryPhotoSrc(
+                                  photo.url,
+                                  retryCount,
+                                );
+                                const isLoaded = loadedPhotos.has(photo.url);
+
+                                return (
+                                  <div
+                                    key={`${photo.url}-${index}`}
+                                    className="aspect-video bg-gray-200 rounded-lg overflow-hidden group cursor-pointer relative"
+                                    onClick={() =>
+                                      window.open(photo.url, "_blank")
                                     }
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                                    onError={(e) => {
-                                      const target =
-                                        e.target as HTMLImageElement;
-                                      target.style.display = "none";
-                                    }}
-                                  />
-                                  {photo.title && (
-                                    <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                      {photo.title}
-                                    </div>
-                                  )}
-                                </div>
-                              ),
+                                  >
+                                    <img
+                                      src={photoSrc}
+                                      alt={
+                                        photo.title ||
+                                        `Hotel photo ${index + 1}`
+                                      }
+                                      className={`w-full h-full object-cover group-hover:scale-110 transition-transform duration-300 ${
+                                        isLoaded ? "opacity-100" : "opacity-0"
+                                      }`}
+                                      loading="eager"
+                                      decoding="async"
+                                      onLoad={() =>
+                                        setLoadedPhotos((prev) => {
+                                          const next = new Set(prev);
+                                          next.add(photo.url);
+                                          return next;
+                                        })
+                                      }
+                                      onError={(e) => {
+                                        const currentRetry =
+                                          photoRetryCounts[photo.url] || 0;
+                                        if (currentRetry < 2) {
+                                          setPhotoRetryCounts((prev) => ({
+                                            ...prev,
+                                            [photo.url]: currentRetry + 1,
+                                          }));
+                                          return;
+                                        }
+                                        const target =
+                                          e.target as HTMLImageElement;
+                                        target.src =
+                                          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f3f4f6' width='400' height='300'/%3E%3Ctext fill='%239ca3af' font-family='sans-serif' font-size='18' x='50%25' y='50%25' text-anchor='middle' dominant-baseline='middle'%3EImage unavailable%3C/text%3E%3C/svg%3E";
+                                      }}
+                                    />
+                                    {!isLoaded && (
+                                      <div className="absolute inset-0 animate-pulse bg-gray-200" />
+                                    )}
+                                    {photo.title && (
+                                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        {photo.title}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              },
                             )}
                           </div>
                           {/* Fade indicator at bottom if there are many photos */}
@@ -1241,10 +1400,31 @@ export default function HotelDetailsPage() {
                           {room.room_pic && (
                             <div className="md:w-1/3 h-48 md:h-auto bg-gray-200">
                               <img
-                                src={room.room_pic}
+                                src={getRetryPhotoSrc(
+                                  room.room_pic,
+                                  photoRetryCounts[room.room_pic] || 0,
+                                )}
                                 alt={room.title}
                                 className="w-full h-full object-cover"
+                                loading="eager"
+                                decoding="async"
+                                onLoad={() =>
+                                  setLoadedPhotos((prev) => {
+                                    const next = new Set(prev);
+                                    next.add(room.room_pic);
+                                    return next;
+                                  })
+                                }
                                 onError={(e) => {
+                                  const currentRetry =
+                                    photoRetryCounts[room.room_pic] || 0;
+                                  if (currentRetry < 2) {
+                                    setPhotoRetryCounts((prev) => ({
+                                      ...prev,
+                                      [room.room_pic]: currentRetry + 1,
+                                    }));
+                                    return;
+                                  }
                                   const target = e.target as HTMLImageElement;
                                   target.style.display = "none";
                                 }}

@@ -27,30 +27,69 @@ interface HotelSearchCompactProps {
   showFilters?: boolean;
 }
 
+interface HotelSuggestion {
+  name: string;
+  type: string;
+  country?: string;
+  city?: string;
+  ittid?: string;
+  lat?: number;
+  lon?: number;
+  country_code?: string;
+  address?: string;
+}
+
+const RECENT_SEARCHES_KEY = "hotel_search_recent_v1";
+const MAX_RECENT_SEARCHES = 5;
+
 export function HotelSearchCompact({
   onHotelSelect,
   maxResults = 10,
   showFilters = false,
 }: HotelSearchCompactProps) {
   const [hotels, setHotels] = useState<Hotel[]>([]);
-  const [suggestions, setSuggestions] = useState<
-    Array<{
-      name: string;
-      type: string;
-      country?: string;
-      city?: string;
-      ittid?: string;
-      lat?: number;
-      lon?: number;
-      country_code?: string;
-      address?: string;
-    }>
-  >([]);
+  const [suggestions, setSuggestions] = useState<HotelSuggestion[]>([]);
+  const [recentSearches, setRecentSearches] = useState<HotelSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showRecent, setShowRecent] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(RECENT_SEARCHES_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as HotelSuggestion[];
+      if (Array.isArray(parsed)) {
+        setRecentSearches(parsed.slice(0, MAX_RECENT_SEARCHES));
+      }
+    } catch (err) {
+      console.error("Failed to load recent searches:", err);
+    }
+  }, []);
+
+  const persistRecentSearches = (items: HotelSuggestion[]) => {
+    setRecentSearches(items);
+    try {
+      localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(items));
+    } catch (err) {
+      console.error("Failed to save recent searches:", err);
+    }
+  };
+
+  const addRecentSearch = (item: HotelSuggestion) => {
+    if (!item.name) return;
+    const deduped = [
+      item,
+      ...recentSearches.filter(
+        (recent) =>
+          recent.name !== item.name || (recent.ittid || "") !== (item.ittid || ""),
+      ),
+    ].slice(0, MAX_RECENT_SEARCHES);
+    persistRecentSearches(deduped);
+  };
 
   // Fetch autocomplete suggestions
   const fetchSuggestions = async (query: string) => {
@@ -89,20 +128,11 @@ export function HotelSearchCompact({
   };
 
   // Create hotel object directly from autocomplete data (using ittid)
-  const createHotelFromAutocomplete = (suggestion: {
-    name: string;
-    type: string;
-    country?: string;
-    city?: string;
-    ittid?: string;
-    lat?: number;
-    lon?: number;
-    country_code?: string;
-    address?: string;
-  }) => {
+  const createHotelFromAutocomplete = (suggestion: HotelSuggestion) => {
     setLoadingDetails(true);
     setError(null);
     setShowSuggestions(false);
+    setShowRecent(false);
 
     try {
       console.log("🏨 Creating hotel from autocomplete data:", suggestion);
@@ -121,7 +151,7 @@ export function HotelSearchCompact({
         addressLine2: null,
         postalCode: null,
         chainName: null,
-        propertyType: null,
+        propertyType: suggestion.type || null,
         mapStatus: "mapped",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -129,6 +159,7 @@ export function HotelSearchCompact({
 
       setHotels([hotel]);
       console.log("✅ Hotel created from autocomplete data:", hotel);
+      addRecentSearch(suggestion);
     } catch (error) {
       console.error("Error creating hotel from autocomplete:", error);
       setError("An unexpected error occurred");
@@ -143,6 +174,7 @@ export function HotelSearchCompact({
     setLoadingDetails(true);
     setError(null);
     setShowSuggestions(false);
+    setShowRecent(false);
 
     try {
       console.log("🏨 Fetching hotel details for:", hotelName);
@@ -172,6 +204,15 @@ export function HotelSearchCompact({
         };
 
         setHotels([hotel]);
+        addRecentSearch({
+          name: response.data.name,
+          type: response.data.propertytype || "Hotel",
+          country: response.data.country,
+          city: response.data.city,
+          ittid: response.data.ittid,
+          country_code: response.data.countrycode,
+          address: response.data.addressline1,
+        });
 
         // Don't auto-open modal - let user click "View Full Details" button
         // Modal will only open when user explicitly clicks the button
@@ -204,17 +245,7 @@ export function HotelSearchCompact({
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
-  const handleSuggestionClick = (suggestion: {
-    name: string;
-    type: string;
-    country?: string;
-    city?: string;
-    ittid?: string;
-    lat?: number;
-    lon?: number;
-    country_code?: string;
-    address?: string;
-  }) => {
+  const handleSuggestionClick = (suggestion: HotelSuggestion) => {
     setSearchQuery(suggestion.name);
 
     // Use the ittid directly from autocomplete response instead of calling search-with-hotel-name
@@ -253,11 +284,87 @@ export function HotelSearchCompact({
           type="text"
           placeholder="Type to search hotels (e.g., 'brazil', 'savoy')..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          // onFocus={() => suggestions.length > 0 && setShowSuggestions(false)}
-          // onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setShowRecent(false);
+          }}
+          onFocus={() => {
+            if (!searchQuery.trim() && recentSearches.length > 0) {
+              setShowRecent(true);
+            }
+          }}
+          onBlur={() => {
+            setTimeout(() => {
+              setShowSuggestions(false);
+              setShowRecent(false);
+            }, 150);
+          }}
           className="pl-10 h-10" // Ensure consistent height
         />
+
+        {/* Recent Searches Dropdown */}
+        {showRecent && recentSearches.length > 0 && (
+          <div className="absolute z-9999 w-full mt-2 bg-white rounded-lg shadow-xl border border-gray-200 max-h-80 sm:max-h-96 overflow-y-auto">
+            <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50 border-b border-gray-200">
+              Recent Searches
+            </div>
+            <div
+              className="max-h-80 overflow-y-auto"
+              style={{
+                scrollbarWidth: "thin",
+                scrollbarColor: "#9CA3AF #F3F4F6",
+              }}
+            >
+              {recentSearches.map((suggestion, index) => (
+                <div
+                  key={`${suggestion.ittid || suggestion.name}-${index}`}
+                  onClick={() => handleSuggestionClick(suggestion)}
+                  className="px-3 sm:px-4 py-3 cursor-pointer transition-all duration-150 hover:bg-gray-50 focus:bg-gray-50 border-l-4 border-transparent"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">
+                        {suggestion.name}
+                      </p>
+                      {(suggestion.city || suggestion.country) && (
+                        <p className="text-xs text-gray-600 mt-1 truncate">
+                          {[suggestion.city, suggestion.country]
+                            .filter(Boolean)
+                            .join(", ")}
+                        </p>
+                      )}
+                      {suggestion.ittid && (
+                        <div className="text-xs text-blue-600 mt-1 font-mono">
+                          ID: {suggestion.ittid}
+                        </div>
+                      )}
+                    </div>
+                    <svg
+                      className="h-5 w-5 text-gray-400 shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Autocomplete Suggestions Dropdown - No Animation, Scrollable */}
         {showSuggestions && suggestions.length > 0 && (

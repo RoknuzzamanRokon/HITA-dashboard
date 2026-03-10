@@ -528,7 +528,49 @@ export default function CachedProfilePage() {
     );
   }
 
-  if (!isAuthenticated || !profile) return null;
+  // Handle case where profile data is not available
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[rgb(var(--bg-primary))]">
+        <div className="text-center max-w-md">
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-[rgb(var(--text-primary))] mb-2">
+            Unable to Load Profile
+          </h2>
+          <p className="text-[rgb(var(--text-secondary))] mb-6">
+            {profileError
+              ? profileError instanceof Error
+                ? profileError.message
+                : "Failed to load profile data"
+              : "Profile data is not available. This might be due to a network issue or expired session."}
+          </p>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={handleRefreshAll}
+              className="px-6 py-3 bg-primary-color text-white rounded-lg hover:bg-primary-hover transition-colors flex items-center justify-center gap-2"
+            >
+              <Loader2 className="w-4 h-4" />
+              Retry Loading Profile
+            </button>
+            <button
+              onClick={() => {
+                // Clear all caches and reload
+                localStorage.clear();
+                window.location.reload();
+              }}
+              className="px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+            >
+              Clear Cache & Reload
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const getRoleInfo = (status: string) => {
     const roles: Record<string, { label: string; icon: React.ReactElement }> = {
