@@ -26,6 +26,7 @@ import { PermissionGuard } from "@/lib/components/auth/permission-guard";
 import { Permission } from "@/lib/utils/rbac";
 import { SkipLink } from "@/lib/components/ui/skip-link";
 import { TokenStorage } from "@/lib/auth/token-storage";
+import { config } from "@/lib/config";
 import { ExportFilterPanel } from "./components/export-filter-panel";
 import { MappingExportPanel } from "./components/mapping-export-panel";
 import { ExportJobsList } from "./components/export-jobs-list";
@@ -595,17 +596,14 @@ export default function ExportsPage() {
         throw new Error("Authentication token not found");
       }
 
-      const response = await fetch(
-        "http://127.0.0.1:8001/v1.0/export/my-validation",
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-            "X-API-Key": apiKey.trim(),
-          },
+      const response = await fetch(`${config.api.url}/export/my-validation`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          "X-API-Key": apiKey.trim(),
         },
-      );
+      });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

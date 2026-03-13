@@ -11,6 +11,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { TokenStorage } from "@/lib/auth/token-storage";
+import { config } from "@/lib/config";
 
 interface IpEntry {
   id: number;
@@ -130,7 +131,7 @@ export function IpAddressPermissionSection() {
       }
 
       const response = await fetch(
-        "http://127.0.0.1:8001/v1.0/permissions/ip/active-permission",
+        `${config.api.url}/permissions/ip/active-permission`,
         {
           method: "POST",
           headers: {
@@ -203,7 +204,7 @@ export function IpAddressPermissionSection() {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           user_id: userId,

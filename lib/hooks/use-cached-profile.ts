@@ -9,6 +9,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/contexts/auth-context';
 import { usePersistentCache, CACHE_CONFIGS } from './use-persistent-cache';
 import { TokenStorage } from '@/lib/auth/token-storage';
+import { config } from '@/lib/config';
 
 interface UserProfile {
     id: string;
@@ -38,7 +39,9 @@ async function fetchProfileWithCache(): Promise<UserProfile> {
         throw new Error("Authentication token not found. Please login again.");
     }
 
-    const response = await fetch("http://127.0.0.1:8001/v1.0/user/check-me", {
+    const apiUrl = `${config.api.url}/user/check-me`;
+
+    const response = await fetch(apiUrl, {
         method: "GET",
         headers: {
             Authorization: `Bearer ${token}`,

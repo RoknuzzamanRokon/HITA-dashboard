@@ -5,6 +5,7 @@ import { useRequireAuth } from "@/lib/hooks/use-auth";
 import { useNotification } from "@/lib/components/notifications/notification-provider";
 import { NotificationService } from "@/lib/api/notifications";
 import { TokenStorage } from "@/lib/auth/token-storage";
+import { config } from "@/lib/config";
 import {
   User,
   Mail,
@@ -301,7 +302,7 @@ export default function CachedProfilePage() {
       console.log("Turning off supplier:", selectedSupplierName);
 
       const response = await fetch(
-        "http://127.0.0.1:8001/v1.0/permissions/turn-off-supplier",
+        `${config.api.url}/permissions/turn-off-supplier`,
         {
           method: "POST",
           headers: {
@@ -403,7 +404,7 @@ export default function CachedProfilePage() {
       console.log("Turning on supplier:", selectedSupplierName);
 
       const response = await fetch(
-        "http://127.0.0.1:8001/v1.0/permissions/turn-on-supplier",
+        `${config.api.url}/permissions/turn-on-supplier`,
         {
           method: "POST",
           headers: {

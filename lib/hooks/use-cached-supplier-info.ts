@@ -9,6 +9,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/contexts/auth-context';
 import { usePersistentCache, CACHE_CONFIGS } from './use-persistent-cache';
 import { TokenStorage } from '@/lib/auth/token-storage';
+import { config } from '@/lib/config';
 
 interface SupplierInfo {
     supplier_info: {
@@ -38,8 +39,10 @@ async function fetchSupplierInfoWithCache(supplierName: string): Promise<Supplie
         throw new Error("Authentication token not found. Please login again.");
     }
 
+    const apiUrl = `${config.api.url}/hotels/get-supplier-info?supplier=${supplierName}`;
+
     const response = await fetch(
-        `http://127.0.0.1:8001/v1.0/hotels/get-supplier-info?supplier=${supplierName}`,
+        apiUrl,
         {
             method: "GET",
             headers: {

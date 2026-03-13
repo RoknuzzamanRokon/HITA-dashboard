@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Gift, Send, CheckCircle, AlertCircle, RotateCcw } from "lucide-react";
 import { TokenStorage } from "@/lib/auth/token-storage";
+import { config } from "@/lib/config";
 
 interface GivePointsResponse {
   message: string;
@@ -74,20 +75,17 @@ export function GivePointsSection() {
       console.log("Giving points to:", giveReceiverId);
       console.log("Allocation type:", allocationType);
 
-      const response = await fetch(
-        "http://127.0.0.1:8001/v1.0/user/points/give",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            receiver_id: giveReceiverId,
-            allocation_type: allocationType,
-          }),
-        }
-      );
+      const response = await fetch(`${config.api.url}/user/points/give`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          receiver_id: giveReceiverId,
+          allocation_type: allocationType,
+        }),
+      });
 
       if (!response.ok) {
         if (response.status === 401) {
@@ -107,7 +105,7 @@ export function GivePointsSection() {
     } catch (err) {
       console.error("Error giving points:", err);
       setGiveError(
-        err instanceof Error ? err.message : "Failed to give points"
+        err instanceof Error ? err.message : "Failed to give points",
       );
     } finally {
       setGiveLoading(false);
@@ -136,14 +134,14 @@ export function GivePointsSection() {
       console.log("Resetting points for user:", resetUserId);
 
       const response = await fetch(
-        `http://127.0.0.1:8001/v1.0/user/reset-point/${resetUserId.trim()}`,
+        `${config.api.url}/user/reset-point/${resetUserId.trim()}`,
         {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -164,7 +162,7 @@ export function GivePointsSection() {
     } catch (err) {
       console.error("Error resetting points:", err);
       setResetError(
-        err instanceof Error ? err.message : "Failed to reset points"
+        err instanceof Error ? err.message : "Failed to reset points",
       );
     } finally {
       setResetLoading(false);

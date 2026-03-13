@@ -7,6 +7,7 @@ import { Input } from "@/lib/components/ui/input";
 import { Select, SelectOption } from "@/lib/components/ui/select";
 import { RadioGroup, RadioOption } from "@/lib/components/ui/radio-group";
 import { HotelExportFilters, ExportFilters } from "@/lib/types/exports";
+import { config } from "@/lib/config";
 import {
   Download,
   Filter,
@@ -37,7 +38,7 @@ const FilterPresetsManager = dynamic(
         <div className="h-10 w-32 bg-[rgb(var(--bg-secondary))] animate-pulse rounded-lg" />
       </div>
     ),
-  }
+  },
 );
 
 export interface ExportFilterPanelProps {
@@ -110,14 +111,14 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
 
         console.log("Fetching active suppliers...");
         const response = await fetch(
-          "http://127.0.0.1:8001/v1.0/user/check-active-my-supplier",
+          `${config.api.url}/user/check-active-my-supplier`,
           {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         console.log("Response status:", response.status);
@@ -132,7 +133,7 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
               (supplier: string) => ({
                 value: supplier,
                 label: supplier.charAt(0).toUpperCase() + supplier.slice(1),
-              })
+              }),
             );
             console.log("Supplier options:", options);
             setSupplierOptions(options);
@@ -144,7 +145,7 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
           console.error(
             "Failed to fetch suppliers:",
             response.status,
-            errorText
+            errorText,
           );
         }
       } catch (error) {
@@ -226,12 +227,12 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
         setErrors((prev) => ({ ...prev, suppliers: undefined }));
       }
     },
-    [selectedSupplierValues, errors.suppliers]
+    [selectedSupplierValues, errors.suppliers],
   );
 
   const handlePropertyTypeToggle = useCallback((value: string) => {
     setPropertyTypes((prev) =>
-      prev.includes(value) ? prev.filter((t) => t !== value) : [...prev, value]
+      prev.includes(value) ? prev.filter((t) => t !== value) : [...prev, value],
     );
   }, []);
 
@@ -258,7 +259,7 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
     setPropertyTypes(
       filters.filters.property_types === "All"
         ? PROPERTY_TYPE_OPTIONS.map((opt) => opt.value)
-        : filters.filters.property_types
+        : filters.filters.property_types,
     );
     setFormat(filters.format);
     setIncludeLocations(filters.include_locations);
@@ -332,13 +333,7 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [
-    suppliers,
-    dateFrom,
-    dateTo,
-    minRating,
-    maxRating,
-  ]);
+  }, [suppliers, dateFrom, dateTo, minRating, maxRating]);
 
   // Format date to ISO 8601 format (YYYY-MM-DDTHH:mm:ss)
   const formatDateToISO8601 = useCallback((dateString: string): string => {
@@ -418,7 +413,7 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
       validateForm,
       formatDateToISO8601,
       onExportCreate,
-    ]
+    ],
   );
 
   // Check if form is valid for disabling submit button
@@ -529,7 +524,7 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
                     "flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all",
                     selectedSupplierValues.size === supplierOptions.length
                       ? "border-green-500 bg-green-50"
-                      : "border-[rgb(var(--border-primary))] hover:border-green-400"
+                      : "border-[rgb(var(--border-primary))] hover:border-green-400",
                   )}
                 >
                   <input
@@ -547,7 +542,7 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
                       } else {
                         // Select all
                         const allValues = new Set(
-                          supplierOptions.map((opt) => opt.value.toString())
+                          supplierOptions.map((opt) => opt.value.toString()),
                         );
                         setSelectedSupplierValues(allValues);
                         setSuppliers(Array.from(allValues));
@@ -575,14 +570,14 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
                       selectedSupplierValues.has(option.value.toString())
                         ? "border-blue-500 bg-blue-50"
                         : errors.suppliers
-                        ? "border-red-300 hover:border-red-400"
-                        : "border-[rgb(var(--border-primary))] hover:border-[rgb(var(--border-primary))]"
+                          ? "border-red-300 hover:border-red-400"
+                          : "border-[rgb(var(--border-primary))] hover:border-[rgb(var(--border-primary))]",
                     )}
                   >
                     <input
                       type="checkbox"
                       checked={selectedSupplierValues.has(
-                        option.value.toString()
+                        option.value.toString(),
                       )}
                       onChange={() =>
                         handleSupplierToggle(option.value.toString())
@@ -800,7 +795,7 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
                 "flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all",
                 propertyTypes.length === PROPERTY_TYPE_OPTIONS.length
                   ? "border-green-500 bg-green-50"
-                  : "border-[rgb(var(--border-primary))] hover:border-green-400"
+                  : "border-[rgb(var(--border-primary))] hover:border-green-400",
               )}
             >
               <input
@@ -813,7 +808,7 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
                   } else {
                     // Select all
                     setPropertyTypes(
-                      PROPERTY_TYPE_OPTIONS.map((opt) => opt.value)
+                      PROPERTY_TYPE_OPTIONS.map((opt) => opt.value),
                     );
                   }
                 }}
@@ -832,7 +827,7 @@ export const ExportFilterPanel = memo(function ExportFilterPanel({
                   "flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all",
                   propertyTypes.includes(option.value)
                     ? "border-blue-500 bg-blue-50"
-                    : "border-[rgb(var(--border-primary))] hover:border-[rgb(var(--border-primary))]"
+                    : "border-[rgb(var(--border-primary))] hover:border-[rgb(var(--border-primary))]",
                 )}
               >
                 <input

@@ -13,6 +13,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { TokenStorage } from "@/lib/auth/token-storage";
+import { config } from "@/lib/config";
 
 interface ApiKeyInfo {
   api_key: string;
@@ -76,7 +77,7 @@ export function ApiKeySection() {
       console.log("Active for days:", activeForDays);
 
       const response = await fetch(
-        `http://127.0.0.1:8001/v1.0/auth/generate-api-key/${generateUserId.trim()}`,
+        `${config.api.url}/auth/generate-api-key/${generateUserId.trim()}`,
         {
           method: "POST",
           headers: {
@@ -86,7 +87,7 @@ export function ApiKeySection() {
           body: JSON.stringify({
             active_for: activeForDays,
           }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -96,7 +97,7 @@ export function ApiKeySection() {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
           errorData.detail ||
-            `Failed to generate API key: ${response.statusText}`
+            `Failed to generate API key: ${response.statusText}`,
         );
       }
 
@@ -111,7 +112,7 @@ export function ApiKeySection() {
     } catch (err) {
       console.error("Error generating API key:", err);
       setGenerateError(
-        err instanceof Error ? err.message : "Failed to generate API key"
+        err instanceof Error ? err.message : "Failed to generate API key",
       );
     } finally {
       setGenerateLoading(false);
@@ -140,14 +141,14 @@ export function ApiKeySection() {
       console.log("Revoking API key for user:", revokeUserId);
 
       const response = await fetch(
-        `http://127.0.0.1:8001/v1.0/auth/revoke-api-key/${revokeUserId.trim()}`,
+        `${config.api.url}/auth/revoke-api-key/${revokeUserId.trim()}`,
         {
           method: "DELETE",
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -156,7 +157,8 @@ export function ApiKeySection() {
         }
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.detail || `Failed to revoke API key: ${response.statusText}`
+          errorData.detail ||
+            `Failed to revoke API key: ${response.statusText}`,
         );
       }
 
@@ -171,7 +173,7 @@ export function ApiKeySection() {
     } catch (err) {
       console.error("Error revoking API key:", err);
       setRevokeError(
-        err instanceof Error ? err.message : "Failed to revoke API key"
+        err instanceof Error ? err.message : "Failed to revoke API key",
       );
     } finally {
       setRevokeLoading(false);
@@ -181,7 +183,7 @@ export function ApiKeySection() {
   const maskApiKey = (key: string) => {
     if (key.length <= 10) return key;
     return `${key.substring(0, 10)}${"*".repeat(
-      key.length - 14
+      key.length - 14,
     )}${key.substring(key.length - 4)}`;
   };
 

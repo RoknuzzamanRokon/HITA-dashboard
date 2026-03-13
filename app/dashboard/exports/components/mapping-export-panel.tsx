@@ -6,6 +6,7 @@ import { Button } from "@/lib/components/ui/button";
 import { Input } from "@/lib/components/ui/input";
 import { RadioGroup, RadioOption } from "@/lib/components/ui/radio-group";
 import { MappingExportFilters, ExportFilters } from "@/lib/types/exports";
+import { config } from "@/lib/config";
 import {
   Download,
   Filter,
@@ -34,7 +35,7 @@ const FilterPresetsManager = dynamic(
         <div className="h-10 w-32 bg-[rgb(var(--bg-secondary))] animate-pulse rounded-lg" />
       </div>
     ),
-  }
+  },
 );
 
 export interface MappingExportPanelProps {
@@ -89,14 +90,14 @@ export const MappingExportPanel = memo(function MappingExportPanel({
         }
 
         const response = await fetch(
-          "http://127.0.0.1:8001/v1.0/user/check-active-my-supplier",
+          `${config.api.url}/user/check-active-my-supplier`,
           {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         if (response.ok) {
@@ -108,7 +109,7 @@ export const MappingExportPanel = memo(function MappingExportPanel({
               (supplier: string) => ({
                 value: supplier,
                 label: supplier.charAt(0).toUpperCase() + supplier.slice(1),
-              })
+              }),
             );
             setSupplierOptions(options);
           }
@@ -175,7 +176,7 @@ export const MappingExportPanel = memo(function MappingExportPanel({
         setErrors((prev) => ({ ...prev, suppliers: undefined }));
       }
     },
-    [selectedSupplierValues, errors.suppliers]
+    [selectedSupplierValues, errors.suppliers],
   );
 
   // Handle loading a preset
@@ -323,7 +324,7 @@ export const MappingExportPanel = memo(function MappingExportPanel({
 
         console.log(
           "📤 Sending export request with filters:",
-          JSON.stringify(filters, null, 2)
+          JSON.stringify(filters, null, 2),
         );
 
         // Call onExportCreate prop with formatted filters
@@ -352,7 +353,7 @@ export const MappingExportPanel = memo(function MappingExportPanel({
       validateForm,
       formatDateToISO8601,
       onExportCreate,
-    ]
+    ],
   );
 
   // Check if form is valid for disabling submit button
@@ -470,7 +471,7 @@ export const MappingExportPanel = memo(function MappingExportPanel({
                     "flex items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all",
                     selectedSupplierValues.size === supplierOptions.length
                       ? "border-green-500 bg-green-50"
-                      : "border-[rgb(var(--border-primary))] hover:border-green-400"
+                      : "border-[rgb(var(--border-primary))] hover:border-green-400",
                   )}
                 >
                   <input
@@ -488,7 +489,7 @@ export const MappingExportPanel = memo(function MappingExportPanel({
                       } else {
                         // Select all
                         const allValues = new Set(
-                          supplierOptions.map((opt) => opt.value.toString())
+                          supplierOptions.map((opt) => opt.value.toString()),
                         );
                         setSelectedSupplierValues(allValues);
                         setSuppliers(Array.from(allValues));
@@ -516,14 +517,14 @@ export const MappingExportPanel = memo(function MappingExportPanel({
                       selectedSupplierValues.has(option.value.toString())
                         ? "border-purple-500 bg-purple-50"
                         : errors.suppliers
-                        ? "border-red-300 hover:border-red-400"
-                        : "border-[rgb(var(--border-primary))] hover:border-[rgb(var(--border-primary))]"
+                          ? "border-red-300 hover:border-red-400"
+                          : "border-[rgb(var(--border-primary))] hover:border-[rgb(var(--border-primary))]",
                     )}
                   >
                     <input
                       type="checkbox"
                       checked={selectedSupplierValues.has(
-                        option.value.toString()
+                        option.value.toString(),
                       )}
                       onChange={() =>
                         handleSupplierToggle(option.value.toString())

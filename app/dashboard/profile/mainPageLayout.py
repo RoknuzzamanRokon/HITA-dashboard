@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRequireAuth } from "@/lib/hooks/use-auth";
 import { TokenStorage } from "@/lib/auth/token-storage";
+import { config } from "@/lib/config";
 import { useNotification } from "@/lib/components/notifications/notification-provider";
 import { NotificationService } from "@/lib/api/notifications";
 import {
@@ -255,7 +256,7 @@ export default function ProfilePage() {
         throw new Error("Authentication token not found. Please login again.");
       }
 
-      const response = await fetch("http://127.0.0.1:8001/v1.0/user/check-me", {
+      const response = await fetch(`${config.api.url}/user/check-me`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -292,7 +293,7 @@ export default function ProfilePage() {
       }
 
       const response = await fetch(
-        "http://127.0.0.1:8001/v1.0/auth/check-api-key",
+        `${config.api.url}/auth/check-api-key`,
         {
           method: "GET",
           headers: {
@@ -345,7 +346,7 @@ export default function ProfilePage() {
       console.log("Turning off supplier:", selectedSupplierName);
 
       const response = await fetch(
-        "http://127.0.0.1:8001/v1.0/permissions/turn-off-supplier",
+        `${config.api.url}/permissions/turn-off-supplier`,
         {
           method: "POST",
           headers: {
@@ -447,7 +448,7 @@ export default function ProfilePage() {
       console.log("Turning on supplier:", selectedSupplierName);
 
       const response = await fetch(
-        "http://127.0.0.1:8001/v1.0/permissions/turn-on-supplier",
+        `${config.api.url}/permissions/turn-on-supplier`,
         {
           method: "POST",
           headers: {
@@ -599,7 +600,7 @@ export default function ProfilePage() {
       console.log("Fetching supplier info for:", supplierName);
 
       const response = await fetch(
-        `http://127.0.0.1:8001/v1.0/hotels/get-supplier-info?supplier=${supplierName}`,
+        `${config.api.url}/hotels/get-supplier-info?supplier=${supplierName}`,
         {
           method: "GET",
           headers: {

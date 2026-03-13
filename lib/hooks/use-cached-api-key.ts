@@ -9,6 +9,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/contexts/auth-context';
 import { usePersistentCache, CACHE_CONFIGS } from './use-persistent-cache';
 import { TokenStorage } from '@/lib/auth/token-storage';
+import { config } from '@/lib/config';
 
 interface ApiKeyData {
     security: {
@@ -33,12 +34,13 @@ async function fetchApiKeyWithCache(): Promise<ApiKeyData> {
         throw new Error("Authentication token not found. Please login again.");
     }
 
-    console.log('📡 Making request to: http://127.0.0.1:8001/v1.0/auth/check-api-key');
+    const apiUrl = `${config.api.url}/auth/check-api-key`;
+    console.log('📡 Making request to:', apiUrl);
     console.log('🔑 Using token:', token.substring(0, 20) + '...');
 
     try {
         const response = await fetch(
-            "http://127.0.0.1:8001/v1.0/auth/check-api-key",
+            apiUrl,
             {
                 method: "GET",
                 headers: {

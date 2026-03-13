@@ -12,6 +12,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { TokenStorage } from "@/lib/auth/token-storage";
+import { config } from "@/lib/config";
 
 interface UserInfo {
   id: string;
@@ -94,7 +95,7 @@ export function UserInfoSection() {
       }
 
       const response = await fetch(
-        `http://127.0.0.1:8001/v1.0/user/check-user-info/${id}`,
+        `${config.api.url}/user/check-user-info/${id}`,
         {
           method: "GET",
           headers: {
