@@ -59,6 +59,9 @@ export default function HotelDetailsPage() {
 
   useEffect(() => {
     const fetchHotelDetails = async () => {
+      console.log("🔍 URL params.id:", params.id);
+      console.log("🔍 ittid variable:", ittid);
+
       if (!ittid) {
         setError("No hotel ID provided");
         setIsLoading(false);
@@ -97,6 +100,7 @@ export default function HotelDetailsPage() {
           user?.role !== "admin_user" &&
           (!user?.pointBalance || user.pointBalance <= 0);
         console.log("🎯 Is Demo User:", isDemoUser);
+        console.log("🔍 About to call API with ittid:", ittid);
 
         if (isDemoUser) {
           console.log("📞 Calling demo full hotel details endpoint");
@@ -107,6 +111,7 @@ export default function HotelDetailsPage() {
         }
 
         if (response.success && response.data) {
+          console.log("✅ API Response successful, setting hotel details");
           setHotelDetails(response.data);
           setIsFromCache(false);
 
@@ -118,10 +123,34 @@ export default function HotelDetailsPage() {
           sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
           console.log("💾 Cached hotel details for future use");
         } else {
-          setError(response.error?.message || "Failed to load hotel details");
+          console.error("❌ API Response failed:", response.error);
+          console.error("❌ Error status:", response.error?.status);
+          console.error("❌ Error details:", response.error?.details);
+
+          // Provide more specific error messages
+          let errorMessage =
+            response.error?.message || "Failed to load hotel details";
+
+          if (response.error?.status === 0) {
+            errorMessage =
+              "Network error: Unable to reach the server. This may be due to firewall, proxy, or network restrictions.";
+          }
+
+          setError(errorMessage);
         }
       } catch (err) {
-        setError("An error occurred while loading hotel details");
+        console.error("❌ Exception caught:", err);
+        console.error("❌ Error name:", err?.name);
+        console.error("❌ Error message:", err?.message);
+        console.error("❌ Error stack:", err?.stack);
+
+        // Create detailed error message
+        const errorMessage =
+          err instanceof Error
+            ? `Error: ${err.message}`
+            : "An error occurred while loading hotel details";
+
+        setError(errorMessage);
       } finally {
         setIsLoading(false);
       }
@@ -139,7 +168,9 @@ export default function HotelDetailsPage() {
     let isCancelled = false;
 
     const preload = async () => {
-      const results = await Promise.all(photos.map((url) => warmImageCache(url)));
+      const results = await Promise.all(
+        photos.map((url) => warmImageCache(url)),
+      );
       if (isCancelled) return;
       setLoadedPhotos((prev) => {
         const next = new Set(prev);
@@ -167,7 +198,9 @@ export default function HotelDetailsPage() {
 
     let isCancelled = false;
     const preload = async () => {
-      const results = await Promise.all(photos.map((url) => warmImageCache(url)));
+      const results = await Promise.all(
+        photos.map((url) => warmImageCache(url)),
+      );
       if (isCancelled) return;
       setLoadedPhotos((prev) => {
         const next = new Set(prev);
@@ -197,6 +230,7 @@ export default function HotelDetailsPage() {
   const handleRefresh = async () => {
     if (!ittid) return;
 
+    console.log("🔄 Refresh - ittid:", ittid);
     setIsRefreshing(true);
 
     // Clear cache
@@ -214,6 +248,8 @@ export default function HotelDetailsPage() {
         user?.role !== "super_user" &&
         user?.role !== "admin_user" &&
         (!user?.pointBalance || user.pointBalance <= 0);
+
+      console.log("🔍 Refresh - About to call API with ittid:", ittid);
 
       if (isDemoUser) {
         response = await HotelService.getDemoFullHotelDetails(ittid);
@@ -235,7 +271,15 @@ export default function HotelDetailsPage() {
         setError(response.error?.message || "Failed to load hotel details");
       }
     } catch (err) {
-      setError("An error occurred while loading hotel details");
+      console.error("❌ Refresh Exception caught:", err);
+      console.error("❌ Refresh Error details:", err?.message);
+
+      const errorMessage =
+        err instanceof Error
+          ? `Error: ${err.message}`
+          : "An error occurred while loading hotel details";
+
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -322,8 +366,8 @@ export default function HotelDetailsPage() {
                     {isPermissionError
                       ? "Access Denied"
                       : isAuthError
-                      ? "Authentication Required"
-                      : "Error"}
+                        ? "Authentication Required"
+                        : "Error"}
                   </h3>
                   <p
                     className={`text-sm text-${
@@ -381,6 +425,54 @@ export default function HotelDetailsPage() {
 
   if (!hotelDetails) {
     return null;
+  }
+
+  if (!hotelDetails.hotel) {
+    console.error("❌ Hotel data is missing from response:", hotelDetails);
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Card className="border-red-200 bg-red-50">
+            <div className="p-6">
+              <div className="flex items-start gap-3">
+                <svg
+                  className="h-6 w-6 text-red-500 flex-shrink-0 mt-0.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-red-900">
+                    Invalid Hotel Data
+                  </h3>
+                  <p className="text-sm text-red-800 mt-1">
+                    The hotel data structure is invalid or incomplete. Please
+                    try another hotel.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.back()}
+                  className="text-red-700 border-red-300 hover:bg-red-100"
+                >
+                  Go Back
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
   const hotel = hotelDetails.hotel;
@@ -877,7 +969,7 @@ export default function HotelDetailsPage() {
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Hotel Name */}
                   <div className="rounded-xl border border-gray-200 bg-gray-50">
                     <div className="flex items-center gap-4 p-4">
@@ -908,7 +1000,6 @@ export default function HotelDetailsPage() {
                       </div>
                     </div>
                   </div>
-
 
                   {/* Basic Info */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1110,7 +1201,8 @@ export default function HotelDetailsPage() {
                               <>
                                 <span>•</span>
                                 <span className="text-xs">
-                                  Loaded {loadedPhotoCount}/{allPhotoUrls.length}
+                                  Loaded {loadedPhotoCount}/
+                                  {allPhotoUrls.length}
                                 </span>
                               </>
                             )}
