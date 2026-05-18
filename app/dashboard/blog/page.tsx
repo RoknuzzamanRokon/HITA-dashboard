@@ -27,14 +27,13 @@ import {
   TrendingUp,
   Users,
   MessageSquare,
-  Mail,
   RefreshCw,
-  Download,
-  Upload,
   BookOpen,
   Zap,
   Shield,
   Code,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Card, CardHeader, CardContent } from "@/lib/components/ui/card";
 import { Button } from "@/lib/components/ui/button";
@@ -51,17 +50,7 @@ import {
   BlogAnalytics as BlogAnalyticsType,
   blogService,
 } from "@/lib/api/blog";
-import {
-  mockBlogPosts,
-  mockBlogCategories,
-  mockBlogTags,
-  mockBlogAnalytics,
-} from "@/lib/api/mock-blog-data";
-
-// Mock data for demonstration - using shared mock data
-const mockPosts: BlogPost[] = mockBlogPosts;
-
-const mockCategories: BlogCategory[] = mockBlogCategories;
+import { mockBlogTags } from "@/lib/api/mock-blog-data";
 
 const mockTags: BlogTag[] = mockBlogTags;
 
@@ -86,7 +75,14 @@ const calculateReadTime = (content: string) => {
   return Math.ceil(wordCount / wordsPerMinute);
 };
 
-const mockAnalytics: BlogAnalyticsType = mockBlogAnalytics;
+const mockAnalytics: BlogAnalyticsType = {
+  total_posts: 0,
+  total_views: 0,
+  total_subscribers: 0,
+  popular_posts: [],
+  popular_categories: [],
+  recent_activity: [],
+};
 
 export default function BlogDashboardPage() {
   const { isAuthenticated, isLoading } = useRequireAuth();
@@ -96,12 +92,19 @@ export default function BlogDashboardPage() {
   const [activeTab, setActiveTab] = useState<
     "posts" | "analytics" | "categories" | "settings"
   >("posts");
-  const [posts, setPosts] = useState<BlogPost[]>(mockPosts);
-  const [categories, setCategories] = useState<BlogCategory[]>(mockCategories);
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [categories, setCategories] = useState<BlogCategory[]>([]);
   const [analytics, setAnalytics] = useState<BlogAnalyticsType>(mockAnalytics);
+  const [totalPublished, setTotalPublished] = useState(0);
+  const [totalDrafts, setTotalDrafts] = useState(0);
+  const [categoryStats, setCategoryStats] = useState<
+    Array<{ id: string; name: string; slug: string; post_count: number }>
+  >([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const POSTS_PER_PAGE = 10;
   const [isDataLoading, setIsDataLoading] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
@@ -124,54 +127,56 @@ export default function BlogDashboardPage() {
   const loadBlogData = async () => {
     try {
       setIsDataLoading(true);
-      console.log("📚 Loading blog data from API...");
 
-      // Load posts
-      const postsResponse = await blogService.getPosts({
-        status: "all",
-        sort: "date",
-        order: "desc",
-      });
+      const [
+        postsResponse,
+        categoriesResponse,
+        analyticsResponse,
+        statsResponse,
+      ] = await Promise.all([
+        blogService.getPosts({
+          status: "all",
+          limit: 500,
+          sort: "date",
+          order: "desc",
+        }),
+        blogService.getCategories(),
+        blogService.getAnalytics(),
+        blogService.getStats(),
+      ]);
 
       if (postsResponse.success && postsResponse.data) {
         setPosts(postsResponse.data.posts);
-        console.log(
-          "✅ Loaded posts from API:",
-          postsResponse.data.posts.length,
-        );
       } else {
-        console.warn("⚠️ Failed to load posts from API, using mock data");
-        setPosts(mockPosts);
+        setPosts([]);
       }
 
-      // Load categories
-      const categoriesResponse = await blogService.getCategories();
       if (categoriesResponse.success && categoriesResponse.data) {
         setCategories(categoriesResponse.data);
-        console.log(
-          "✅ Loaded categories from API:",
-          categoriesResponse.data.length,
-        );
       } else {
-        console.warn("⚠️ Failed to load categories from API, using mock data");
-        setCategories(mockCategories);
+        setCategories([]);
       }
 
-      // Load analytics
-      const analyticsResponse = await blogService.getAnalytics();
       if (analyticsResponse.success && analyticsResponse.data) {
         setAnalytics(analyticsResponse.data);
-        console.log("✅ Loaded analytics from API");
-      } else {
-        console.warn("⚠️ Failed to load analytics from API, using mock data");
-        setAnalytics(mockAnalytics);
+      }
+
+      if (statsResponse.success && statsResponse.data) {
+        setTotalPublished(statsResponse.data.total_published);
+        setTotalDrafts(statsResponse.data.total_drafts);
+        setCategoryStats(statsResponse.data.categories);
+        // Sync total_posts into analytics
+        setAnalytics((prev) => ({
+          ...prev,
+          total_posts:
+            statsResponse.data!.total_published +
+            statsResponse.data!.total_drafts,
+        }));
       }
     } catch (error) {
-      console.error("❌ Error loading blog data:", error);
-      // Fallback to mock data
-      setPosts(mockPosts);
-      setCategories(mockCategories);
-      setAnalytics(mockAnalytics);
+      console.error("Error loading blog data:", error);
+      setPosts([]);
+      setCategories([]);
     } finally {
       setIsDataLoading(false);
     }
@@ -186,9 +191,31 @@ export default function BlogDashboardPage() {
       selectedCategory === "all" || post.category.id === selectedCategory;
     const matchesStatus =
       selectedStatus === "all" || post.status === selectedStatus;
-
     return matchesSearch && matchesCategory && matchesStatus;
   });
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredPosts.length / POSTS_PER_PAGE),
+  );
+  const paginatedPosts = filteredPosts.slice(
+    (currentPage - 1) * POSTS_PER_PAGE,
+    currentPage * POSTS_PER_PAGE,
+  );
+
+  // Reset to page 1 when filters change
+  const handleCategoryFilter = (val: string) => {
+    setSelectedCategory(val);
+    setCurrentPage(1);
+  };
+  const handleStatusFilter = (val: string) => {
+    setSelectedStatus(val);
+    setCurrentPage(1);
+  };
+  const handleSearch = (val: string) => {
+    setSearchQuery(val);
+    setCurrentPage(1);
+  };
 
   // Event handlers
   const handleCreatePost = () => {
@@ -199,9 +226,9 @@ export default function BlogDashboardPage() {
   const handleImageUpload = async (file: File): Promise<string> => {
     try {
       console.log("📤 Uploading image:", file.name, file.type, file.size);
-      
+
       const response = await blogService.uploadImage(file);
-      
+
       if (response.success && response.data) {
         console.log("✅ Image uploaded successfully:", response.data.url);
         return response.data.url;
@@ -283,8 +310,13 @@ export default function BlogDashboardPage() {
         } else {
           // Show error to user instead of silently falling back to local creation
           console.error("❌ API creation failed:", response.error);
-          alert("Failed to save post to database: " + (response.error?.message || "Unknown error"));
-          throw new Error("Failed to create post: " + JSON.stringify(response.error));
+          alert(
+            "Failed to save post to database: " +
+              (response.error?.message || "Unknown error"),
+          );
+          throw new Error(
+            "Failed to create post: " + JSON.stringify(response.error),
+          );
 
           const selectedCategory = categories.find(
             (c) => c.id === postData.category_id,
@@ -355,35 +387,46 @@ export default function BlogDashboardPage() {
     }
   };
 
-  const handleViewPost = (postId: string) => {
-    // TODO: Open post in new tab
-    console.log("View post:", postId);
-  };
-
   const handleRefreshData = async () => {
-    console.log("🔄 Refreshing blog data...");
     await loadBlogData();
   };
 
   // Category management handlers
-  const handleCreateCategory = (categoryData: any) => {
-    const newCategory: BlogCategory = {
-      id: Date.now().toString(),
-      ...categoryData,
-      post_count: 0,
-      created_at: new Date().toISOString(),
-    };
-    setCategories([...categories, newCategory]);
+  const handleCreateCategory = async (categoryData: any) => {
+    try {
+      const response = await blogService.createCategory(categoryData);
+      if (response.success && response.data) {
+        setCategories([...categories, response.data]);
+        await loadBlogData(); // refresh stats
+      }
+    } catch (error) {
+      console.error("Failed to create category:", error);
+    }
   };
 
-  const handleUpdateCategory = (id: string, categoryData: any) => {
-    setCategories(
-      categories.map((c) => (c.id === id ? { ...c, ...categoryData } : c)),
-    );
+  const handleUpdateCategory = async (id: string, categoryData: any) => {
+    try {
+      const response = await blogService.updateCategory(id, categoryData);
+      if (response.success) {
+        setCategories(
+          categories.map((c) => (c.id === id ? { ...c, ...categoryData } : c)),
+        );
+      }
+    } catch (error) {
+      console.error("Failed to update category:", error);
+    }
   };
 
-  const handleDeleteCategory = (id: string) => {
-    setCategories(categories.filter((c) => c.id !== id));
+  const handleDeleteCategory = async (id: string) => {
+    try {
+      const response = await blogService.deleteCategory(id);
+      if (response.success) {
+        setCategories(categories.filter((c) => c.id !== id));
+        await loadBlogData(); // refresh stats
+      }
+    } catch (error) {
+      console.error("Failed to delete category:", error);
+    }
   };
 
   if (isLoading) {
@@ -475,7 +518,10 @@ export default function BlogDashboardPage() {
             <div>
               <p className="text-sm font-medium text-gray-600">Total Posts</p>
               <p className="text-2xl font-bold text-gray-900">
-                {analytics.total_posts}
+                {totalPublished + totalDrafts}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                {totalPublished} published · {totalDrafts} drafts
               </p>
             </div>
             <div className="p-3 bg-blue-100 rounded-lg">
@@ -501,20 +547,6 @@ export default function BlogDashboardPage() {
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Subscribers</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {analytics.total_subscribers.toLocaleString()}
-              </p>
-            </div>
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <Mail className="w-6 h-6 text-purple-600" />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
               <p className="text-sm font-medium text-gray-600">Categories</p>
               <p className="text-2xl font-bold text-gray-900">
                 {categories.length}
@@ -525,7 +557,45 @@ export default function BlogDashboardPage() {
             </div>
           </div>
         </Card>
+
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Published</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {totalPublished}
+              </p>
+            </div>
+            <div className="p-3 bg-purple-100 rounded-lg">
+              <Globe className="w-6 h-6 text-purple-600" />
+            </div>
+          </div>
+        </Card>
       </div>
+
+      {/* Per-category breakdown */}
+      {categoryStats.length > 0 && (
+        <Card className="p-6">
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">
+            Posts by Category
+          </h3>
+          <div className="flex flex-wrap gap-3">
+            {categoryStats.map((cat) => (
+              <div
+                key={cat.id}
+                className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2"
+              >
+                <span className="text-sm font-medium text-gray-700">
+                  {cat.name}
+                </span>
+                <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                  {cat.post_count}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Navigation Tabs */}
       <div className="border-b border-gray-200">
@@ -555,51 +625,73 @@ export default function BlogDashboardPage() {
         </nav>
       </div>
 
-      {/* Tab Content */}
       {activeTab === "posts" && (
         <div className="space-y-6">
-          {/* Filters */}
-          <Card className="p-6">
+          {/* Posts by Category filter bar */}
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => handleCategoryFilter("all")}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                selectedCategory === "all"
+                  ? "bg-blue-600 text-white shadow"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              All
+              <span
+                className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${selectedCategory === "all" ? "bg-white/20 text-white" : "bg-gray-200 text-gray-600"}`}
+              >
+                {posts.length}
+              </span>
+            </button>
+            {categoryStats.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => handleCategoryFilter(cat.id)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  selectedCategory === cat.id
+                    ? "bg-blue-600 text-white shadow"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                {cat.name}
+                <span
+                  className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${selectedCategory === cat.id ? "bg-white/20 text-white" : "bg-gray-200 text-gray-600"}`}
+                >
+                  {cat.post_count}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Search + Status filter */}
+          <Card className="p-4">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1">
                 <Input
                   placeholder="Search posts..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => handleSearch(e.target.value)}
                   leftIcon={<Search className="w-4 h-4" />}
                 />
               </div>
-              <div className="flex gap-4">
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                >
-                  <option value="all">All Categories</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                >
-                  <option value="all">All Status</option>
-                  <option value="published">Published</option>
-                  <option value="draft">Draft</option>
-                </select>
-              </div>
+              <select
+                value={selectedStatus}
+                onChange={(e) => handleStatusFilter(e.target.value)}
+                className="rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="all">All Status</option>
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+              </select>
             </div>
           </Card>
 
-          {/* Posts List */}
+          {/* Posts Table */}
           <Card>
             <CardHeader
               title="Blog Posts"
-              subtitle={`${filteredPosts.length} posts found`}
+              subtitle={`${filteredPosts.length} posts found · page ${currentPage} of ${totalPages}`}
             />
             <CardContent className="p-0">
               <div className="overflow-x-auto">
@@ -630,82 +722,158 @@ export default function BlogDashboardPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredPosts.map((post) => (
-                      <tr key={post.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
-                          <div>
+                    {paginatedPosts.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={7}
+                          className="px-6 py-12 text-center text-gray-500"
+                        >
+                          No posts found.
+                        </td>
+                      </tr>
+                    ) : (
+                      paginatedPosts.map((post) => (
+                        <tr key={post.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4">
                             <div className="text-sm font-medium text-gray-900">
                               {post.title}
                             </div>
                             <div className="text-sm text-gray-500 truncate max-w-xs">
                               {post.excerpt}
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                              <User className="w-4 h-4 text-gray-600" />
-                            </div>
-                            <div className="ml-3">
-                              <div className="text-sm font-medium text-gray-900">
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                                <User className="w-4 h-4 text-gray-600" />
+                              </div>
+                              <div className="ml-3 text-sm font-medium text-gray-900">
                                 {post.author}
                               </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {post.category.name}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              post.status === "published"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-yellow-100 text-yellow-800"
-                            }`}
-                          >
-                            {post.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {post.view_count.toLocaleString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(post.created_at).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex items-center justify-end space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleViewPost(post.id)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              {post.category.name}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                post.status === "published"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-yellow-100 text-yellow-800"
+                              }`}
                             >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEditPost(post.id)}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeletePost(post.id)}
-                            >
-                              <Trash2 className="w-4 h-4 text-red-500" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                              {post.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {post.view_count.toLocaleString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(post.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div className="flex items-center justify-end space-x-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  window.open(`/blog/${post.id}`, "_blank")
+                                }
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditPost(post.id)}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeletePost(post.id)}
+                              >
+                                <Trash2 className="w-4 h-4 text-red-500" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
+                  <p className="text-sm text-gray-600">
+                    Showing {(currentPage - 1) * POSTS_PER_PAGE + 1}–
+                    {Math.min(
+                      currentPage * POSTS_PER_PAGE,
+                      filteredPosts.length,
+                    )}{" "}
+                    of {filteredPosts.length} posts
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="p-2 rounded-md border border-gray-300 disabled:opacity-40 hover:bg-gray-50 transition-colors"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(
+                        (p) =>
+                          p === 1 ||
+                          p === totalPages ||
+                          Math.abs(p - currentPage) <= 1,
+                      )
+                      .reduce<(number | "...")[]>((acc, p, idx, arr) => {
+                        if (idx > 0 && p - (arr[idx - 1] as number) > 1)
+                          acc.push("...");
+                        acc.push(p);
+                        return acc;
+                      }, [])
+                      .map((p, idx) =>
+                        p === "..." ? (
+                          <span
+                            key={`ellipsis-${idx}`}
+                            className="px-2 text-gray-400"
+                          >
+                            …
+                          </span>
+                        ) : (
+                          <button
+                            key={p}
+                            onClick={() => setCurrentPage(p as number)}
+                            className={`w-8 h-8 rounded-md text-sm font-medium transition-colors ${
+                              currentPage === p
+                                ? "bg-blue-600 text-white"
+                                : "border border-gray-300 hover:bg-gray-50 text-gray-700"
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        ),
+                      )}
+                    <button
+                      onClick={() =>
+                        setCurrentPage((p) => Math.min(totalPages, p + 1))
+                      }
+                      disabled={currentPage === totalPages}
+                      className="p-2 rounded-md border border-gray-300 disabled:opacity-40 hover:bg-gray-50 transition-colors"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

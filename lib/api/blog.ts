@@ -87,6 +87,7 @@ export interface BlogPostsResponse {
     page: number;
     limit: number;
     total_pages: number;
+    category_summary?: Array<{ id: string; name: string; slug: string; post_count: number }>;
 }
 
 export interface BlogSearchParams {
@@ -325,7 +326,7 @@ class BlogService {
         try {
             const formData = new FormData();
             formData.append('file', file);
-            
+
             const response = await apiClient.post(`${this.baseUrl}/images/upload`, formData, true, 0);
             return {
                 success: response.success,
@@ -334,6 +335,23 @@ class BlogService {
             };
         } catch (error) {
             console.error("Failed to upload blog image:", error);
+            return { success: false, error };
+        }
+    }
+
+    /**
+     * Get public blog stats (total posts, categories with counts)
+     */
+    async getStats(): Promise<{ success: boolean; data?: { total_published: number; total_drafts: number; total_categories: number; total_tags: number; categories: Array<{ id: string; name: string; slug: string; post_count: number }>; tags: Array<{ id: string; name: string; slug: string; post_count: number }> }; error?: any }> {
+        try {
+            const response = await apiClient.get(`${this.baseUrl}/stats`, false);
+            return {
+                success: response.success,
+                data: response.success ? this.unwrap(response.data) : undefined,
+                error: response.error,
+            };
+        } catch (error) {
+            console.error("Failed to fetch blog stats:", error);
             return { success: false, error };
         }
     }
