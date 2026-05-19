@@ -50,6 +50,8 @@ next-env.d.ts
 For-Dashbord
 
 
+log/frontendOutput.log
+log/frontendError.log
 
 EXPORT_API_DOCUMENTATION.md
 EXPORT_DOCUMENTATION_INDEX.md
